@@ -24,6 +24,7 @@
  */
 
 #include "ubifs.h"
+#include <u-boot/zlib.h>
 
 #if !defined(CONFIG_SYS_64BIT_VSPRINTF)
 #warning Please define CONFIG_SYS_64BIT_VSPRINTF for correct output!
@@ -34,14 +35,14 @@ DECLARE_GLOBAL_DATA_PTR;
 /* compress.c */
 
 /*
- * We need a wrapper for gunzip() because the parameters are
+ * We need a wrapper for zunzip() because the parameters are
  * incompatible with the lzo decompressor.
  */
 static int gzip_decompress(const unsigned char *in, size_t in_len,
 			   unsigned char *out, size_t *out_len)
 {
 	unsigned long len = in_len;
-	return gunzip(out, *out_len, (unsigned char *)in, &len);
+	return zunzip(out, *out_len, (unsigned char *)in, &len, 0, 0);
 }
 
 /* Fake description object for the "none" compressor */
@@ -641,6 +642,7 @@ int ubifs_load(char *filename, u32 addr, u32 size)
 	ui = ubifs_inode(inode);
 	if (((inode->i_mode & S_IFMT) == S_IFLNK) && ui->data_len) {
 		memcpy(link_name, ui->data, ui->data_len);
+		link_name[ui->data_len] = '\0';
 		printf("%s is linked to %s!\n", filename, link_name);
 		ubifs_iput(inode);
 

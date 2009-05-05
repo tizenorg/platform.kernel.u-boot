@@ -30,6 +30,8 @@
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 
 .globl lowlevel_init
+.weak lowlevel_init
+.set lowlevel_init,function
 lowlevel_init:
 
 	/*

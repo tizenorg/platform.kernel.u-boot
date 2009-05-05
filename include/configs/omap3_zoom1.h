@@ -42,6 +42,12 @@
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap3.h>
 
+/*
+ * Display CPU and Board information
+ */
+#define CONFIG_DISPLAY_CPUINFO		1
+#define CONFIG_DISPLAY_BOARDINFO	1
+
 /* Clock Defines */
 #define V_OSCK			26000000	/* Clock output from T2 */
 #define V_SCLK			(V_OSCK >> 1)
@@ -182,7 +188,7 @@
 		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
-	"if mmcinit; then " \
+	"if mmc init; then " \
 		"if run loadbootscript; then " \
 			"run bootscript; " \
 		"else " \
@@ -220,12 +226,13 @@
 							/* load address */
 
 /*
- * 2430 has 12 GP timers, they can be driven by the SysClk (12/13/19.2) or by
- * 32KHz clk, or from external sig. This rate is divided by a local divisor.
+ * OMAP3 has 12 GP timers, they can be driven by the system clock
+ * (12/13/16.8/19.2/38.4MHz) or by 32KHz clock. We use 13MHz (V_SCLK).
+ * This rate is divided by a local divisor.
  */
-#define CONFIG_SYS_TIMERBASE		(OMAP34XX_GPT2)
-#define CONFIG_SYS_PTV			7	/* 2^(PTV+1) */
-#define CONFIG_SYS_HZ			((V_SCLK) / (2 << CONFIG_SYS_PTV))
+#define CONFIG_SYS_TIMERBASE		OMAP34XX_GPT2
+#define CONFIG_SYS_PTV			2	/* Divisor: 2^(PTV+1) => 8 */
+#define CONFIG_SYS_HZ			1000
 
 /*-----------------------------------------------------------------------
  * Stack sizes
