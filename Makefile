@@ -22,9 +22,9 @@
 #
 
 VERSION = 2009
-PATCHLEVEL = 03
+PATCHLEVEL = 06
 SUBLEVEL =
-EXTRAVERSION =
+EXTRAVERSION = -rc1
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -3523,7 +3523,6 @@ clean:
 	       $(obj)board/armltd/{integratorap,integratorcp}/u-boot.lds  \
 	       $(obj)board/bf5{18f,26,27,33,38f,48,61}-ez{brd,kit}/u-boot.lds \
 	       $(obj)board/bf5{33,37}-stamp/u-boot.lds			  \
-	       $(obj)cpu/arm926ejs/at91/u-boot.lds			  \
 	       $(obj)cpu/blackfin/bootrom-asm-offsets.[chs]
 	@rm -f $(obj)include/bmp_logo.h
 	@rm -f $(obj)nand_spl/{u-boot-spl,u-boot-spl.map,System.map}
