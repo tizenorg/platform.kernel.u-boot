@@ -395,7 +395,8 @@ void start_armboot (void)
 
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
-	misc_init_r ();
+	/* inki */
+	//misc_init_r ();
 #endif
 
 	/* enable exceptions */
