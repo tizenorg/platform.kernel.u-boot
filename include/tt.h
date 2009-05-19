@@ -884,7 +884,7 @@ enum s3c64xx_uarts_nr {
 	S3C64XX_UART2,
 };
 
-#include "s5pc100.h"
+#include "s5pc1x0.h"
 
 static inline s3c64xx_uart *s3c64xx_get_base_uart(enum s3c64xx_uarts_nr nr)
 {

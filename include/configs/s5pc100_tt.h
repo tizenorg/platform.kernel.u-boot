@@ -122,7 +122,7 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_FAT
-#define CONFIG_CMD_EXT2
+//#define CONFIG_CMD_EXT2
 
 #define CONFIG_BOOTDELAY	3
 
@@ -312,6 +312,7 @@
 #define CONFIG_ENV_IS_IN_NAND
 #define CONFIG_BOOTARGS		"console=ttySAC,115200"
 
+/*
 #if !defined(CONFIG_ENABLE_MMU)
 #define CONFIG_CMD_USB			1
 #define CONFIG_USB_S3C64XX
@@ -323,6 +324,7 @@
 
 #define CONFIG_USB_STORAGE	1
 #endif
+*/
 #define CONFIG_DOS_PARTITION	1
 
 #if defined(CONFIG_USB_OHCI_NEW) && defined(CONFIG_ENABLE_MMU)

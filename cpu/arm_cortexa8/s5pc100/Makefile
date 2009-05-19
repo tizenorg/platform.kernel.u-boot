@@ -2,6 +2,9 @@
 # (C) Copyright 2000-2003
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
+# (C) Copyright 2008
+# Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+#
 # See file CREDITS for list of people who contributed to this
 # project.
 #
@@ -23,13 +26,12 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	=  $(obj)lib$(SOC).a
+LIB	= $(obj)lib$(SOC).a
 
-SOBJS	:= lowlevel_init.o
-COBJS	:= sys_info.o board.o clock.o interrupts.o mem.o syslib.o
+COBJS-y	= interrupts.o
+COBJS-$(CONFIG_S5PC100)	+= cpu_init.o speed.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
+OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS-y))
 
 all:	 $(obj).depend $(LIB)
 

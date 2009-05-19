@@ -79,7 +79,6 @@ int board_init(void)
 	return 0;
 }
 
-/*
 int dram_init(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
@@ -89,7 +88,18 @@ int dram_init(void)
 
 	return 0;
 }
-*/
+
+#ifdef CONFIG_DISPLAY_BOARDINFO
+int checkboard(void)
+{
+	printf("Board:   SMDK6400\n");
+	return 0;
+}
+#endif
+
+void raise(void)
+{
+}
 
 #ifdef CONFIG_ENABLE_MMU
 ulong virt_to_phy_smdk6400(ulong addr)
@@ -114,7 +124,6 @@ void nand_init(void)
 }
 #endif
 
-#if 1 
 ulong board_flash_get_legacy (ulong base, int banknum, flash_info_t *info)
 {
 	if (banknum == 0) {	/* non-CFI boot flash */
@@ -125,5 +134,4 @@ ulong board_flash_get_legacy (ulong base, int banknum, flash_info_t *info)
 	} else
 		return 0;
 }
-#endif
 
