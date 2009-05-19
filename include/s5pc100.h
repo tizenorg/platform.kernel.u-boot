@@ -36,7 +36,10 @@
 
 #include <asm/hardware.h>
 
-#define ELFIN_CLOCK_POWER_BASE	0x7e00f000
+#define CLOCK_REGISTER_BASE		0xE0100000
+#define OTHERS_REGISTER_BASE	0xE0200000
+
+#define ELFIN_CLOCK_POWER_BASE		0xE0100000
 
 /* Clock & Power Controller for mDirac3*/
 #define APLL_LOCK_OFFSET	0x00
@@ -203,7 +206,7 @@
 /*
  * GPIO
  */
-#define ELFIN_GPIO_BASE		0x7f008000
+#define ELFIN_GPIO_BASE		0xE0300000
 
 #define GPACON_OFFSET		0x00
 #define GPADAT_OFFSET		0x04
@@ -288,7 +291,7 @@
 #define GPQCONSLP_OFFSET	0x18C
 #define GPQPUDSLP_OFFSET	0x190
 
-#define EINTPEND_OFFSET		0x924
+#define EINTPEND_OFFSET		0xA00
 
 #define GPACON_REG		__REG(ELFIN_GPIO_BASE + GPACON_OFFSET)
 #define GPADAT_REG		__REG(ELFIN_GPIO_BASE + GPADAT_OFFSET)
@@ -633,8 +636,10 @@
 /*
  * Interrupt
  */
-#define ELFIN_VIC0_BASE_ADDR	0x71200000
-#define ELFIN_VIC1_BASE_ADDR	0x71300000
+#define ELFIN_VIC0_BASE_ADDR	0xE4000000
+#define ELFIN_VIC1_BASE_ADDR	0xE4100000
+#define ELFIN_VIC2_BASE_ADDR	0xE4200000
+
 #define oINTMOD			0x0C	/* VIC INT SELECT (IRQ or FIQ) */
 #define oINTUNMSK		0x10	/* VIC INT EN (write 1 to unmask) */
 #define oINTMSK			0x14	/* VIC INT EN CLEAR (write 1 to mask) */

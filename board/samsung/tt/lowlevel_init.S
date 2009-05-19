@@ -34,7 +34,7 @@
 #include <config.h>
 #include <version.h>
 
-#include <tt.h>
+#include <s5pc100.h>
 
 #ifdef CONFIG_SERIAL1
 #define ELFIN_UART_CONSOLE_BASE (ELFIN_UART_BASE + ELFIN_UART0_OFFSET)
@@ -51,45 +51,48 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r12, lr
 
-	/* LED on only #8 */
-	ldr	r0, =ELFIN_GPIO_BASE
-	ldr	r1, =0x55540000
-	str	r1, [r0, #GPNCON_OFFSET]
-
-	ldr	r1, =0x55555555
-	str	r1, [r0, #GPNPUD_OFFSET]
-
-	ldr	r1, =0xf000
-	str	r1, [r0, #GPNDAT_OFFSET]
-
 	/* Disable Watchdog */
-	ldr	r0, =0x7e000000		@0x7e004000
-	orr	r0, r0, #0x4000
+	ldr	r0, =0xEA200000		@0xEA200000
+	orr	r0, r0, #0x0
 	mov	r1, #0
 	str	r1, [r0]
 
-	/* External interrupt pending clear */
+	/* External interrupt pending clear : GPIO_BASE = 0xE0300000 */
 	ldr	r0, =(ELFIN_GPIO_BASE+EINTPEND_OFFSET)	/*EINTPEND*/
+	add r4, r0, #0x54
+interrupt_pending_loop:
 	ldr	r1, [r0]
 	str	r1, [r0]
 
-	ldr	r0, =ELFIN_VIC0_BASE_ADDR	@0x71200000
-	ldr	r1, =ELFIN_VIC1_BASE_ADDR	@0x71300000
+	/* It compares to end offset value of external interrupt pending register */
+	cmp r0, r4
+	add r0, r0, #0x04
+	bcc interrupt_pending_loop
 
-	/* Disable all interrupts (VIC0 and VIC1) */
+	/* s5pc100 has 3 groups of interrupt sources */
+	ldr	r0, =ELFIN_VIC0_BASE_ADDR	@0xE4000000
+	ldr	r1, =ELFIN_VIC1_BASE_ADDR	@0xE4100000
+	ldr	r2, =ELFIN_VIC2_BASE_ADDR	@0xE4200000
+
+	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
 	str	r3, [r0, #oINTMSK]
 	str	r3, [r1, #oINTMSK]
+	str	r3, [r2, #oINTMSK]
 
+#ifndef CONFIG_ONENAND_IPL
 	/* Set all interrupts as IRQ */
 	mov	r3, #0x0
 	str	r3, [r0, #oINTMOD]
 	str	r3, [r1, #oINTMOD]
+	str	r3, [r2, #oINTMOD]
 
 	/* Pending Interrupt Clear */
 	mov	r3, #0x0
 	str	r3, [r0, #oVECTADDR]
 	str	r3, [r1, #oVECTADDR]
+	str	r3, [r2, #oVECTADDR]
+#endif
 
 	/* init system clock */
 	bl system_clock_init
@@ -114,7 +117,7 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init
 
 /* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =(ELFIN_CLOCK_POWER_BASE + RST_STAT_OFFSET)
+	ldr	r0, =(CLOCK_REGISTER_BASE + RST_STAT_OFFSET)
 	ldr	r1, [r0]
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
@@ -127,7 +130,7 @@ lowlevel_init:
 wakeup_reset:
 
 	/* Clear wakeup status register */
-	ldr	r0, =(ELFIN_CLOCK_POWER_BASE + WAKEUP_STAT_OFFSET)
+	ldr	r0, =(CLOCK_REGISTER_BASE + WAKEUP_STAT_OFFSET)
 	ldr	r1, [r0]
 	str	r1, [r0]
 
@@ -137,7 +140,7 @@ wakeup_reset:
 	str	r1, [r0, #GPNDAT_OFFSET]
 
 	/* Load return address and jump to kernel */
-	ldr	r0, =(ELFIN_CLOCK_POWER_BASE + INF_REG0_OFFSET)
+	ldr	r0, =(CLOCK_REGISTER_BASE + INF_REG0_OFFSET)
 	/* r1 = physical address of s3c6400_cpu_resume function */
 	ldr	r1, [r0]
 	/* Jump to kernel (sleep-s3c6400.S) */
@@ -149,7 +152,7 @@ wakeup_reset:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r0, =ELFIN_CLOCK_POWER_BASE	/* 0x7e00f000 */
+	ldr	r0, =CLOCK_REGISTER_BASE	/* 0xE0100000 */
 
 #ifdef CONFIG_SYNC_MODE
 	ldr	r1, [r0, #OTHERS_OFFSET]
@@ -184,7 +187,7 @@ check_syncack:
 	 * This was unconditional in original Samsung sources, but it doesn't
 	 * seem to make much sense on S3C6400.
 	 */
-#ifndef CONFIG_S3C6400
+#ifndef CONFIG_S5PC100
 	ldr	r1, [r0, #OTHERS_OFFSET]
 	bic	r1, r1, #0xC0
 	orr	r1, r1, #0x40
@@ -197,59 +200,136 @@ wait_for_async:
 	bne	wait_for_async
 #endif
 
-	ldr	r1, [r0, #OTHERS_OFFSET]
-	bic	r1, r1, #0x40
-	str	r1, [r0, #OTHERS_OFFSET]
+	/* clock initialization */
+	ldr r0, =0xe0100304
+	ldr r1, =0x10000
+	str r1, [r0]
+
+	ldr r1, =0x11000
+	str r1, [r0]
+
+	ldr r1, =0x11100
+	str r1, [r0]
+
+	ldr r1, =0x11110
+	str r1, [r0]
+
+	ldr r1, =0x11110
+	str r1, [r0]
+
+	ldr r0, =0xe0100308
+	ldr r1, =0x1
+	str r1, [r0]
+
+	/* APLL Enable */
+	ldr r0, =0xe1000000
+	ldr r1, =0xe10
+	str r1, [r0]
+
+	ldr r0, =0xe0100100
+	ldr r1, =0x81bc0400
+	str r1, [r0]
+
+ldr r3, =loop1
+	b dummy_loop
+loop1:
+	/* MPLL Enable */
+	ldr r0, =0xe0100004
+	ldr r1, =0xe10
+	str r1, [r0]
+
+	ldr r0, =0xe0100104
+	ldr r1, =0x80590201
+	str r1, [r0]
+
+ldr r3, =loop2
+	b dummy_loop
+loop2:
+	/* EPLL Enable */
+	ldr r0, =0xe0100008
+	ldr r1, =0xe10
+	str r1, [r0]
+
+	ldr r0, =0xe0100108
+	ldr r1, =0x80870303
+	str r1, [r0]
+
+ldr r3, =loop3
+	b dummy_loop
+loop3:
+	/* HPLL Enable */
+	ldr r0, =0xe0100200
+	ldr r1, =0x0
+	str r1, [r0]
+
+	ldr r0, =0xe010000c
+	ldr r1, =0xe10
+	str r1, [r0]
+
+	ldr r0, =0xe010010c
+	ldr r1, =0x80600603
+	str r1, [r0]
+
+ldr r3, =loop4
+	b dummy_loop
+loop4:
+	/* Set Source Clock */
+	ldr r0, =0xe0100200
+	ldr r1, =0x0
+	str r1, [r0]
+
+	ldr r1, =0x1
+	str r1, [r0]
+
+	ldr r1, =0x11
+	str r1, [r0]
+
+	ldr r1, =0x111
+	str r1, [r0]
+
+	ldr r1, =0x1111
+	str r1, [r0]
+
+	ldr r0, =0xe0100204
+	ldr r1, =0x1
+	str r1, [r0]
+
+	ldr r1, =0x1000001
+	str r1, [r0]
+
+	ldr r0, =0xe0100400
+	ldr r1, =0x9000
+	str r1, [r0]
+
+	b setting_end
+	
+	/* wait at least 1000us to stablize all clock */
+dummy_loop:
+	mov	r2, #0x2
+1:	subs	r2, r2, #1
+	bne	1b
+	mov pc, r3
+
+setting_end:
 #endif
 
-	mov	r1, #0xff00
-	orr	r1, r1, #0xff
-	str	r1, [r0, #APLL_LOCK_OFFSET]
-	str	r1, [r0, #MPLL_LOCK_OFFSET]
-
-	/* Set Clock Divider */
-	ldr	r1, [r0, #CLK_DIV0_OFFSET]
-	bic	r1, r1, #0x30000
-	bic	r1, r1, #0xff00
-	bic	r1, r1, #0xff
-	ldr	r2, =CLK_DIV_VAL
-	orr	r1, r1, r2
-	str	r1, [r0, #CLK_DIV0_OFFSET]
-
-	ldr	r1, =APLL_VAL
-	str	r1, [r0, #APLL_CON_OFFSET]
-	ldr	r1, =MPLL_VAL
-	str	r1, [r0, #MPLL_CON_OFFSET]
-
-	/* FOUT of EPLL is 96MHz */
-	ldr	r1, =0x200203
-	str	r1, [r0, #EPLL_CON0_OFFSET]
-	ldr	r1, =0x0
-	str	r1, [r0, #EPLL_CON1_OFFSET]
-
-	/* APLL, MPLL, EPLL select to Fout */
-	ldr	r1, [r0, #CLK_SRC_OFFSET]
-	orr	r1, r1, #0x7
-	str	r1, [r0, #CLK_SRC_OFFSET]
-
-	/* wait at least 200us to stablize all clock */
-	mov	r1, #0x10000
-1:	subs	r1, r1, #1
-	bne	1b
+#	/* wait at least 200us to stablize all clock */
+#	mov	r2, #0x10000
+#1:	subs	r2, r2, #1
+#	bne	1b
 
 	/* Synchronization for VIC port */
 #if defined(CONFIG_SYNC_MODE)
 	ldr	r1, [r0, #OTHERS_OFFSET]
 	orr	r1, r1, #0x20
 	str	r1, [r0, #OTHERS_OFFSET]
-#elif !defined(CONFIG_S3C6400)
+#elif !defined(CONFIG_S5PC100)
 	/* According to 661558um_S3C6400X_rev10.pdf 0x20 is reserved */
 	ldr	r1, [r0, #OTHERS_OFFSET]
 	bic	r1, r1, #0x20
 	str	r1, [r0, #OTHERS_OFFSET]
 #endif
 	mov	pc, lr
-
 
 #ifndef CONFIG_NAND_SPL
 /*
