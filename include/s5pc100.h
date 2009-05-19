@@ -898,3 +898,94 @@ static inline s3c64xx_uart *s3c64xx_get_base_uart(enum s3c64xx_uarts_nr nr)
 #endif
 
 #endif /*__S3C6400_H__*/
+
+
+
+
+
+#if defined (__S5PC100_H__)
+
+/*
+ * Referenced from linux/arch/arm/plat-s3c/include/plat/ 
+ * & linux/arch/arm/plat-s3c6410/include/plat.
+ */
+
+//#ifndef __S5PC100_H__
+//#define __S5PC100_H__
+
+#include <asm/hardware.h>
+
+#define S5C_ADDR_BASE	(0xe0000000)
+#define S5C_ADDR(x)		(S5C_ADDR_BASE + (x))
+
+#define S5C_PA_SYS		S5C_ADDR(0x00000000)    /* Chip ID/OM */
+
+#define S5C_PA_VIC		S5C_ADDR(0x04000000)    /* Interrupt Controller 1 */
+#define S5C_PA_VIC0		S5C_ADDR(0x04000000)    /* Interrupt Controller 1 */
+#define S5C_PA_VIC1		S5C_ADDR(0x04100000)    /* Interrupt Controller 2 */
+#define S5C_PA_VIC2		S5C_ADDR(0x04200000)    /* Interrupt Controller 3 */
+
+#define S5C_PA_MEM		S5C_ADDR(0x07000000)    /* SROM */
+#define S5C_PA_SROM		S5C_ADDR(0x07000000)    /* SROM */
+#define S5C_PA_ONENAND	S5C_ADDR(0x07100000)    /* ONENAND */
+#define S5C_PA_NAND		S5C_ADDR(0x07200000)    /* NAND */
+
+#define S5C_PA_TIMER	S5C_ADDR(0x0a000000)    /* PWM Timer */
+#define S5C_PA_PWMTIMER	S5C_ADDR(0x0a000000)    /* PWM Timer */
+#define S5C_PA_SYSTEM	S5C_ADDR(0x0a100000)    /* System Timer */
+#define S5C_PA_WATCHDOG	S5C_ADDR(0x0a200000)    /* Watchdog Timer */
+#define S5C_PA_RTC		S5C_ADDR(0x0a300000)    /* RTC */
+
+#define S5C_PA_UART		S5C_ADDR(0x0c000000)    /* UART */
+
+
+
+
+#define S3C_IDREG(x)	(S3C_PA_SYS + (x))
+
+/*
+ * Clock Controller
+ */
+#define S5C_PA_ID		S5C_ADDR(0x00000000)    /* Chip ID/OM */
+#define S5C_PA_CLK1		S5C_ADDR(0x00100000)    /* Clock Controller 1 */
+#define S5C_PA_CLK2		S5C_ADDR(0x00200000)    /* Clock Controller 2 */
+#define S5C_PA_GPIO		S5C_ADDR(0x00300000)    /* GPIO */
+
+
+/*
+ * GPIO
+ */
+
+/* GPIO Bank A */
+
+/* Bus Matrix */
+
+/* Memory controller */
+
+/* SDRAM Controller */
+
+/* Memory Chip direct command */
+
+/* Nand flash controller */
+
+/* Interrupt */
+
+/* Watchdog timer */
+
+/* UART */
+
+/* PWM timer */
+
+/* Fields */
+
+/* bits */
+
+/*-----------------------------------------------------------------------
+ * Physical Memory Map
+ */
+
+/* Memory Parameters */
+/* DDR Parameters */
+/* mDDR memory configuration */
+
+#endif /*__S5PC100_H__*/
