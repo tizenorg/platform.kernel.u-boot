@@ -24,112 +24,151 @@
  */
 
 #include <config.h>
-#include <s3c6400.h>
+#include <s5pc100.h>
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
-	/* DMC1 base address 0x7e001000 */
-	ldr	r0, =ELFIN_DMC1_BASE
+	/* DLL parameter setting */
+	ldr r0, =0xe6000018
+	ldr r1, =0x50101000
+	str r1, [r0]
 
-	ldr	r1, =0x4
-	str	r1, [r0, #INDEX_DMC_MEMC_CMD]
+	ldr r0, =0xe600001c
+	ldr r1, =0xf4
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_REFRESH_PRD
-	str	r1, [r0, #INDEX_DMC_REFRESH_PRD]
+	ldr r0, =0xe6000020
+	ldr r1, =0x0
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_CAS_LATENCY
-	str	r1, [r0, #INDEX_DMC_CAS_LATENCY]
+	/* DLL on */
+	ldr r0, =0xe6000018
+	ldr r1, =0x50101002
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_DQSS
-	str	r1, [r0, #INDEX_DMC_T_DQSS]
+	/* DLL start */
+	ldr r0, =0xe6000018
+	ldr r1, =0x50101003
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_MRD
-	str	r1, [r0, #INDEX_DMC_T_MRD]
+	/* Force value locking for DLL off */
+	ldr r0, =0xe6000018
+	ldr r1, =0x50101003
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RAS
-	str	r1, [r0, #INDEX_DMC_T_RAS]
+	/* DLL off */
+	ldr r1, =0x50101001
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RC
-	str	r1, [r0, #INDEX_DMC_T_RC]
+	/* auto refresh off */
+	ldr r0, =0xe6000000
+	ldr r1, =0xff001010
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RCD
-	ldr	r2, =DMC_DDR_schedule_RCD
-	orr	r1, r1, r2
-	str	r1, [r0, #INDEX_DMC_T_RCD]
+	/* BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh, force precharge, dynamic power down off */
+	ldr r0, =0xe6000004
+	ldr r1, =0x00212100
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RFC
-	ldr	r2, =DMC_DDR_schedule_RFC
-	orr	r1, r1, r2
-	str	r1, [r0, #INDEX_DMC_T_RFC]
+	/* 128MB config, 4banks */
+	ldr r0, =0xe6000008
+	ldr r1, =0x20f80222
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RP
-	ldr	r2, =DMC_DDR_schedule_RP
-	orr	r1, r1, r2
-	str	r1, [r0, #INDEX_DMC_T_RP]
+	ldr r0, =0xe600000c
+	ldr r1, =0x28f80222
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_RRD
-	str	r1, [r0, #INDEX_DMC_T_RRD]
+	ldr r0, =0xe6000014
+	ldr r1, =0x20000000
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_WR
-	str	r1, [r0, #INDEX_DMC_T_WR]
+	/* 7.8us*166MHz%LE %LONG1294(0x50E) 7.8us*133MHz%LE %LONG1038(0x40E),
+	 *  100MHz%LE %LONG780(0x30C), 20MHz%LE %LONG156(0x9C), 10MHz%LE %LONG78(0x4E)
+	 */
+	ldr r0, =0xe6000030
+	ldr r1, =0x0000050e
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_WTR
-	str	r1, [r0, #INDEX_DMC_T_WTR]
+	/* 133MHz */
+	ldr r0, =0xe6000034
+	ldr r1, =0x0c233287
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_XP
-	str	r1, [r0, #INDEX_DMC_T_XP]
+	/* twtr=3 twr=2 trtp=3 cl=3 wl=3 rl=3 */
+	ldr r0, =0xe6000038
+	ldr r1, =0x32330303
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_XSR
-	str	r1, [r0, #INDEX_DMC_T_XSR]
+	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
+	ldr r0, =0xe600003c
+	ldr r1, =0x04141433
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_t_ESR
-	str	r1, [r0, #INDEX_DMC_T_ESR]
+	/* chip0 Deselect */
+	ldr r0, =0xe6000010
+	ldr r1, =0x07000000
+	str r1, [r0]
 
-	ldr	r1, =DMC1_MEM_CFG
-	str	r1, [r0, #INDEX_DMC_MEMORY_CFG]
+	/* chip0 PALL */
+	ldr r0, =0xe6000010
+	ldr r1, =0x01000000
+	str r1, [r0]
 
-	ldr	r1, =DMC1_MEM_CFG2
-	str	r1, [r0, #INDEX_DMC_MEMORY_CFG2]
+	/* chip0 REFA */
+	ldr r0, =0xe6000010
+	ldr r1, =0x05000000
+	str r1, [r0]
 
-	ldr	r1, =DMC1_CHIP0_CFG
-	str	r1, [r0, #INDEX_DMC_CHIP_0_CFG]
+	/* chip0 REFA */
+	ldr r0, =0xe6000010
+	ldr r1, =0x05000000
+	str r1, [r0]
 
-	ldr	r1, =DMC_DDR_32_CFG
-	str	r1, [r0, #INDEX_DMC_USER_CONFIG]
+	/* chip0 MRS, CL%LE %LONG3, BL%LE %LONG4 */
+	ldr r0, =0xe6000010
+	ldr r1, =0x00000032
+	str r1, [r0]
 
-	/* DMC0 DDR Chip 0 configuration direct command reg */
-	ldr	r1, =DMC_NOP0
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
+	/* chip1 Deselect */
+	ldr r0, =0xe6000010
+	ldr r1, =0x07100000
+	str r1, [r0]
 
-	/* Precharge All */
-	ldr	r1, =DMC_PA0
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
+	/* chip1 PALL */
+	ldr r0, =0xe6000010
+	ldr r1, =0x01100000
+	str r1, [r0]
 
-	/* Auto Refresh 2 time */
-	ldr	r1, =DMC_AR0
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
+	/* chip1 REFA */
+	ldr r0, =0xe6000010
+	ldr r1, =0x05100000
+	str r1, [r0]
 
-	/* MRS */
-	ldr	r1, =DMC_mDDR_EMR0
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
+	/* chip1 REFA */
+	ldr r0, =0xe6000010
+	ldr r1, =0x05100000
+	str r1, [r0]
 
-	/* Mode Reg */
-	ldr	r1, =DMC_mDDR_MR0
-	str	r1, [r0, #INDEX_DMC_DIRECT_CMD]
+	/* chip1 MRS, CL%LE %LONG3, BL%LE %LONG4 */
+	ldr r0, =0xe6000010
+	ldr r1, =0x00100032
+	str r1, [r0]
 
-	/* Enable DMC1 */
-	mov	r1, #0x0
-	str	r1, [r0, #INDEX_DMC_MEMC_CMD]
+	/* auto refresh on */
+	ldr r0, =0xe6000000
+	ldr r1, =0xff002030
+	str r1, [r0]
 
-check_dmc1_ready:
-	ldr	r1, [r0, #INDEX_DMC_MEMC_STATUS]
-	mov	r2, #0x3
-	and	r1, r1, r2
-	cmp	r1, #0x1
-	bne	check_dmc1_ready
-	nop
+	/* PwrdnConfig */
+	ldr r0, =0xe6000028
+	ldr r1, =0x00100002
+	str r1, [r0]
 
+	/* BL%LE %LONG */
+	ldr r0, =0xe6000004
+	ldr r1, =0xff212100
+	str r1, [r0]
 	mov	pc, lr
 
 	.ltorg

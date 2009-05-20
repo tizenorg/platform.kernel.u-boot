@@ -107,11 +107,11 @@ interrupt_pending_loop:
 	bl nand_asm_init
 #endif
 
-	/* Memory subsystem address 0x7e00f120 */
+	/* Memory subsystem address 0xe0200200 */
 	ldr	r0, =ELFIN_MEM_SYS_CFG
 
-	/* Xm0CSn2 = NFCON CS0, Xm0CSn3 = NFCON CS1 */
-	mov	r1, #S3C64XX_MEM_SYS_CFG_NAND
+	/* */
+	mov	r1, #0
 	str	r1, [r0]
 
 	bl	mem_ctrl_asm_init
