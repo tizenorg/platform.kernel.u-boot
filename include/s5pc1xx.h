@@ -19,21 +19,21 @@
 #define S5P_PA_CLK			S5P_ADDR(0x00100000)	/* Clock Base */
 #define S5P_PA_PWR			S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */
-#define S5P_PA_GPIO		S5P_ADDR(0x00300000)    /* GPIO Base */
-#define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
-#define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
-#define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
+#define S5P_PA_GPIO			S5P_ADDR(0x00300000)    /* GPIO Base */
+#define S5P_PA_VIC0			S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
+#define S5P_PA_VIC1			S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
+#define S5P_PA_VIC2			S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
 #define S5P_PA_TZIC0		S5P_ADDR(0x05000000)    /* TrustZone Interrupt Controller 0 */
 #define S5P_PA_TZIC1		S5P_ADDR(0x05100000)    /* TrustZone Interrupt Controller 1 */
 #define S5P_PA_TZIC2		S5P_ADDR(0x05200000)    /* TrustZone Interrupt Controller 2 */
-#define S5P_PA_SROM		S5P_ADDR(0x07000000)    /* SROM */
-#define S5P_PA_ONENAND		S5P_ADDR(0x07100000)    /* ONENAND */
-#define S5P_PA_NAND		S5P_ADDR(0x07200000)    /* NAND */
-#define S5P_PA_PWMTIMER	S5P_ADDR(0x0a000000)    /* PWM Timer */
-#define S5P_PA_WATCHDOG	S5P_ADDR(0x0a200000)    /* Watchdog Timer */
+#define S5P_PA_DMC			S5P_ADDR(0x06000000)    /* Dram Memory Controller */
+#define S5P_PA_SROMC		S5P_ADDR(0x07000000)    /* SROM Controller */
+#define S5P_PA_ONENANDC		S5P_ADDR(0x07100000)    /* OneNand Controller */
+#define S5P_PA_PWMTIMER		S5P_ADDR(0x0a000000)    /* PWM Timer */
+#define S5P_PA_WATCHDOG		S5P_ADDR(0x0a200000)    /* Watchdog Timer */
 #define S5P_PA_SYSTEM		S5P_ADDR(0x0a100000)    /* System Timer */
 #define S5P_PA_RTC			S5P_ADDR(0x0a300000)    /* RTC */
-#define S5P_PA_UART		S5P_ADDR(0x0c000000)	/* Uart Base */
+#define S5P_PA_UART			S5P_ADDR(0x0c000000)	/* Uart Base */
 
 
 /* 
@@ -1135,9 +1135,96 @@
 
 
 /*
- * Memory
- * : SROM, Onenand, Nand, SDRAM
+ * Memory : SDRAM, SROM, OneNand
  */
+
+/* DRAM Memory Controller */
+#define S5P_DMC_BASE(x)		(S5P_PA_DMC + (x))
+
+#define CONCONTROL_OFFSET	0x0		/* Controller Control Register */
+#define MEMCONTROL_OFFSET	0x04	/* Memory Control Register */
+#define MEMCONFIG0_OFFSET	0x08	/* Memory Chip0 Configuration Register */
+#define MEMCONFIG1_OFFSET	0x0c	/* Memory Chip1 Configuration Register */
+#define DIRECTCMD_OFFSET	0x10	/* Memory Direct Command Register */
+#define PRECHCONFIG_OFFSET	0x14	/* Precharge Policy Configuration Register */
+#define PHYCONTROL0_OFFSET	0x18	/* PHY Control0 Register */
+#define PHYCONTROL1_OFFSET	0x1c	/* PHY Control1 Register */
+#define PHYCONTROL2_OFFSET	0x20	/* PHY Control2 Register */
+#define PWRDNCONFIG_OFFSET	0x28	/* Dynamic Power Down Configuration Register */
+#define TIMINGAREF_OFFSET	0x30	/* AC Timing Register for SDRAM Auto Refresh */
+#define TIMINGROW_OFFSET	0x34	/* AC Timing Register for SDRAM Row */
+#define TIMINGDATA_OFFSET	0x38	/* AC Timing Register for SDRAM Data */
+#define TIMINGPOWER_OFFSET	0x3c	/* AC Timing Register for Power Mode of SDRAM */
+#define PHYSTATUS0_OFFSET	0x40	/* PHY Status Register 0 */
+#define PHYSTATUS1_OFFSET	0x44	/* PHY Status Register 1 */
+#define CHIP0STATUS_OFFSET	0x48	/* Memory Chip0 Status Register */
+#define CHIP1STATUS_OFFSET	0x4c	/* Memory Chip1 Status Register */
+#define AREFSTATUS_OFFSET	0x50	/* Counter status Register for Auto Refresh */
+#define MRSTATUS_OFFSET		0x54	/* Memory Mode Registers Status Register */
+#define PHYTEST0_OFFSET		0x58	/* PHY Test Register 0 */
+#define PHYTEST1_OFFSET		0x5c	/* PHY Test Register 1 */
+#define QOSCONTROL0_OFFSET	0x60	/* Quality of Service Control Register 0 */
+#define QOSCONFIG0_OFFSET	0x64	/* Quality of Service Configuration Register 0 */
+#define QOSCONTROL1_OFFSET	0x68
+#define QOSCONFIG1_OFFSET	0x6c
+#define QOSCONTROL2_OFFSET	0x70
+#define QOSCONFIG2_OFFSET	0x74
+#define QOSCONTROL3_OFFSET	0x78
+#define QOSCONFIG3_OFFSET	0x7c
+#define QOSCONTROL5_OFFSET	0x80
+#define QOSCONFIG4_OFFSET	0x84
+#define QOSCONTROL5_OFFSET	0x88
+#define QOSCONFIG5_OFFSET	0x8c
+#define QOSCONTROL6_OFFSET	0x90
+#define QOSCONFIG6_OFFSET	0x94
+#define QOSCONTROL7_OFFSET	0x98
+#define QOSCONFIG7_OFFSET	0x9c
+
+#define S5P_CONCONTROL		S5P_DMC_BASE(CONCONTROL_OFFSET)
+#define S5P_MEMCONTROL		S5P_DMC_BASE(MEMCONTROL_OFFSET)
+#define S5P_MEMCONFIG0		S5P_DMC_BASE(MEMCONFIG0_OFFSET)
+#define S5P_MEMCONFIG1		S5P_DMC_BASE(MEMCONFIG1_OFFSET)
+#define S5P_DIRECTCMD		S5P_DMC_BASE(DIRECTCMD_OFFSET)
+#define S5P_PRECHCONFIG		S5P_DMC_BASE(PRECHCONFIG_OFFSET)
+#define S5P_PHYCONTROL0		S5P_DMC_BASE(PHYCONTROL0_OFFSET)
+#define S5P_PHYCONTROL1		S5P_DMC_BASE(PHYCONTROL1_OFFSET)
+#define S5P_PHYCONTROL2		S5P_DMC_BASE(PHYCONTROL2_OFFSET)
+#define S5P_PWRDNCONFIG		S5P_DMC_BASE(PWRDNCONFIG_OFFSET)
+#define S5P_TIMINGAREF		S5P_DMC_BASE(TIMINGAREF_OFFSET)
+#define S5P_TIMINGROW		S5P_DMC_BASE(TIMINGROW_OFFSET)
+#define S5P_TIMINGDATA		S5P_DMC_BASE(TIMINGDATA_OFFSET)
+#define S5P_TIMINGPOWER		S5P_DMC_BASE(TIMINGPOWER_OFFSET)
+#define S5P_PHYSTATUS0		S5P_DMC_BASE(PHYSTATUS0_OFFSET)
+#define S5P_PHYSTATUS1		S5P_DMC_BASE(PHYSTATUS1_OFFSET)
+#define S5P_CHIP0STATUS		S5P_DMC_BASE(CHIP0STATUS_OFFSET)
+#define S5P_CHIP1STATUS		S5P_DMC_BASE(CHIP1STATUS_OFFSET)
+#define S5P_AREFSTATUS		S5P_DMC_BASE(AREFSTATUS_OFFSET)
+#define S5P_MRSTATUS		S5P_DMC_BASE(MRSTATUS_OFFSET)
+#define S5P_PHYTEST0		S5P_DMC_BASE(PHYTEST0_OFFSET)
+#define S5P_PHYTEST1		S5P_DMC_BASE(PHYTEST1_OFFSET)
+
+#define S5P_QOSCONTROL0		S5P_DMC_BASE(QOSCONTROL0_OFFSET)
+#define S5P_QOSCONFIG0		S5P_DMC_BASE(QOSCONFIG0_OFFSET)
+#define S5P_QOSCONTROL1		S5P_DMC_BASE(QOSCONTROL1_OFFSET)
+#define S5P_QOSCONFIG1		S5P_DMC_BASE(QOSCONFIG1_OFFSET)
+#define S5P_QOSCONTROL2		S5P_DMC_BASE(QOSCONTROL2_OFFSET)
+#define S5P_QOSCONFIG2		S5P_DMC_BASE(QOSCONFIG2_OFFSET)
+#define S5P_QOSCONTROL3		S5P_DMC_BASE(QOSCONTROL3_OFFSET)
+#define S5P_QOSCONFIG3		S5P_DMC_BASE(QOSCONFIG3_OFFSET)
+#define S5P_QOSCONTROL4		S5P_DMC_BASE(QOSCONTROL4_OFFSET)
+#define S5P_QOSCONFIG4		S5P_DMC_BASE(QOSCONFIG4_OFFSET)
+#define S5P_QOSCONTROL5		S5P_DMC_BASE(QOSCONTROL5_OFFSET)
+#define S5P_QOSCONFIG5		S5P_DMC_BASE(QOSCONFIG5_OFFSET)
+#define S5P_QOSCONTROL6		S5P_DMC_BASE(QOSCONTROL6_OFFSET)
+#define S5P_QOSCONFIG6		S5P_DMC_BASE(QOSCONFIG6_OFFSET)
+#define S5P_QOSCONTROL7		S5P_DMC_BASE(QOSCONTROL7_OFFSET)
+#define S5P_QOSCONFIG7		S5P_DMC_BASE(QOSCONFIG7_OFFSET)
+
+
+/* SROM */
+
+/* OneNand */
+
 
 
 /*
