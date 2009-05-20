@@ -1,7 +1,7 @@
 #!/bin/sh -x
 
 # Set default cross compiler
-CROSS_COMPILER=/usr/local/arm/arm-2007q3/bin/arm-none-linux-gnueabi-
+CROSS_COMPILER=/opt/toolchains/arm-2007q3/bin/arm-none-linux-gnueabi-
 
 # Check this system has ccache
 check_ccache()
