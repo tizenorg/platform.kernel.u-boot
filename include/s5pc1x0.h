@@ -62,13 +62,6 @@ typedef struct {
 	volatile u8	res2[3];
 #endif
 	volatile u32	UBRDIV;
-#ifdef __BIG_ENDIAN
-	volatile u8	res3[2];
-	volatile u16	UDIVSLOT;
-#else
-	volatile u16	UDIVSLOT;
-	volatile u8	res3[2];
-#endif
 } s3c64xx_uart;
 
 /* PWM TIMER (see manual chapter 10) */

@@ -975,6 +975,7 @@ enum s3c64xx_uarts_nr {
 	S3C64XX_UART0,
 	S3C64XX_UART1,
 	S3C64XX_UART2,
+	S3C64XX_UART3,
 };
 
 #include "s3c64x0.h"

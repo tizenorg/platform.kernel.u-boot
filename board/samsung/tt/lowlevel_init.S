@@ -343,9 +343,18 @@ uart_asm_init:
 	str	r1, [r0, #GPA1CON_OFFSET]
 
 	/* uart_sel GPK0[5] */
-	ldr	r1, =0x22145522
-	str	r1, [r0, #GPK0CON_OFFSET]
-	ldr	r1, =0xFF
+	ldr	r1, [r0, #GPK0CON_OFFSET]
+	bic	r1, r1, #0xf00000
+	orr	r1, r1, #0x100000
+	str   	r1, [r0, #GPK0CON_OFFSET]
+
+	ldr	r1, [r0, #GPK0PUD_OFFSET]
+	bic	r1, r1, #0xc00
+	orr	r1, r1, #0x800
+	str	r1, [r0, #GPK0PUD_OFFSET]
+
+	ldr	r1, [r0, #GPK0DAT_OFFSET]
+	orr	r1, r1, #0x20
 	str	r1, [r0, #GPK0DAT_OFFSET]
 
 	mov	pc, lr

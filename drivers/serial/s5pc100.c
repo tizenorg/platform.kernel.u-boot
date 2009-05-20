@@ -25,15 +25,14 @@
 
 #include <s5pc100.h>
 
-#ifdef CONFIG_SERIAL1
+#ifdef CONFIG_SERIAL0
 #define UART_NR	S3C64XX_UART0
-
-#elif defined(CONFIG_SERIAL2)
+#elif defined(CONFIG_SERIAL1)
 #define UART_NR	S3C64XX_UART1
-
-#elif defined(CONFIG_SERIAL3)
+#elif defined(CONFIG_SERIAL2)
 #define UART_NR	S3C64XX_UART2
-
+#elif defined(CONFIG_SERIAL3)
+#define UART_NR	S3C64XX_UART3
 #else
 #error "Bad: you didn't configure serial ..."
 #endif
@@ -76,10 +75,10 @@ void serial_setbrg(void)
 
 	i = (pclk / baudrate) % 16;
 
-	uart->UBRDIV = pclk / baudrate / 16 - 1;
-	uart->UDIVSLOT = udivslot[i];
+	uart->UBRDIV = 0x23;
+	uart->UDIVSLOT = 0x3;
 
-	for (i = 0; i < 100; i++)
+	for (i = 0; i < 100; i++);
 		barrier();
 }
 
@@ -92,12 +91,12 @@ int serial_init(void)
 	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
-	uart->UFCON = 0xff;
+	uart->UFCON = 0;
 	uart->UMCON = 0;
 	/* 8N1 */
-	uart->ULCON = 3;
+	uart->ULCON = 0x3;
 	/* No interrupts, no DMA, pure polling */
-	uart->UCON = 5;
+	uart->UCON = 0x245;
 
 	serial_setbrg();
 
