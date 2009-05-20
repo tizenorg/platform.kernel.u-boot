@@ -21,4 +21,4 @@
 #
 # download area is 0x5000c000
 
-TEXT_BASE = 0x27e00000
+TEXT_BASE = 0x25e00000
