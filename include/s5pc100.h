@@ -468,7 +468,7 @@
 /*
  * Memory controller
  */
-#define ELFIN_SROM_BASE		0x70000000
+#define ELFIN_SROM_BASE		0xE7000000
 
 #define SROM_BW_REG	__REG(ELFIN_SROM_BASE + 0x0)
 #define SROM_BC0_REG	__REG(ELFIN_SROM_BASE + 0x4)
@@ -720,7 +720,7 @@
 /*
  * PWM timer
  */
-#define ELFIN_TIMER_BASE	0x7F006000
+#define ELFIN_TIMER_BASE	0xEA000000
 
 #define TCFG0_REG	__REG(0x7F006000)
 #define TCFG1_REG	__REG(0x7F006004)

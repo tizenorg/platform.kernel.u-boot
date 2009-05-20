@@ -45,7 +45,7 @@
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/tt.h>
 
-#define CONFIG_SYS_SDRAM_BASE	0x50000000
+#define CONFIG_SYS_SDRAM_BASE	0x20000000
 
 /* input clock of PLL: SMDK6400 has 12MHz input clock */
 #define CONFIG_SYS_CLK_FREQ	12000000

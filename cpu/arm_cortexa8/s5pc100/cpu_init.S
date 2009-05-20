@@ -57,6 +57,7 @@ mem_ctrl_asm_init:
 	str r1, [r0]
 
 	/* DLL off */
+	ldr r0, =0xe6000018
 	ldr r1, =0x50101001
 	str r1, [r0]
 

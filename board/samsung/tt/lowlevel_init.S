@@ -57,6 +57,11 @@ lowlevel_init:
 	mov	r1, #0
 	str	r1, [r0]
 
+	/* setting SRAM */
+	ldr r0, =0xe7000000
+	ldr r1, =0x9
+	str r1, [r0]
+
 	/* External interrupt pending clear : GPIO_BASE = 0xE0300000 */
 	ldr	r0, =(ELFIN_GPIO_BASE+EINTPEND_OFFSET)	/*EINTPEND*/
 	add r4, r0, #0x54
@@ -114,14 +119,14 @@ interrupt_pending_loop:
 	mov	r1, #0
 	str	r1, [r0]
 
-	bl	mem_ctrl_asm_init
+#	bl	mem_ctrl_asm_init
 
 /* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =(CLOCK_REGISTER_BASE + RST_STAT_OFFSET)
-	ldr	r1, [r0]
-	bic	r1, r1, #0xfffffff7
-	cmp	r1, #0x8
-	beq	wakeup_reset
+#	ldr	r0, =(OTHERS_REGISTER_BASE)
+#	ldr	r1, [r0]
+#	bic	r1, r1, #0xfffffff7
+#	cmp	r1, #0x8
+#	beq	wakeup_reset
 
 1:
 	mov	lr, r12
@@ -305,7 +310,7 @@ loop4:
 	
 	/* wait at least 1000us to stablize all clock */
 dummy_loop:
-	mov	r2, #0x2
+	mov	r2, #0x2000
 1:	subs	r2, r2, #1
 	bne	1b
 	mov pc, r3
