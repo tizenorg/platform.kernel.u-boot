@@ -333,17 +333,22 @@ setting_end:
 #endif
 	mov	pc, lr
 
-#ifndef CONFIG_NAND_SPL
 /*
  * uart_asm_init: Initialize UART's pins
  */
 uart_asm_init:
 	/* set GPIO to enable UART */
 	ldr	r0, =ELFIN_GPIO_BASE
-	ldr	r1, =0x220022
+	ldr	r1, =0x22
 	str	r1, [r0, #GPA1CON_OFFSET]
+
+	/* uart_sel GPK0[5] */
+	ldr	r1, =0x22145522
+	str	r1, [r0, #GPK0CON_OFFSET]
+	ldr	r1, =0xFF
+	str	r1, [r0, #GPK0DAT_OFFSET]
+
 	mov	pc, lr
-#endif
 
 #ifdef CONFIG_BOOT_NAND
 /*
