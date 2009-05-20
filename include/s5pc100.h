@@ -990,7 +990,7 @@ static inline s3c64xx_uart *s3c64xx_get_base_uart(enum s3c64xx_uarts_nr nr)
 
 
 
-#if defined (__S5PC100_H__)
+#if defined (__S5PC100_GENERIC_H__)
 
 /*
  * Referenced from linux/arch/arm/plat-s3c/include/plat/ 
@@ -1635,7 +1635,6 @@ static inline s3c64xx_uart *s3c64xx_get_base_uart(enum s3c64xx_uarts_nr nr)
 #define S5PC_GPIO_WAKEUP_INT1_PEND	S5PC_WAKEUP_INT_PEND(0x04)
 #define S5PC_GPIO_WAKEUP_INT2_PEND	S5PC_WAKEUP_INT_PEND(0x08)
 #define S5PC_GPIO_WAKEUP_INT3_PEND	S5PC_WAKEUP_INT_PEND(0x0c)
-
 
 
 /* 
