@@ -134,11 +134,6 @@ wakeup_reset:
 	ldr	r1, [r0]
 	str	r1, [r0]
 
-	/* LED test */
-	ldr	r0, =ELFIN_GPIO_BASE
-	ldr	r1, =0x3000
-	str	r1, [r0, #GPNDAT_OFFSET]
-
 	/* Load return address and jump to kernel */
 	ldr	r0, =(CLOCK_REGISTER_BASE + INF_REG0_OFFSET)
 	/* r1 = physical address of s3c6400_cpu_resume function */
@@ -339,7 +334,7 @@ uart_asm_init:
 	/* set GPIO to enable UART */
 	ldr	r0, =ELFIN_GPIO_BASE
 	ldr	r1, =0x220022
-	str	r1, [r0, #GPACON_OFFSET]
+	str	r1, [r0, #GPA1CON_OFFSET]
 	mov	pc, lr
 #endif
 
