@@ -136,11 +136,6 @@ interrupt_pending_loop:
 
 wakeup_reset:
 
-	/* Clear wakeup status register */
-	ldr	r0, =(CLOCK_REGISTER_BASE + WAKEUP_STAT_OFFSET)
-	ldr	r1, [r0]
-	str	r1, [r0]
-
 	/* Load return address and jump to kernel */
 	ldr	r0, =(CLOCK_REGISTER_BASE + INF_REG0_OFFSET)
 	/* r1 = physical address of s3c6400_cpu_resume function */

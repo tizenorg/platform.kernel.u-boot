@@ -14,7 +14,8 @@ check_ccache()
 
 build_uboot()
 {
-	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $* -j 4
+#make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $* -j 4
+	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $*
 }
 
 check_ccache
