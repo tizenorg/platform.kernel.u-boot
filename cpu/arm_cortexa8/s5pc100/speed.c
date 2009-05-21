@@ -51,7 +51,7 @@
 
 static ulong get_PLLCLK(int pllreg)
 {
-	ulong r, m, p, s;
+	ulong r, m, p, s, mask;
 
 	switch (pllreg) {
 	case APLL:
@@ -70,10 +70,12 @@ static ulong get_PLLCLK(int pllreg)
 		hang();
 	}
 
-	if (pllreg == APLL)		/* for s5pc1xx */
-		m = (r >> 16) & 0x3ff;
+	if (pllreg == APLL)
+		mask = 0x3ff;
 	else 
-		m = (r >> 16) & 0x1ff;
+		mask = 0x1ff;
+
+	m = (r >> 16) & mask;
 	p = (r >> 8) & 0x3f;
 	s = r & 0x7;
 
@@ -83,11 +85,12 @@ static ulong get_PLLCLK(int pllreg)
 /* return ARMCORE frequency */
 ulong get_ARMCLK(void)
 {
-	ulong div;
+	ulong div, ret;
 
 	div = S5P_CLK_DIV0_REG;
 
-	return get_PLLCLK(APLL) / ((div & 0x7) + 1);
+	/* arm_ratio : [6:4] */
+	return get_PLLCLK(APLL) / (((div >> 4) & 0x7) + 1);
 }
 
 /* return FCLK frequency */
