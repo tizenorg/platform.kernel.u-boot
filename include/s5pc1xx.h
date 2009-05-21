@@ -1,13 +1,10 @@
-
-//#if defined (__S5PC100_GENERIC_H__)
-
 /*
  * Referenced from linux/arch/arm/plat-s3c/include/plat/ 
  * & linux/arch/arm/plat-s3c6410/include/plat.
  */
 
-//#ifndef __S5PC100_H__
-//#define __S5PC100_H__
+#ifndef __S5PC100_H__
+#define __S5PC100_H__
 
 #include <asm/hardware.h>
 
@@ -49,6 +46,7 @@
  */
 #define S5P_CLKREG(x)	(S5P_PA_CLK + (x))
 
+/* Clock Register */
 #define S5P_APLL_LOCK	S5P_CLKREG(0x0)
 #define S5P_MPLL_LOCK	S5P_CLKREG(0x4)
 #define S5P_EPLL_LOCK	S5P_CLKREG(0x8)
@@ -68,7 +66,7 @@
 #define S5P_CLK_DIV1	S5P_CLKREG(0x304)
 #define S5P_CLK_DIV2	S5P_CLKREG(0x308)
 #define S5P_CLK_DIV3	S5P_CLKREG(0x30c)
-#define S5P_CLK_DIV0	S5P_CLKREG(0x300)
+#define S5P_CLK_DIV4	S5P_CLKREG(0x300)
 
 #define S5P_CLK_OUT		S5P_CLKREG(0x400)
 
@@ -86,6 +84,45 @@
 
 #define S5P_CLK_GATE_SCLK0	S5P_CLKREG(0x560)
 #define S5P_CLK_GATE_SCLK1	S5P_CLKREG(0x564)
+
+/* Clock Address */
+#define S5P_APLL_LOCK_REG	__REG(S5P_APLL_LOCK)
+#define S5P_MPLL_LOCK_REG	__REG(S5P_MPLL_LOCK)
+#define S5P_EPLL_LOCK_REG	__REG(S5P_EPLL_LOCK)
+#define S5P_HPLL_LOCK_REG	__REG(S5P_HPLL_LOCK)
+
+#define S5P_APLL_CON_REG	__REG(S5P_APLL_CON)
+#define S5P_MPLL_CON_REG	__REG(S5P_MPLL_CON)
+#define S5P_EPLL_CON_REG	__REG(S5P_EPLL_CON)
+#define S5P_HPLL_CON_REG	__REG(S5P_HPLL_CON)
+
+#define S5P_CLK_SRC0_REG	__REG(S5P_CLK_SRC0)
+#define S5P_CLK_SRC1_REG	__REG(S5P_CLK_SRC1)
+#define S5P_CLK_SRC2_REG	__REG(S5P_CLK_SRC2)
+#define S5P_CLK_SRC3_REG	__REG(S5P_CLK_SRC3)
+
+#define S5P_CLK_DIV0_REG	__REG(S5P_CLK_DIV0)
+#define S5P_CLK_DIV1_REG	__REG(S5P_CLK_DIV1)
+#define S5P_CLK_DIV2_REG	__REG(S5P_CLK_DIV2)
+#define S5P_CLK_DIV3_REG	__REG(S5P_CLK_DIV3)
+#define S5P_CLK_DIV4_REG	__REG(S5P_CLK_DIV4)
+
+#define S5P_CLK_OUT_REG		__REG(S5P_CLK_OUT)
+
+#define S5P_CLK_GATE_D00_REG	__REG(S5P_CLK_GATE_D00)
+#define S5P_CLK_GATE_D01_REG	__REG(S5P_CLK_GATE_D01)
+#define S5P_CLK_GATE_D02_REG	__REG(S5P_CLK_GATE_D02)
+
+#define S5P_CLK_GATE_D10_REG	__REG(S5P_CLK_GATE_D10)
+#define S5P_CLK_GATE_D11_REG	__REG(S5P_CLK_GATE_D11)
+#define S5P_CLK_GATE_D12_REG	__REG(S5P_CLK_GATE_D12)
+#define S5P_CLK_GATE_D13_REG	__REG(S5P_CLK_GATE_D13)
+#define S5P_CLK_GATE_D14_REG	__REG(S5P_CLK_GATE_D14)
+
+#define S5P_CLK_GATE_D20_REG	__REG(S5P_CLK_GATE_D20)
+
+#define S5P_CLK_GATE_SCLK0_REG	__REG(S5P_CLK_GATE_SCLK0)
+#define S5P_CLK_GATE_SCLK1_REG	__REG(S5P_CLK_GATE_SCLK1)
 
 
 /*
@@ -839,18 +876,6 @@
 #define S5P_VIC1_VECT_PRIO_BASE(x)	(S5P_PA_VIC1 + 0x200 + (x))
 #define S5P_VIC1_ADDRESS_BASE(x)	(S5P_PA_VIC1 + 0xf00 + (x))
 
-//#define VIC_IRQSTATUS_OFFSET		0x0		/* IRQ Status Register */
-//#define FIQSTATUS_OFFSET		0x4		/* FIQ Status Register */
-//#define RAWINTR_OFFSET			0x8		/* Raw Interrupt Status Register */
-//#define VIC_INTSELECT_OFFSET		0xc		/* Interrupt Select Register */
-//#define INTENABLE_OFFSET		0x10	/* Interrupt Enable Register */
-//#define INTENCLEAR_OFFSET		0x14	/* Interrupt Enable Clear Register */
-//#define SOFTINT_OFFSET			0x18	/* Software Interrupt Register */
-//#define SOFTINTCLEAR_OFFSET		0x1c	/* Software Interrupt Clear Register */
-//#define PROTECTION_OFFSET		0x20	/* Protection Enable Register */
-//#define SWPRIORITYMASK_OFFSET	0x24	/* Software Priority Mask Register */
-//#define PRIORITYDAISY_OFFSET	0x28	/* Vector Priority Register for Daisy Chain */
-
 #define S5P_VIC1IRQSTATUS		S5P_VIC1_BASE(VIC_IRQSTATUS_OFFSET)
 #define S5P_VIC1FIQSTATUS		S5P_VIC1_BASE(VIC_FIQSTATUS_OFFSET)
 #define S5P_VIC1RAWINTR			S5P_VIC1_BASE(VIC_RAWINTR_OFFSET)
@@ -945,18 +970,6 @@
 #define S5P_VIC2_VECT_ADDR_BASE(x)	(S5P_PA_VIC2 + 0x100 + (x))
 #define S5P_VIC2_VECT_PRIO_BASE(x)	(S5P_PA_VIC2 + 0x200 + (x))
 #define S5P_VIC2_ADDRESS_BASE(x)	(S5P_PA_VIC2 + 0xf00 + (x))
-
-//#define VIC_IRQSTATUS_OFFSET		0x0		/* IRQ Status Register */
-//#define VIC_FIQSTATUS_OFFSET		0x4		/* FIQ Status Register */
-//#define VIC_RAWINTR_OFFSET			0x8		/* Raw Interrupt Status Register */
-//#define VIC_INTSELECT_OFFSET		0xc		/* Interrupt Select Register */
-//#define VIC_INTENABLE_OFFSET		0x10	/* Interrupt Enable Register */
-//#define INTENCLEAR_OFFSET		0x14	/* Interrupt Enable Clear Register */
-//#define SOFTINT_OFFSET			0x18	/* Software Interrupt Register */
-//#define SOFTINTCLEAR_OFFSET		0x1c	/* Software Interrupt Clear Register */
-//#define PROTECTION_OFFSET		0x20	/* Protection Enable Register */
-//#define SWPRIORITYMASK_OFFSET	0x24	/* Software Priority Mask Register */
-//#define PRIORITYDAISY_OFFSET	0x28	/* Vector Priority Register for Daisy Chain */
 
 #define S5P_VIC2IRQSTATUS		S5P_VIC2_BASE(VIC_IRQSTATUS_OFFSET)
 #define S5P_VIC2FIQSTATUS		S5P_VIC2_BASE(VIC_FIQSTATUS_OFFSET)
@@ -1221,9 +1234,10 @@
 #define S5P_QOSCONFIG7		S5P_DMC_BASE(QOSCONFIG7_OFFSET)
 
 
-/* SROM */
+/* SROM Base */
 #define S5P_SROMC_BASE(x)	(S5P_PA_SROMC + (x))
 
+/* SROM offset */
 #define SROM_BW_OFFSET		0x0
 #define SROM_BC0_OFFSET		0x04
 #define SROM_BC1_OFFSET		0x08
@@ -1232,13 +1246,24 @@
 #define SROM_BC4_OFFSET		0x14
 #define SROM_BC5_OFFSET		0x18
 
-#define S5P_SROM_BW			__REG(S5P_SROMC_BASE(SROM_BW_OFFSET))
-#define S5P_SROM_BC0		__REG(S5P_SROMC_BASE(SROM_BC0_OFFSET))
+/* SROM Register */
+#define S5P_SROM_BW			S5P_SROMC_BASE(SROM_BW_OFFSET)
+#define S5P_SROM_BC0		S5P_SROMC_BASE(SROM_BC0_OFFSET)
 #define S5P_SROM_BC1		S5P_SROMC_BASE(SROM_BC1_OFFSET)
 #define S5P_SROM_BC2		S5P_SROMC_BASE(SROM_BC2_OFFSET)
 #define S5P_SROM_BC3		S5P_SROMC_BASE(SROM_BC3_OFFSET)
 #define S5P_SROM_BC4		S5P_SROMC_BASE(SROM_BC4_OFFSET)
 #define S5P_SROM_BC5		S5P_SROMC_BASE(SROM_BC5_OFFSET)
+
+/* SROM Addressing */
+#define S5P_SROM_BW_REG			__REG(S5P_SROM_BW)
+#define S5P_SROM_BC0_REG		__REG(S5P_SROM_BC0)
+#define S5P_SROM_BC1_REG		__REG(S5P_SROM_BC1)
+#define S5P_SROM_BC2_REG		__REG(S5P_SROM_BC2)
+#define S5P_SROM_BC3_REG		__REG(S5P_SROM_BC3)
+#define S5P_SROM_BC4_REG		__REG(S5P_SROM_BC4)
+#define S5P_SROM_BC5_REG		__REG(S5P_SROM_BC5)
+
 
 
 /* OneNand */
@@ -1457,7 +1482,7 @@
 #define S5P_RTCALM			S5P_RTC_BASE(RTCALM_OFFSET)
 
 #define S5P_ALMSEC			S5P_RTC_BASE(ALMSEC_OFFSET)
-#define S5P_ALMMIN			S5P_RTC_BASE(ALMMIN_FFSET)
+#define S5P_ALMMIN			S5P_RTC_BASE(ALMMIN_OFFSET)
 #define S5P_ALMHOUR			S5P_RTC_BASE(ALMHOUR_OFFSET)
 #define S5P_ALMDATE			S5P_RTC_BASE(ALMDATE_OFFSET)
 #define S5P_ALMMON			S5P_RTC_BASE(ALMMON_OFFSET)
@@ -1480,7 +1505,9 @@
 #define S5P_PA_UART		S5P_ADDR(0x0c000000)    /* UART */
 
 
-//#endif /*__S5PC100_H__*/
+#endif /*__S5PC100_H__*/
+
+
 
 
 
