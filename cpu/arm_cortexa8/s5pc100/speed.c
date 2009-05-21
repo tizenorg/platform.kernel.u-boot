@@ -31,11 +31,12 @@
  */
 
 #include <common.h>
-#include <s5pc100.h>
+#include <s5pc1xx.h>
 
 #define APLL 0
 #define MPLL 1
 #define EPLL 2
+#define HPLL 3
 
 /* ------------------------------------------------------------------------- */
 /*
@@ -54,19 +55,25 @@ static ulong get_PLLCLK(int pllreg)
 
 	switch (pllreg) {
 	case APLL:
-		r = APLL_CON_REG;
+		r = S5P_APLL_CON_REG;
 		break;
 	case MPLL:
-		r = MPLL_CON_REG;
+		r = S5P_MPLL_CON_REG;
 		break;
 	case EPLL:
-		r = EPLL_CON0_REG;
+		r = S5P_EPLL_CON_REG;
+		break;
+	case HPLL:
+		r = S5P_HPLL_CON_REG;
 		break;
 	default:
 		hang();
 	}
 
-	m = (r >> 16) & 0x3ff;
+	if (pllreg == APLL)		/* for s5pc1xx */
+		m = (r >> 16) & 0x3ff;
+	else 
+		m = (r >> 16) & 0x1ff;
 	p = (r >> 8) & 0x3f;
 	s = r & 0x7;
 
@@ -78,7 +85,7 @@ ulong get_ARMCLK(void)
 {
 	ulong div;
 
-	div = CLK_DIV0_REG;
+	div = S5P_CLK_DIV0_REG;
 
 	return get_PLLCLK(APLL) / ((div & 0x7) + 1);
 }
@@ -96,7 +103,7 @@ ulong get_HCLK(void)
 
 	uint div, div_apll, div_arm, div_d0_bus;
 
-	div = CLK_DIV0_REG;
+	div = S5P_CLK_DIV0_REG;
 
 	div_apll = (div & 0x1) + 1;
 	div_arm = ((div >> 4) & 0x7) + 1;
@@ -111,7 +118,7 @@ ulong get_HCLK(void)
 ulong get_PCLK(void)
 {
 	ulong fclk;
-	uint div = CLK_DIV1_REG;
+	uint div = S5P_CLK_DIV1_REG;
 	uint div_d1_bus = ((div >> 12) & 0x7) + 1;
 	uint div_pclk = ((div >> 16) & 0x7) + 1;
 
@@ -134,9 +141,5 @@ int print_cpuinfo(void)
 	       get_FCLK() / 1000000, get_HCLK() / 1000000,
 	       get_PCLK() / 1000000);
 
-	if (OTHERS_REG & 0x80)
-		printf("(SYNC Mode) \n");
-	else
-		printf("(ASYNC Mode) \n");
 	return 0;
 }
