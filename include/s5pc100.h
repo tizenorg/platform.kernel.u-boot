@@ -971,22 +971,22 @@
 #define DMC_DDR_USER_CONFIG	1
 
 #ifndef __ASSEMBLY__
-enum s3c64xx_uarts_nr {
-	S3C64XX_UART0,
-	S3C64XX_UART1,
-	S3C64XX_UART2,
-	S3C64XX_UART3,
+enum s5pc1xx_uarts_nr {
+	S5PC1XX_UART0,
+	S5PC1XX_UART1,
+	S5PC1XX_UART2,
+	S5PC1XX_UART3,
 };
 
-#include "s3c64x0.h"
+#include "s5pc1x0.h"
 
-static inline s3c64xx_uart *s3c64xx_get_base_uart(enum s3c64xx_uarts_nr nr)
+static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 {
-	return (s3c64xx_uart *)(ELFIN_UART_BASE + (nr * 0x400));
+	return (s5pc1xx_uart *)(ELFIN_UART_BASE + (nr * 0x400));
 }
 #endif
 
-#endif /*__S3C6400_H__*/
+#endif
 
 
 
