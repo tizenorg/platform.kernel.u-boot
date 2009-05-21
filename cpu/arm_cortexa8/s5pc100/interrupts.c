@@ -95,7 +95,6 @@ int interrupt_init(void)
 	timestamp = 0;
 
 	/* usb OTG */
-	//__REG(ELFIN_VIC1_BASE_ADDR + 0x10) |= 1<<24;
 	S5P_VIC1INTENABLE_REG |= 1<<24;
 
 	return 0;
