@@ -40,7 +40,6 @@
 
 #include <common.h>
 #include <asm/proc-armv/ptrace.h>
-//#include <s5pc100.h>
 #include <s5pc1xx.h>
 #include <div64.h>
 
