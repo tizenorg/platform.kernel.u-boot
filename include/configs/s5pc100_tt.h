@@ -86,9 +86,9 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_DRIVER_CS8900	1	/* we have a CS8900 on-board	*/
-#define CS8900_BASE	  	0x18800300
-#define CS8900_BUS16		1 	/* follow the Linux driver	*/
+//#define CONFIG_DRIVER_CS8900	1	/* we have a CS8900 on-board	*/
+//#define CS8900_BASE	  	0x18800300
+//#define CS8900_BUS16		1 	/* follow the Linux driver	*/
 
 /*
  * select serial console configuration
@@ -129,7 +129,7 @@
 #undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
-#define CONFIG_CMD_ONENAND
+//#define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_JFFS2
