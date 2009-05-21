@@ -42,7 +42,6 @@
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100_TT	1	/* working with TT */
-//#define CONFIG_S5PC1XX_I2C
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/tt.h>
@@ -87,12 +86,6 @@
  * select serial console configuration
  */
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
-
-#ifdef CONFIG_S5PC1XX_I2C		/* use H/W I2C for PMIC & USB switch */
-#define CONFIG_HARD_I2C		1
-#define CFG_I2C_SPEED		50000
-#define CFG_I2C_SLAVE		0xFE
-#endif
 
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
@@ -189,11 +182,6 @@
 	"bootblock=5\0" \
 	"ubiblock=4\0" \
 	"ubi=enabled"
-
-#if (CONFIG_COMMANDS & CONFIG_CMD_KGDB)
-#define CONFIG_KGDB_BAUDRATE	115200	/* speed to run kgdb serial port */
-#define CONFIG_KGDB_SER_INDEX	1	/* which serial port to use	 */
-#endif
 
 /*
  * Miscellaneous configurable options
@@ -316,12 +304,7 @@
 #define CONFIG_SYS_ONENAND_BASE		0x00000000
 /* Settings as above boot configuration */
 #define CONFIG_ENV_IS_IN_ONENAND
-#define CONFIG_BOOTARGS		"console=ttySAC,115200"
 
 #define CONFIG_DOS_PARTITION	1
-
-#if defined(CONFIG_USB_OHCI_NEW) && defined(CONFIG_ENABLE_MMU)
-# error "usb_ohci.c is currently broken with MMU enabled."
-#endif
 
 #endif	/* __CONFIG_H */
