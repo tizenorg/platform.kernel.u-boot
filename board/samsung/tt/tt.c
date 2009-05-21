@@ -42,8 +42,7 @@ int board_init(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 
-	//gd->bd->bi_arch_number = MACH_TYPE;
-	gd->bd->bi_arch_number = 200;
+	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
