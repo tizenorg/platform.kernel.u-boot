@@ -84,13 +84,6 @@
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes for initial data */
 
 /*
- * Hardware drivers
- */
-//#define CONFIG_DRIVER_CS8900	1	/* we have a CS8900 on-board	*/
-//#define CS8900_BASE	  	0x18800300
-//#define CS8900_BUS16		1 	/* follow the Linux driver	*/
-
-/*
  * select serial console configuration
  */
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
@@ -129,7 +122,7 @@
 #undef CONFIG_CMD_IMLS
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
-//#define CONFIG_CMD_ONENAND
+#define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_JFFS2
@@ -271,19 +264,6 @@
 #define CONFIG_ENV_IS_IN_ONENAND
 #define CONFIG_BOOTARGS		"console=ttySAC,115200"
 
-/*
-#if !defined(CONFIG_ENABLE_MMU)
-#define CONFIG_CMD_USB			1
-#define CONFIG_USB_S3C64XX
-#define CONFIG_USB_OHCI_NEW		1
-#define CONFIG_SYS_USB_OHCI_REGS_BASE		0x74300000
-#define CONFIG_SYS_USB_OHCI_SLOT_NAME		"s3c6400"
-#define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	3
-#define CONFIG_SYS_USB_OHCI_CPU_INIT		1
-
-#define CONFIG_USB_STORAGE	1
-#endif
-*/
 #define CONFIG_DOS_PARTITION	1
 
 #if defined(CONFIG_USB_OHCI_NEW) && defined(CONFIG_ENABLE_MMU)
