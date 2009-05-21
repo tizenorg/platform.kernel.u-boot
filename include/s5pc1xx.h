@@ -1,5 +1,5 @@
 
-#if defined (__S5PC100_GENERIC_H__)
+//#if defined (__S5PC100_GENERIC_H__)
 
 /*
  * Referenced from linux/arch/arm/plat-s3c/include/plat/ 
@@ -32,7 +32,7 @@
 #define S5P_PA_WATCHDOG		S5P_ADDR(0x0a200000)    /* Watchdog Timer */
 #define S5P_PA_SYSTEM		S5P_ADDR(0x0a100000)    /* System Timer */
 #define S5P_PA_RTC			S5P_ADDR(0x0a300000)    /* RTC */
-#define S5P_PA_UART		S5P_ADDR(0x0c000000)	/* Uart Base */
+#define S5P_PA_UART			S5P_ADDR(0x0c000000)	/* Uart Base */
 
 
 /* 
@@ -70,7 +70,7 @@
 #define S5P_CLK_DIV3	S5P_CLKREG(0x30c)
 #define S5P_CLK_DIV0	S5P_CLKREG(0x300)
 
-#define S5P_CLK_OUT	S5P_CLKREG(0x400)
+#define S5P_CLK_OUT		S5P_CLKREG(0x400)
 
 #define S5P_CLK_GATE_D00	S5P_CLKREG(0x500)
 #define S5P_CLK_GATE_D01	S5P_CLKREG(0x504)
@@ -724,9 +724,6 @@
  * Vector Interrupt Controller
  * : VIC0, VIC1, VIC2
  */
-#define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Interrupt Controller 0 */
-#define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Interrupt Controller 1 */
-#define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Interrupt Controller 3 */
 
 /* VIC0 */
 #define S5P_VIC0_BASE(x)			(S5P_PA_VIC0 + (x))
