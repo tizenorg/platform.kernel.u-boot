@@ -30,7 +30,6 @@
 
 #include <common.h>
 #include <s5pc100.h>
-#include <flash.h>
 
 static inline void delay(unsigned long loops)
 {
@@ -95,6 +94,8 @@ void nand_init(void)
 }
 #endif
 
+#ifndef CONFIG_SYS_NO_FLASH
+#include <flash.h>
 ulong board_flash_get_legacy (ulong base, int banknum, flash_info_t *info)
 {
 	if (banknum == 0) {	/* non-CFI boot flash */
@@ -105,4 +106,4 @@ ulong board_flash_get_legacy (ulong base, int banknum, flash_info_t *info)
 	} else
 		return 0;
 }
-
+#endif

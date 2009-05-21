@@ -40,6 +40,7 @@
 #define CONFIG_ARMCORTEXA8	1	/* This is an ARM V7 CPU core */
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
+#define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100_TT	1	/* working with TT */
 //#define CONFIG_S5PC1XX_I2C
 
