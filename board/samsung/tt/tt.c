@@ -29,7 +29,7 @@
  */
 
 #include <common.h>
-#include <s5pc100.h>
+#include <s5pc1xx.h>
 
 static inline void delay(unsigned long loops)
 {
