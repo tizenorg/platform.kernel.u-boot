@@ -130,6 +130,17 @@ interrupt_pending_loop:
 #	cmp	r1, #0x8
 #	beq	wakeup_reset
 
+	/* DRAM I/O Drive-Strength */
+	ldr	r0, =ELFIN_GPIO_BASE
+	ldr	r1, =0x5555
+	str	r1, [r0, #MP_0DRV_OFFSET]
+	str	r1, [r0, #MP_1DRV_OFFSET]
+	str	r1, [r0, #MP_2DRV_OFFSET]
+	str	r1, [r0, #MP_3DRV_OFFSET]
+	str	r1, [r0, #MP_4DRV_OFFSET]
+	str	r1, [r0, #MP_5DRV_OFFSET]
+	str	r1, [r0, #MP_6DRV_OFFSET]
+	str	r1, [r0, #MP_7DRV_OFFSET]
 1:
 	mov	lr, r12
 	mov	pc, lr
