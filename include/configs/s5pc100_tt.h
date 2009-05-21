@@ -41,6 +41,7 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_S5PC100_TT	1	/* working with TT */
+//#define CONFIG_S5PC1XX_I2C
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/tt.h>
@@ -92,6 +93,12 @@
  * select serial console configuration
  */
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
+
+#ifdef CONFIG_S5PC1XX_I2C		/* use H/W I2C for PMIC & USB switch */
+#define CONFIG_HARD_I2C		1
+#define CFG_I2C_SPEED		50000
+#define CFG_I2C_SLAVE		0xFE
+#endif
 
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
@@ -187,8 +194,8 @@
 
 /* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1	*/
-#define PHYS_SDRAM_1_SIZE	0x08000000	/* 128 MB in Bank #1	*/
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
+#define PHYS_SDRAM_1_SIZE	0x08000000				/* 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 

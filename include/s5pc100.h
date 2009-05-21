@@ -35,13 +35,13 @@
 #define APLL_LOCK_OFFSET	0x00
 #define MPLL_LOCK_OFFSET	0x04
 #define EPLL_LOCK_OFFSET	0x08
-#define APLL_CON_OFFSET		0x0C
-#define MPLL_CON_OFFSET		0x10
-#define EPLL_CON0_OFFSET	0x14
+#define APLL_CON_OFFSET		0x100
+#define MPLL_CON_OFFSET		0x104
+#define EPLL_CON0_OFFSET	0x108
 #define EPLL_CON1_OFFSET	0x18
 #define CLK_SRC_OFFSET		0x1C
-#define CLK_DIV0_OFFSET		0x20
-#define CLK_DIV1_OFFSET		0x24
+#define CLK_DIV0_OFFSET		0x300
+#define CLK_DIV1_OFFSET		0x304
 #define CLK_DIV2_OFFSET		0x28
 #define CLK_OUT_OFFSET		0x2C
 #define HCLK_GATE_OFFSET	0x30
@@ -837,6 +837,7 @@
 #define TCFG0_DZONE(x)		FInsrt((x), fTCFG0_DZONE)
 #define TCFG0_PRE1(x)		FInsrt((x), fTCFG0_PRE1)
 #define TCFG0_PRE0(x)		FInsrt((x), fTCFG0_PRE0)
+#define TCFG1_MUX4(x)		FInsrt((x), fTCFG1_MUX4)
 #define TCON_4_AUTO		(1 << 22)  /* auto reload on/off for Timer 4 */
 #define TCON_4_UPDATE		(1 << 21)  /* manual Update TCNTB4 */
 #define TCON_4_ONOFF		(1 << 20)  /* 0: Stop, 1: start Timer 4 */

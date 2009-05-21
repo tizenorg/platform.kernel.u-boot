@@ -94,34 +94,31 @@ ulong get_HCLK(void)
 {
 	ulong fclk;
 
-	uint hclkx2_div = ((CLK_DIV0_REG >> 9) & 0x7) + 1;
-	uint hclk_div = ((CLK_DIV0_REG >> 8) & 0x1) + 1;
+	uint div, div_apll, div_arm, div_d0_bus;
 
-	/*
-	 * Bit 7 exists on s3c6410, and not on s3c6400, it is reserved on
-	 * s3c6400 and is always 0, and it is indeed running in ASYNC mode
-	 */
-	if (OTHERS_REG & 0x80)
-		fclk = get_FCLK();		/* SYNC Mode	*/
-	else
-		fclk = get_PLLCLK(MPLL);	/* ASYNC Mode	*/
+	div = CLK_DIV0_REG;
 
-	return fclk / (hclk_div * hclkx2_div);
+	div_apll = (div & 0x1) + 1;
+	div_arm = ((div >> 4) & 0x7) + 1;
+	div_d0_bus = ((div >> 8) & 0x7) + 1;
+
+	fclk = get_FCLK();
+
+	return fclk / (div_apll * div_arm * div_d0_bus);
 }
 
 /* return PCLK frequency */
 ulong get_PCLK(void)
 {
 	ulong fclk;
-	uint hclkx2_div = ((CLK_DIV0_REG >> 9) & 0x7) + 1;
-	uint pre_div = ((CLK_DIV0_REG >> 12) & 0xf) + 1;
+	uint div = CLK_DIV1_REG;
+	uint div_d1_bus = ((div >> 12) & 0x7) + 1;
+	uint div_pclk = ((div >> 16) & 0x7) + 1;
 
-	if (OTHERS_REG & 0x80)
-		fclk = get_FCLK();		/* SYNC Mode	*/
-	else
-		fclk = get_PLLCLK(MPLL);	/* ASYNC Mode	*/
+	/* ASYNC Mode */
+	fclk = get_PLLCLK(MPLL);
 
-	return fclk / (hclkx2_div * pre_div);
+	return fclk/(div_d1_bus * div_pclk);
 }
 
 /* return UCLK frequency */
@@ -132,7 +129,7 @@ ulong get_UCLK(void)
 
 int print_cpuinfo(void)
 {
-	printf("\nCPU:     S3C6400@%luMHz\n", get_ARMCLK() / 1000000);
+	printf("\nCPU:     S5PC100@%luMHz\n", get_ARMCLK() / 1000000);
 	printf("         Fclk = %luMHz, Hclk = %luMHz, Pclk = %luMHz ",
 	       get_FCLK() / 1000000, get_HCLK() / 1000000,
 	       get_PCLK() / 1000000);
