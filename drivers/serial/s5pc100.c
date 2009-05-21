@@ -26,13 +26,13 @@
 #include <s5pc100.h>
 
 #ifdef CONFIG_SERIAL0
-#define UART_NR	S3C64XX_UART0
+#define UART_NR	S5PC1XX_UART0
 #elif defined(CONFIG_SERIAL1)
-#define UART_NR	S3C64XX_UART1
+#define UART_NR	S5PC1XX_UART1
 #elif defined(CONFIG_SERIAL2)
-#define UART_NR	S3C64XX_UART2
+#define UART_NR	S5PC1XX_UART2
 #elif defined(CONFIG_SERIAL3)
-#define UART_NR	S3C64XX_UART3
+#define UART_NR	S5PC1XX_UART3
 #else
 #error "Bad: you didn't configure serial ..."
 #endif
@@ -40,7 +40,7 @@
 #define barrier() asm volatile("" ::: "memory")
 
 /*
- * The coefficient, used to calculate the baudrate on S3C6400 UARTs is
+ * The coefficient, used to calculate the baudrate on S5PC1XX UARTs is
  * calculated as
  * C = UBRDIV * 16 + number_of_set_bits_in_UDIVSLOT
  * however, section 31.6.11 of the datasheet doesn't recomment using 1 for 1,
@@ -68,7 +68,7 @@ static const int udivslot[] = {
 void serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
-	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
+	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
 	u32 pclk = get_PCLK();
 	u32 baudrate = gd->baudrate;
 	int i;
@@ -88,7 +88,7 @@ void serial_setbrg(void)
  */
 int serial_init(void)
 {
-	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
+	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
 	uart->UFCON = 0;
@@ -110,7 +110,7 @@ int serial_init(void)
  */
 int serial_getc(void)
 {
-	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
+	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	/* wait for character to arrive */
 	while (!(uart->UTRSTAT & 0x1));
@@ -137,7 +137,7 @@ void enable_putc(void)
  */
 void serial_putc(const char c)
 {
-	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
+	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 #ifdef CONFIG_MODEM_SUPPORT
 	if (be_quiet)
@@ -159,7 +159,7 @@ void serial_putc(const char c)
  */
 int serial_tstc(void)
 {
-	s3c64xx_uart *const uart = s3c64xx_get_base_uart(UART_NR);
+	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	return uart->UTRSTAT & 0x1;
 }

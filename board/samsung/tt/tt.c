@@ -32,15 +32,6 @@
 #include <s5pc100.h>
 #include <flash.h>
 
-/* ------------------------------------------------------------------------- */
-#define CS8900_Tacs	0x0	/* 0clk		address set-up		*/
-#define CS8900_Tcos	0x4	/* 4clk		chip selection set-up	*/
-#define CS8900_Tacc	0xE	/* 14clk	access cycle		*/
-#define CS8900_Tcoh	0x1	/* 1clk		chip selection hold	*/
-#define CS8900_Tah	0x4	/* 4clk		address holding time	*/
-#define CS8900_Tacp	0x6	/* 6clk		page mode access cycle	*/
-#define CS8900_PMC	0x0	/* normal(1data)page mode configuration	*/
-
 static inline void delay(unsigned long loops)
 {
 	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
@@ -48,29 +39,9 @@ static inline void delay(unsigned long loops)
 			  : "=r" (loops) : "0" (loops));
 }
 
-/*
- * Miscellaneous platform dependent initialisations
- */
-
-static void cs8900_pre_init(void)
-{
-	SROM_BW_REG &= ~(0xf << 4);
-	SROM_BW_REG |= (1 << 7) | (1 << 6) | (1 << 4);
-	SROM_BC1_REG = ((CS8900_Tacs << 28) + (CS8900_Tcos << 24) +
-			(CS8900_Tacc << 16) + (CS8900_Tcoh << 12) +
-			(CS8900_Tah << 8) + (CS8900_Tacp << 4) + CS8900_PMC);
-}
-
 int board_init(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
-
-	cs8900_pre_init();
-
-	/* NOR-flash in SROM0 */
-
-	/* Enable WAIT */
-	SROM_BW_REG |= 4 | 8 | 1;
 
 	//gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_arch_number = 200;
@@ -92,7 +63,7 @@ int dram_init(void)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
-	printf("Board:   SMDK6400\n");
+	printf("Board:   TT(S5PC100)\n");
 	return 0;
 }
 #endif

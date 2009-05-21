@@ -285,7 +285,7 @@ init_fnc_t *init_sequence[] = {
 #if defined(CONFIG_CMD_PCI) || defined (CONFIG_PCI)
 	arm_pci_init,
 #endif
-	display_dram_config,
+	//display_dram_config,
 	NULL,
 };
 
@@ -318,7 +318,7 @@ void start_armboot (void)
 
 #ifndef CONFIG_SYS_NO_FLASH
 	/* configure available FLASH banks */
-	display_flash_config (flash_init ());
+	//display_flash_config (flash_init ());
 #endif /* CONFIG_SYS_NO_FLASH */
 
 #ifdef CONFIG_VFD
@@ -355,24 +355,24 @@ void start_armboot (void)
 
 #if defined(CONFIG_CMD_NAND)
 	puts ("NAND:  ");
-	nand_init();		/* go init the NAND */
+	//nand_init();		/* go init the NAND */
 #endif
 
 #if defined(CONFIG_CMD_ONENAND)
-	onenand_init();
+	//onenand_init();
 #endif
 
 #ifdef CONFIG_HAS_DATAFLASH
-	AT91F_DataflashInit();
-	dataflash_print_info();
+	//AT91F_DataflashInit();
+	//dataflash_print_info();
 #endif
 
 	/* initialize environment */
-	env_relocate ();
+	//env_relocate ();
 
 #ifdef CONFIG_VFD
 	/* must do this after the framebuffer is allocated */
-	drv_vfd_init();
+	//drv_vfd_init();
 #endif /* CONFIG_VFD */
 
 #ifdef CONFIG_SERIAL_MULTI
@@ -380,18 +380,18 @@ void start_armboot (void)
 #endif
 
 	/* IP Address */
-	gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
+	//gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
 
-	devices_init ();	/* get the devices list going. */
+	//devices_init ();	/* get the devices list going. */
 
-	jumptable_init ();
+	//jumptable_init ();
 
 #if defined(CONFIG_API)
 	/* Initialize API */
-	api_init ();
+	//api_init ();
 #endif
 
-	console_init_r ();	/* fully init console as a device */
+	//console_init_r ();	/* fully init console as a device */
 
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
@@ -400,54 +400,62 @@ void start_armboot (void)
 #endif
 
 	/* enable exceptions */
-	enable_interrupts ();
+	//enable_interrupts ();
 
 	/* Perform network card initialisation if necessary */
 #ifdef CONFIG_DRIVER_TI_EMAC
 	/* XXX: this needs to be moved to board init */
+	/*
 extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 	if (getenv ("ethaddr")) {
 		uchar enetaddr[6];
 		eth_getenv_enetaddr("ethaddr", enetaddr);
 		davinci_eth_set_mac_addr(enetaddr);
 	}
+	*/
 #endif
 
 #ifdef CONFIG_DRIVER_CS8900
 	/* XXX: this needs to be moved to board init */
-	cs8900_get_enetaddr ();
+	//cs8900_get_enetaddr ();
 #endif
 
 #if defined(CONFIG_DRIVER_SMC91111) || defined (CONFIG_DRIVER_LAN91C96)
 	/* XXX: this needs to be moved to board init */
+	/*
 	if (getenv ("ethaddr")) {
 		uchar enetaddr[6];
 		eth_getenv_enetaddr("ethaddr", enetaddr);
 		smc_set_mac_addr(enetaddr);
 	}
+	*/
 #endif /* CONFIG_DRIVER_SMC91111 || CONFIG_DRIVER_LAN91C96 */
 
 	/* Initialize from environment */
+	/*
 	if ((s = getenv ("loadaddr")) != NULL) {
 		load_addr = simple_strtoul (s, NULL, 16);
 	}
+	*/
 #if defined(CONFIG_CMD_NET)
+	/*
 	if ((s = getenv ("bootfile")) != NULL) {
 		copy_filename (BootFile, s, sizeof (BootFile));
 	}
+	*/
 #endif
 
 #ifdef BOARD_LATE_INIT
-	board_late_init ();
+	//board_late_init ();
 #endif
 #if defined(CONFIG_CMD_NET)
 #if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");
 #endif
-	eth_initialize(gd->bd);
+	//eth_initialize(gd->bd);
 #if defined(CONFIG_RESET_PHY_R)
 	debug ("Reset Ethernet PHY\n");
-	reset_phy();
+	//reset_phy();
 #endif
 #endif
 	/* main_loop() can return to retry autoboot, if so just run it again. */

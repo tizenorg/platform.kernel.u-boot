@@ -70,33 +70,31 @@ int interrupt_init(void)
 {
 	s3c64xx_timers *const timers = s3c64xx_get_base_timers();
 
-	/* use PWM Timer 4 because it has no output */
-	/*
-	 * We use the following scheme for the timer:
-	 * Prescaler is hard fixed at 167, divider at 1/4.
-	 * This gives at PCLK frequency 66MHz approx. 10us ticks
-	 * The timer is set to wrap after 100s, at 66MHz this obviously
-	 * happens after 10,000,000 ticks. A long variable can thus
-	 * keep values up to 40,000s, i.e., 11 hours. This should be
-	 * enough for most uses:-) Possible optimizations: select a
-	 * binary-friendly frequency, e.g., 1ms / 128. Also calculate
-	 * the prescaler automatically for other PCLK frequencies.
-	 */
-	timers->TCFG0 = PRESCALER << 8;
+	/* use PWM Timer 4 because it has no ouput */
+	/* prescaler for timer 4 is 16 */
+	timers->TCFG0 = TCFG0_PRE1(16-1);
 	if (timer_load_val == 0) {
-		timer_load_val = get_PCLK() / PRESCALER * (100 / 4); /* 100s */
-		timers->TCFG1 = (timers->TCFG1 & ~0xf0000) | 0x20000;
+		/*
+		 * for 10 ms clock period @ PCLK with 4 bit divider = 1/2
+		 * (default) and prescaler = 16. Should be 20859
+		 * @66.75MHz
+		 */
+		timers->TCFG1 = TCFG1_MUX4(2-1);
+		timer_load_val = get_PCLK() / (2 * 16 * 100);
 	}
 
 	/* load value for 10 ms timeout */
 	lastdec = timers->TCNTB4 = timer_load_val;
-	/* auto load, manual update of Timer 4 */
-	timers->TCON = (timers->TCON & ~0x00700000) | TCON_4_AUTO |
-		TCON_4_UPDATE;
 
-	/* auto load, start Timer 4 */
+	/* auto load, manual update of Timer 4 */
+	timers->TCON = (timers->TCON & ~0x00700000) | TCON_4_AUTO | TCON_4_UPDATE;
+
+	/* auto load, start timer 4 */
 	timers->TCON = (timers->TCON & ~0x00700000) | TCON_4_AUTO | COUNT_4_ON;
 	timestamp = 0;
+
+	/* usb OTG */
+	__REG(ELFIN_VIC1_BASE_ADDR + 0x10) |= 1<<24;
 
 	return 0;
 }
