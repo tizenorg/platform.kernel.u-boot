@@ -27,8 +27,11 @@ do {									\
 #define DPRINTK(...)			do { } while (0)
 #endif
 
-/* b0010000 << 26 */
+#if defined(CONFIG_S3C64XX)
 #define AHB_ADDR			0x20000000
+#elif defined(CONFIG_S5PC1XX)
+#define AHB_ADDR			0xB0000000
+#endif
 
 #define ONENAND_ERASE_STATUS		0x00
 #define ONENAND_MULTI_ERASE_SET		0x01
@@ -43,12 +46,25 @@ do {									\
 #define ONENAND_LOCK_TIGHT_END		0x0D
 #define ONENAND_UNLOCK_ALL		0x0E
 
+#if defined(CONFIG_S3C64XX)
 #define MAP_00				(0x0 << 24)
 #define MAP_01				(0x1 << 24)
 #define MAP_10				(0x2 << 24)
 #define MAP_11				(0x3 << 24)
+#elif defined(CONFIG_S5PC1XX)
+#define MAP_00				(0x0 << 26)
+#define MAP_01				(0x1 << 26)
+#define MAP_10				(0x2 << 26)
+#define MAP_11				(0x3 << 26)
+#endif
 
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 12 | (fpa) << 6 | (fsa) << 4) & 0xffffff)
+#if defined(CONFIG_S3C64XX)
+#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 12 | (fpa) << 6 | \
+					(fsa) << 4) & 0xffffff)
+#elif defined(CONFIG_S5PC1XX)
+#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 6 | \
+					(fsa) << 4) & 0xffffff)
+#endif
 
 #define GET_FBA(mem_addr)		((mem_addr) & 0x3ff000)
 
