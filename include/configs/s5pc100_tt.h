@@ -132,6 +132,64 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define MTDIDS_DEFAULT "onenand0=s3c-onenand"
+#define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
+				",128k@0x40000(params)"\
+				",2m@0x60000(kernel)"\
+				",16m@0x260000(test)"\
+				",-(UBI)"
+
+#define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
+
+#if 1
+#define CONFIG_BOOTCOMMAND	"run ubifsboot"
+#else
+#define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
+#endif
+
+#define CONFIG_COMMON_BOOT	"console=ttySA,115200n8" \
+		" ${meminfo}" \
+		" " MTDPARTS_DEFAULT
+
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
+		" rootfstype=cramfs " CONFIG_COMMON_BOOT
+
+#ifdef CONFIG_USE_BIG_UBOOT
+#define CONFIG_UPDATEB	"updateb=onenand erase block 0-1;" \
+			" onenand write 0x22008000 0x0 0x40000\0"
+#else
+#define CONFIG_UPDATEB	"updateb=onenand erase block 0-1;" \
+			" onenand write 0x22008000 0x0 0x20000;" \
+			" onenand write 0x22008000 0x20000 0x20000\0"
+#endif
+
+#define CONFIG_EXTRA_ENV_SETTINGS					\
+	CONFIG_UPDATEB \
+	"updatek=onenand erase 0x60000 0x200000;" \
+	" onenand write 0x21008000 0x60000 0x200000\0" \
+	"updateu=onenand erase block 147-4095;" \
+	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
+	"bootk=onenand read 0x20007FC0 0x60000 0x200000;" \
+	" bootm 0x20007FC0\0" \
+	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
+	 " rootfstype=${rootfstype}" \
+	 " ubi.mtd=${ubiblock} ${opts} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"ubifsboot=set bootargs root=ubi0!initrd.ubifs rootfstype=ubifs" \
+	 " ubi.mtd=${ubiblock} ${opts} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
+	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
+	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
+	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
+	 "${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"rootfstype=cramfs\0" \
+	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"meminfo=mem=128M\0" \
+	"nfsroot=/nfsroot/arm\0" \
+	"bootblock=5\0" \
+	"ubiblock=4\0" \
+	"ubi=enabled"
+
 #if (CONFIG_COMMANDS & CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	115200	/* speed to run kgdb serial port */
 #define CONFIG_KGDB_SER_INDEX	1	/* which serial port to use	 */
@@ -189,7 +247,7 @@
 /* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x08000000				/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1_SIZE	0x08000000		/* 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -229,12 +287,8 @@
 
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
-#define CONFIG_BOOTCOMMAND	"nand read 0xc0018000 0x60000 0x1c0000;" \
-				"bootm 0xc0018000"
 #else
 #define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_BOOTCOMMAND	"nand read 0x50018000 0x60000 0x1c0000;" \
-				"bootm 0x50018000"
 #endif
 
 /* NAND U-Boot load and start address */
