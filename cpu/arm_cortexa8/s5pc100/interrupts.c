@@ -40,7 +40,8 @@
 
 #include <common.h>
 #include <asm/proc-armv/ptrace.h>
-#include <s5pc100.h>
+//#include <s5pc100.h>
+#include <s5pc1xx.h>
 #include <div64.h>
 
 static ulong timer_load_val;
@@ -49,7 +50,7 @@ static ulong timer_load_val;
 
 static s3c64xx_timers *s3c64xx_get_base_timers(void)
 {
-	return (s3c64xx_timers *)ELFIN_TIMER_BASE;
+	return (s3c64xx_timers *)S5P_TIMER_BASE;
 }
 
 /* macro to read the 16 bit timer */
@@ -94,7 +95,8 @@ int interrupt_init(void)
 	timestamp = 0;
 
 	/* usb OTG */
-	__REG(ELFIN_VIC1_BASE_ADDR + 0x10) |= 1<<24;
+	//__REG(ELFIN_VIC1_BASE_ADDR + 0x10) |= 1<<24;
+	S5P_VIC1INTENABLE_REG |= 1<<24;
 
 	return 0;
 }

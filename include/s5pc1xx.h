@@ -973,6 +973,9 @@
 #define S5P_VIC1PCELLID2		S5P_VIC1_ADDRESS_BASE(0xf8)
 #define S5P_VIC1PCELLID3		S5P_VIC1_ADDRESS_BASE(0xfc)
 
+#define S5P_VIC1_BASE_REG		__REG(S5P_VIC1_BASE(0x0))
+#define S5P_VIC1INTENABLE_REG	__REG(S5P_VIC1INTENABLE)
+
 
 /* VIC2 */
 #define S5P_VIC2_BASE(x)			(S5P_PA_VIC2 + (x))
@@ -1408,7 +1411,7 @@
 #define S5P_PWM_TCFG1		S5P_PWMTIMER_BASE(PWM_TCFG1_OFFSET)
 #define S5P_PWM_TCON		S5P_PWMTIMER_BASE(PWM_TCON_OFFSET)
 #define S5P_PWM_TCNTB0		S5P_PWMTIMER_BASE(PWM_TCNTB0_OFFSET)
-#define S5P_PWM_TCMPB0		S5P_PWMTIMER_BASE(PWM_TCMPB0_OFFSET)
+#define S5P_PWM_TCMPB0		S5P_PWMTIMER_BASE(PWM_TCMPB0_OFFSET)get_PCLK
 #define S5P_PWM_TCNTO0		S5P_PWMTIMER_BASE(PWM_TCNTO0_OFFSET)
 #define S5P_PWM_TCNTB1		S5P_PWMTIMER_BASE(PWM_TCNTB1_OFFSET)
 #define S5P_PWM_TCMPB1		S5P_PWMTIMER_BASE(PWM_TCMPB1_OFFSET)
@@ -1421,6 +1424,26 @@
 #define S5P_PWM_TCNTB4		S5P_PWMTIMER_BASE(PWM_TCNTB4_OFFSET)
 #define S5P_PWM_TCNTO4		S5P_PWMTIMER_BASE(PWM_TCNTO4_OFFSET)
 #define S5P_PWM_TINT_CSTAT	S5P_PWMTIMER_BASE(PWM_TINT_CSTAT_OFFSET)
+
+#define S5P_TIMER_BASE			S5P_PWMTIMER_BASE(0x0)
+#define S5P_PWMTIMER_BASE_Rget_PCLKEG	__REG(S5P_PWMTIMER_BASE(0x0))
+#define S5P_PWM_TCFG0_REG		__REG(S5P_PWM_TCFG0)
+#define S5P_PWM_TCFG1_REG		__REG(S5P_PWM_TCFG1_REG)
+#define S5P_PWM_TCON_REG		__REG(S5P_PWM_TCON_REG)
+#define S5P_PWM_TCNTB0_REG		__REG(S5P_PWM_TCNTB0_REG)
+#define S5P_PWM_TCMPB0_REG		__REG(S5P_PWM_TCMPB0_REG)
+#define S5P_PWM_TCNTO0_REG		__REG(S5P_PWM_TCNTO0_REG)
+#define S5P_PWM_TCNTB1_REG		__REG(S5P_PWM_TCNTB1_REG)
+#define S5P_PWM_TCMPB1_REG		__REG(S5P_PWM_TCMPB1_REG)
+#define S5P_PWM_TCNTO1_REG		__REG(S5P_PWM_TCNTO1_REG)
+#define S5P_PWM_TCNTB2_REG		__REG(S5P_PWM_TCNTB2_REG)
+#define S5P_PWM_TCMPB2_REG		__REG(S5P_PWM_TCMPB2_REG)
+#define S5P_PWM_TCNTO2_REG		__REG(S5P_PWM_TCNTO2_REG)
+#define S5P_PWM_TCNTB3_REG		__REG(S5P_PWM_TCNTB3_REG)
+#define S5P_PWM_TCNTO3_REG		__REG(S5P_PWM_TCNTO3_REG)
+#define S5P_PWM_TCNTB4_REG		__REG(S5P_PWM_TCNTB4_REG)
+#define S5P_PWM_TCNTO4_REG		__REG(S5P_PWM_TCNTO4_REG)
+#define S5P_PWM_TINT_CSTAT_REG	__REG(S5P_PWM_TINT_CSTAT)
 
 
 /* System Timer */
@@ -1512,14 +1535,133 @@
  * UART
  */
 #define S5P_PA_UART		S5P_ADDR(0x0c000000)    /* UART */
+#define UARTx_OFFSET(x)	(S5P_PA_UART + x * 0x400)
+
+#define S5P_UART_BASE	(S5P_PA_UART)
+
+#define ULCON_OFFSET		0x00
+#define UCON_OFFSET		0x04
+#define UFCON_OFFSET		0x08
+#define UMCON_OFFSET		0x0C
+#define UTRSTAT_OFFSET		0x10
+#define UERSTAT_OFFSET		0x14
+#define UFSTAT_OFFSET		0x18
+#define UMSTAT_OFFSET		0x1C
+#define UTXH_OFFSET		0x20
+#define URXH_OFFSET		0x24
+#define UBRDIV_OFFSET		0x28
+#define UDIVSLOT_OFFSET		0x2C
+#define UINTP_OFFSET		0x30
+#define UINTSP_OFFSET		0x34
+#define UINTM_OFFSET		0x38
+
+#define UTRSTAT_TX_EMPTY	(1 << 2)
+#define UTRSTAT_RX_READY	(1 << 0)
+#define UART_ERR_MASK		0xF
+
+
+
+/*
+ *
+ */
+
+/* fields */
+#define fTCFG0_DZONE		Fld(8, 16) /* the dead zone length (=timer 0) */
+#define fTCFG0_PRE1		Fld(8, 8)  /* prescaler value for time 2,3,4 */
+#define fTCFG0_PRE0		Fld(8, 0)  /* prescaler value for time 0,1 */
+#define fTCFG1_MUX4		Fld(4, 16)
+/* bits */
+#define TCFG0_DZONE(x)		FInsrt((x), fTCFG0_DZONE)
+#define TCFG0_PRE1(x)		FInsrt((x), fTCFG0_PRE1)
+#define TCFG0_PRE0(x)		FInsrt((x), fTCFG0_PRE0)
+#define TCFG1_MUX4(x)		FInsrt((x), fTCFG1_MUX4)
+#define TCON_4_AUTO		(1 << 22)  /* auto reload on/off for Timer 4 */
+#define TCON_4_UPDATE		(1 << 21)  /* manual Update TCNTB4 */
+#define TCON_4_ONOFF		(1 << 20)  /* 0: Stop, 1: start Timer 4 */
+#define COUNT_4_ON		(TCON_4_ONOFF * 1)
+#define COUNT_4_OFF		(TCON_4_ONOFF * 0)
+#define TCON_3_AUTO		(1 << 19)  /* auto reload on/off for Timer 3 */
+#define TIMER3_ATLOAD_ON	(TCON_3_AUTO * 1)
+#define TIMER3_ATLAOD_OFF	FClrBit(TCON, TCON_3_AUTO)
+#define TCON_3_INVERT		(1 << 18)  /* 1: Inverter on for TOUT3 */
+#define TIMER3_IVT_ON		(TCON_3_INVERT * 1)
+#define TIMER3_IVT_OFF		(FClrBit(TCON, TCON_3_INVERT))
+#define TCON_3_MAN		(1 << 17)  /* manual Update TCNTB3,TCMPB3 */
+#define TIMER3_MANUP		(TCON_3_MAN*1)
+#define TIMER3_NOP		(FClrBit(TCON, TCON_3_MAN))
+#define TCON_3_ONOFF		(1 << 16)  /* 0: Stop, 1: start Timer 3 */
+#define TIMER3_ON		(TCON_3_ONOFF * 1)
+#define TIMER3_OFF		(FClrBit(TCON, TCON_3_ONOFF))
+
+#if defined(CONFIG_CLK_400_100_50)
+#define STARTUP_AMDIV		400
+#define STARTUP_MDIV		400
+#define STARTUP_PDIV		6
+#define STARTUP_SDIV		1
+#elif defined(CONFIG_CLK_400_133_66)
+#define STARTUP_AMDIV		400
+#define STARTUP_MDIV		533
+#define STARTUP_PDIV		6
+#define STARTUP_SDIV		1
+#elif defined(CONFIG_CLK_533_133_66)
+#define STARTUP_AMDIV		533
+#define STARTUP_MDIV		533
+#define STARTUP_PDIV		6
+#define STARTUP_SDIV		1
+#elif defined(CONFIG_CLK_667_133_66)
+#define STARTUP_AMDIV		667
+#define STARTUP_MDIV		533
+#define STARTUP_PDIV		6
+#define STARTUP_SDIV		1
+#endif
+
+#define	STARTUP_PCLKDIV		3
+#define STARTUP_HCLKX2DIV	1
+#define STARTUP_HCLKDIV		1
+#define STARTUP_MPLLDIV		1
+#define STARTUP_APLLDIV		0
+
+#define CLK_DIV_VAL	((STARTUP_PCLKDIV << 12) | (STARTUP_HCLKX2DIV << 9) | \
+	(STARTUP_HCLKDIV << 8) | (STARTUP_MPLLDIV<<4) | STARTUP_APLLDIV)
+#define MPLL_VAL	((1 << 31) | (STARTUP_MDIV << 16) | \
+	(STARTUP_PDIV << 8) | STARTUP_SDIV)
+#define STARTUP_MPLL	(((CONFIG_SYS_CLK_FREQ >> STARTUP_SDIV) / \
+	STARTUP_PDIV) * STARTUP_MDIV)
+
+#if defined(CONFIG_SYNC_MODE)
+#define APLL_VAL	((1 << 31) | (STARTUP_MDIV << 16) | \
+	(STARTUP_PDIV << 8) | STARTUP_SDIV)
+#define STARTUP_APLL	(((CONFIG_SYS_CLK_FREQ >> STARTUP_SDIV) / \
+	STARTUP_PDIV) * STARTUP_MDIV)
+#define STARTUP_HCLK	(STARTUP_MPLL / (STARTUP_HCLKX2DIV + 1) / \
+	(STARTUP_HCLKDIV + 1))
+#else
+#define APLL_VAL	((1 << 31) | (STARTUP_AMDIV << 16) | \
+	(STARTUP_PDIV << 8) | STARTUP_SDIV)
+#define STARTUP_APLL	(((CONFIG_SYS_CLK_FREQ >> STARTUP_SDIV) / \
+	STARTUP_PDIV) * STARTUP_AMDIV)
+#define STARTUP_HCLK	(STARTUP_MPLL / (STARTUP_HCLKX2DIV + 1) / \
+	(STARTUP_HCLKDIV + 1))
+#endif
+
+
+#ifndef __ASSEMBLY__
+enum s5pc1xx_uarts_nr {
+	S5PC1XX_UART0,
+	S5PC1XX_UART1,
+	S5PC1XX_UART2,
+	S5PC1XX_UART3,
+};
+
+#include "s5pc1x0.h"
+
+static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
+{
+	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
+}
+#endif
 
 
 #endif /*__S5PC100_H__*/
-
-
-
-
-
-
 
 
