@@ -71,20 +71,22 @@ typedef struct {
 #endif
 } s5pc1xx_uart;
 
-/* PWM TIMER (see manual chapter 10) */
 typedef struct {
 	volatile u32	TCNTB;
 	volatile u32	TCMPB;
 	volatile u32	TCNTO;
-} s3c64xx_timer;
+} s5pc1xx_timer;
 
 typedef struct {
 	volatile u32	TCFG0;
 	volatile u32	TCFG1;
 	volatile u32	TCON;
-	s3c64xx_timer	ch[4];
+	s5pc1xx_timer	ch[3];
+	volatile u32	TCNTB3;
+	volatile u32	TCNTO3;
 	volatile u32	TCNTB4;
 	volatile u32	TCNTO4;
-} s3c64xx_timers;
+	volatile u32	TINTCSTAT;
+} s5pc1xx_timers;
 
 #endif

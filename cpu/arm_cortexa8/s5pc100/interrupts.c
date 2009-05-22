@@ -47,15 +47,15 @@ static ulong timer_load_val;
 
 #define PRESCALER	167
 
-static s3c64xx_timers *s3c64xx_get_base_timers(void)
+static s5pc1xx_timers *s5pc1xx_get_base_timers(void)
 {
-	return (s3c64xx_timers *)S5P_TIMER_BASE;
+	return (s5pc1xx_timers *)S5P_TIMER_BASE;
 }
 
 /* macro to read the 16 bit timer */
 static inline ulong read_timer(void)
 {
-	s3c64xx_timers *const timers = s3c64xx_get_base_timers();
+	s5pc1xx_timers *const timers = s5pc1xx_get_base_timers();
 
 	return timers->TCNTO4;
 }
@@ -68,7 +68,7 @@ static unsigned long long timestamp;
 
 int interrupt_init(void)
 {
-	s3c64xx_timers *const timers = s3c64xx_get_base_timers();
+	s5pc1xx_timers *const timers = s5pc1xx_get_base_timers();
 
 	/* use PWM Timer 4 because it has no ouput */
 	/* prescaler for timer 4 is 16 */
