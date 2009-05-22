@@ -48,7 +48,7 @@
 
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
-/* input clock of PLL: SMDK6400 has 12MHz input clock */
+/* input clock of PLL: TickerTape has 12MHz input clock */
 #define CONFIG_SYS_CLK_FREQ	12000000
 
 #if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)

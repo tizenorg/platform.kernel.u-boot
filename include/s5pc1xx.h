@@ -66,7 +66,7 @@
 #define S5P_CLK_DIV1	S5P_CLKREG(0x304)
 #define S5P_CLK_DIV2	S5P_CLKREG(0x308)
 #define S5P_CLK_DIV3	S5P_CLKREG(0x30c)
-#define S5P_CLK_DIV4	S5P_CLKREG(0x300)
+#define S5P_CLK_DIV4	S5P_CLKREG(0x310)
 
 #define S5P_CLK_OUT		S5P_CLKREG(0x400)
 
@@ -523,14 +523,23 @@
 #define S5P_GPIO_L4_PDNPUL			S5P_GPIO_L4_BASE(PDNPULL_OFFSET) 
 
 /* GPIO MP Bank */ 
-#define S5P_MP_0_BASE(x)			(S5P_MP_REG(0x0) + (x))
-#define S5P_MP_1_BASE(x)			(S5P_MP_REG(0x20) + (x))
-#define S5P_MP_2_BASE(x)			(S5P_MP_REG(0x40) + (x))
-#define S5P_MP_3_BASE(x)			(S5P_MP_REG(0x60) + (x))
-#define S5P_MP_4_BASE(x)			(S5P_MP_REG(0x80) + (x))
-#define S5P_MP_5_BASE(x)			(S5P_MP_REG(0xa0) + (x))
-#define S5P_MP_6_BASE(x)			(S5P_MP_REG(0xc0) + (x))
-#define S5P_MP_7_BASE(x)			(S5P_MP_REG(0xe0) + (x))
+#define S5P_MP_0_OFFSET				0x0
+#define S5P_MP_1_OFFSET				0x20
+#define S5P_MP_2_OFFSET				0x40
+#define S5P_MP_3_OFFSET				0x60
+#define S5P_MP_4_OFFSET				0x80
+#define S5P_MP_5_OFFSET				0xa0
+#define S5P_MP_6_OFFSET				0xc0
+#define S5P_MP_7_OFFSET				0xe0
+
+#define S5P_MP_0_BASE(x)			(S5P_MP_REG(S5P_MP_0_OFFSET) + (x))
+#define S5P_MP_1_BASE(x)			(S5P_MP_REG(S5P_MP_1_OFFSET) + (x))
+#define S5P_MP_2_BASE(x)			(S5P_MP_REG(S5P_MP_2_OFFSET) + (x))
+#define S5P_MP_3_BASE(x)			(S5P_MP_REG(S5P_MP_3_OFFSET) + (x))
+#define S5P_MP_4_BASE(x)			(S5P_MP_REG(S5P_MP_4_OFFSET) + (x))
+#define S5P_MP_5_BASE(x)			(S5P_MP_REG(S5P_MP_5_OFFSET) + (x))
+#define S5P_MP_6_BASE(x)			(S5P_MP_REG(S5P_MP_6_OFFSET) + (x))
+#define S5P_MP_7_BASE(x)			(S5P_MP_REG(S5P_MP_7_OFFSET) + (x))
 
 #define S5P_MP_0PULL				S5P_MP_0_BASE(PULL_OFFSET)
 #define S5P_MP_0DRV				S5P_MP_0_BASE(DRV_OFFSET)
@@ -789,6 +798,7 @@
 #define VIC_PROTECTION_OFFSET		0x20	/* Protection Enable Register */
 #define VIC_SWPRIORITYMASK_OFFSET	0x24	/* Software Priority Mask Register */
 #define VIC_PRIORITYDAISY_OFFSET	0x28	/* Vector Priority Register for Daisy Chain */
+#define VIC_INTADDRESS_OFFSET		0xf00	/* Vector Priority Register for Daisy Chain */
 
 #define S5P_VIC0IRQSTATUS		S5P_VIC0_BASE(VIC_IRQSTATUS_OFFSET)
 #define S5P_VIC0FIQSTATUS		S5P_VIC0_BASE(VIC_FIQSTATUS_OFFSET)
@@ -1426,7 +1436,7 @@
 #define S5P_PWM_TINT_CSTAT	S5P_PWMTIMER_BASE(PWM_TINT_CSTAT_OFFSET)
 
 #define S5P_TIMER_BASE			S5P_PWMTIMER_BASE(0x0)
-#define S5P_PWMTIMER_BASE_Rget_PCLKEG	__REG(S5P_PWMTIMER_BASE(0x0))
+#define S5P_PWMTIMER_BASE_REG	__REG(S5P_PWMTIMER_BASE(0x0))
 #define S5P_PWM_TCFG0_REG		__REG(S5P_PWM_TCFG0)
 #define S5P_PWM_TCFG1_REG		__REG(S5P_PWM_TCFG1_REG)
 #define S5P_PWM_TCON_REG		__REG(S5P_PWM_TCON_REG)
@@ -1570,11 +1580,13 @@
 #define fTCFG0_PRE1		Fld(8, 8)  /* prescaler value for time 2,3,4 */
 #define fTCFG0_PRE0		Fld(8, 0)  /* prescaler value for time 0,1 */
 #define fTCFG1_MUX4		Fld(4, 16)
+
 /* bits */
 #define TCFG0_DZONE(x)		FInsrt((x), fTCFG0_DZONE)
 #define TCFG0_PRE1(x)		FInsrt((x), fTCFG0_PRE1)
 #define TCFG0_PRE0(x)		FInsrt((x), fTCFG0_PRE0)
 #define TCFG1_MUX4(x)		FInsrt((x), fTCFG1_MUX4)
+
 #define TCON_4_AUTO		(1 << 22)  /* auto reload on/off for Timer 4 */
 #define TCON_4_UPDATE		(1 << 21)  /* manual Update TCNTB4 */
 #define TCON_4_ONOFF		(1 << 20)  /* 0: Stop, 1: start Timer 4 */
