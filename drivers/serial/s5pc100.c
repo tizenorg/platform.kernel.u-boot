@@ -23,7 +23,7 @@
 
 #include <common.h>
 
-#include <s5pc100.h>
+#include <s5pc1xx.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_NR	S5PC1XX_UART0
