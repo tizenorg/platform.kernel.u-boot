@@ -9,7 +9,7 @@
 
 #include <onenand_uboot.h>
 
-#include <s5pc100.h>
+#include <s5pc1xx.h>
 #include <s5pc1xx-onenand.h>
 
 #include <asm/io.h>
@@ -28,10 +28,10 @@ void onenand_board_init(struct mtd_info *mtd)
 
 	s3c_onenand_init(mtd);
 
-	value = CLK_DIV0_REG;
+	value = S5P_CLK_DIV0_REG;
 	value &= ~(3 << 16);
 	value |= (1 << 16);
-	CLK_DIV0_REG = value;
+	S5P_CLK_DIV0_REG = value;
 
 	INT_ERR_MASK0_REG = 0x17ff;
 	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */

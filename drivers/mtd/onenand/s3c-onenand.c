@@ -11,7 +11,7 @@
 #include <s3c6400.h>
 #include <s3c64xx-onenand.h>
 #elif defined(CONFIG_S5PC1XX)
-#include <s5pc100.h>
+#include <s5pc1xx.h>
 #include <s5pc1xx-onenand.h>
 #endif
 
