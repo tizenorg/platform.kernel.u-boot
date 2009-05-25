@@ -70,14 +70,14 @@ int interrupt_init(void)
 
 	/* use PWM Timer 4 because it has no ouput */
 	/* prescaler for timer 4 is 16 */
-	timers->TCFG0 = TCFG0_PRE1(16-1);
+	timers->TCFG0 = ((16-1) & 0xff) << 8;
 	if (timer_load_val == 0) {
 		/*
 		 * for 10 ms clock period @ PCLK with 4 bit divider = 1/2
 		 * (default) and prescaler = 16. Should be 20859
 		 * @66.75MHz
 		 */
-		timers->TCFG1 = TCFG1_MUX4(2-1);
+		timers->TCFG1 = ((2-1) & 0xf) << 16;
 		timer_load_val = get_PCLK() / (2 * 16 * 100);
 	}
 
