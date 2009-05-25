@@ -72,17 +72,20 @@ typedef struct {
 } s5pc1xx_uart;
 
 typedef struct {
-	volatile u32	TCNTB;
-	volatile u32	TCMPB;
-	volatile u32	TCNTO;
-} s5pc1xx_timer;
-
-typedef struct {
 	volatile u32	TCFG0;
 	volatile u32	TCFG1;
 	volatile u32	TCON;
-	s5pc1xx_timer	ch[3];
+	volatile u32	TCNTB0;
+	volatile u32	TCMPB0;
+	volatile u32	TCNTO0;
+	volatile u32	TCNTB1;
+	volatile u32	TCMPB1;
+	volatile u32	TCNTO1;
+	volatile u32	TCNTB2;
+	volatile u32	TCMPB2;
+	volatile u32	TCNTO2;
 	volatile u32	TCNTB3;
+	volatile u32	res1;
 	volatile u32	TCNTO3;
 	volatile u32	TCNTB4;
 	volatile u32	TCNTO4;
