@@ -1665,6 +1665,8 @@ enum s5pc1xx_uarts_nr {
 	S5PC1XX_UART3,
 };
 
+ulong get_PCLK(void);
+
 #include "s5pc1x0.h"
 
 static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
@@ -1672,6 +1674,7 @@ static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
 }
 #endif
+
 
 
 #endif /*__S5PC100_H__*/

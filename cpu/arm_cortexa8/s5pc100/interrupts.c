@@ -45,8 +45,6 @@
 
 static ulong timer_load_val;
 
-#define PRESCALER	167
-
 static s5pc1xx_timers *s5pc1xx_get_base_timers(void)
 {
 	return (s5pc1xx_timers *)S5P_TIMER_BASE;
@@ -109,24 +107,9 @@ int interrupt_init(void)
  */
 unsigned long long get_ticks(void)
 {
-	ulong now = read_timer();
-
-	if (lastdec >= now) {
-		/* normal mode */
-		timestamp += lastdec - now;
-	} else {
-		/* we have an overflow ... */
-		timestamp += lastdec + timer_load_val - now;
-	}
-	lastdec = now;
-
-	return timestamp;
+	return get_timer(0);
 }
 
-/*
- * This function is derived from PowerPC code (timebase clock frequency).
- * On ARM it returns the number of timer ticks per second.
- */
 ulong get_tbclk(void)
 {
 	/* We overrun in 100s */
@@ -147,9 +130,19 @@ void reset_timer(void)
 
 ulong get_timer_masked(void)
 {
-	unsigned long long res = get_ticks();
-	do_div (res, (timer_load_val / (100 * CONFIG_SYS_HZ)));
-	return res;
+	ulong now = read_timer();
+
+	if (lastdec >= now) {
+		/* normal mode */
+		timestamp += lastdec - now;
+	}
+	else {
+		/* we have an overflow ... */
+		timestamp += lastdec + timer_load_val - now;
+	}
+	lastdec = now;
+
+	return timestamp;
 }
 
 ulong get_timer(ulong base)
@@ -159,17 +152,30 @@ ulong get_timer(ulong base)
 
 void set_timer(ulong t)
 {
-	timestamp = t * (timer_load_val / (100 * CONFIG_SYS_HZ));
+	timestamp = t;
 }
 
 void udelay(unsigned long usec)
 {
-	unsigned long long tmp;
-	ulong tmo;
+	ulong tmo, tmp;
 
-	tmo = (usec + 9) / 10;
-	tmp = get_ticks() + tmo;	/* get current timestamp */
+	if (usec >= 1000) {		/* if "big" number, spread normalization to seconds */
+		tmo = usec / 1000;	/* start to normalize for usec to ticks per sec */
+		tmo *= CFG_HZ;		/* find number of "ticks" to wait to achieve target */
+		tmo /= 1000;		/* finish normalize. */
+	}
+	else {				/* else small number, don't kill it prior to HZ multiply */
+		tmo = usec * CFG_HZ;
+		tmo /= (1000 * 1000);
+	}
 
-	while (get_ticks() < tmp)/* loop till event */
+	tmp = get_timer(0);		/* get current timestamp */
+	if ((tmo + tmp + 1) < tmp)	/* if setting this fordward will roll time stamp */
+		reset_timer_masked();	/* reset "advancing" timestamp to 0, set lastdec value */
+	else
+		tmo += tmp;		/* else, set advancing stamp wake up time */
+
+	while (get_timer_masked()<tmo)	/* loop till event */
 		 /*NOP*/;
 }
+
