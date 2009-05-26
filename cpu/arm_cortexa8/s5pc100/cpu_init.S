@@ -52,7 +52,7 @@ mem_ctrl_asm_init:
 	str r1, [r0]
 
 	/* DLL start */
-	ldr r0, =S5P_PHUCONTROL0			@ 0xe6000018
+	ldr r0, =S5P_PHYCONTROL0			@ 0xe6000018
 	ldr r1, =0x50101003
 	str r1, [r0]
 
@@ -178,7 +178,7 @@ mem_ctrl_asm_init:
 	str r1, [r0]
 
 	/* BL%LE %LONG */
-	ldr r0, =S5P_MEMCONROL				@ 0xe6000004
+	ldr r0, =S5P_MEMCONTROL				@ 0xe6000004
 	ldr r1, =0xff212100
 	str r1, [r0]
 	mov	pc, lr
