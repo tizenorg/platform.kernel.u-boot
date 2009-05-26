@@ -41,10 +41,9 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
-#define CONFIG_S5PC100_TT	1	/* working with TT */
+#define CONFIG_TICKERTAPE	1	/* working with TickerTape */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
-#include <asm/arch/tt.h>
 
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
@@ -191,7 +190,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
-#define CONFIG_SYS_PROMPT	"TT # "	/* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT	"TickerTape # "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -255,7 +254,7 @@
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
-#define CONFIG_IDENT_STRING	" for TT"
+#define CONFIG_IDENT_STRING	" for TickerTape"
 
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
