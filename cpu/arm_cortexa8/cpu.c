@@ -123,6 +123,7 @@ void l2cache_enable()
 		__asm__ __volatile__("mov r0, %0":"=r"(i));
 		__asm__ __volatile__("mov r12, %0":"=r"(j));
 	}
+
 }
 
 void l2cache_disable()

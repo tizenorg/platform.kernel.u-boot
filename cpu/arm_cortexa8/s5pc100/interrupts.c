@@ -53,7 +53,7 @@ static ulong count_value;
 
 /* Internal tick units */
 static unsigned long long timestamp;	/* Monotonic incrementing timer */
-static unsigned long lastdec;	/* Last decremneter snapshot */	
+static unsigned long lastdec;	/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
 static inline ulong READ_TIMER(void)
@@ -67,8 +67,11 @@ int interrupt_init(void)
 {
 	s5pc1xx_timers *const timers = (s5pc1xx_timers *)S5P_TIMER_BASE;
 
-	/* PWM Timer 4 */
-	/* Timer Freq(HZ) = PCLK / { (prescaler_value + 1) * (divider_value) } */
+	/*
+	 * @ PWM Timer 4
+	 * Timer Freq(HZ) =
+	 *	PCLK / { (prescaler_value + 1) * (divider_value) }
+	 */
 
 	/* set prescaler : 16 */
 	/* set divider : 2 */
@@ -79,10 +82,11 @@ int interrupt_init(void)
 
 		/* reset initial value */
 		/* count_value = 2085937.5(HZ) (per 1 sec)*/
-		count_value = get_PCLK() / ((PRESCALER_0 + 1) * (MUX4_DIV_12 + 1));
+		count_value = get_PCLK() / ((PRESCALER_0 + 1) *
+				(MUX4_DIV_12 + 1));
 
 		/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
-		count_value = count_value / 100;	
+		count_value = count_value / 100;
 	}
 
 	/* set count value */
@@ -90,10 +94,12 @@ int interrupt_init(void)
 	lastdec = count_value;
 
 	/* auto reload & manual update */
-	timers->TCON = (timers->TCON & ~(0x03 << 20)) | S5P_TCON4_AUTO_RELOAD | S5P_TCON4_UPDATE;
+	timers->TCON = (timers->TCON & ~(0x03 << 20)) |
+		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_UPDATE;
 
 	/* start PWM timer 4 */
-	timers->TCON = (timers->TCON & ~(0x03 << 20)) | S5P_TCON4_AUTO_RELOAD | S5P_TCON4_ON;
+	timers->TCON = (timers->TCON & ~(0x03 << 20)) |
+		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_ON;
 
 	timestamp = 0;
 
@@ -125,25 +131,44 @@ void udelay(unsigned long usec)
 {
 	ulong tmo, tmp;
 
-	if (usec >= 1000) {		/* if "big" number, spread normalization to seconds */
-		tmo = usec / 1000;	/* start to normalize for usec to ticks per sec */
-		tmo *= CONFIG_SYS_HZ;	/* find number of "ticks" to wait to achieve target */
-		tmo /= 1000;		/* finish normalize. */
+	if (usec >= 1000) {
 
-	} else {			/* else small number, don't kill it prior to HZ multiply */
+		/*
+		 * if "big" number, spread normalization
+		 * to seconds
+		 * 1. start to normalize for usec to ticks per sec
+		 * 2. find number of "ticks" to wait to achieve target
+		 * 3. finish normalize.
+		 */
+		tmo = usec / 1000;
+		tmo *= CONFIG_SYS_HZ;
+		tmo /= 1000;
+
+	} else {
+		/* else small number, don't kill it prior to HZ multiply */
 		tmo = usec * CONFIG_SYS_HZ;
 		tmo /= (1000 * 1000);
 
 	}
 
-	tmp = get_timer(0);		/* get current timestamp */
-	if ((tmo + tmp + 1) < tmp) {	/* if setting this fordward will roll time stamp */
-		reset_timer_masked();	/* reset "advancing" timestamp to 0, set lastdec value */
+	/* get current timestamp */
+	tmp = get_timer(0);
+
+	if ((tmo + tmp + 1) < tmp) {
+
+		/* if setting this fordward will roll time stamp */
+		/* reset "advancing" timestamp to 0, set lastdec value */
+		reset_timer_masked();
+
 	} else {
-		tmo += tmp;		/* else, set advancing stamp wake up time */
+
+		/* else, set advancing stamp wake up time */
+		tmo += tmp;
 	}
 
-	while (get_timer_masked() < tmo);	/* loop till event */
+	/* loop till event */
+	while (get_timer_masked() < tmo)
+		;	/* nop */
 }
 
 void reset_timer_masked(void)
@@ -159,9 +184,13 @@ ulong get_timer_masked(void)
 	ulong now = READ_TIMER();
 
 	if (lastdec >= now) {
-		timestamp += lastdec - now;	/* normal mode */
+		/* normal mode */
+		timestamp += lastdec - now;
+
 	} else {
-		timestamp += lastdec + count_value - now;	/* overflow */
+		/* overflow */
+		timestamp += lastdec + count_value - now;
+
 	}
 	lastdec = now;
 
@@ -178,7 +207,7 @@ unsigned long long get_ticks(void)
 }
 
 /*
- * This function is derived from PowerPC code (timebase clock frequency).  
+ * This function is derived from PowerPC code (timebase clock frequency).
  * On ARM it returns the number of timer ticks per second.
  */
 ulong get_tbclk(void)
