@@ -144,10 +144,10 @@ ulong get_UCLK(void)
 
 int print_cpuinfo(void)
 {
-	printf("\nCPU:     S5PC100@%luMHz\n", get_ARMCLK() / 1000000);
-	printf("         Fclk = %luMHz, Hclk = %luMHz, Pclk = %luMHz ",
-	       get_FCLK() / 1000000, get_HCLK() / 1000000,
-	       get_PCLK() / 1000000);
+	printf("CPU:\tS5PC100@%luMHz\n", get_ARMCLK() / 1000000);
+	printf("\tFclk = %luMHz, Hclk = %luMHz, Pclk = %luMHz\n",
+			get_FCLK() / 1000000, get_HCLK() / 1000000,
+			get_PCLK() / 1000000);
 
 	return 0;
 }
