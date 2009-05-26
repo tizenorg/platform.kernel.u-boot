@@ -2983,8 +2983,9 @@ omap3_pandora_config :	unconfig
 omap3_zoom1_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom1 omap3 omap3
 
-s5pc100_tt_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 tt samsung s5pc100
+s5pc100_tickertape_config:	unconfig
+#@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 tt samsung s5pc100
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 tickertape samsung s5pc100
 
 #########################################################################
 ## XScale Systems
