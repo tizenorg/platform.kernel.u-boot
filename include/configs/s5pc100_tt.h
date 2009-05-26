@@ -125,6 +125,8 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define CONFIG_MTD_PARTITIONS
+
 #define MTDIDS_DEFAULT "onenand0=s3c-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
@@ -156,6 +158,7 @@
 			" onenand write 0x22008000 0x20000 0x20000\0"
 #endif
 
+#define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=onenand erase 0x60000 0x200000;" \
@@ -186,15 +189,15 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP				/* undef to save memory	      */
-#define CONFIG_SYS_PROMPT		"TT # "		/* Monitor Command Prompt     */
-#define CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size    */
-#define CONFIG_SYS_PBSIZE		384		/* Print Buffer Size          */
-#define CONFIG_SYS_MAXARGS		16		/* max number of command args */
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size  */
+#define CONFIG_SYS_LONGHELP	/* undef to save memory */
+#define CONFIG_SYS_PROMPT	"TT # "	/* Monitor Command Prompt */
+#define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
+#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
+#define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x7e00000) /* 126MB in DRAM */
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_SDRAM_BASE	/* default load address	*/
 
@@ -251,26 +254,7 @@
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
-#define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
-#define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
-
-/* timeout values are in ticks */
-#define CONFIG_SYS_FLASH_ERASE_TOUT	(5 * CONFIG_SYS_HZ) /* Timeout for Flash Erase	*/
-#define CONFIG_SYS_FLASH_WRITE_TOUT	(5 * CONFIG_SYS_HZ) /* Timeout for Flash Write	*/
-
-#define CONFIG_ENV_SIZE		0x20000	/* Total Size of Environment Sector */
-#define CONFIG_ENV_ADDR		0x40000
-
-/*
- * SMDK6400 board specific data
- */
-
 #define CONFIG_IDENT_STRING	" for TT"
-
-/* base address for uboot */
-#define CONFIG_SYS_PHY_UBOOT_BASE	(CONFIG_SYS_SDRAM_BASE + 0x07e00000)
-/* total memory available to uboot */
-#define CONFIG_SYS_UBOOT_SIZE		(1024 * 1024)
 
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
@@ -278,31 +262,16 @@
 #define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
 #endif
 
-/* NAND U-Boot load and start address */
-#define CONFIG_SYS_UBOOT_BASE		(CONFIG_SYS_MAPPED_RAM_BASE + 0x07e00000)
-
-#define CONFIG_ENV_OFFSET		0x0040000
-
 /* Boot configuration (define only one of next 3) */
 #define CONFIG_BOOT_ONENAND
-/* None of these are currently implemented. Left from the original Samsung
- * version for reference
-#define CONFIG_BOOT_NAND
-#define CONFIG_BOOT_NOR
-#define CONFIG_BOOT_MOVINAND
-*/
 
-#define CONFIG_ONENAND
-/* Unimplemented or unsupported. See comment above.
-#define CONFIG_NAND
-#define CONFIG_NAND_S3C64XX
-#define CONFIG_MOVINAND
-*/
+#define CONFIG_ENV_IS_IN_ONENAND	1
+#define CONFIG_ENV_SIZE			0x20000
+#define CONFIG_ENV_ADDR			0x40000
+#define CONFIG_ENV_OFFSET		0x40000
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
-#define CONFIG_SYS_ONENAND_BASE		0x00000000
-/* Settings as above boot configuration */
-#define CONFIG_ENV_IS_IN_ONENAND
+#define CONFIG_SYS_ONENAND_BASE		0xe71000000
 
 #define CONFIG_DOS_PARTITION	1
 
