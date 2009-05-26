@@ -5,6 +5,10 @@
  * (C) Copyright 2002
  * David Mueller, ELSOFT AG, d.mueller@elsoft.ch
  *
+ * (C) Copyright 2009
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
