@@ -201,14 +201,13 @@ cpu_init_crit:
 	/*
 	 * disable MMU stuff and caches
 	 */
-	/*
 	mrc	p15, 0, r0, c1, c0, 0
 	bic	r0, r0, #0x00002000	@ clear bits 13 (--V-)
 	bic	r0, r0, #0x00000007	@ clear bits 2:0 (-CAM)
 	orr	r0, r0, #0x00000002	@ set bit 1 (--A-) Align
 	orr	r0, r0, #0x00000800	@ set bit 12 (Z---) BTB
 	mcr	p15, 0, r0, c1, c0, 0
-	*/
+
 	/*
 	 * Jump to board specific initialization...
 	 * The Mask ROM will have already initialized
@@ -216,9 +215,7 @@ cpu_init_crit:
 	 * wake up conditions.
 	 */
 	mov	ip, lr			@ persevere link reg across call
-	mov r9, ip
 	bl	lowlevel_init	@ go setup pll,mux,memory
-	mov ip, r9
 	mov	lr, ip			@ restore link
 	mov	pc, lr			@ back to my caller
 /*
