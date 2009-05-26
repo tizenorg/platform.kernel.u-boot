@@ -22,6 +22,7 @@
  * (C) Copyright 2009
  * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
  * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
