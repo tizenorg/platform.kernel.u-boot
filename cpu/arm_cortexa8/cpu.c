@@ -82,7 +82,7 @@ int cleanup_before_linux(void)
 	/* turn off L2 cache */
 	l2cache_disable();
 	/* invalidate L2 cache also */
-	//v7_flush_dcache_all(get_device_type());
+	v7_flush_dcache_all(get_device_type());
 #endif
 	i = 0;
 	/* mem barrier to sync up things */
@@ -95,12 +95,12 @@ int cleanup_before_linux(void)
 	return 0;
 }
 
+#ifndef CONFIG_L2_OFF
 void l2cache_enable()
 {
 	unsigned long i;
 	volatile unsigned int j;
 
-#if 0
 	/* ES2 onwards we can disable/enable L2 ourselves */
 	if (get_cpu_rev() >= CPU_3XX_ES20) {
 		__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
@@ -123,7 +123,6 @@ void l2cache_enable()
 		__asm__ __volatile__("mov r0, %0":"=r"(i));
 		__asm__ __volatile__("mov r12, %0":"=r"(j));
 	}
-#endif
 
 }
 
@@ -132,7 +131,6 @@ void l2cache_disable()
 	unsigned long i;
 	volatile unsigned int j;
 
-#if 0
 	/* ES2 onwards we can disable/enable L2 ourselves */
 	if (get_cpu_rev() >= CPU_3XX_ES20) {
 		__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
@@ -155,8 +153,8 @@ void l2cache_disable()
 		__asm__ __volatile__("mov r0, %0":"=r"(i));
 		__asm__ __volatile__("mov r12, %0":"=r"(j));
 	}
-#endif
 }
+#endif
 
 static void cache_flush(void)
 {

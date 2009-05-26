@@ -51,7 +51,7 @@ _TEXT_BASE:
 
 	.globl lowlevel_init
 lowlevel_init:
-	mov	r12, lr
+	mov	r9, lr
 
 	/* Disable Watchdog */
 	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
@@ -142,7 +142,7 @@ interrupt_pending_loop:
 	str	r1, [r0, #S5P_MP_6_OFFSET]
 	str	r1, [r0, #S5P_MP_7_OFFSET]
 1:
-	mov	lr, r12
+	mov	lr, r9
 	mov	pc, lr
 
 wakeup_reset:

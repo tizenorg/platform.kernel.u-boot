@@ -77,7 +77,7 @@ static ulong get_PLLCLK(int pllreg)
 
 	if (pllreg == APLL)
 		mask = 0x3ff;
-	else 
+	else
 		mask = 0x1ff;
 
 	m = (r >> 16) & mask;

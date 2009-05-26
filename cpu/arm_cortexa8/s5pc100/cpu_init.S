@@ -71,7 +71,7 @@ mem_ctrl_asm_init:
 	ldr r1, =0xff001010
 	str r1, [r0]
 
-	/* 
+	/*
 	 * BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh,
 	 * force precharge, dynamic power down off
 	 */

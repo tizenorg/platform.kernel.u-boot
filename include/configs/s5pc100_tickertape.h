@@ -98,6 +98,7 @@
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BAUDRATE		115200
+#define CONFIG_L2_OFF
 
 /***********************************************************
  * Command definition
