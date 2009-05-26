@@ -368,7 +368,7 @@ void start_armboot (void)
 #endif
 
 	/* initialize environment */
-	//env_relocate ();
+	env_relocate ();
 
 #ifdef CONFIG_VFD
 	/* must do this after the framebuffer is allocated */
@@ -382,7 +382,7 @@ void start_armboot (void)
 	/* IP Address */
 	gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
 
-	//devices_init ();	/* get the devices list going. */
+	devices_init ();	/* get the devices list going. */
 
 	jumptable_init ();
 
@@ -391,11 +391,10 @@ void start_armboot (void)
 	api_init ();
 #endif
 
-	//console_init_r ();	/* fully init console as a device */
+	console_init_r ();	/* fully init console as a device */
 
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
-	/* inki */
 	misc_init_r ();
 #endif
 
