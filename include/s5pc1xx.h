@@ -40,7 +40,7 @@
 #define S5P_PA_TZIC2		S5P_ADDR(0x05200000)    /* TrustZone Interrupt Controller 2 */
 #define S5P_PA_DMC		S5P_ADDR(0x06000000)    /* Dram Memory Controller */
 #define S5P_PA_SROMC		S5P_ADDR(0x07000000)    /* SROM Controller */
-#define S5P_PA_ONENANDC		S5P_ADDR(0x07100000)    /* OneNand Controller */
+#define S5P_PA_ONENANDC		S5P_ADDR(0x07100000)    /* OneNAND Controller */
 #define S5P_PA_PWMTIMER		S5P_ADDR(0x0a000000)    /* PWM Timer */
 #define S5P_PA_WATCHDOG		S5P_ADDR(0x0a200000)    /* Watchdog Timer */
 #define S5P_PA_SYSTEM		S5P_ADDR(0x0a100000)    /* System Timer */
@@ -1174,7 +1174,7 @@
 #define S5P_TZIC2PCELLID3		S5P_TZIC2_BASE(PCELLID3_OFFSET + 0x0)
 
 /*
- * Memory : SDRAM, SROM, OneNand
+ * Memory : SDRAM, SROM, OneNAND
  */
 
 /* DRAM Memory Controller */
@@ -1289,9 +1289,10 @@
 #define S5P_SROM_BC4_REG	__REG(S5P_SROM_BC4)
 #define S5P_SROM_BC5_REG	__REG(S5P_SROM_BC5)
 
-/* OneNand */
+/* OneNAND */
 #define S5P_ONENANDC_BASE(x)	(S5P_PA_ONENANDC + (x))
 
+/* OneNAND offset */
 #define MEM_CFG_OFFSET		0x0
 #define BURST_LEN_OFFSET	0x10
 #define MEM_RESET_OFFSET	0x20
@@ -1340,6 +1341,7 @@
 #define OFFSET_ADDR_OFFSET	0x380
 #define INT_MON_STATUS_OFFSET	0x390
 
+/* OneNAND register */
 #define S5P_MEM_CFG		S5P_ONENANDC_BASE(MEM_CFG_OFFSET)
 #define S5P_BURST_LEN		S5P_ONENANDC_BASE(BURST_LEN_OFFSET)
 #define S5P_MEM_RESET		S5P_ONENANDC_BASE(MEM_RESET_OFFSET)

@@ -19,6 +19,11 @@
  * (C) Copyright 2008
  * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
  *
+ * (C) Copyright 2009
+ * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ *
  * See file CREDITS for list of people who contributed to this
  * project.
  *
@@ -39,9 +44,7 @@
  */
 
 #include <common.h>
-#include <asm/proc-armv/ptrace.h>
 #include <s5pc1xx.h>
-#include <div64.h>
 
 #define PRESCALER_0		(16 - 1)	/* prescaler of PWM timer 4 */
 #define MUX4_DIV_12		(2 - 1)		/* MUX 4, 1/2 period */
@@ -122,20 +125,20 @@ void udelay(unsigned long usec)
 {
 	ulong tmo, tmp;
 
-	if (usec >= 1000) {			/* if "big" number, spread normalization to seconds */
-		tmo = usec / 1000;		/* start to normalize for usec to ticks per sec */
+	if (usec >= 1000) {		/* if "big" number, spread normalization to seconds */
+		tmo = usec / 1000;	/* start to normalize for usec to ticks per sec */
 		tmo *= CONFIG_SYS_HZ;	/* find number of "ticks" to wait to achieve target */
-		tmo /= 1000;			/* finish normalize. */
+		tmo /= 1000;		/* finish normalize. */
 
-	} else {					/* else small number, don't kill it prior to HZ multiply */
+	} else {			/* else small number, don't kill it prior to HZ multiply */
 		tmo = usec * CONFIG_SYS_HZ;
 		tmo /= (1000 * 1000);
 
 	}
 
-	tmp = get_timer(0);				/* get current timestamp */
+	tmp = get_timer(0);		/* get current timestamp */
 	if ((tmo + tmp + 1) < tmp) {	/* if setting this fordward will roll time stamp */
-		reset_timer_masked();		/* reset "advancing" timestamp to 0, set lastdec value */
+		reset_timer_masked();	/* reset "advancing" timestamp to 0, set lastdec value */
 	} else {
 		tmo += tmp;		/* else, set advancing stamp wake up time */
 	}
@@ -156,7 +159,7 @@ ulong get_timer_masked(void)
 	ulong now = READ_TIMER();
 
 	if (lastdec >= now) {
-		timestamp += lastdec - now;		/* normal mode */
+		timestamp += lastdec - now;	/* normal mode */
 	} else {
 		timestamp += lastdec + count_value - now;	/* overflow */
 	}

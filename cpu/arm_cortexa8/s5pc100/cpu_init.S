@@ -1,8 +1,13 @@
 /*
- * Originates from Samsung's u-boot 1.1.6 port to S3C6400 / SMDK6400
+ * Originates from Samsung's u-boot 1.1.6 port to S5PC1xx
  *
  * Copyright (C) 2008
  * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+
+ * Copyright (C) 2009
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -24,7 +29,6 @@
  */
 
 #include <config.h>
-/*#include <s5pc100.h>*/
 #include <s5pc1xx.h>
 
 	.globl mem_ctrl_asm_init
@@ -67,7 +71,10 @@ mem_ctrl_asm_init:
 	ldr r1, =0xff001010
 	str r1, [r0]
 
-	/* BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh, force precharge, dynamic power down off */
+	/* 
+	 * BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh,
+	 * force precharge, dynamic power down off
+	 */
 	ldr r0, =S5P_MEMCONTROL				@ 0xe6000004
 	ldr r1, =0x00212100
 	str r1, [r0]
@@ -85,8 +92,11 @@ mem_ctrl_asm_init:
 	ldr r1, =0x20000000
 	str r1, [r0]
 
-	/* 7.8us*166MHz%LE %LONG1294(0x50E) 7.8us*133MHz%LE %LONG1038(0x40E),
-	 *  100MHz%LE %LONG780(0x30C), 20MHz%LE %LONG156(0x9C), 10MHz%LE %LONG78(0x4E)
+	/*
+	 * 7.8us*166MHz%LE %LONG1294(0x50E) 7.8us*133MHz%LE %LONG1038(0x40E),
+	 * 100MHz%LE %LONG780(0x30C),
+	 * 20MHz%LE %LONG156(0x9C),
+	 * 10MHz%LE %LONG78(0x4E)
 	 */
 	ldr r0, =S5P_TIMINGAREF				@ 0xe6000030
 	ldr r1, =0x0000050e
