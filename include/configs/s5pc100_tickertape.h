@@ -151,10 +151,10 @@
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #ifdef CONFIG_USE_BIG_UBOOT
-#define CONFIG_UPDATEB	"updateb=onenand erase block 0-1;" \
+#define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x22008000 0x0 0x40000\0"
 #else
-#define CONFIG_UPDATEB	"updateb=onenand erase block 0-1;" \
+#define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x22008000 0x0 0x20000;" \
 			" onenand write 0x22008000 0x20000 0x20000\0"
 #endif
@@ -272,7 +272,7 @@
 #define CONFIG_ENV_OFFSET		0x40000
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
-#define CONFIG_SYS_ONENAND_BASE		0xe71000000
+#define CONFIG_SYS_ONENAND_BASE		0xe7100000
 
 #define CONFIG_DOS_PARTITION	1
 
