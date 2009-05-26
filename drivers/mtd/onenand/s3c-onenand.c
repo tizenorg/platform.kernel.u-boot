@@ -62,8 +62,10 @@ do {									\
 #define MEM_ADDR(fba, fpa, fsa)		(((fba) << 12 | (fpa) << 6 | \
 					(fsa) << 4) & 0xffffff)
 #elif defined(CONFIG_S5PC1XX)
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 6 | \
-					(fsa) << 4) & 0x3ffffff)
+#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 7 | \
+					(fsa) << 5) & 0x3ffffff)
+#define MEM_ADDR2(fba, fpa, fsa)	((1 << 24 | (fba) << 13 | (fpa) << 7 | \
+					(fsa) << 5) & 0x3ffffff)
 #endif
 
 #define GET_FBA(mem_addr)		((mem_addr) & 0x3ff000)
@@ -211,12 +213,19 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 	int fba, fpa, fsa = 0;
 	int mem_addr;
 	int i, ret, count;
+	int dev_id, ddp;
 
 	fba = (int) (addr >> this->erase_shift);
 	fpa = (int) (addr >> this->page_shift);
 	fpa &= this->page_mask;
 
-	mem_addr = MEM_ADDR(fba, fpa, fsa);
+	dev_id = DEVICE_ID0_REG;
+	ddp = dev_id & ONENAND_DEVICE_IS_DDP;
+
+	if (ddp)
+		mem_addr = MEM_ADDR2(fba, fpa, fsa);
+	else
+		mem_addr = MEM_ADDR(fba, fpa, fsa);
 
 	if (cmd != ONENAND_CMD_READOOB)
 		DPRINTK("cmd 0x%x, addr 0x%x, fba %d, fpa %d, len 0x%x", cmd, (unsigned int) addr, fba, fpa, len);

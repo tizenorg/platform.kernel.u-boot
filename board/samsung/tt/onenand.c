@@ -28,10 +28,22 @@ void onenand_board_init(struct mtd_info *mtd)
 
 	s3c_onenand_init(mtd);
 
-	value = S5P_CLK_DIV0_REG;
+	/* D0 Domain clock gating */
+	value = S5P_CLK_GATE_D00_REG;
+	value &= ~(1 << 2);
+	value |= (1 << 2);
+	S5P_CLK_GATE_D00_REG = value;
+
+	value = S5P_CLK_SRC0_REG;
+	value &= ~(1 << 24);
+	value &= ~(1 << 20);
+	S5P_CLK_SRC0_REG = value;
+
+	/* SYSCON */
+	value = S5P_CLK_DIV1_REG;
 	value &= ~(3 << 16);
 	value |= (1 << 16);
-	S5P_CLK_DIV0_REG = value;
+	S5P_CLK_DIV1_REG = value;
 
 	INT_ERR_MASK0_REG = 0x17ff;
 	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */
@@ -59,9 +71,6 @@ void onenand_board_init(struct mtd_info *mtd)
 		;
 
 	BURST_LEN0_REG = 16;
-
-	/* Disable watchdog */
-	FLASH_AUX_CNTRL0_REG = 1;
 
 	s3c_set_width_regs(this);
 }
