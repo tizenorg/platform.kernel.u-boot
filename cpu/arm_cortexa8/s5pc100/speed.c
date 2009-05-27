@@ -104,6 +104,12 @@ ulong get_FCLK(void)
 	return get_PLLCLK(APLL);
 }
 
+/* return MCLK frequency */
+ulong get_MCLK(void)
+{
+	return get_PLLCLK(MPLL);
+}
+
 /* return HCLK frequency */
 ulong get_HCLK(void)
 {
