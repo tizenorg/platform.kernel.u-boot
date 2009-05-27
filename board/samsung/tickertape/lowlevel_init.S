@@ -192,7 +192,8 @@ system_clock_init:
 	str r1, [r0]
 
 	ldr r0, =S5P_APLL_CON
-	ldr r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
+#	ldr r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
+	ldr r1, =0x81f40302		@ SDIV 2, PDIV 3, MDIV 500 (500MHz)
 	str r1, [r0]
 
 	ldr r3, =loop1
