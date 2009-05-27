@@ -95,7 +95,7 @@ ulong get_ARMCLK(void)
 	div = S5P_CLK_DIV0_REG;
 
 	/* arm_ratio : [6:4] */
-	return get_PLLCLK(APLL) / (((div >> 4) & 0x7) + 1);
+	return get_PLLCLK(APLL) / ((((div >> 4) & 0x7) + 1) * (div & 0x1) + 1);
 }
 
 /* return FCLK frequency */
