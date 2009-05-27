@@ -75,6 +75,9 @@
 
 #undef CONFIG_SKIP_RELOCATE_UBOOT
 
+#define CONFIG_LCD
+#define CONFIG_TL2796
+
 /*
  * Size of malloc() pool
  */
