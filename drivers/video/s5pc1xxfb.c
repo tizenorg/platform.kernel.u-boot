@@ -62,13 +62,16 @@
 
 #define S5PC_VFRAME_FREQ	60
 
+#define DEBUG 
+#ifdef DEBUG
+#define udebug printf
+#else
+#define udebug
+#endif
+
 extern void tl2796_panel_power_on(void);
 extern void tl2796_panel_enable(void);
 extern void tl2796_panel_init(void);
-
-void lcd_setcolreg(short regno, ushort red, ushort green, ushort blud){}
-void lcd_enable(void){}
-ulong calc_fbsize(void){return 0;}
 
 int lcd_line_length;
 int lcd_color_fg;
@@ -79,15 +82,6 @@ void *lcd_console_address;
 
 short console_col;
 short console_row;
-
-#define DEBUG 
-//#undef DEBUG
-
-#ifdef DEBUG
-#define udebug printf
-#else
-#define udebug
-#endif
 
 static unsigned short makepixel565(char r, char g, char b)
 {
@@ -245,7 +239,7 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	unsigned int mpll_ratio, fb_size;
 
 	s5pcfb_fimd.bytes_per_pixel = vid->vl_bpix / 8;
-	page_width = lcd_line_length = s5pcfb_fimd.xres * s5pcfb_fimd.bytes_per_pixel;
+	page_width = s5pcfb_fimd.xres * s5pcfb_fimd.bytes_per_pixel;
 	offset = 0;
 
 	/* calculate LCD Pixel clock */
@@ -348,6 +342,19 @@ void lcd_ctrl_init(void *lcdbase)
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
+}
 
+void lcd_setcolreg(short regno, ushort red, ushort green, ushort blud)
+{
+	return;
+}
+
+void lcd_enable(void)
+{
 	lcd_panel_init();
+}
+
+ulong calc_fbsize(void)
+{
+	return (s5pcfb_fimd.xres * s5pcfb_fimd.yres * s5pcfb_fimd.bytes_per_pixel);
 }
