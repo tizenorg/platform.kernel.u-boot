@@ -2,6 +2,11 @@
  * (C) Copyright 2005-2008 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
+ * Derived from X-loader
+ *
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of
@@ -18,28 +23,31 @@
  * MA 02111-1307 USA
  */
 
-#ifndef _ONENAND_IPL_H
-#define _ONENAND_IPL_H
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(_start)
+SECTIONS
+{
+	. = 0x00000000;
 
-#include <linux/mtd/onenand_regs.h>
+	. = ALIGN(4);
+	.text      :
+	{
+	  start.o	(.text)
+	  *(.text)
+	}
 
-#define onenand_readw(a)        readw(THIS_ONENAND(a))
-#define onenand_writew(v, a)    writew(v, THIS_ONENAND(a))
+	. = ALIGN(4);
+	.rodata : { *(.rodata) }
 
-#define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
+	. = ALIGN(4);
+	.data : { *(.data) }
 
-#define READ_INTERRUPT()                                                \
-	onenand_readw(THIS_ONENAND(ONENAND_REG_INTERRUPT))
+	. = ALIGN(4);
+	.got : { *(.got) }
 
-#ifdef CONFIG_S5PC1XX
-#define AHB_ADDR			0xB0000000
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 7 | \
-					(fsa) << 5) & 0x3ffffff)
-#define CMD_MAP_01(mem_addr) 		(AHB_ADDR | (1 << 26) | (mem_addr))
-#define CMD_MAP_11(addr)		(AHB_ADDR | (3 << 26) | ((addr) << 2))
-#undef onenand_readw
-#define onenand_readw(a)		(readl(CMD_MAP_11((a) >> 1)) & 0xffff)
-#endif
-
-extern int onenand_read_block(unsigned char *buf);
-#endif
+	. = ALIGN(4);
+	__bss_start = .;
+	.bss : { *(.bss) }
+	_end = .;
+}

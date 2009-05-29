@@ -37,6 +37,23 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
+#ifdef CONFIG_S5PC1XX
+static inline int onenand_read_page(ulong block, ulong page,
+				u_char * buf, int pagesize)
+{
+	unsigned int *p = (unsigned int *) buf;
+	int mem_addr, i;
+
+	mem_addr = MEM_ADDR(block, page, 0);
+
+	pagesize >>= 2;
+
+	for (i = 0; i < pagesize; i++)
+		*p++ = *(volatile unsigned int *)(CMD_MAP_01(mem_addr));
+
+	return 0;
+}
+#else
 /* read a page with ECC */
 static inline int onenand_read_page(ulong block, ulong page,
 				u_char * buf, int pagesize)
@@ -88,6 +105,7 @@ static inline int onenand_read_page(ulong block, ulong page,
 
 	return 0;
 }
+#endif
 
 #define ONENAND_START_PAGE		1
 #define ONENAND_PAGES_PER_BLOCK		64
@@ -114,6 +132,9 @@ int onenand_read_block(unsigned char *buf)
 
 	erasesize = ONENAND_PAGES_PER_BLOCK * pagesize;
 	nblocks = (CONFIG_SYS_MONITOR_LEN + erasesize - 1) >> erase_shift;
+#ifdef CONFIG_S5PC1XX
+	nblocks = 1;
+#endif
 
 	/* NOTE: you must read page from page 1 of block 0 */
 	/* read the block page by page*/

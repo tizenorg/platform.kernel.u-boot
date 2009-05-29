@@ -64,6 +64,7 @@ lowlevel_init:
 	ldr r1, =0x9
 	str r1, [r0]
 
+#ifndef CONFIG_ONENAND_IPL
 	/* External interrupt pending clear : GPIO_BASE = 0xE0300000 */
 	ldr	r0, =S5P_GPIO_INT_PEND_REG(0x0)	/*EINTPEND*/
 	add r4, r0, #0x54
@@ -88,7 +89,6 @@ interrupt_pending_loop:
 	str	r3, [r1, #VIC_INTENCLEAR_OFFSET]
 	str	r3, [r2, #VIC_INTENCLEAR_OFFSET]
 
-#ifndef CONFIG_ONENAND_IPL
 	/* Set all interrupts as IRQ */
 	mov	r3, #0x0
 	str	r3, [r0, #VIC_INTSELECT_OFFSET]
@@ -105,33 +105,20 @@ interrupt_pending_loop:
 	/* init system clock */
 	bl system_clock_init
 
-#ifndef CONFIG_NAND_SPL
+#ifndef CONFIG_ONENAND_IPL
 	/* for UART */
 	bl uart_asm_init
 #endif
 
-#ifdef CONFIG_BOOT_NAND
-	/* simple init for NAND */
-	bl nand_asm_init
-#endif
-
+#ifdef CONFIG_ONENAND_IPL
 	/* Memory subsystem address 0xe0200200 */
 	ldr	r0, =S5P_MEM_SYS_CFG
 
 	mov	r1, #0
 	str	r1, [r0]
 
-#	bl	mem_ctrl_asm_init
-
-	/* Wakeup support. Don't know if it's going to be used, untested. */
-#	ldr	r0, =(OTHERS_REGISTER_BASE)
-#	ldr	r1, [r0]
-#	bic	r1, r1, #0xfffffff7
-#	cmp	r1, #0x8
-#	beq	wakeup_reset
-
 	/* DRAM I/O Drive-Strength */
-	ldr	r0, =S5P_MP_0_BASE(0x0)
+	ldr	r0, =S5P_MP_0DRV
 	ldr	r1, =0x5555
 	str	r1, [r0, #S5P_MP_0_OFFSET]
 	str	r1, [r0, #S5P_MP_1_OFFSET]
@@ -141,10 +128,23 @@ interrupt_pending_loop:
 	str	r1, [r0, #S5P_MP_5_OFFSET]
 	str	r1, [r0, #S5P_MP_6_OFFSET]
 	str	r1, [r0, #S5P_MP_7_OFFSET]
+#endif
+	bl	mem_ctrl_asm_init
+
+#ifndef CONFIG_ONENAND_IPL
+	/* Wakeup support. Don't know if it's going to be used, untested. */
+	ldr	r0, =(S5P_OTHERS_BASE)
+	ldr	r1, [r0]
+	bic	r1, r1, #0xfffffff7
+	cmp	r1, #0x8
+	beq	wakeup_reset
+#endif
+
 1:
 	mov	lr, r9
 	mov	pc, lr
 
+#ifndef CONFIG_ONENAND_IPL
 wakeup_reset:
 
 	/* Clear wakeup status register */
@@ -162,16 +162,19 @@ wakeup_reset:
 	mov	pc, r1
 	nop
 	nop
+#endif
 /*
  * system_clock_init: Initialize core clock and bus clock.
  * void system_clock_init(void)
  */
 system_clock_init:
+#ifndef CONFIG_ONENAND_IPL
 	nop
 	nop
 	nop
 	nop
 	nop
+#endif
 
 	/*
 	 * Fout = MDIV * Fin / (PDIV * (2 ^ SDIV))
@@ -266,10 +269,10 @@ dummy_loop:
 	mov pc, r3
 
 setting_end:
-#	/* wait at least 200us to stablize all clock */
-#	mov	r2, #0x10000
-#1:	subs	r2, r2, #1
-#	bne	1b
+	/* wait at least 200us to stablize all clock */
+	mov	r2, #0x10000
+1:	subs	r2, r2, #1
+	bne	1b
 
 	/* Synchronization for VIC port */
 #if defined(CONFIG_SYNC_MODE)
@@ -284,6 +287,7 @@ setting_end:
 #endif
 	mov	pc, lr
 
+#ifndef CONFIG_ONENAND_IPL
 /*
  * uart_asm_init: Initialize UART's pins
  */
@@ -310,23 +314,6 @@ uart_asm_init:
 	ldr	r1, [r0]
 	orr	r1, r1, #0x20
 	str	r1, [r0]
-
-	mov	pc, lr
-
-#ifdef CONFIG_BOOT_NAND
-/*
- * NAND Interface init for SMDK6400
- */
-nand_asm_init:
-	ldr	r0, =ELFIN_NAND_BASE
-	ldr	r1, [r0, #NFCONF_OFFSET]
-	orr	r1, r1, #0x70
-	orr	r1, r1, #0x7700
-	str	r1, [r0, #NFCONF_OFFSET]
-
-	ldr	r1, [r0, #NFCONT_OFFSET]
-	orr	r1, r1, #0x07
-	str	r1, [r0, #NFCONT_OFFSET]
 
 	mov	pc, lr
 #endif

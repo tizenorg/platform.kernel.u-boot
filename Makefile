@@ -151,7 +151,7 @@ ifeq ($(ARCH),ppc)
 CROSS_COMPILE = ppc_8xx-
 endif
 ifeq ($(ARCH),arm)
-CROSS_COMPILE = /usr/local/arm/arm-2007q3/bin/arm-none-linux-gnueabi-
+CROSS_COMPILE = arm-linux-
 endif
 ifeq ($(ARCH),i386)
 CROSS_COMPILE = i386-linux-
@@ -2984,7 +2984,9 @@ omap3_zoom1_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom1 omap3 omap3
 
 s5pc100_tickertape_config:	unconfig
+	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 tickertape samsung s5pc100
+	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 
 #########################################################################
 ## XScale Systems

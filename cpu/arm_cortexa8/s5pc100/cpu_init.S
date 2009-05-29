@@ -33,11 +33,15 @@
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
+
+#ifdef CONFIG_ONENAND_IPL
 	/* DLL parameter setting */
 	ldr r0, =S5P_PHYCONTROL0			@ 0xe6000018
 	ldr r1, =0x50101000
 	str r1, [r0]
+#endif
 
+#ifndef CONFIG_ONENAND_IPL
 	ldr r0, =S5P_PHYCONTROL1			@ 0xe600001c
 	ldr r1, =0xf4
 	str r1, [r0]
@@ -70,7 +74,9 @@ mem_ctrl_asm_init:
 	ldr r0, =S5P_CONCONTROL				@ 0xe6000000
 	ldr r1, =0xff001010
 	str r1, [r0]
+#endif
 
+#ifdef CONFIG_ONENAND_IPL
 	/*
 	 * BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh,
 	 * force precharge, dynamic power down off
@@ -83,7 +89,9 @@ mem_ctrl_asm_init:
 	ldr r0, =S5P_MEMCONFIG0				@ 0xe6000008
 	ldr r1, =0x20f80222
 	str r1, [r0]
+#endif
 
+#ifndef CONFIG_ONENAND_IPL
 	ldr r0, =S5P_MEMCONFIG1				@ 0xe600000c
 	ldr r1, =0x28f80222
 	str r1, [r0]
@@ -91,7 +99,9 @@ mem_ctrl_asm_init:
 	ldr r0, =S5P_PRECHCONFIG			@ 0xe6000014
 	ldr r1, =0x20000000
 	str r1, [r0]
+#endif
 
+#ifdef CONFIG_ONENAND_IPL
 	/*
 	 * 7.8us*166MHz%LE %LONG1294(0x50E) 7.8us*133MHz%LE %LONG1038(0x40E),
 	 * 100MHz%LE %LONG780(0x30C),
@@ -141,7 +151,9 @@ mem_ctrl_asm_init:
 	ldr r0, =S5P_DIRECTCMD				@ 0xe6000010
 	ldr r1, =0x00000032
 	str r1, [r0]
+#endif
 
+#ifndef CONFIG_ONENAND_IPL
 	/* chip1 Deselect */
 	ldr r0, =S5P_DIRECTCMD				@ 0xe6000010
 	ldr r1, =0x07100000
@@ -173,14 +185,17 @@ mem_ctrl_asm_init:
 	str r1, [r0]
 
 	/* PwrdnConfig */
-	ldr r0, =S5P_PWRDNCONFIG			@ 0xe6000028
-	ldr r1, =0x00100002
-	str r1, [r0]
+#	ldr r0, =S5P_PWRDNCONFIG			@ 0xe6000028
+#	ldr r1, =0x00100002
+#	str r1, [r0]
+#endif
 
+#ifdef CONFIG_ONENAND_IPL
 	/* BL%LE %LONG */
 	ldr r0, =S5P_MEMCONTROL				@ 0xe6000004
 	ldr r1, =0xff212100
 	str r1, [r0]
+#endif
 	mov	pc, lr
 
 	.ltorg
