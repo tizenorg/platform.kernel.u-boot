@@ -34,6 +34,7 @@
 
 .globl _start
 _start: b	reset
+#ifndef CONFIG_ONENAND_IPL
 	ldr	pc, _undefined_instruction
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
@@ -50,6 +51,9 @@ _not_used:		.word not_used
 _irq:			.word irq
 _fiq:			.word fiq
 _pad:			.word 0x12345678 /* now 16*4=64 */
+#else
+	.	= _start + 64
+#endif
 .global _end_vect
 _end_vect:
 
@@ -108,6 +112,7 @@ reset:
 	orr	r0, r0, #0xd3
 	msr	cpsr,r0
 
+#ifndef CONFIG_ONENAND_IPL
 #if (CONFIG_OMAP34XX)
 	/* Copy vectors to mask ROM indirect addr */
 	adr	r0, _start		@ r0 <- current position of code
@@ -131,11 +136,13 @@ next:
 	bl	cpy_clk_code		@ put dpll adjust code behind vectors
 #endif /* NAND Boot */
 #endif
+#endif	/* CONFIG_ONENAND_IPL */
 	/* the mask ROM code should have PLL and others stable */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 	bl	cpu_init_crit
 #endif
 
+#ifndef CONFIG_ONENAND_IPL
 #ifndef CONFIG_SKIP_RELOCATE_UBOOT
 relocate:				@ relocate U-Boot to RAM
 	adr	r0, _start		@ r0 <- current position of code
@@ -154,18 +161,24 @@ copy_loop:				@ copy 32 bytes at a time
 	cmp	r0, r2			@ until source end addreee [r2]
 	ble	copy_loop
 #endif	/* CONFIG_SKIP_RELOCATE_UBOOT */
+#endif	/* CONFIG_ONENAND_IPL */
 
 	/* Set up the stack */
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
+#ifdef CONFIG_ONENAND_IPL
+	sub	sp, r0, #128		@ leave 32 words for abort-stack
+#else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area
 	sub	r0, r0, #CONFIG_SYS_GBL_DATA_SIZE @ bdinfo
 #ifdef CONFIG_USE_IRQ
 	sub	r0, r0, #(CONFIG_STACKSIZE_IRQ + CONFIG_STACKSIZE_FIQ)
 #endif
 	sub	sp, r0, #12		@ leave 3 words for abort-stack
+#endif	/* CONFIG_ONENAND_IPL */
 	and	sp, sp, #~7		@ 8 byte alinged for (ldr/str)d
 
+#ifndef CONFIG_ONENAND_IPL
 	/* Clear BSS (if any). Is below tx (watch load addr - need space) */
 clear_bss:
 	ldr	r0, _bss_start		@ find start of bss segment
@@ -176,10 +189,15 @@ clbss_l:
 	cmp	r0, r1			@ are we at the end yet
 	add	r0, r0, #4		@ increment clear index pointer
 	bne	clbss_l			@ keep clearing till at end
+#endif	/* CONFIG_ONENAND_IPL */
 
 	ldr	pc, _start_armboot	@ jump to C code
 
+#ifdef CONFIG_ONENAND_IPL
+_start_armboot: .word start_oneboot
+#else
 _start_armboot: .word start_armboot
+#endif
 
 
 /*************************************************************************
@@ -218,6 +236,8 @@ cpu_init_crit:
 	bl	lowlevel_init		@ go setup pll,mux,memory
 	mov	lr, ip			@ restore link
 	mov	pc, lr			@ back to my caller
+
+#ifndef CONFIG_ONENAND_IPL
 /*
  *************************************************************************
  *
@@ -514,3 +534,4 @@ _loop_forever:
 	b	_loop_forever
 rstctl:
 	.word	PRM_RSTCTRL
+#endif	/* CONFIG_ONENAND_IPL */
