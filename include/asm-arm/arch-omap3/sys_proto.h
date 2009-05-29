@@ -63,5 +63,7 @@ void make_cs1_contiguous(void);
 void omap_nand_switch_ecc(int);
 void power_init_r(void);
 void dieid_num_r(void);
+void l2_cache_disable();
+void l2_cache_enable();
 
 #endif
