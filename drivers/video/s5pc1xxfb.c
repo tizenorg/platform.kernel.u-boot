@@ -369,3 +369,9 @@ ulong calc_fbsize(void)
 {
 	return (s5pcfb_fimd.xres * s5pcfb_fimd.yres * s5pcfb_fimd.bytes_per_pixel);
 }
+
+void s5pc1xxfb_test(void *lcdbase)
+{
+	lcd_ctrl_init(lcdbase);
+	lcd_enable();
+}
