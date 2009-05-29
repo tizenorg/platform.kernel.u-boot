@@ -151,7 +151,7 @@ ifeq ($(ARCH),ppc)
 CROSS_COMPILE = ppc_8xx-
 endif
 ifeq ($(ARCH),arm)
-CROSS_COMPILE = /usr/local/arm/arm-2007q3/bin/arm-none-linux-gnueabi-
+CROSS_COMPILE = arm-linux-
 endif
 ifeq ($(ARCH),i386)
 CROSS_COMPILE = i386-linux-
