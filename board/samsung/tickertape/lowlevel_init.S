@@ -116,6 +116,18 @@ interrupt_pending_loop:
 
 	mov	r1, #0
 	str	r1, [r0]
+
+	/* DRAM I/O Drive-Strength */
+	ldr	r0, =S5P_MP_0DRV
+	ldr	r1, =0x5555
+	str	r1, [r0, #S5P_MP_0_OFFSET]
+	str	r1, [r0, #S5P_MP_1_OFFSET]
+	str	r1, [r0, #S5P_MP_2_OFFSET]
+	str	r1, [r0, #S5P_MP_3_OFFSET]
+	str	r1, [r0, #S5P_MP_4_OFFSET]
+	str	r1, [r0, #S5P_MP_5_OFFSET]
+	str	r1, [r0, #S5P_MP_6_OFFSET]
+	str	r1, [r0, #S5P_MP_7_OFFSET]
 #endif
 	bl	mem_ctrl_asm_init
 
@@ -126,18 +138,6 @@ interrupt_pending_loop:
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
 	beq	wakeup_reset
-
-	/* DRAM I/O Drive-Strength */
-	ldr	r0, =S5P_MP_0_BASE(0x0)
-	ldr	r1, =0x5555
-	str	r1, [r0, #S5P_MP_0_OFFSET]
-	str	r1, [r0, #S5P_MP_1_OFFSET]
-	str	r1, [r0, #S5P_MP_2_OFFSET]
-	str	r1, [r0, #S5P_MP_3_OFFSET]
-	str	r1, [r0, #S5P_MP_4_OFFSET]
-	str	r1, [r0, #S5P_MP_5_OFFSET]
-	str	r1, [r0, #S5P_MP_6_OFFSET]
-	str	r1, [r0, #S5P_MP_7_OFFSET]
 #endif
 
 1:
