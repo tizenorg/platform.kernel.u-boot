@@ -206,9 +206,9 @@ void s_init(void)
 #endif
 
 #ifdef CONFIG_L2_OFF
-	l2cache_disable();
+	l2_cache_disable();
 #else
-	l2cache_enable();
+	l2_cache_enable();
 #endif
 	/*
 	 * Writing to AuxCR in U-boot using SMI for GP DEV
