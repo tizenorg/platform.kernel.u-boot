@@ -26,8 +26,8 @@
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define	DEFMASK			0xFF00
-#define COMMAND_ONLY	0xFFFE
-#define DATA_ONLY		0xFFFF
+#define COMMAND_ONLY	0xFE
+#define DATA_ONLY		0xFF
 
 #define S5PCFB_CS_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xdf, 0xE0300304)
 #define S5PCFB_CS_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x20, 0xE0300304)
