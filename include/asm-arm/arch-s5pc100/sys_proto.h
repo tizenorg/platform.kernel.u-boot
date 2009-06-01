@@ -25,6 +25,6 @@
 #define _SYS_PROTO_H_
 
 ulong get_PCLK(void);
-static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr);
+static inline s5pc1xx_uart_t *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr);
 
 #endif

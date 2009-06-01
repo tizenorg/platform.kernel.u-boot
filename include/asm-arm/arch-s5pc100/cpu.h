@@ -27,7 +27,7 @@
 
 /* UART (see manual chapter 11) */
 #ifndef __ASSEMBLY__
-typedef struct s5pc1x0_uart {
+typedef struct s5pc1xx_uart {
 	volatile unsigned long	ULCON;
 	volatile unsigned long	UCON;
 	volatile unsigned long	UFCON;
@@ -55,7 +55,7 @@ typedef struct s5pc1x0_uart {
 	volatile unsigned short    UDIVSLOT;
 	volatile unsigned char     res3[2];
 #endif
-} s5pc1xx_uart;
+} s5pc1xx_uart_t;
 
 enum s5pc1xx_uarts_nr {
 	S5PC1XX_UART0,
@@ -85,6 +85,7 @@ typedef struct s5pc1x0_timer {
 	volatile unsigned long	TCNTO3;
 	volatile unsigned long	TCNTB4;
 	volatile unsigned long	TCNTO4;
+
 	volatile unsigned long	TINTCSTAT;
 } s5pc1xx_timers;
 #else

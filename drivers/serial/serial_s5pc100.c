@@ -39,9 +39,9 @@
 
 #define barrier() asm volatile("" ::: "memory")
 
-static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
+static inline s5pc1xx_uart_t *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 {
-	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
+	return (s5pc1xx_uart_t *)(S5P_UART_BASE + (nr * 0x400));
 }
 
 /*
@@ -73,7 +73,7 @@ static const int udivslot[] = {
 void serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
-	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 	u32 pclk = get_PCLK();
 	u32 baudrate = gd->baudrate;
 	int i;
@@ -93,7 +93,7 @@ void serial_setbrg(void)
  */
 int serial_init(void)
 {
-	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
 	uart->UFCON = 0;
@@ -115,7 +115,7 @@ int serial_init(void)
  */
 int serial_getc(void)
 {
-	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	/* wait for character to arrive */
 	while (!(uart->UTRSTAT & 0x1));
@@ -142,7 +142,7 @@ void enable_putc(void)
  */
 void serial_putc(const char c)
 {
-	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 #ifdef CONFIG_MODEM_SUPPORT
 	if (be_quiet)
@@ -164,7 +164,7 @@ void serial_putc(const char c)
  */
 int serial_tstc(void)
 {
-	s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(UART_NR);
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	return uart->UTRSTAT & 0x1;
 }
