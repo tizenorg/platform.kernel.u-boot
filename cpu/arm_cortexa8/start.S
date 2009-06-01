@@ -525,6 +525,7 @@ finished_inval:
 	.align	5
 .global reset_cpu
 reset_cpu:
+#if (CONFIG_OMAP34XX)
 	ldr	r1, rstctl			@ get addr for global reset
 						@ reg
 	mov	r3, #0x2			@ full reset pll + mpu
@@ -534,4 +535,5 @@ _loop_forever:
 	b	_loop_forever
 rstctl:
 	.word	PRM_RSTCTRL
+#endif
 #endif	/* CONFIG_ONENAND_IPL */
