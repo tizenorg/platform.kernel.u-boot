@@ -9,7 +9,6 @@
 
 #include <onenand_uboot.h>
 
-#include <s5pc1xx.h>
 #include <s5pc1xx-onenand.h>
 
 #include <asm/io.h>

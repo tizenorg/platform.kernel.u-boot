@@ -1262,276 +1262,276 @@
 /* SROM Base */
 #define S5P_SROMC_BASE(x)	(S5P_PA_SROMC + (x))
 
-/* SROM offset */
-#define SROM_BW_OFFSET		0x0
-#define SROM_BC0_OFFSET		0x04
-#define SROM_BC1_OFFSET		0x08
-#define SROM_BC2_OFFSET		0x0c
-#define SROM_BC3_OFFSET		0x10
-#define SROM_BC4_OFFSET		0x14
-#define SROM_BC5_OFFSET		0x18
+/* srom offset */
+#define srom_bw_offset		0x0
+#define srom_bc0_offset		0x04
+#define srom_bc1_offset		0x08
+#define srom_bc2_offset		0x0c
+#define srom_bc3_offset		0x10
+#define srom_bc4_offset		0x14
+#define srom_bc5_offset		0x18
 
-/* SROM Register */
-#define S5P_SROM_BW		S5P_SROMC_BASE(SROM_BW_OFFSET)
-#define S5P_SROM_BC0		S5P_SROMC_BASE(SROM_BC0_OFFSET)
-#define S5P_SROM_BC1		S5P_SROMC_BASE(SROM_BC1_OFFSET)
-#define S5P_SROM_BC2		S5P_SROMC_BASE(SROM_BC2_OFFSET)
-#define S5P_SROM_BC3		S5P_SROMC_BASE(SROM_BC3_OFFSET)
-#define S5P_SROM_BC4		S5P_SROMC_BASE(SROM_BC4_OFFSET)
-#define S5P_SROM_BC5		S5P_SROMC_BASE(SROM_BC5_OFFSET)
+/* srom register */
+#define s5p_srom_bw		s5p_sromc_base(srom_bw_offset)
+#define s5p_srom_bc0		s5p_sromc_base(srom_bc0_offset)
+#define s5p_srom_bc1		s5p_sromc_base(srom_bc1_offset)
+#define s5p_srom_bc2		s5p_sromc_base(srom_bc2_offset)
+#define s5p_srom_bc3		s5p_sromc_base(srom_bc3_offset)
+#define s5p_srom_bc4		s5p_sromc_base(srom_bc4_offset)
+#define s5p_srom_bc5		s5p_sromc_base(srom_bc5_offset)
 
-/* SROM Addressing */
-#define S5P_SROM_BW_REG		__REG(S5P_SROM_BW)
-#define S5P_SROM_BC0_REG	__REG(S5P_SROM_BC0)
-#define S5P_SROM_BC1_REG	__REG(S5P_SROM_BC1)
-#define S5P_SROM_BC2_REG	__REG(S5P_SROM_BC2)
-#define S5P_SROM_BC3_REG	__REG(S5P_SROM_BC3)
-#define S5P_SROM_BC4_REG	__REG(S5P_SROM_BC4)
-#define S5P_SROM_BC5_REG	__REG(S5P_SROM_BC5)
+/* srom addressing */
+#define s5p_srom_bw_reg		__reg(s5p_srom_bw)
+#define s5p_srom_bc0_reg	__reg(s5p_srom_bc0)
+#define s5p_srom_bc1_reg	__reg(s5p_srom_bc1)
+#define s5p_srom_bc2_reg	__reg(s5p_srom_bc2)
+#define s5p_srom_bc3_reg	__reg(s5p_srom_bc3)
+#define s5p_srom_bc4_reg	__reg(s5p_srom_bc4)
+#define s5p_srom_bc5_reg	__reg(s5p_srom_bc5)
 
-/* OneNAND */
-#define S5P_ONENANDC_BASE(x)	(S5P_PA_ONENANDC + (x))
+/* onenand */
+#define s5p_onenandc_base(x)	(s5p_pa_onenandc + (x))
 
-/* OneNAND offset */
-#define MEM_CFG_OFFSET		0x0
-#define BURST_LEN_OFFSET	0x10
-#define MEM_RESET_OFFSET	0x20
-#define INT_ERR_STAT_OFFSET	0x30
-#define INT_ERR_MASK_OFFSET	0x40
-#define INT_ERR_ACK_OFFSET	0x50
-#define ECC_ERR_STAT_1_OFFSET	0x60
-#define MANUFACT_ID_OFFSET	0x70
-#define DEVICE_ID_OFFSET	0x80
-#define DATA_BUF_SIZE_OFFSET	0x90
-#define BOOT_BUF_SIZE_OFFSET	0xa0
-#define BUF_AMOUNT_OFFSET	0xb0
-#define TECH_OFFSET		0xc0
-#define FBA_WIDTH_OFFSET	0xd0
-#define FPA_WIDTH_OFFSET	0xe0
-#define FSA_WIDTH_OFFSET	0xf0
-#define REVISION_OFFSET		0x100
-#define SYNC_MODE_OFFSET	0x130
-#define TRANS_SPARE_OFFSET	0x140
-#define PAGE_CNT_OFFSET		0x170
-#define ERR_PAGE_ADDR_OFFSET	0x180
-#define BURST_RD_LAT_OFFSET	0x190
-#define INT_PIN_ENABLE_OFFSET	0x1a0
-#define INT_MON_CYC_OFFSET	0x1b0
-#define ACC_CLOCK_OFFSET	0x1c0
-#define ERR_BLK_ADDR_OFFSET	0x1e0
-#define FLASH_VER_ID_OFFSET	0x1f0
-#define BANK_EN_OFFSET		0x220
-#define WTCHDG_RST_L_OFFSET	0x260
-#define WTCHDG_RST_H_OFFSET	0x270
-#define SYNC_WRITE_OFFSET	0x280
-#define CACHE_READ_OFFSET	0x290
-#define COLD_RST_DLY_OFFSET	0x2a0
-#define DDP_DEVICE_OFFSET	0x2b0
-#define MULTI_PLANE_OFFSET	0x2c0
-#define TRANS_MODE_OFFSET	0x2e0
-#define DEV_STAT_OFFSET		0x2f0
-#define ECC_ERR_STAT_2_OFFSET	0x300
-#define ECC_ERR_STAT_3_OFFSET	0x310
-#define ECC_ERR_STAT_4_OFFSET	0x320
-#define EFCT_BUF_CNT_OFFSET	0x330
-#define DEV_PAGE_SIZE_OFFSET	0x340
-#define SUPERLOAD_EN_OFFSET	0x350
-#define CACHE_PRG_EN_OFFSET	0x360
-#define SINGLE_PAGE_BUF_OFFSET	0x370
-#define OFFSET_ADDR_OFFSET	0x380
-#define INT_MON_STATUS_OFFSET	0x390
+/* onenand offset */
+#define mem_cfg_offset		0x0
+#define burst_len_offset	0x10
+#define mem_reset_offset	0x20
+#define int_err_stat_offset	0x30
+#define int_err_mask_offset	0x40
+#define int_err_ack_offset	0x50
+#define ecc_err_stat_1_offset	0x60
+#define manufact_id_offset	0x70
+#define device_id_offset	0x80
+#define data_buf_size_offset	0x90
+#define boot_buf_size_offset	0xa0
+#define buf_amount_offset	0xb0
+#define tech_offset		0xc0
+#define fba_width_offset	0xd0
+#define fpa_width_offset	0xe0
+#define fsa_width_offset	0xf0
+#define revision_offset		0x100
+#define sync_mode_offset	0x130
+#define trans_spare_offset	0x140
+#define page_cnt_offset		0x170
+#define err_page_addr_offset	0x180
+#define burst_rd_lat_offset	0x190
+#define int_pin_enable_offset	0x1a0
+#define int_mon_cyc_offset	0x1b0
+#define acc_clock_offset	0x1c0
+#define err_blk_addr_offset	0x1e0
+#define flash_ver_id_offset	0x1f0
+#define bank_en_offset		0x220
+#define wtchdg_rst_l_offset	0x260
+#define wtchdg_rst_h_offset	0x270
+#define sync_write_offset	0x280
+#define cache_read_offset	0x290
+#define cold_rst_dly_offset	0x2a0
+#define ddp_device_offset	0x2b0
+#define multi_plane_offset	0x2c0
+#define trans_mode_offset	0x2e0
+#define dev_stat_offset		0x2f0
+#define ecc_err_stat_2_offset	0x300
+#define ecc_err_stat_3_offset	0x310
+#define ecc_err_stat_4_offset	0x320
+#define efct_buf_cnt_offset	0x330
+#define dev_page_size_offset	0x340
+#define superload_en_offset	0x350
+#define cache_prg_en_offset	0x360
+#define single_page_buf_offset	0x370
+#define offset_addr_offset	0x380
+#define int_mon_status_offset	0x390
 
-/* OneNAND register */
-#define S5P_MEM_CFG		S5P_ONENANDC_BASE(MEM_CFG_OFFSET)
-#define S5P_BURST_LEN		S5P_ONENANDC_BASE(BURST_LEN_OFFSET)
-#define S5P_MEM_RESET		S5P_ONENANDC_BASE(MEM_RESET_OFFSET)
-#define S5P_INT_ERR_STAT	S5P_ONENANDC_BASE(INT_ERR_STAT_OFFSET)
-#define S5P_INT_ERR_MASK	S5P_ONENANDC_BASE(INT_ERR_MASK_OFFSET)
-#define S5P_INT_ERR_ACK		S5P_ONENANDC_BASE(INT_ERR_ACK_OFFSET)
-#define S5P_ECC_ERR_STAT_1	S5P_ONENANDC_BASE(ECC_ERR_STAT_1_OFFSET)
-#define S5P_MANUFACT_ID		S5P_ONENANDC_BASE(MANUFACT_ID_OFFSET)
-#define S5P_DEVICE_ID		S5P_ONENANDC_BASE(DEVICE_ID_OFFSET)
-#define S5P_DATA_BUF_SIZE	S5P_ONENANDC_BASE(DATA_BUF_SIZE_OFFSET)
-#define S5P_BOOT_BUF_SIZE	S5P_ONENANDC_BASE(BOOT_BUF_SIZE_OFFSET)
-#define S5P_BUF_AMOUNT		S5P_ONENANDC_BASE(BUF_AMOUNT_OFFSET)
-#define S5P_TECH		S5P_ONENANDC_BASE(TECH_OFFSET)
-#define S5P_FBA_WIDTH		S5P_ONENANDC_BASE(FBA_WIDTH_OFFSET)
-#define S5P_FPA_WIDTH		S5P_ONENANDC_BASE(FPA_WIDTH_OFFSET)
-#define S5P_FSA_WIDTH		S5P_ONENANDC_BASE(FSA_WIDTH_OFFSET)
-#define S5P_REVISION		S5P_ONENANDC_BASE(REVISION_OFFSET)
-#define S5P_SYNC_MODE		S5P_ONENANDC_BASE(SYNC_MODE_OFFSET)
-#define S5P_TRANS_SPARE		S5P_ONENANDC_BASE(TRANS_SPARE_OFFSET)
-#define S5P_PAGE_CNT		S5P_ONENANDC_BASE(PAGE_CNT_OFFSET)
-#define S5P_ERR_PAGE_ADDR	S5P_ONENANDC_BASE(ERR_PAGE_ADDR_OFFSET)
-#define S5P_BURST_RD_LAT	S5P_ONENANDC_BASE(BURST_RD_LAT_OFFSET)
-#define S5P_INT_PIN_ENABLE	S5P_ONENANDC_BASE(INT_PIN_ENABLE_OFFSET)
-#define S5P_INT_MON_CYC		S5P_ONENANDC_BASE(INT_MON_CYC_OFFSET)
-#define S5P_ACC_CLOCK		S5P_ONENANDC_BASE(ACC_CLOCK_OFFSET)
-#define S5P_ERR_BLK_ADDR	S5P_ONENANDC_BASE(ERR_BLK_ADDR_OFFSET)
-#define S5P_FLASH_VER_ID	S5P_ONENANDC_BASE(FLASH_VER_ID_OFFSET)
-#define S5P_BANK_EN		S5P_ONENANDC_BASE(BANK_EN_OFFSET)
-#define S5P_WTCHDG_RST_L	S5P_ONENANDC_BASE(WTCHDG_RST_L_OFFSET)
-#define S5P_WTCHDG_RST_H	S5P_ONENANDC_BASE(WTCHDG_RST_H_OFFSET)
-#define S5P_SYNC_WRITE		S5P_ONENANDC_BASE(SYNC_WRITE_OFFSET)
-#define S5P_CACHE_READ		S5P_ONENANDC_BASE(CACHE_READ_OFFSET)
-#define S5P_COLD_RST_DLY	S5P_ONENANDC_BASE(COLD_RST_DLY_OFFSET)
-#define S5P_DDP_DEVICE		S5P_ONENANDC_BASE(DDP_DEVICE_OFFSET)
-#define S5P_MULTI_PLANE		S5P_ONENANDC_BASE(MULTI_PLANE_OFFSET)
-#define S5P_MEM_CNT		S5P_ONENANDC_BASE(MEM_CNT_OFFSET)
-#define S5P_TRANS_MODE		S5P_ONENANDC_BASE(TRANS_MODE_OFFSET)
-#define S5P_DEV_START		S5P_ONENANDC_BASE(DEV_START_OFFSET)
-#define S5P_ECC_ERR_STAT_2	S5P_ONENANDC_BASE(ECC_ERR_STAT_2_OFFSET)
-#define S5P_ECC_ERR_STAT_3	S5P_ONENANDC_BASE(ECC_ERR_STAT_3_OFFSET)
-#define S5P_ECC_ERR_STAT_4	S5P_ONENANDC_BASE(ECC_ERR_STAT_4_OFFSET)
-#define S5P_EFCT_BUF_CNT	S5P_ONENANDC_BASE(EFCT_BUF_CNT_OFFSET)
-#define S5P_DEV_PAGE_SIZE	S5P_ONENANDC_BASE(DEV_PAGE_SIZE_OFFSET)
-#define S5P_SUPERLOAD_EN	S5P_ONENANDC_BASE(SUPERLOAD_EN_OFFSET)
-#define S5P_CACHE_PRG_EN	S5P_ONENANDC_BASE(CACHE_PRG_EN_OFFSET)
-#define S5P_SINGLE_PAGE_BUF	S5P_ONENANDC_BASE(SINGLE_PAGE_BUF_OFFSET)
-#define S5P_OFFSET_ADDR		S5P_ONENANDC_BASE(OFFSET_ADDR_OFFSET)
-#define S5P_INT_MON_STATUS	S5P_ONENANDC_BASE(INT_MON_STATUS_OFFSET)
+/* onenand register */
+#define s5p_mem_cfg		s5p_onenandc_base(mem_cfg_offset)
+#define s5p_burst_len		s5p_onenandc_base(burst_len_offset)
+#define s5p_mem_reset		s5p_onenandc_base(mem_reset_offset)
+#define s5p_int_err_stat	s5p_onenandc_base(int_err_stat_offset)
+#define s5p_int_err_mask	s5p_onenandc_base(int_err_mask_offset)
+#define s5p_int_err_ack		s5p_onenandc_base(int_err_ack_offset)
+#define s5p_ecc_err_stat_1	s5p_onenandc_base(ecc_err_stat_1_offset)
+#define s5p_manufact_id		s5p_onenandc_base(manufact_id_offset)
+#define s5p_device_id		s5p_onenandc_base(device_id_offset)
+#define s5p_data_buf_size	s5p_onenandc_base(data_buf_size_offset)
+#define s5p_boot_buf_size	s5p_onenandc_base(boot_buf_size_offset)
+#define s5p_buf_amount		s5p_onenandc_base(buf_amount_offset)
+#define s5p_tech		s5p_onenandc_base(tech_offset)
+#define s5p_fba_width		s5p_onenandc_base(fba_width_offset)
+#define s5p_fpa_width		s5p_onenandc_base(fpa_width_offset)
+#define s5p_fsa_width		s5p_onenandc_base(fsa_width_offset)
+#define s5p_revision		s5p_onenandc_base(revision_offset)
+#define s5p_sync_mode		s5p_onenandc_base(sync_mode_offset)
+#define s5p_trans_spare		s5p_onenandc_base(trans_spare_offset)
+#define s5p_page_cnt		s5p_onenandc_base(page_cnt_offset)
+#define s5p_err_page_addr	s5p_onenandc_base(err_page_addr_offset)
+#define s5p_burst_rd_lat	s5p_onenandc_base(burst_rd_lat_offset)
+#define s5p_int_pin_enable	s5p_onenandc_base(int_pin_enable_offset)
+#define s5p_int_mon_cyc		s5p_onenandc_base(int_mon_cyc_offset)
+#define s5p_acc_clock		s5p_onenandc_base(acc_clock_offset)
+#define s5p_err_blk_addr	s5p_onenandc_base(err_blk_addr_offset)
+#define s5p_flash_ver_id	s5p_onenandc_base(flash_ver_id_offset)
+#define s5p_bank_en		s5p_onenandc_base(bank_en_offset)
+#define s5p_wtchdg_rst_l	s5p_onenandc_base(wtchdg_rst_l_offset)
+#define s5p_wtchdg_rst_h	s5p_onenandc_base(wtchdg_rst_h_offset)
+#define s5p_sync_write		s5p_onenandc_base(sync_write_offset)
+#define s5p_cache_read		s5p_onenandc_base(cache_read_offset)
+#define s5p_cold_rst_dly	s5p_onenandc_base(cold_rst_dly_offset)
+#define s5p_ddp_device		s5p_onenandc_base(ddp_device_offset)
+#define s5p_multi_plane		s5p_onenandc_base(multi_plane_offset)
+#define s5p_mem_cnt		s5p_onenandc_base(mem_cnt_offset)
+#define s5p_trans_mode		s5p_onenandc_base(trans_mode_offset)
+#define s5p_dev_start		s5p_onenandc_base(dev_start_offset)
+#define s5p_ecc_err_stat_2	s5p_onenandc_base(ecc_err_stat_2_offset)
+#define s5p_ecc_err_stat_3	s5p_onenandc_base(ecc_err_stat_3_offset)
+#define s5p_ecc_err_stat_4	s5p_onenandc_base(ecc_err_stat_4_offset)
+#define s5p_efct_buf_cnt	s5p_onenandc_base(efct_buf_cnt_offset)
+#define s5p_dev_page_size	s5p_onenandc_base(dev_page_size_offset)
+#define s5p_superload_en	s5p_onenandc_base(superload_en_offset)
+#define s5p_cache_prg_en	s5p_onenandc_base(cache_prg_en_offset)
+#define s5p_single_page_buf	s5p_onenandc_base(single_page_buf_offset)
+#define s5p_offset_addr		s5p_onenandc_base(offset_addr_offset)
+#define s5p_int_mon_status	s5p_onenandc_base(int_mon_status_offset)
 
 /*
- * Timer 
- * : PWM, Watchdog, System timer, RTC
+ * timer 
+ * : pwm, watchdog, system timer, rtc
  */
 
-/* PWM */
-#define S5P_PWMTIMER_BASE(x)	(S5P_PA_PWMTIMER + (x))
+/* pwm */
+#define s5p_pwmtimer_base(x)	(s5p_pa_pwmtimer + (x))
 
-/* PWM timer offset */
-#define PWM_TCFG0_OFFSET	0x0
-#define PWM_TCFG1_OFFSET	0x04
-#define PWM_TCON_OFFSET		0x08
-#define PWM_TCNTB0_OFFSET	0x0c
-#define PWM_TCMPB0_OFFSET	0x10
-#define PWM_TCNTO0_OFFSET	0x14
-#define PWM_TCNTB1_OFFSET	0x18
-#define PWM_TCMPB1_OFFSET	0x1c
-#define PWM_TCNTO1_OFFSET	0x20
-#define PWM_TCNTB2_OFFSET	0x24
-#define PWM_TCMPB2_OFFSET	0x28
-#define PWM_TCNTO2_OFFSET	0x2c
-#define PWM_TCNTB3_OFFSET	0x30
-#define PWM_TCNTO3_OFFSET	0x38
-#define PWM_TCNTB4_OFFSET	0x3c
-#define PWM_TCNTO4_OFFSET	0x40
-#define PWM_TINT_CSTAT_OFFSET	0x44
+/* pwm timer offset */
+#define pwm_tcfg0_offset	0x0
+#define pwm_tcfg1_offset	0x04
+#define pwm_tcon_offset		0x08
+#define pwm_tcntb0_offset	0x0c
+#define pwm_tcmpb0_offset	0x10
+#define pwm_tcnto0_offset	0x14
+#define pwm_tcntb1_offset	0x18
+#define pwm_tcmpb1_offset	0x1c
+#define pwm_tcnto1_offset	0x20
+#define pwm_tcntb2_offset	0x24
+#define pwm_tcmpb2_offset	0x28
+#define pwm_tcnto2_offset	0x2c
+#define pwm_tcntb3_offset	0x30
+#define pwm_tcnto3_offset	0x38
+#define pwm_tcntb4_offset	0x3c
+#define pwm_tcnto4_offset	0x40
+#define pwm_tint_cstat_offset	0x44
 
-/* PWM timer register */
-#define S5P_PWM_TCFG0		S5P_PWMTIMER_BASE(PWM_TCFG0_OFFSET)
-#define S5P_PWM_TCFG1		S5P_PWMTIMER_BASE(PWM_TCFG1_OFFSET)
-#define S5P_PWM_TCON		S5P_PWMTIMER_BASE(PWM_TCON_OFFSET)
-#define S5P_PWM_TCNTB0		S5P_PWMTIMER_BASE(PWM_TCNTB0_OFFSET)
-#define S5P_PWM_TCMPB0		S5P_PWMTIMER_BASE(PWM_TCMPB0_OFFSET)
-#define S5P_PWM_TCNTO0		S5P_PWMTIMER_BASE(PWM_TCNTO0_OFFSET)
-#define S5P_PWM_TCNTB1		S5P_PWMTIMER_BASE(PWM_TCNTB1_OFFSET)
-#define S5P_PWM_TCMPB1		S5P_PWMTIMER_BASE(PWM_TCMPB1_OFFSET)
-#define S5P_PWM_TCNTO1		S5P_PWMTIMER_BASE(PWM_TCNTO1_OFFSET)
-#define S5P_PWM_TCNTB2		S5P_PWMTIMER_BASE(PWM_TCNTB2_OFFSET)
-#define S5P_PWM_TCMPB2		S5P_PWMTIMER_BASE(PWM_TCMPB2_OFFSET)
-#define S5P_PWM_TCNTO2		S5P_PWMTIMER_BASE(PWM_TCNTO2_OFFSET)
-#define S5P_PWM_TCNTB3		S5P_PWMTIMER_BASE(PWM_TCNTB3_OFFSET)
-#define S5P_PWM_TCNTO3		S5P_PWMTIMER_BASE(PWM_TCNTO3_OFFSET)
-#define S5P_PWM_TCNTB4		S5P_PWMTIMER_BASE(PWM_TCNTB4_OFFSET)
-#define S5P_PWM_TCNTO4		S5P_PWMTIMER_BASE(PWM_TCNTO4_OFFSET)
-#define S5P_PWM_TINT_CSTAT	S5P_PWMTIMER_BASE(PWM_TINT_CSTAT_OFFSET)
+/* pwm timer register */
+#define s5p_pwm_tcfg0		s5p_pwmtimer_base(pwm_tcfg0_offset)
+#define s5p_pwm_tcfg1		s5p_pwmtimer_base(pwm_tcfg1_offset)
+#define s5p_pwm_tcon		s5p_pwmtimer_base(pwm_tcon_offset)
+#define s5p_pwm_tcntb0		s5p_pwmtimer_base(pwm_tcntb0_offset)
+#define s5p_pwm_tcmpb0		s5p_pwmtimer_base(pwm_tcmpb0_offset)
+#define s5p_pwm_tcnto0		s5p_pwmtimer_base(pwm_tcnto0_offset)
+#define s5p_pwm_tcntb1		s5p_pwmtimer_base(pwm_tcntb1_offset)
+#define s5p_pwm_tcmpb1		s5p_pwmtimer_base(pwm_tcmpb1_offset)
+#define s5p_pwm_tcnto1		s5p_pwmtimer_base(pwm_tcnto1_offset)
+#define s5p_pwm_tcntb2		s5p_pwmtimer_base(pwm_tcntb2_offset)
+#define s5p_pwm_tcmpb2		s5p_pwmtimer_base(pwm_tcmpb2_offset)
+#define s5p_pwm_tcnto2		s5p_pwmtimer_base(pwm_tcnto2_offset)
+#define s5p_pwm_tcntb3		s5p_pwmtimer_base(pwm_tcntb3_offset)
+#define s5p_pwm_tcnto3		s5p_pwmtimer_base(pwm_tcnto3_offset)
+#define s5p_pwm_tcntb4		s5p_pwmtimer_base(pwm_tcntb4_offset)
+#define s5p_pwm_tcnto4		s5p_pwmtimer_base(pwm_tcnto4_offset)
+#define s5p_pwm_tint_cstat	s5p_pwmtimer_base(pwm_tint_cstat_offset)
 
-/* PWM timer addressing */
-#define S5P_TIMER_BASE		S5P_PWMTIMER_BASE(0x0)
-#define S5P_PWMTIMER_BASE_REG	__REG(S5P_PWMTIMER_BASE(0x0))
-#define S5P_PWM_TCFG0_REG	__REG(S5P_PWM_TCFG0)
-#define S5P_PWM_TCFG1_REG	__REG(S5P_PWM_TCFG1)
-#define S5P_PWM_TCON_REG	__REG(S5P_PWM_TCON)
-#define S5P_PWM_TCNTB0_REG	__REG(S5P_PWM_TCNTB0)
-#define S5P_PWM_TCMPB0_REG	__REG(S5P_PWM_TCMPB0)
-#define S5P_PWM_TCNTO0_REG	__REG(S5P_PWM_TCNTO0)
-#define S5P_PWM_TCNTB1_REG	__REG(S5P_PWM_TCNTB1)
-#define S5P_PWM_TCMPB1_REG	__REG(S5P_PWM_TCMPB1)
-#define S5P_PWM_TCNTO1_REG	__REG(S5P_PWM_TCNTO1)
-#define S5P_PWM_TCNTB2_REG	__REG(S5P_PWM_TCNTB2)
-#define S5P_PWM_TCMPB2_REG	__REG(S5P_PWM_TCMPB2)
-#define S5P_PWM_TCNTO2_REG	__REG(S5P_PWM_TCNTO2)
-#define S5P_PWM_TCNTB3_REG	__REG(S5P_PWM_TCNTB3)
-#define S5P_PWM_TCNTO3_REG	__REG(S5P_PWM_TCNTO3)
-#define S5P_PWM_TCNTB4_REG	__REG(S5P_PWM_TCNTB4)
-#define S5P_PWM_TCNTO4_REG	__REG(S5P_PWM_TCNTO4)
-#define S5P_PWM_TINT_CSTAT_REG	__REG(S5P_PWM_TINT_CSTAT)
+/* pwm timer addressing */
+#define s5p_timer_base		s5p_pwmtimer_base(0x0)
+#define s5p_pwmtimer_base_reg	__reg(s5p_pwmtimer_base(0x0))
+#define s5p_pwm_tcfg0_reg	__reg(s5p_pwm_tcfg0)
+#define s5p_pwm_tcfg1_reg	__reg(s5p_pwm_tcfg1)
+#define s5p_pwm_tcon_reg	__reg(s5p_pwm_tcon)
+#define s5p_pwm_tcntb0_reg	__reg(s5p_pwm_tcntb0)
+#define s5p_pwm_tcmpb0_reg	__reg(s5p_pwm_tcmpb0)
+#define s5p_pwm_tcnto0_reg	__reg(s5p_pwm_tcnto0)
+#define s5p_pwm_tcntb1_reg	__reg(s5p_pwm_tcntb1)
+#define s5p_pwm_tcmpb1_reg	__reg(s5p_pwm_tcmpb1)
+#define s5p_pwm_tcnto1_reg	__reg(s5p_pwm_tcnto1)
+#define s5p_pwm_tcntb2_reg	__reg(s5p_pwm_tcntb2)
+#define s5p_pwm_tcmpb2_reg	__reg(s5p_pwm_tcmpb2)
+#define s5p_pwm_tcnto2_reg	__reg(s5p_pwm_tcnto2)
+#define s5p_pwm_tcntb3_reg	__reg(s5p_pwm_tcntb3)
+#define s5p_pwm_tcnto3_reg	__reg(s5p_pwm_tcnto3)
+#define s5p_pwm_tcntb4_reg	__reg(s5p_pwm_tcntb4)
+#define s5p_pwm_tcnto4_reg	__reg(s5p_pwm_tcnto4)
+#define s5p_pwm_tint_cstat_reg	__reg(s5p_pwm_tint_cstat)
 
-/* PWM timer value */
-#define S5P_TCON4_AUTO_RELOAD	(1 << 22)  /* Interval mode(Auto Reload) of PWM Timer 4 */
-#define S5P_TCON4_UPDATE	(1 << 21)  /* Update TCNTB4 */
-#define S5P_TCON4_ON		(1 << 20)  /* start bit of PWM Timer 4 */
-
-
-
-/* System Timer */
-#define S5P_SYSTIMER_BASE(x)	(S5P_PA_SYSTEM + (x))
-
-#define SYS_TCFG_OFFSET		0x0
-#define SYS_TCON_OFFSET		0x04
-#define SYS_TCNTB_OFFSET	0x08
-#define SYS_TCNTO_OFFSET	0x0c
-#define SYS_ICNTB_OFFSET	0x10
-#define SYS_ICNTO_OFFSET	0x14
-#define SYS_INT_CSTAT_OFFSET	0x18
-
-#define S5P_SYS_TCFG		S5P_SYSTIMER_BASE(SYS_TCFG_OFFSET)
-#define S5P_SYS_TCON		S5P_SYSTIMER_BASE(SYS_TCON_OFFSET)
-#define S5P_SYS_TCNTB		S5P_SYSTIMER_BASE(SYS_TCNTB_OFFSET)
-#define S5P_SYS_TCNTO		S5P_SYSTIMER_BASE(SYS_TCNTO_OFFSET)
-#define S5P_SYS_ICNTB		S5P_SYSTIMER_BASE(SYS_ICNTB_OFFSET)
-#define S5P_SYS_ICNTO		S5P_SYSTIMER_BASE(SYS_ICNTO_OFFSET)
-#define S5P_SYS_INT_CSTAT	S5P_SYSTIMER_BASE(SYS_INT_CSTAT_OFFSET)
+/* pwm timer value */
+#define s5p_tcon4_auto_reload	(1 << 22)  /* interval mode(auto reload) of pwm timer 4 */
+#define s5p_tcon4_update	(1 << 21)  /* update tcntb4 */
+#define s5p_tcon4_on		(1 << 20)  /* start bit of pwm timer 4 */
 
 
-/* Watchdog */
-#define S5P_WATCHDOG_BASE(x)	(S5P_PA_WATCHDOG + (x))
 
-#define WTCON_OFFSET		0x0
-#define WTDAT_OFFSET		0x4
-#define WTCNT_OFFSET		0x8
-#define WTCLRINT_OFFSET		0xc
+/* system timer */
+#define s5p_systimer_base(x)	(s5p_pa_system + (x))
 
-#define S5P_WTCON		S5P_WATCHDOG_BASE(WTCON_OFFSET)
-#define S5P_WTDAT		S5P_WATCHDOG_BASE(WTDAT_OFFSET)
-#define S5P_WTCNT		S5P_WATCHDOG_BASE(WTCNT_OFFSET)
-#define S5P_WTCLRINT		S5P_WATCHDOG_BASE(WTCLRINT_OFFSET)
+#define sys_tcfg_offset		0x0
+#define sys_tcon_offset		0x04
+#define sys_tcntb_offset	0x08
+#define sys_tcnto_offset	0x0c
+#define sys_icntb_offset	0x10
+#define sys_icnto_offset	0x14
+#define sys_int_cstat_offset	0x18
 
-/* RTC */
-#define S5P_RTC_BASE(x)		(S5P_PA_RTC + (x))
+#define s5p_sys_tcfg		s5p_systimer_base(sys_tcfg_offset)
+#define s5p_sys_tcon		s5p_systimer_base(sys_tcon_offset)
+#define s5p_sys_tcntb		s5p_systimer_base(sys_tcntb_offset)
+#define s5p_sys_tcnto		s5p_systimer_base(sys_tcnto_offset)
+#define s5p_sys_icntb		s5p_systimer_base(sys_icntb_offset)
+#define s5p_sys_icnto		s5p_systimer_base(sys_icnto_offset)
+#define s5p_sys_int_cstat	s5p_systimer_base(sys_int_cstat_offset)
 
-#define INTP_OFFSET		0x30
-#define RTCCON_OFFSET		0x40
-#define TICCNT_OFFSET		0x44
-#define RTCALM_OFFSET		0x50
 
-#define ALMSEC_OFFSET		0x54
-#define ALMMIN_OFFSET		0x58
-#define ALMHOUR_OFFSET		0x5c
-#define ALMDATE_OFFSET		0x60
-#define ALMMON_OFFSET		0x64
-#define ALMYEAR_OFFSET		0x68
+/* watchdog */
+#define s5p_watchdog_base(x)	(s5p_pa_watchdog + (x))
 
-#define BCDSEC_OFFSET		0x70
-#define BCDMIN_OFFSET		0x74
-#define BCDHOUR_OFFSET		0x78
-#define BCDDATE_OFFSET		0x7c
-#define BCDDAY_OFFSET		0x80
-#define BCDMON_OFFSET		0x84
-#define BCDYEAR_OFFSET		0x88
+#define wtcon_offset		0x0
+#define wtdat_offset		0x4
+#define wtcnt_offset		0x8
+#define wtclrint_offset		0xc
 
-#define CURTICCNT		0x90
+#define s5p_wtcon		s5p_watchdog_base(wtcon_offset)
+#define s5p_wtdat		s5p_watchdog_base(wtdat_offset)
+#define s5p_wtcnt		s5p_watchdog_base(wtcnt_offset)
+#define s5p_wtclrint		s5p_watchdog_base(wtclrint_offset)
 
-#define S5P_INTP		S5P_RTC_BASE(INTP_OFFSET)
-#define S5P_RTCCON		S5P_RTC_BASE(RTCCON_OFFSET)
-#define S5P_TICCNT		S5P_RTC_BASE(TICCNT_OFFSET)
-#define S5P_RTCALM		S5P_RTC_BASE(RTCALM_OFFSET)
+/* rtc */
+#define s5p_rtc_base(x)		(s5p_pa_rtc + (x))
 
-#define S5P_ALMSEC		S5P_RTC_BASE(ALMSEC_OFFSET)
-#define S5P_ALMMIN		S5P_RTC_BASE(ALMMIN_OFFSET)
-#define S5P_ALMHOUR		S5P_RTC_BASE(ALMHOUR_OFFSET)
-#define S5P_ALMDATE		S5P_RTC_BASE(ALMDATE_OFFSET)
+#define intp_offset		0x30
+#define rtccon_offset		0x40
+#define ticcnt_offset		0x44
+#define rtcalm_offset		0x50
+
+#define almsec_offset		0x54
+#define almmin_offset		0x58
+#define almhour_offset		0x5c
+#define almdate_offset		0x60
+#define almmon_offset		0x64
+#define almyear_offset		0x68
+
+#define bcdsec_offset		0x70
+#define bcdmin_offset		0x74
+#define bcdhour_offset		0x78
+#define bcddate_offset		0x7c
+#define bcdday_offset		0x80
+#define bcdmon_offset		0x84
+#define bcdyear_offset		0x88
+
+#define curticcnt		0x90
+
+#define s5p_intp		s5p_rtc_base(intp_offset)
+#define s5p_rtccon		s5p_rtc_base(rtccon_offset)
+#define s5p_ticcnt		s5p_rtc_base(ticcnt_offset)
+#define s5p_rtcalm		s5p_rtc_base(rtcalm_offset)
+
+#define s5p_almsec		s5p_rtc_base(almsec_offset)
+#define s5p_almmin		s5p_rtc_base(almmin_offset)
+#define s5p_almhour		s5p_rtc_base(almhour_offset)
+#define s5p_almdate		s5p_rtc_base(almdate_offset)
 #define S5P_ALMMON		S5P_RTC_BASE(ALMMON_OFFSET)
 #define S5P_ALMYEAR		S5P_RTC_BASE(ALMYEAR_OFFSET)
 

@@ -29,7 +29,6 @@
  */
 
 #include <config.h>
-#include <s5pc1xx.h>
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:

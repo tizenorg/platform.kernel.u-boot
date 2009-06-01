@@ -44,7 +44,6 @@
  */
 
 #include <common.h>
-#include <s5pc1xx.h>
 
 #define PRESCALER_0		(16 - 1)	/* prescaler of PWM timer 4 */
 #define MUX4_DIV_12		(2 - 1)		/* MUX 4, 1/2 period */
@@ -58,14 +57,14 @@ static unsigned long lastdec;	/* Last decremneter snapshot */
 /* macro to read the 16 bit timer */
 static inline ulong READ_TIMER(void)
 {
-	s5pc1xx_timers *const timers = (s5pc1xx_timers *)S5P_TIMER_BASE;
+	s5pc1xx_timers_t *const timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
 
 	return timers->TCNTO4;
 }
 
 int interrupt_init(void)
 {
-	s5pc1xx_timers *const timers = (s5pc1xx_timers *)S5P_TIMER_BASE;
+	s5pc1xx_timers_t *const timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
 
 	/*
 	 * @ PWM Timer 4

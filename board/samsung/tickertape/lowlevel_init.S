@@ -33,8 +33,7 @@
 
 #include <config.h>
 #include <version.h>
-
-#include <s5pc1xx.h>
+#include <asm/arch/cpu.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_CONSOLE_BASE	UARTx_OFFSET(0)

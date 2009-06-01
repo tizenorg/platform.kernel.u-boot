@@ -36,7 +36,6 @@
  */
 
 #include <common.h>
-#include <s5pc1xx.h>
 
 #define APLL 0
 #define MPLL 1
