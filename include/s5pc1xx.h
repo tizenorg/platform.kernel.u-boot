@@ -1583,8 +1583,6 @@ enum s5pc1xx_uarts_nr {
 
 ulong get_PCLK(void);
 
-#include "s5pc1x0.h"
-
 static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 {
 	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
