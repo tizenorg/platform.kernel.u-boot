@@ -189,6 +189,10 @@ system_clock_init:
 	ldr r1, =0x1		@ UART ratio set 1 -> 2
 	str r1, [r0]
 
+	ldr r0, =S5P_CLK_DIV0
+	ldr r1, =0x11301
+	str r1, [r0]
+
 	/* APLL Enable */
 	ldr r0, =S5P_APLL_LOCK	
 	ldr r1, =0xe10		@ Locktime : 0xe10 = 3600
