@@ -56,6 +56,13 @@ typedef struct s5pc1x0_uart {
 	volatile unsigned char     res3[2];
 #endif
 } s5pc1xx_uart;
+
+enum s5pc1xx_uarts_nr {
+	S5PC1XX_UART0,
+	S5PC1XX_UART1,
+	S5PC1XX_UART2,
+	S5PC1XX_UART3,
+};
 #else
 #endif
 

@@ -1573,20 +1573,4 @@
 #define UTRSTAT_RX_READY	(1 << 0)
 #define UART_ERR_MASK		0xF
 
-#ifndef __ASSEMBLY__
-enum s5pc1xx_uarts_nr {
-	S5PC1XX_UART0,
-	S5PC1XX_UART1,
-	S5PC1XX_UART2,
-	S5PC1XX_UART3,
-};
-
-ulong get_PCLK(void);
-
-static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
-{
-	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
-}
-#endif
-
 #endif /*__S5PC100_H__*/

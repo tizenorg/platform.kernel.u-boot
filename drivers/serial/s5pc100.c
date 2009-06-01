@@ -39,6 +39,11 @@
 
 #define barrier() asm volatile("" ::: "memory")
 
+static inline s5pc1xx_uart *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
+{
+	return (s5pc1xx_uart *)(S5P_UART_BASE + (nr * 0x400));
+}
+
 /*
  * The coefficient, used to calculate the baudrate on S5PC1XX UARTs is
  * calculated as
