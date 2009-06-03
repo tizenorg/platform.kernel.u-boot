@@ -50,10 +50,10 @@ void onenand_board_init(struct mtd_info *mtd)
 
 	MEM_RESET0_REG = ONENAND_MEM_RESET_COLD;
 
-	while (!(INT_ERR_STAT0_REG & (RST_CMP|INT_ACT)))
-		continue;
+	while (!(INT_ERR_STAT0_REG & RST_CMP))
+		;
 
-	INT_ERR_ACK0_REG |= RST_CMP | INT_ACT;
+	INT_ERR_ACK0_REG |= RST_CMP;
 
 	ACC_CLOCK0_REG = 0x2;
 

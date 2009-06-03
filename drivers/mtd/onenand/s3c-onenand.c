@@ -84,11 +84,15 @@ static struct s3c_onenand onenand;
 
 static void s3c_onenand_reset(void)
 {
+	unsigned int sav;
+
+	sav =
 	MEM_RESET0_REG = ONENAND_MEM_RESET_COLD;
-	while (!(INT_ERR_STAT0_REG & INT_ACT))
+	while (!(INT_ERR_STAT0_REG & RST_CMP))
 		;
 	/* Clear interrupt */
-	INT_ERR_ACK0_REG = 0x0;
+	INT_ERR_ACK0_REG = RST_CMP;
+
 	/* Clear the ECC status */
 	ECC_ERR_STAT0_REG = 0x0;
 }
@@ -180,24 +184,27 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 
 	INT_ERR_ACK0_REG = stat;
 
+	/* REVISIT : need to find out why the INT_TO is occured
+	 */
 	if (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | INT_TO | LD_FAIL_ECC_ERR)) {
-		printk("onenand_wait: controller error = 0x%04x\n", stat);
+		printk("s3c_onenand_wait: controller error = 0x%04x\n", stat);
 		if (stat & LOCKED_BLK) {
-			printk("onenand_wait: it's locked error = 0x%04x\n", stat);
+			printk("s3c_onenand_wait: it's locked error = 0x%04x\n", stat);
 		}
 
 		return -EIO;
 	}
 
+#if defined(CONFIG_S3C64XX)
 	if (stat & LOAD_CMP) {
 		ecc = ECC_ERR_STAT0_REG;
 		if (ecc & ONENAND_ECC_2BIT_ALL) {
 			MTDDEBUG (MTD_DEBUG_LEVEL0,
-					"onenand_wait: ECC error = 0x%04x\n", ecc);
+					"s3c_onenand_wait: ECC error = 0x%04x\n", ecc);
 			return -EBADMSG;
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -235,11 +242,13 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		TRANS_SPARE0_REG = TSRF;
 		m = (unsigned int *) onenand.oobbuf;
 		count = mtd->writesize >> 2;
+		/* redundant read */
 		for (i = 0; i < count; i++)
 			*m = readl(CMD_MAP_01(mem_addr));
 		memset(onenand.oobbuf, 0xff, mtd->oobsize);
 		s = (unsigned int *) onenand.oobbuf;
 		count = mtd->oobsize >> 2;
+		/* read shared area */
 		for (i = 0; i < count; i++) {
 			*s = readl(CMD_MAP_01(mem_addr));
 			/* It's initial bad */
@@ -249,7 +258,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		}
 		cm = (unsigned char *) this->spare_buf;
 		cs = (unsigned char *) onenand.oobbuf;
-		count = len;
+		len = count;
 		for (i = 0; i < len; i++)
 			*cm++ = *cs++;
 		TRANS_SPARE0_REG = ~TSRF;
@@ -347,14 +356,13 @@ static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 		if (stat & flags)
 			break;
 	}
-
 	INT_ERR_ACK0_REG = stat;
 
 	if (stat & LD_FAIL_ECC_ERR) {
 		s3c_onenand_reset();
 		return ONENAND_BBT_READ_ERROR;
 	}
-
+#if defined(CONFIG_S3C64XX)
 	if (stat & LOAD_CMP) {
 		int ecc = ECC_ERR_STAT0_REG;
 		if (ecc & ONENAND_ECC_2BIT_ALL) {
@@ -363,6 +371,7 @@ static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 		}
 	} else
 		return ONENAND_BBT_READ_FATAL_ERROR;
+#endif
 
 	return 0;
 }
@@ -376,13 +385,15 @@ static int s3c_onenand_read_spareram(struct mtd_info *mtd, loff_t addr,
 void s3c_set_width_regs(struct onenand_chip *this)
 {
 	int dev_id, density;
-	int dbs_dfs, fba, fpa, fsa;
+	int fba, fpa, fsa;
+#if defined(CONFIG_S3C64XX)
+	int dbs_dfs = 0;
+#endif
 
 	dev_id = DEVICE_ID0_REG;
 
 	density = (dev_id >> ONENAND_DEVICE_DENSITY_SHIFT) & 0xf;
 
-	dbs_dfs = 0;
 	fba = density + 7;
 	fpa = 6;
 	fsa = 2;
@@ -390,7 +401,10 @@ void s3c_set_width_regs(struct onenand_chip *this)
 	FBA_WIDTH0_REG = fba;
 	FPA_WIDTH0_REG = fpa;
 	FSA_WIDTH0_REG = fsa;
+#if defined(CONFIG_S3C64XX)
 	DBS_DFS_WIDTH0_REG = dbs_dfs;
+#endif
+
 }
 
 void s3c_onenand_init(struct mtd_info *mtd)
