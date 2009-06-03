@@ -78,8 +78,8 @@ void serial_setbrg(void)
 
 	i = (pclk / baudrate) % 16;
 
-	uart->UBRDIV = 0x23;
-	uart->UDIVSLOT = 0x3;
+	uart->UBRDIV = pclk / baudrate / 16 - 1;
+	uart->UDIVSLOT = udivslot[i];
 
 	for (i = 0; i < 100; i++);
 		barrier();
