@@ -143,7 +143,7 @@
 #endif
 
 #define CONFIG_COMMON_BOOT	"console=ttySA,115200n8" \
-		" ${meminfo}" \
+		" mem=128M " \
 		" " MTDPARTS_DEFAULT
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
