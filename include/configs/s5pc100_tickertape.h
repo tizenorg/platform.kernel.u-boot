@@ -8,6 +8,10 @@
  * (C) Copyright 2008
  * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
  *
+ * (C) Copyright 2009
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ *
  * Configuation settings for the SAMSUNG SMDK6400(mDirac-III) board.
  *
  * See file CREDITS for list of people who contributed to this
@@ -54,16 +58,9 @@
 #define CONFIG_ENABLE_MMU
 #endif
 
-#define CONFIG_MEMORY_UPPER_CODE
-
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
-
-
-/* Clock Defines */
-#define V_OSCK			26000000	/* Clock output from T2 */
-#define V_SCLK			(V_OSCK >> 1)
 
 /*
  * Architecture magic and machine type
@@ -87,9 +84,7 @@
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
-#ifdef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#endif
 
 #define CONFIG_CMDLINE_EDITING
 
@@ -215,26 +210,7 @@
  */
 #define CONFIG_STACKSIZE	0x40000		/* regular stack 256KB */
 
-/**********************************
- Support Clock Settings
- **********************************
- Setting	SYNC	ASYNC
- ----------------------------------
- 667_133_66	 X	  O
- 533_133_66	 O	  O
- 400_133_66	 X	  O
- 400_100_50	 O	  O
- **********************************/
-
-/*#define CONFIG_CLK_667_133_66*/
-#define CONFIG_CLK_533_133_66
-/*
-#define CONFIG_CLK_400_100_50
-#define CONFIG_CLK_400_133_66
-#define CONFIG_SYNC_MODE
-*/
-
-/* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
+/* TickerTape has 1 banks of DRAM, we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
 #define PHYS_SDRAM_1_SIZE	0x08000000		/* 128 MB in Bank #1 */
@@ -245,12 +221,6 @@
  * FLASH and environment organization
  */
 #define CONFIG_SYS_NO_FLASH		1
-
-/* **** PISMO SUPPORT *** */
-
-/* Configure the PISMO */
-#define PISMO1_NAND_SIZE		GPMC_SIZE_128M
-#define PISMO1_ONEN_SIZE		GPMC_SIZE_128M
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
