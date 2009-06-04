@@ -49,19 +49,6 @@
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
-#define CONFIG_SYS_SDRAM_BASE	0x20000000
-
-/* input clock of PLL: TickerTape has 12MHz input clock */
-#define CONFIG_SYS_CLK_FREQ	12000000
-
-#if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)
-#define CONFIG_ENABLE_MMU
-#endif
-
-#define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_CMDLINE_TAG
-#define CONFIG_INITRD_TAG
-
 /*
  * Architecture magic and machine type
  */
@@ -72,10 +59,22 @@
 
 #undef CONFIG_SKIP_RELOCATE_UBOOT
 
+/* input clock of PLL: TickerTape has 12MHz input clock */
+#define CONFIG_SYS_CLK_FREQ	12000000
+
+/* DRAM Base */
+#define CONFIG_SYS_SDRAM_BASE	0x20000000
+
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_INITRD_TAG
+#define CONFIG_CMDLINE_EDITING
+
 /*
  * Size of malloc() pool
+ * 1MB = 0x100000, 0x100000 = 1024 * 1024
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + SZ_1M)	
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes for initial data */
 
 /*
@@ -83,14 +82,8 @@
  */
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
-#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-
-#define CONFIG_CMDLINE_EDITING
-
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-
 #define CONFIG_BAUDRATE		115200
 #define CONFIG_L2_OFF
 
@@ -185,6 +178,8 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
+#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
+#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT	"TickerTape # "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
@@ -193,12 +188,9 @@
 
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
-
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
 
-#define CONFIG_SYS_TIMERBASE		(OMAP34XX_GPT2)
-#define CONFIG_SYS_PTV			2       /* Divisor: 2^(PTV+1) => 8 */
-#define CONFIG_SYS_HZ					2085900		/* at PCLK 66.75MHz */
+#define CONFIG_SYS_HZ		2085900		/* at PCLK 66.75MHz */
 
 /* valid baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
@@ -208,12 +200,12 @@
  *
  * The stack sizes are set up in start.S using the settings below
  */
-#define CONFIG_STACKSIZE	0x40000		/* regular stack 256KB */
+#define CONFIG_STACKSIZE	SZ_256K		/* regular stack 256KB, 0x40000 */
 
 /* TickerTape has 1 banks of DRAM, we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x08000000		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1_SIZE	SZ_128M		/* 0x8000000, 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -226,19 +218,25 @@
 
 #define CONFIG_IDENT_STRING	" for TickerTape"
 
+#if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)
+#define CONFIG_ENABLE_MMU
+#endif
+
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
 #else
 #define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
 #endif
 
-/* Boot configuration (define only one of next 3) */
+/*-----------------------------------------------------------------------
+ * Boot configuration (define only one of next 3)
+ */
 #define CONFIG_BOOT_ONENAND
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#define CONFIG_ENV_SIZE			0x20000
-#define CONFIG_ENV_ADDR			0x40000
-#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_SIZE			SZ_128K		/* 128KB, 0x20000 */
+#define CONFIG_ENV_ADDR			SZ_256K		/* 256KB, 0x40000 */
+#define CONFIG_ENV_OFFSET		SZ_256K		/* 256KB, 0x40000 */
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
 #define CONFIG_SYS_ONENAND_BASE		0x00000000
