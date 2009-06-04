@@ -393,6 +393,11 @@ void start_armboot (void)
 
 	console_init_r ();	/* fully init console as a device */
 
+#if defined(CONFIG_S5PC1XXFB)
+	unsigned int *addr = (_bss_end + (4096 - 1)) & ~(4096 - 1);
+	s5pc1xxfb_test((void *)addr);
+#endif
+
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r ();
