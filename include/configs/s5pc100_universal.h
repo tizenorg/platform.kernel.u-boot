@@ -142,7 +142,7 @@
 #define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
 #endif
 
-#define CONFIG_COMMON_BOOT	"console=ttySA,115200n8" \
+#define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
 		" mem=80M " \
 		" " MTDPARTS_DEFAULT
 
