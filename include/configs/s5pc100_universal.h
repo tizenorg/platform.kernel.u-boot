@@ -142,6 +142,10 @@
 #define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
 #endif
 
+#define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
+		" console=ttySAC2,115200n8" \
+		" mem=80M"
+
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
 		" mem=80M " \
 		" " MTDPARTS_DEFAULT
@@ -177,7 +181,9 @@
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
-	 "${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 " ${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
+	 " initrd=0x24800000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=80M\0" \
@@ -237,7 +243,7 @@
 /* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x08000000		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1_SIZE	0x05000000		/* 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
