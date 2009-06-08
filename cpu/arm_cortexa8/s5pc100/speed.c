@@ -89,7 +89,7 @@ static ulong get_PLLCLK(int pllreg)
 /* return ARMCORE frequency */
 ulong get_ARMCLK(void)
 {
-	ulong div, ret;
+	ulong div;
 
 	div = S5P_CLK_DIV0_REG;
 
