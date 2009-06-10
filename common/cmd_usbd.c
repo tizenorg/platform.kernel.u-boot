@@ -458,7 +458,7 @@ static int process_data(struct usbd_ops *usbd)
 
 	/* Error */
 	case COMMAND_RESET_USB:
-		printf("\nError is occured!(maybe previous step)->
+		printf("\nError is occured!(maybe previous step)->\
 				Turn off and restart!\n");
 
 		/* Stop USB */
