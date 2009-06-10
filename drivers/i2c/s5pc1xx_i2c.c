@@ -53,7 +53,7 @@
 
 static inline s5pc1xx_i2c_t *s5pc1xx_get_base_i2c(void)
 {
-	return (s5pc1xx_i2c_t *)(S5P_I2C_BASE + I2Cx_OFFSET(I2C_NR));
+	return (s5pc1xx_i2c_t *)(I2Cx_OFFSET(I2C_NR));
 }
 
 static int WaitForXfer(void)
