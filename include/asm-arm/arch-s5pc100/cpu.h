@@ -373,6 +373,7 @@ typedef struct s5pc1xx_timer {
 #include <asm/arch/watchdog.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/clock-others.h>
+#include <asm/arch/i2c.h>
 
 #endif	/* __S5PC100_H__ */
 
