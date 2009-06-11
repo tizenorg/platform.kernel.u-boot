@@ -30,6 +30,7 @@ LIB	= $(obj)lib$(SOC).a
 
 COBJS-y	= interrupts.o
 COBJS-$(CONFIG_S5PC100)	+= cpu_init.o speed.o
+COBJS-$(CONFIG_CMD_USBDOWN) += usb-hs-otg.o usb_downloader.o
 
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS-y))
 
