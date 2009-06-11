@@ -44,22 +44,27 @@ void onenand_board_init(struct mtd_info *mtd)
 	value |= (1 << 16);
 	S5P_CLK_DIV1_REG = value;
 
-	INT_ERR_MASK0_REG = 0x17ff;
-	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */
-	INT_ERR_MASK0_REG &= ~(1 << 11);        /* ONENAND_INT_ERR_RDY_ACT */
+	WATCHDOG_CNT_LOW_REG = 0xffff;
+	WATCHDOG_CNT_HI_REG = 0xffff;
+
+	INT_ERR_MASK0_REG = 0x1fff;
+//	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */
 
 	MEM_RESET0_REG = ONENAND_MEM_RESET_COLD;
 
 	while (!(INT_ERR_STAT0_REG & RST_CMP))
-		;
+		continue;
 
 	INT_ERR_ACK0_REG |= RST_CMP;
+	INT_ERR_ACK0_REG = INT_ERR_STAT0_REG;
 
-	ACC_CLOCK0_REG = 0x2;
+	ACC_CLOCK0_REG = 0x3;
 
-	/* MEM_CFG0_REG = 0x46e0; */
+#if 0
+	/* MEM_CFG0_REG = 0xf0e0; */
 	MEM_CFG0_REG =
 #ifdef CONFIG_SYNC_MODE
+#error not yet supported...
 		ONENAND_SYS_CFG1_SYNC_READ |
 #endif
 		ONENAND_SYS_CFG1_BRL_4 |
@@ -68,8 +73,11 @@ void onenand_board_init(struct mtd_info *mtd)
 		ONENAND_SYS_CFG1_INT |
 		ONENAND_SYS_CFG1_IOBE
 		;
-
-	BURST_LEN0_REG = 16;
+#else
+	MEM_CFG0_REG &= ~ONENAND_SYS_CFG1_SYNC_READ;
+	MEM_CFG0_REG |= ONENAND_SYS_CFG1_BL_16;
+	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
+#endif
 
 	s3c_set_width_regs(this);
 }
