@@ -151,6 +151,10 @@
 #define ONENAND_SYS_CFG1_INT		(1 << 6)
 #define ONENAND_SYS_CFG1_IOBE		(1 << 5)
 #define ONENAND_SYS_CFG1_RDY_CONF	(1 << 4)
+#define ONENAND_SYS_CFG1_VHF		(1 << 3)
+#define ONENAND_SYS_CFG1_HF		(1 << 2)
+#define ONENAND_SYS_CFG1_WM		(1 << 1)
+#define ONENAND_SYS_CFG1_BWPS		(1 << 0)
 
 /*
  * Controller Status Register F240h (R)
@@ -186,5 +190,6 @@
 #define ONENAND_ECC_1BIT		(1 << 0)
 #define ONENAND_ECC_2BIT		(1 << 1)
 #define ONENAND_ECC_2BIT_ALL		(0xAAAA)
+#define ONENAND_ECC_4BIT_UNCORRECTABLE	(0x1010)
 
 #endif				/* __ONENAND_REG_H */
