@@ -21,7 +21,7 @@ LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_ONENAND_IPL -g
 CFLAGS	+= -DCONFIG_ONENAND_IPL -g
-OBJCLFAGS += --gap-fill=0x00
+OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o
 SOBJS	+= start.o cpu_init.o
