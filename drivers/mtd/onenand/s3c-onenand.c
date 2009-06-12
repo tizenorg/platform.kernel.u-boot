@@ -82,15 +82,8 @@ struct s3c_onenand {
 
 static struct s3c_onenand onenand;
 
-static void s3c_onenand_reset(void)
+static void s3c_onenand_ecc_clear(void)
 {
-	MEM_RESET0_REG = ONENAND_MEM_RESET_COLD;
-
-	while (!(INT_ERR_STAT0_REG & RST_CMP))
-		continue;
-	/* Clear interrupt */
-	INT_ERR_ACK0_REG = RST_CMP;
-
 	/* Clear the ECC status */
 	ECC_ERR_STAT0_REG = 0x0;
 }
@@ -173,7 +166,7 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 {
 	unsigned int flags = INT_ACT;
 	unsigned int stat;
-	unsigned int timeout = 0x100000;
+	unsigned int timeout = 0x1000000;
 
 	while (1 && timeout--) {
 		stat = INT_ERR_STAT0_REG;
@@ -182,10 +175,11 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 	}
 
 	INT_ERR_ACK0_REG = stat;
+	DPRINTK("enter stat 0x%x", stat);
 
 	/* REVISIT : need to find out why the INT_TO is occured */
 	if (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | INT_TO | LD_FAIL_ECC_ERR)) {
-		printk("s3c_onenand_wait: controller error = 0x%04x\n", stat);
+		printk("s3c_onenand_wait: controller error = 0x%04x, state %d, flags 0x%x\n", stat, state, flags);
 		printk("interrupt moniter status 0x%x page 0x%x\n", INT_MON_STATUS_REG, ERR_PAGE_ADDR_REG);
 		printk("Error block address 0x%x\n", ERR_BLK_ADDR_REG);
 		
@@ -224,11 +218,17 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 
 	mem_addr = MEM_ADDR(fba, fpa, fsa);
 
-	if (cmd != ONENAND_CMD_READOOB)
+	if (cmd != ONENAND_CMD_READOOB) {
 		DPRINTK("cmd 0x%x, addr 0x%x, fba %d, fpa %d, len 0x%x, mem_addr 0x%x, trans mode %d", cmd, (unsigned int) addr, fba, fpa, len, mem_addr, TRANS_MODE_REG);
+		DPRINTK("CMD_MAP_01 0x%x", CMD_MAP_01(mem_addr));
+		/* Workaround: Clear the timeout interrupt */
+		DPRINTK("int err stat0 0x%x", INT_ERR_STAT0_REG);
+		INT_ERR_ACK0_REG = INT_ERR_STAT0_REG;
+	}
 
 	switch (cmd) {
 	case ONENAND_CMD_READ:
+		TRANS_SPARE0_REG |= TSRF;
 		count = len >> 2;
 		if (len != mtd->writesize)
 			DPRINTK("length error");
@@ -240,9 +240,11 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		count = mtd->oobsize >> 2;
 		for (i = 0; i < count; i++)
 			*s++ = readl(CMD_MAP_01(mem_addr));
+		TRANS_SPARE0_REG &= ~TSRF;
 		return 0;
 
 	case ONENAND_CMD_READOOB:
+		writel(ONENAND_MAIN_SPARE_ACCESS, CMD_MAP_10(mem_addr));
 		TRANS_SPARE0_REG |= TSRF;
 		m = (unsigned int *) onenand.oobbuf;
 		count = mtd->writesize >> 2;
@@ -269,17 +271,15 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		return 0;
 
 	case ONENAND_CMD_PROG:
-//		TRANS_SPARE0_REG = TSRF;
+		TRANS_SPARE0_REG |= TSRF;
 		m = (unsigned int *) this->main_buf;
 		if (len != mtd->writesize)
 			DPRINTK("length error");
 		DPRINTK("write buffer 0x%x", (unsigned int) this->main_buf);
 		count = len >> 2;
-		DPRINTK("count %d", count);
-		for (i = 0; i < count; i++) {
-//			writel(*m++, CMD_MAP_01(mem_addr));
-			(*(volatile unsigned int *)(CMD_MAP_01(mem_addr)) = (*m++));
-		}
+		for (i = 0; i < count; i++)
+			writel(*m++, CMD_MAP_01(mem_addr));
+		DPRINTK("spare %d", count);
 #if 0
 		/* FIXME how to write oob together */
 		s = (unsigned int *) this->spare_buf;
@@ -287,7 +287,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		for (i = 0; i < count; i++)
 			writel(*s++, CMD_MAP_01(mem_addr));
 #endif
-//		TRANS_SPARE0_REG = ~TSRF;
+		TRANS_SPARE0_REG &= ~TSRF;
 		DPRINTK();
 		return 0;
 
@@ -316,25 +316,14 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		return 0;
 
 	case ONENAND_CMD_ERASE:
+		ret = 0;
+		writel(ONENAND_MAIN_ACCESS_ONLY, CMD_MAP_10(mem_addr));
 		writel(ONENAND_ERASE_START, CMD_MAP_10(mem_addr));
-		writel(ONENAND_ERASE_STATUS, CMD_MAP_10(mem_addr));
+		DPRINTK("int err stat0 0x%x", INT_ERR_STAT0_REG);
 
-#if 0
-		ret = this->wait(mtd, FL_ERASING);
-		if (ret) {
-			s3c_onenand_reset();
-			return ret;
-		}
-#else
-		while (1) {
-			unsigned int ret = readl(CMD_MAP_10(mem_addr));
-			if (ret == 0)
-				break;
-		}
-		/* FIXME why timeout??? */
-		INT_ERR_ACK0_REG = INT_TO;
-#endif
-		return 0;
+		writel(ONENAND_MAIN_SPARE_ACCESS, CMD_MAP_10(mem_addr));
+
+		return ret;
 
 	default:
 		break;
@@ -364,6 +353,8 @@ static int onenand_write_bufferram(struct mtd_info *mtd, loff_t addr, int area,
 	else 
 		this->spare_buf = (unsigned char *) buffer;
 
+	DPRINTK("int err stat0 0x%x", INT_ERR_STAT0_REG);
+
 	return 0;
 }
 
@@ -380,14 +371,14 @@ static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 	INT_ERR_ACK0_REG = stat;
 
 	if (stat & LD_FAIL_ECC_ERR) {
-		s3c_onenand_reset();
+		s3c_onenand_ecc_clear();
 		return ONENAND_BBT_READ_ERROR;
 	}
 
 	if (stat & LOAD_CMP) {
 		int ecc = ECC_ERR_STAT0_REG;
 		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
-			s3c_onenand_reset();
+			s3c_onenand_ecc_clear();
 			return ONENAND_BBT_READ_ERROR;
 		}
 	}
