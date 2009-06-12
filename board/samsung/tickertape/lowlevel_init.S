@@ -96,9 +96,7 @@ lowlevel_init:
 
 	/* Memory subsystem address 0xe0200200 */
 	ldr	r0, =S5P_MEM_SYS_CFG
-
-	mov	r1, #0
-	str	r1, [r0]
+	str	r5, [r0]
 
 	/* DRAM I/O Drive-Strength */
 	ldr	r0, =S5P_MP_0DRV
@@ -116,7 +114,7 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =(S5P_OTHERS_BASE)
+	ldr	r0, =S5P_OTHERS_BASE
 	ldr	r1, [r0]
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
@@ -138,10 +136,10 @@ wakeup_reset:
 	/* Load return address and jump to kernel */
 	ldr	r0, =S5P_INFORM0
 
-	/* r1 = physical address of s3c6400_cpu_resume function */
+	/* r1 = physical address of s5pc100_cpu_resume function */
 	ldr	r1, [r0]
 
-	/* Jump to kernel (sleep-s3c6400.S) */
+	/* Jump to kernel (sleep-s5pc100.S) */
 	mov	pc, r1
 	nop
 	nop
@@ -154,7 +152,15 @@ wakeup_reset:
 system_clock_init:
 	ldr	r8, =S5P_PA_CLK			@ 0xE0100000
 
-	/* APLL Enable: S5P_APLL_LOCK */
+	/* Set Clock divider */
+	ldr	r1, =0x00011110
+	str	r1, [r8, #0x304]
+	ldr	r1, =0x1
+	str	r1, [r8, #0x308]
+	ldr	r1, =0x00011301
+	str	r1, [r8, #0x300]
+
+	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r8, #0x000]		@ S5P_APLL_LOCK
 	str	r1, [r8, #0x004]		@ S5P_MPLL_LOCK
@@ -169,19 +175,19 @@ system_clock_init:
 	/* S5P_EPLL_CON */
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
 	str	r1, [r8, #0x108]
+	/* S5P_HPLL_CON */
+	ldr	r1, =0x80600603
+	str	r1, [r8, #0x10C]
 
 	/* Set Source Clock */
-	ldr	r0, =S5P_CLK_SRC0
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
-	str	r1, [r0]
+	str	r1, [r8, #0x200]		@ S5P_CLK_SRC0
 
-	ldr	r0, =S5P_CLK_SRC1
-	ldr	r1, =0x1000001		@ Uart Clock & CLK48M Muxing
-	str	r1, [r0]
+	ldr	r1, =0x1000001			@ Uart Clock & CLK48M Muxing
+	str	r1, [r8, #0x204]		@ S5P_CLK_SRC1
 
-	ldr	r0, =S5P_CLK_OUT
 	ldr	r1, =0x9000			@ ARMCLK/4
-	str	r1, [r0]
+	str	r1, [r8, #0x400]		@ S5P_CLK_OUT
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
