@@ -364,7 +364,6 @@ typedef struct s5pc1xx_timer {
 	volatile unsigned long	TCNTO3;
 	volatile unsigned long	TCNTB4;
 	volatile unsigned long	TCNTO4;
-
 	volatile unsigned long	TINTCSTAT;
 } s5pc1xx_timers_t;
 #endif	/* __ASSEMBLY__ */
