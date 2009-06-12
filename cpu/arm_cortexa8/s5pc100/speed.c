@@ -84,7 +84,7 @@ static ulong get_PLLCLK(int pllreg)
 ulong get_ARMCLK(void)
 {
 	ulong div;
-	unsigned long long dout_apll, armclk;
+	unsigned long dout_apll, armclk;
 	unsigned int apll_ratio, arm_ratio;;
 
 	div = S5P_CLK_DIV0_REG;
