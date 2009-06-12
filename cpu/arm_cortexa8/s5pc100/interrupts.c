@@ -130,14 +130,12 @@ void set_timer(ulong t)
 	timestamp = t;
 }
 
-
 /* delay x useconds */
 void udelay(unsigned long usec)
 {
 	ulong tmo, tmp;
 
 	if (usec >= 1000) {
-
 		/*
 		 * if "big" number, spread normalization
 		 * to seconds
@@ -148,28 +146,22 @@ void udelay(unsigned long usec)
 		tmo = usec / 1000;
 		tmo *= CONFIG_SYS_HZ;
 		tmo /= 1000;
-
 	} else {
 		/* else small number, don't kill it prior to HZ multiply */
 		tmo = usec * CONFIG_SYS_HZ;
 		tmo /= (1000 * 1000);
-
 	}
 
 	/* get current timestamp */
 	tmp = get_timer(0);
 
-	if ((tmo + tmp + 1) < tmp) {
-
-		/* if setting this fordward will roll time stamp */
-		/* reset "advancing" timestamp to 0, set lastdec value */
+	/* if setting this fordward will roll time stamp */
+	/* reset "advancing" timestamp to 0, set lastdec value */
+	/* else, set advancing stamp wake up time */
+	if ((tmo + tmp + 1) < tmp)
 		reset_timer_masked();
-
-	} else {
-
-		/* else, set advancing stamp wake up time */
+	else
 		tmo += tmp;
-	}
 
 	/* loop till event */
 	while (get_timer_masked() < tmo)
@@ -188,15 +180,11 @@ ulong get_timer_masked(void)
 	/* current tick value */
 	ulong now = READ_TIMER();
 
-	if (lastdec >= now) {
-		/* normal mode */
+	if (lastdec >= now)
 		timestamp += lastdec - now;
-
-	} else {
-		/* overflow */
+	else
 		timestamp += lastdec + count_value - now;
 
-	}
 	lastdec = now;
 
 	return timestamp;
@@ -220,4 +208,3 @@ ulong get_tbclk(void)
 	/* We overrun in 100s */
 	return CONFIG_SYS_HZ * 100;
 }
-
