@@ -1,10 +1,4 @@
 /*
- * (C) Copyright 2001-2004
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
- *
- * (C) Copyright 2002
- * David Mueller, ELSOFT AG, d.mueller@elsoft.ch
- *
  * (C) Copyright 2009
  * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
  * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
@@ -77,7 +71,7 @@ static ulong get_PLLCLK(int pllreg)
 	if (pllreg == APLL)
 		mask = 0x3ff;
 	else
-		mask = 0x1ff;
+		mask = 0x0ff;
 
 	m = (r >> 16) & mask;
 	p = (r >> 8) & 0x3f;
@@ -90,11 +84,19 @@ static ulong get_PLLCLK(int pllreg)
 ulong get_ARMCLK(void)
 {
 	ulong div;
+	unsigned long long dout_apll, armclk;
+	unsigned int apll_ratio, arm_ratio;;
 
 	div = S5P_CLK_DIV0_REG;
+	/* ARM_RATIO: [6:4] */
+	arm_ratio = (div >> 4) & 0x7;
+	/* APLL_RATIO: [0] */
+	apll_ratio = div & 0x1;
 
-	/* arm_ratio : [6:4] */
-	return get_PLLCLK(APLL) / ((((div >> 4) & 0x7) + 1) * (div & 0x1) + 1);
+	dout_apll = get_PLLCLK(APLL) / (apll_ratio + 1);
+	armclk = dout_apll / (arm_ratio + 1);
+
+	return armclk;
 }
 
 /* return FCLK frequency */
@@ -109,36 +111,53 @@ ulong get_MCLK(void)
 	return get_PLLCLK(MPLL);
 }
 
-/* return HCLK frequency */
+/* return HCLKD0 frequency */
 ulong get_HCLK(void)
 {
-	ulong fclk;
-
-	uint div, div_apll, div_arm, div_d0_bus;
+	ulong hclkd0;
+	uint div, d0_bus_ratio;
 
 	div = S5P_CLK_DIV0_REG;
+	/* D0_BUS_RATIO: [10:8] */
+	d0_bus_ratio = (div >> 8) & 0x7;
 
-	div_apll = (div & 0x1) + 1;
-	div_arm = ((div >> 4) & 0x7) + 1;
-	div_d0_bus = ((div >> 8) & 0x7) + 1;
+	hclkd0 = get_ARMCLK() / (d0_bus_ratio + 1);
 
-	fclk = get_FCLK();
-
-	return fclk / (div_apll * div_arm * div_d0_bus);
+	return hclkd0;
 }
 
-/* return PCLK frequency */
+/* return PCLKD0 frequency */
+ulong get_PCLKD0(void)
+{
+	ulong pclkd0;
+	uint div, pclkd0_ratio;
+
+	div = S5P_CLK_DIV0_REG;
+	/* PCLKD0_RATIO: [14:12] */
+	pclkd0_ratio = (div >> 12) & 0x7;
+
+	pclkd0 = get_HCLK() / (pclkd0_ratio + 1);
+
+	return pclkd0;
+}
+
+/* return PCLKD1 frequency */
 ulong get_PCLK(void)
 {
-	ulong fclk;
-	uint div = S5P_CLK_DIV1_REG;
-	uint div_d1_bus = ((div >> 12) & 0x7) + 1;
-	uint div_pclk = ((div >> 16) & 0x7) + 1;
+	ulong d1_bus, pclkd1;
+	uint div, d1_bus_ratio, pclkd1_ratio;
+
+	div = S5P_CLK_DIV1_REG;
+	/* D1_BUS_RATIO: [14:12] */
+	d1_bus_ratio = (div >> 12) & 0x7;
+	/* PCLKD1_RATIO: [18:16] */
+	pclkd1_ratio = (div >> 16) & 0x7;
 
 	/* ASYNC Mode */
-	fclk = get_PLLCLK(MPLL);
+	d1_bus = get_PLLCLK(MPLL) / (d1_bus_ratio + 1);
+	pclkd1 = d1_bus / (pclkd1_ratio + 1);
 
-	return fclk/(div_d1_bus * div_pclk);
+	return pclkd1;
 }
 
 /* return UCLK frequency */
@@ -150,9 +169,10 @@ ulong get_UCLK(void)
 int print_cpuinfo(void)
 {
 	printf("CPU:\tS5PC100@%luMHz\n", get_ARMCLK() / 1000000);
-	printf("\tFclk = %luMHz, Hclk = %luMHz, Pclk = %luMHz\n",
+	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
+		" PclkD1 = %luMHz\n",
 			get_FCLK() / 1000000, get_HCLK() / 1000000,
-			get_PCLK() / 1000000);
+			get_PCLKD0() / 1000000, get_PCLK() / 1000000);
 
 	return 0;
 }
