@@ -45,8 +45,14 @@
 
 #include <common.h>
 
-#define PRESCALER_0		(16 - 1)	/* prescaler of PWM timer 4 */
-#define MUX4_DIV_12		(2 - 1)		/* MUX 4, 1/2 period */
+#define PRESCALER_1		(16 - 1)	/* prescaler of timer 2, 3, 4 */
+#define MUX_DIV_2		(1)		/* 1/2 period */
+#define MUX_DIV_4		(2)		/* 1/4 period */
+#define MUX_DIV_8		(3)		/* 1/8 period */
+#define MUX_DIV_16		(4)		/* 1/16 period */
+#define MUX4_DIV_SHIFT		16
+
+#define TCON_TIMER4_SHIFT	20
 
 static ulong count_value;
 
@@ -57,14 +63,14 @@ static unsigned long lastdec;	/* Last decremneter snapshot */
 /* macro to read the 16 bit timer */
 static inline ulong READ_TIMER(void)
 {
-	s5pc1xx_timers_t *const timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
+	const s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *) S5P_TIMER_BASE;
 
 	return timers->TCNTO4;
 }
 
 int interrupt_init(void)
 {
-	s5pc1xx_timers_t *const timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
+	s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *) S5P_TIMER_BASE;
 
 	/*
 	 * @ PWM Timer 4
@@ -74,15 +80,15 @@ int interrupt_init(void)
 
 	/* set prescaler : 16 */
 	/* set divider : 2 */
-	timers->TCFG0 = (PRESCALER_0 & 0xff) << 8;
-	timers->TCFG1 = (MUX4_DIV_12 & 0xf) << 16;
+	timers->TCFG0 = (PRESCALER_1 & 0xff) << 8;
+	timers->TCFG1 = (MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT;
 
 	if (count_value == 0) {
 
 		/* reset initial value */
 		/* count_value = 2085937.5(HZ) (per 1 sec)*/
-		count_value = get_PCLK() / ((PRESCALER_0 + 1) *
-				(MUX4_DIV_12 + 1));
+		count_value = get_PCLK() / ((PRESCALER_1 + 1) *
+				(MUX_DIV_2 + 1));
 
 		/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
 		count_value = count_value / 100;
@@ -93,11 +99,11 @@ int interrupt_init(void)
 	lastdec = count_value;
 
 	/* auto reload & manual update */
-	timers->TCON = (timers->TCON & ~(0x03 << 20)) |
+	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
 		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_UPDATE;
 
 	/* start PWM timer 4 */
-	timers->TCON = (timers->TCON & ~(0x03 << 20)) |
+	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
 		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_ON;
 
 	timestamp = 0;
