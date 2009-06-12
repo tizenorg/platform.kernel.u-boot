@@ -45,7 +45,7 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
-#define CONFIG_TICKERTAPE	1	/* working with TickerTape */
+#define CONFIG_SMDKC100		1	/* working with SMDKC100 */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -59,7 +59,7 @@
 
 #undef CONFIG_SKIP_RELOCATE_UBOOT
 
-/* input clock of PLL: TickerTape has 12MHz input clock */
+/* input clock of PLL: SMDKC100 has 12MHz input clock */
 #define CONFIG_SYS_CLK_FREQ	12000000
 
 /* DRAM Base */
@@ -202,7 +202,7 @@
  */
 #define CONFIG_STACKSIZE	SZ_256K		/* regular stack 256KB, 0x40000 */
 
-/* TickerTape has 1 banks of DRAM, we use only one in U-Boot */
+/* SMDKC100 has 1 banks of DRAM, we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
 #define PHYS_SDRAM_1_SIZE	SZ_128M		/* 0x8000000, 128 MB in Bank #1 */
