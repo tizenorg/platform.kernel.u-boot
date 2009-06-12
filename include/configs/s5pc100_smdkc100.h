@@ -8,6 +8,10 @@
  * (C) Copyright 2008
  * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
  *
+ * (C) Copyright 2009
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ *
  * Configuation settings for the SAMSUNG SMDK6400(mDirac-III) board.
  *
  * See file CREDITS for list of people who contributed to this
@@ -41,29 +45,9 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
-#define CONFIG_UNIVERSAL	1	/* working with Universal */
+#define CONFIG_TICKERTAPE	1	/* working with TickerTape */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
-
-#define CONFIG_SYS_SDRAM_BASE	0x20000000
-
-/* input clock of PLL: Universal has 12MHz input clock */
-#define CONFIG_SYS_CLK_FREQ	12000000
-
-#if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)
-#define CONFIG_ENABLE_MMU
-#endif
-
-#define CONFIG_MEMORY_UPPER_CODE
-
-#define CONFIG_SETUP_MEMORY_TAGS
-#define CONFIG_CMDLINE_TAG
-#define CONFIG_INITRD_TAG
-
-
-/* Clock Defines */
-#define V_OSCK			26000000	/* Clock output from T2 */
-#define V_SCLK			(V_OSCK >> 1)
 
 /*
  * Architecture magic and machine type
@@ -75,27 +59,31 @@
 
 #undef CONFIG_SKIP_RELOCATE_UBOOT
 
+/* input clock of PLL: TickerTape has 12MHz input clock */
+#define CONFIG_SYS_CLK_FREQ	12000000
+
+/* DRAM Base */
+#define CONFIG_SYS_SDRAM_BASE	0x20000000
+
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_INITRD_TAG
+#define CONFIG_CMDLINE_EDITING
+
 /*
  * Size of malloc() pool
+ * 1MB = 0x100000, 0x100000 = 1024 * 1024
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + SZ_1M)	
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes for initial data */
 
 /*
  * select serial console configuration
  */
-#define CONFIG_SERIAL0          1	/* we use SERIAL 2 on S5PC100 */
-
-#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
-#ifdef CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#endif
-
-#define CONFIG_CMDLINE_EDITING
+#define CONFIG_SERIAL0          1	/* we use SERIAL 0 on SMDKC100 */
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
-
 #define CONFIG_BAUDRATE		115200
 #define CONFIG_L2_OFF
 
@@ -142,12 +130,8 @@
 #define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
 #endif
 
-#define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
-		" console=ttySAC2,115200n8" \
-		" mem=80M"
-
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" mem=80M " \
+		" mem=128M " \
 		" " MTDPARTS_DEFAULT
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
@@ -181,12 +165,10 @@
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
-	 " ${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
-	 " initrd=0x24800000,8M ramdisk=8192\0" \
+	 "${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"meminfo=mem=80M\0" \
+	"meminfo=mem=128M\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"bootblock=5\0" \
 	"ubiblock=4\0" \
@@ -196,7 +178,9 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
-#define CONFIG_SYS_PROMPT	"Universal # "	/* Monitor Command Prompt */
+#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
+#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
+#define CONFIG_SYS_PROMPT	"SMDKC100 # "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -204,12 +188,9 @@
 
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
-
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
 
-#define CONFIG_SYS_TIMERBASE		(OMAP34XX_GPT2)
-#define CONFIG_SYS_PTV			2       /* Divisor: 2^(PTV+1) => 8 */
-#define CONFIG_SYS_HZ					2085900		/* at PCLK 66.75MHz */
+#define CONFIG_SYS_HZ		2085900		/* at PCLK 66.75MHz */
 
 /* valid baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
@@ -219,31 +200,12 @@
  *
  * The stack sizes are set up in start.S using the settings below
  */
-#define CONFIG_STACKSIZE	0x40000		/* regular stack 256KB */
+#define CONFIG_STACKSIZE	SZ_256K		/* regular stack 256KB, 0x40000 */
 
-/**********************************
- Support Clock Settings
- **********************************
- Setting	SYNC	ASYNC
- ----------------------------------
- 667_133_66	 X	  O
- 533_133_66	 O	  O
- 400_133_66	 X	  O
- 400_100_50	 O	  O
- **********************************/
-
-/*#define CONFIG_CLK_667_133_66*/
-#define CONFIG_CLK_533_133_66
-/*
-#define CONFIG_CLK_400_100_50
-#define CONFIG_CLK_400_133_66
-#define CONFIG_SYNC_MODE
-*/
-
-/* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
+/* TickerTape has 1 banks of DRAM, we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x05000000		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1_SIZE	SZ_128M		/* 0x8000000, 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -252,15 +214,13 @@
  */
 #define CONFIG_SYS_NO_FLASH		1
 
-/* **** PISMO SUPPORT *** */
-
-/* Configure the PISMO */
-#define PISMO1_NAND_SIZE		GPMC_SIZE_128M
-#define PISMO1_ONEN_SIZE		GPMC_SIZE_128M
-
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
-#define CONFIG_IDENT_STRING	" for Universal"
+#define CONFIG_IDENT_STRING	" for SMDKC100"
+
+#if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)
+#define CONFIG_ENABLE_MMU
+#endif
 
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
@@ -268,13 +228,13 @@
 #define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
 #endif
 
-/* Boot configuration (define only one of next 3) */
-//#define CONFIG_BOOT_ONENAND
-
+/*-----------------------------------------------------------------------
+ * Boot configuration (define only one of next 3)
+ */
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#define CONFIG_ENV_SIZE			0x20000
-#define CONFIG_ENV_ADDR			0x40000
-#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_SIZE			SZ_128K		/* 128KB, 0x20000 */
+#define CONFIG_ENV_ADDR			SZ_256K		/* 256KB, 0x40000 */
+#define CONFIG_ENV_OFFSET		SZ_256K		/* 256KB, 0x40000 */
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
 #define CONFIG_SYS_ONENAND_BASE		0x00000000
