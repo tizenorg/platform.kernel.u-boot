@@ -34,25 +34,25 @@
 
 /* clock definitions */
 #define SELECT_CLOCK_SOURCE2	0xE0100208
-#define LCD_CLOCK_SOURCE		0x1000
+#define LCD_CLOCK_SOURCE	0x1000
 
-#define CLOCK_DIV1				0xE0100304
+#define CLOCK_DIV1		0xE0100304
 
 /* LCD Panel definitions */
-#define PANEL_WIDTH			480
+#define PANEL_WIDTH		480
 #define PANEL_HEIGHT		800
 #define S5P_LCD_BPP		32	
 
-#define S5PCFB_HFP			8
-#define S5PCFB_HSW			4
-#define S5PCFB_HBP			8	
+#define S5PCFB_HFP		8
+#define S5PCFB_HSW		4
+#define S5PCFB_HBP		8
 
-#define S5PCFB_VFP			8
-#define S5PCFB_VSW			4
-#define S5PCFB_VBP			8
+#define S5PCFB_VFP		8
+#define S5PCFB_VSW		4
+#define S5PCFB_VBP		8
 
-#define S5PCFB_HRES			480
-#define S5PCFB_VRES			800
+#define S5PCFB_HRES		480
+#define S5PCFB_VRES		800
 
 #define S5PCFB_HRES_VIRTUAL	480
 #define S5PCFB_VRES_VIRTUAL	800
@@ -60,7 +60,7 @@
 #define S5PCFB_HRES_OSD		480
 #define S5PCFB_VRES_OSD		800
 
-#define S5P_VFRAME_FREQ	60
+#define S5P_VFRAME_FREQ		60
 
 #define DEBUG 
 #ifdef DEBUG
@@ -85,15 +85,16 @@ short console_row;
 
 static unsigned short makepixel565(char r, char g, char b)
 {
-    return (unsigned short)(((r>>3)<<11)|((g>>2)<<5)|(b>>3));
+    return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
 }
 
 static unsigned int makepixel8888(char a, char r, char g, char b)
 {
-	return (unsigned int) ((a << 24) | (r << 16) | (g << 8)  | b);
+	return (unsigned int)((a << 24) | (r << 16) | (g << 8)  | b);
 }
 
-static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos, int y2pos, unsigned short pixel)
+static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos,
+		int y2pos, unsigned short pixel)
 {
 	unsigned short *pDst = (unsigned short *)pImg;
 	unsigned int offset_s;
@@ -101,13 +102,14 @@ static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos, int y2pos,
 
 	for(i = y1pos; i < y2pos; i++) {
 		for(j = x1pos; j < x2pos; j++) {
-			offset_s = i*PANEL_WIDTH+j;
-			*(pDst+offset_s) = pixel;
+			offset_s = i * PANEL_WIDTH + j;
+			*(pDst + offset_s) = pixel;
 		}
 	}
 }
 
-static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos, int y2pos, unsigned int pixel)
+static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos,
+		int y2pos, unsigned int pixel)
 {
 	unsigned int *pDst = (unsigned int *)pImg;
 	unsigned int offset_s;
@@ -115,7 +117,7 @@ static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos, int y2pos,
 
 	for(i = y1pos; i < y2pos; i++) {
 		for(j = x1pos; j < x2pos; j++) {
-			offset_s = i*PANEL_WIDTH+j;
+			offset_s = i * PANEL_WIDTH + j;
 			*(pDst+offset_s) = pixel;
 		}
 	}
@@ -149,7 +151,8 @@ vidinfo_t panel_info = {
 /* LCD Controller data */
 s5pcfb_fimd_info_t s5pcfb_fimd = {
 	.vidcon0 = S5P_VIDCON0_INTERLACE_F_PROGRESSIVE | S5P_VIDCON0_VIDOUT_RGB_IF | \
-			   S5P_VIDCON0_L1_DATA16_SUB_16PLUS8_MODE | S5P_VIDCON0_L0_DATA16_MAIN_16PLUS8_MODE | \
+			   S5P_VIDCON0_L1_DATA16_SUB_16PLUS8_MODE | \
+			   S5P_VIDCON0_L0_DATA16_MAIN_16PLUS8_MODE | \
 			   S5P_VIDCON0_PNRMODE_RGB_P | S5P_VIDCON0_CLKVALUP_ALWAYS | \
 			   S5P_VIDCON0_CLKDIR_DIVIDED | S5P_VIDCON0_CLKSEL_F_HCLK | \
 			   S5P_VIDCON0_ENVID_DISABLE | S5P_VIDCON0_ENVID_F_DISABLE,
@@ -157,16 +160,24 @@ s5pcfb_fimd_info_t s5pcfb_fimd = {
 	.vidcon1 = S5P_VIDCON1_IHSYNC_NORMAL | S5P_VIDCON1_IVSYNC_NORMAL | 
 		S5P_VIDCON1_IVDEN_INVERT | S5P_VIDCON1_IVCLK_RISE_EDGE,
 
-	.vidtcon0 = S5P_VIDTCON0_VBPD(S5PCFB_VBP - 1) | S5P_VIDTCON0_VFPD(S5PCFB_VFP - 1) | \
-				S5P_VIDTCON0_VSPW(S5PCFB_VSW - 1),
-	.vidtcon1 = S5P_VIDTCON1_HBPD(S5PCFB_HBP - 1) | S5P_VIDTCON1_HFPD(S5PCFB_HFP - 1) | \
-				S5P_VIDTCON1_HSPW(S5PCFB_HSW - 1),
-	.vidtcon2 = S5P_VIDTCON2_LINEVAL(S5PCFB_VRES - 1) | S5P_VIDTCON2_HOZVAL(S5PCFB_HRES - 1),
+	.vidtcon0 = S5P_VIDTCON0_VBPD(S5PCFB_VBP - 1) | \
+		    S5P_VIDTCON0_VFPD(S5PCFB_VFP - 1) | \
+		    S5P_VIDTCON0_VSPW(S5PCFB_VSW - 1),
+
+	.vidtcon1 = S5P_VIDTCON1_HBPD(S5PCFB_HBP - 1) | \
+		    S5P_VIDTCON1_HFPD(S5PCFB_HFP - 1) | \
+		    S5P_VIDTCON1_HSPW(S5PCFB_HSW - 1),
+
+	.vidtcon2 = S5P_VIDTCON2_LINEVAL(S5PCFB_VRES - 1) | \
+		    S5P_VIDTCON2_HOZVAL(S5PCFB_HRES - 1),
+
 	.vidosd0a = S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0),
-	.vidosd0b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES - 1) | S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES - 1),
+	.vidosd0b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES - 1) | \
+		    S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES - 1),
 
 	.vidosd1a = S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0),
-	.vidosd1b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES_OSD - 1) | S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES_OSD - 1),
+	.vidosd1b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES_OSD - 1) | \
+		    S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES_OSD - 1),
 
 	.width = PANEL_WIDTH,
 	.height = PANEL_HEIGHT,
@@ -176,16 +187,17 @@ s5pcfb_fimd_info_t s5pcfb_fimd = {
 	.dithmode = (S5P_DITHMODE_RDITHPOS_5BIT | S5P_DITHMODE_GDITHPOS_6BIT | \
 			S5P_DITHMODE_BDITHPOS_5BIT ) & S5P_DITHMODE_DITHERING_DISABLE,
 
-	.wincon0 = S5P_WINCONx_HAWSWP_DISABLE | S5P_WINCONx_BURSTLEN_16WORD | S5P_WINCONx_BPPMODE_F_24BPP_888,
+	.wincon0 = S5P_WINCONx_HAWSWP_DISABLE | S5P_WINCONx_BURSTLEN_16WORD | \
+		   S5P_WINCONx_BPPMODE_F_24BPP_888,
 
 	.bpp = S5P_LCD_BPP,
 	.bytes_per_pixel = 4,
 	.wpalcon = S5P_WPALCON_W0PAL_24BIT,
 
 	.vidintcon0 = S5P_VIDINTCON0_FRAMESEL0_VSYNC | S5P_VIDINTCON0_FRAMESEL1_NONE | \
-				  S5P_VIDINTCON0_INTFRMEN_DISABLE | S5P_VIDINTCON0_FIFOSEL_WIN0 | \
-				  S5P_VIDINTCON0_FIFOLEVEL_25 | S5P_VIDINTCON0_INTFIFOEN_DISABLE | \
-				  S5P_VIDINTCON0_INTEN_ENABLE,
+		      S5P_VIDINTCON0_INTFRMEN_DISABLE | S5P_VIDINTCON0_FIFOSEL_WIN0 | \
+		      S5P_VIDINTCON0_FIFOLEVEL_25 | S5P_VIDINTCON0_INTFIFOEN_DISABLE | \
+		      S5P_VIDINTCON0_INTEN_ENABLE,
 	.vidintcon1 = 0,
 	.xoffset = 0,
 	.yoffset = 0,
@@ -210,8 +222,8 @@ static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 	s5pcfb_fimd.palette = (u_long)lcdbase + fb_size + PAGE_SIZE - palette_mem_size;
 
 	udebug("fb_size=%d, screen_base=%x, palette_size=%d, palettle_mem_size=%d, palette=%x\n",
-			fb_size, s5pcfb_fimd.screen, s5pcfb_fimd.palette_size, palette_mem_size,
-			s5pcfb_fimd.palette);
+			fb_size, s5pcfb_fimd.screen, s5pcfb_fimd.palette_size,
+			palette_mem_size, s5pcfb_fimd.palette);
 }
 
 static void s5pc_gpio_setup(void)
@@ -245,8 +257,9 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	offset = 0;
 
 	/* calculate LCD Pixel clock */
-	s5pcfb_fimd.pixclock = (S5P_VFRAME_FREQ * (vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width)
-			* (vid->vl_vpw + vid->vl_bfw + vid->vl_efw + vid->vl_height));
+	s5pcfb_fimd.pixclock = (S5P_VFRAME_FREQ *
+			(vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width) *
+			(vid->vl_vpw + vid->vl_bfw + vid->vl_efw + vid->vl_height));
 
 	/* initialize the fimd specific */
 	s5pcfb_fimd.vidintcon0 &= ~S5P_VIDINTCON0_FRAMESEL0_MASK;
@@ -261,18 +274,18 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	__REG(S5P_VIDCON0) = s5pcfb_fimd.vidcon0;
 
 	mpll_ratio = (__raw_readl(CLOCK_DIV1) & 0x000000f0) >> 4;
-	s5pcfb_fimd.vidcon0 |=
-			S5P_VIDCON0_CLKVAL_F((int)(((get_MCLK() / mpll_ratio) / s5pcfb_fimd.pixclock) - 1));
+	s5pcfb_fimd.vidcon0 |= S5P_VIDCON0_CLKVAL_F((int)(((get_MCLK() / mpll_ratio)
+					/ s5pcfb_fimd.pixclock) - 1));
 
 	udebug("mpll_ratio = %d, MCLK = %d, pixclock=%d, vidcon0 = %d\n",
-			mpll_ratio, get_MCLK(), s5pcfb_fimd.pixclock, s5pcfb_fimd.vidcon0);
+			mpll_ratio, get_MCLK(), s5pcfb_fimd.pixclock,
+			s5pcfb_fimd.vidcon0);
 
 	/* set window size */
 	s5pcfb_fimd.vidosd0c = S5P_VIDOSD0C_OSDSIZE(PANEL_WIDTH * PANEL_HEIGHT);
 
 	/* set wondow position */
-	__REG(S5P_VIDOSD0A) =
-			S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0);
+	__REG(S5P_VIDOSD0A) = S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0);
 	__REG(S5P_VIDOSD0B) =
 			S5P_VIDOSDxB_OSD_RBX_F(PANEL_WIDTH - 1 + s5pcfb_fimd.xoffset) |
 			S5P_VIDOSDxB_OSD_RBY_F(PANEL_HEIGHT - 1 + s5pcfb_fimd.yoffset);
@@ -326,13 +339,17 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 static void fill_fb(void)
 {
 	/* red */
-	read_image32((char *)s5pcfb_fimd.screen, 0, 0, 480, 200, makepixel8888(0, 255, 0, 0));
+	read_image32((char *)s5pcfb_fimd.screen, 0, 0, 480, 200,
+			makepixel8888(0, 255, 0, 0));
 	/* green */
-	read_image32((char *)s5pcfb_fimd.screen, 0, 200, 480, 400, makepixel8888(0, 0, 255, 0));
+	read_image32((char *)s5pcfb_fimd.screen, 0, 200, 480, 400,
+			makepixel8888(0, 0, 255, 0));
 	/* blue */
-	read_image32((char *)s5pcfb_fimd.screen, 0, 400, 480, 600, makepixel8888(0, 0, 0, 255));
+	read_image32((char *)s5pcfb_fimd.screen, 0, 400, 480, 600,
+			makepixel8888(0, 0, 0, 255));
 	/* write */
-	read_image32((char *)s5pcfb_fimd.screen, 0, 600, 480, 800, makepixel8888(0, 255, 255, 255));
+	read_image32((char *)s5pcfb_fimd.screen, 0, 600, 480, 800,
+			makepixel8888(0, 255, 255, 255));
 }
 
 static void lcd_panel_on(void)
