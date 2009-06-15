@@ -10,10 +10,10 @@
 #ifndef ___ASM_ARCH_MAP_BASE_H
 #define ___ASM_ARCH_MAP_BASE_H
 
-#define S5PC_ADDR_BASE	(0xE1F00000)
+#define S5P_ADDR_BASE	(0xE1F00000)
 
-#define S5PC_ADDR(x)	(S5PC_ADDR_BASE + (x))
+#define S5P_ADDR(x)	(S5P_ADDR_BASE + (x))
 
-#define S5PC_LCD_BASE	S5PC_ADDR(0xC100000)	/* Display Controller */
+#define S5P_LCD_BASE	S5P_ADDR(0xC100000)	/* Display Controller */
 
 #endif

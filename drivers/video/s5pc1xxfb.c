@@ -41,7 +41,7 @@
 /* LCD Panel definitions */
 #define PANEL_WIDTH			480
 #define PANEL_HEIGHT		800
-#define S5PC_LCD_BPP		32	
+#define S5P_LCD_BPP		32	
 
 #define S5PCFB_HFP			8
 #define S5PCFB_HSW			4
@@ -60,7 +60,7 @@
 #define S5PCFB_HRES_OSD		480
 #define S5PCFB_VRES_OSD		800
 
-#define S5PC_VFRAME_FREQ	60
+#define S5P_VFRAME_FREQ	60
 
 #define DEBUG 
 #ifdef DEBUG
@@ -131,7 +131,7 @@ vidinfo_t panel_info = {
 		.vl_hsp		= CONFIG_SYS_LOW,
 		.vl_vsp		= CONFIG_SYS_LOW,
 		.vl_dp		= CONFIG_SYS_HIGH,
-		.vl_bpix	= S5PC_LCD_BPP,
+		.vl_bpix	= S5P_LCD_BPP,
 		.vl_lbw		= 0,
 		.vl_splt	= 0,
 		.vl_clor	= 0,
@@ -148,44 +148,44 @@ vidinfo_t panel_info = {
 
 /* LCD Controller data */
 s5pcfb_fimd_info_t s5pcfb_fimd = {
-	.vidcon0 = S5PC_VIDCON0_INTERLACE_F_PROGRESSIVE | S5PC_VIDCON0_VIDOUT_RGB_IF | \
-			   S5PC_VIDCON0_L1_DATA16_SUB_16PLUS8_MODE | S5PC_VIDCON0_L0_DATA16_MAIN_16PLUS8_MODE | \
-			   S5PC_VIDCON0_PNRMODE_RGB_P | S5PC_VIDCON0_CLKVALUP_ALWAYS | \
-			   S5PC_VIDCON0_CLKDIR_DIVIDED | S5PC_VIDCON0_CLKSEL_F_HCLK | \
-			   S5PC_VIDCON0_ENVID_DISABLE | S5PC_VIDCON0_ENVID_F_DISABLE,
+	.vidcon0 = S5P_VIDCON0_INTERLACE_F_PROGRESSIVE | S5P_VIDCON0_VIDOUT_RGB_IF | \
+			   S5P_VIDCON0_L1_DATA16_SUB_16PLUS8_MODE | S5P_VIDCON0_L0_DATA16_MAIN_16PLUS8_MODE | \
+			   S5P_VIDCON0_PNRMODE_RGB_P | S5P_VIDCON0_CLKVALUP_ALWAYS | \
+			   S5P_VIDCON0_CLKDIR_DIVIDED | S5P_VIDCON0_CLKSEL_F_HCLK | \
+			   S5P_VIDCON0_ENVID_DISABLE | S5P_VIDCON0_ENVID_F_DISABLE,
 
-	.vidcon1 = S5PC_VIDCON1_IHSYNC_NORMAL | S5PC_VIDCON1_IVSYNC_NORMAL | 
-		S5PC_VIDCON1_IVDEN_INVERT | S5PC_VIDCON1_IVCLK_RISE_EDGE,
+	.vidcon1 = S5P_VIDCON1_IHSYNC_NORMAL | S5P_VIDCON1_IVSYNC_NORMAL | 
+		S5P_VIDCON1_IVDEN_INVERT | S5P_VIDCON1_IVCLK_RISE_EDGE,
 
-	.vidtcon0 = S5PC_VIDTCON0_VBPD(S5PCFB_VBP - 1) | S5PC_VIDTCON0_VFPD(S5PCFB_VFP - 1) | \
-				S5PC_VIDTCON0_VSPW(S5PCFB_VSW - 1),
-	.vidtcon1 = S5PC_VIDTCON1_HBPD(S5PCFB_HBP - 1) | S5PC_VIDTCON1_HFPD(S5PCFB_HFP - 1) | \
-				S5PC_VIDTCON1_HSPW(S5PCFB_HSW - 1),
-	.vidtcon2 = S5PC_VIDTCON2_LINEVAL(S5PCFB_VRES - 1) | S5PC_VIDTCON2_HOZVAL(S5PCFB_HRES - 1),
-	.vidosd0a = S5PC_VIDOSDxA_OSD_LTX_F(0) | S5PC_VIDOSDxA_OSD_LTY_F(0),
-	.vidosd0b = S5PC_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES - 1) | S5PC_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES - 1),
+	.vidtcon0 = S5P_VIDTCON0_VBPD(S5PCFB_VBP - 1) | S5P_VIDTCON0_VFPD(S5PCFB_VFP - 1) | \
+				S5P_VIDTCON0_VSPW(S5PCFB_VSW - 1),
+	.vidtcon1 = S5P_VIDTCON1_HBPD(S5PCFB_HBP - 1) | S5P_VIDTCON1_HFPD(S5PCFB_HFP - 1) | \
+				S5P_VIDTCON1_HSPW(S5PCFB_HSW - 1),
+	.vidtcon2 = S5P_VIDTCON2_LINEVAL(S5PCFB_VRES - 1) | S5P_VIDTCON2_HOZVAL(S5PCFB_HRES - 1),
+	.vidosd0a = S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0),
+	.vidosd0b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES - 1) | S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES - 1),
 
-	.vidosd1a = S5PC_VIDOSDxA_OSD_LTX_F(0) | S5PC_VIDOSDxA_OSD_LTY_F(0),
-	.vidosd1b = S5PC_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES_OSD - 1) | S5PC_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES_OSD - 1),
+	.vidosd1a = S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0),
+	.vidosd1b = S5P_VIDOSDxB_OSD_RBX_F(S5PCFB_HRES_OSD - 1) | S5P_VIDOSDxB_OSD_RBY_F(S5PCFB_VRES_OSD - 1),
 
 	.width = PANEL_WIDTH,
 	.height = PANEL_HEIGHT,
 	.xres = PANEL_WIDTH,
 	.yres = PANEL_HEIGHT,
 
-	.dithmode = (S5PC_DITHMODE_RDITHPOS_5BIT | S5PC_DITHMODE_GDITHPOS_6BIT | \
-			S5PC_DITHMODE_BDITHPOS_5BIT ) & S5PC_DITHMODE_DITHERING_DISABLE,
+	.dithmode = (S5P_DITHMODE_RDITHPOS_5BIT | S5P_DITHMODE_GDITHPOS_6BIT | \
+			S5P_DITHMODE_BDITHPOS_5BIT ) & S5P_DITHMODE_DITHERING_DISABLE,
 
-	.wincon0 = S5PC_WINCONx_HAWSWP_DISABLE | S5PC_WINCONx_BURSTLEN_16WORD | S5PC_WINCONx_BPPMODE_F_24BPP_888,
+	.wincon0 = S5P_WINCONx_HAWSWP_DISABLE | S5P_WINCONx_BURSTLEN_16WORD | S5P_WINCONx_BPPMODE_F_24BPP_888,
 
-	.bpp = S5PC_LCD_BPP,
+	.bpp = S5P_LCD_BPP,
 	.bytes_per_pixel = 4,
-	.wpalcon = S5PC_WPALCON_W0PAL_24BIT,
+	.wpalcon = S5P_WPALCON_W0PAL_24BIT,
 
-	.vidintcon0 = S5PC_VIDINTCON0_FRAMESEL0_VSYNC | S5PC_VIDINTCON0_FRAMESEL1_NONE | \
-				  S5PC_VIDINTCON0_INTFRMEN_DISABLE | S5PC_VIDINTCON0_FIFOSEL_WIN0 | \
-				  S5PC_VIDINTCON0_FIFOLEVEL_25 | S5PC_VIDINTCON0_INTFIFOEN_DISABLE | \
-				  S5PC_VIDINTCON0_INTEN_ENABLE,
+	.vidintcon0 = S5P_VIDINTCON0_FRAMESEL0_VSYNC | S5P_VIDINTCON0_FRAMESEL1_NONE | \
+				  S5P_VIDINTCON0_INTFRMEN_DISABLE | S5P_VIDINTCON0_FIFOSEL_WIN0 | \
+				  S5P_VIDINTCON0_FIFOLEVEL_25 | S5P_VIDINTCON0_INTFIFOEN_DISABLE | \
+				  S5P_VIDINTCON0_INTEN_ENABLE,
 	.vidintcon1 = 0,
 	.xoffset = 0,
 	.yoffset = 0,
@@ -245,82 +245,82 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	offset = 0;
 
 	/* calculate LCD Pixel clock */
-	s5pcfb_fimd.pixclock = (S5PC_VFRAME_FREQ * (vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width)
+	s5pcfb_fimd.pixclock = (S5P_VFRAME_FREQ * (vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width)
 			* (vid->vl_vpw + vid->vl_bfw + vid->vl_efw + vid->vl_height));
 
 	/* initialize the fimd specific */
-	s5pcfb_fimd.vidintcon0 &= ~S5PC_VIDINTCON0_FRAMESEL0_MASK;
-	s5pcfb_fimd.vidintcon0 |= S5PC_VIDINTCON0_FRAMESEL0_VSYNC;
-	s5pcfb_fimd.vidintcon0 |= S5PC_VIDINTCON0_INTFRMEN_ENABLE;
+	s5pcfb_fimd.vidintcon0 &= ~S5P_VIDINTCON0_FRAMESEL0_MASK;
+	s5pcfb_fimd.vidintcon0 |= S5P_VIDINTCON0_FRAMESEL0_VSYNC;
+	s5pcfb_fimd.vidintcon0 |= S5P_VIDINTCON0_INTFRMEN_ENABLE;
 
-	__REG(S5PC_VIDINTCON0) = s5pcfb_fimd.vidintcon0;
+	__REG(S5P_VIDINTCON0) = s5pcfb_fimd.vidintcon0;
 
 	/* set configuration register for VCLK */
 	s5pcfb_fimd.vidcon0 = s5pcfb_fimd.vidcon0 &
-			~(S5PC_VIDCON0_ENVID_ENABLE | S5PC_VIDCON0_ENVID_F_ENABLE);
-	__REG(S5PC_VIDCON0) = s5pcfb_fimd.vidcon0;
+			~(S5P_VIDCON0_ENVID_ENABLE | S5P_VIDCON0_ENVID_F_ENABLE);
+	__REG(S5P_VIDCON0) = s5pcfb_fimd.vidcon0;
 
 	mpll_ratio = (__raw_readl(CLOCK_DIV1) & 0x000000f0) >> 4;
 	s5pcfb_fimd.vidcon0 |=
-			S5PC_VIDCON0_CLKVAL_F((int)(((get_MCLK() / mpll_ratio) / s5pcfb_fimd.pixclock) - 1));
+			S5P_VIDCON0_CLKVAL_F((int)(((get_MCLK() / mpll_ratio) / s5pcfb_fimd.pixclock) - 1));
 
 	udebug("mpll_ratio = %d, MCLK = %d, pixclock=%d, vidcon0 = %d\n",
 			mpll_ratio, get_MCLK(), s5pcfb_fimd.pixclock, s5pcfb_fimd.vidcon0);
 
 	/* set window size */
-	s5pcfb_fimd.vidosd0c = S5PC_VIDOSD0C_OSDSIZE(PANEL_WIDTH * PANEL_HEIGHT);
+	s5pcfb_fimd.vidosd0c = S5P_VIDOSD0C_OSDSIZE(PANEL_WIDTH * PANEL_HEIGHT);
 
 	/* set wondow position */
-	__REG(S5PC_VIDOSD0A) =
-			S5PC_VIDOSDxA_OSD_LTX_F(0) | S5PC_VIDOSDxA_OSD_LTY_F(0);
-	__REG(S5PC_VIDOSD0B) =
-			S5PC_VIDOSDxB_OSD_RBX_F(PANEL_WIDTH - 1 + s5pcfb_fimd.xoffset) |
-			S5PC_VIDOSDxB_OSD_RBY_F(PANEL_HEIGHT - 1 + s5pcfb_fimd.yoffset);
+	__REG(S5P_VIDOSD0A) =
+			S5P_VIDOSDxA_OSD_LTX_F(0) | S5P_VIDOSDxA_OSD_LTY_F(0);
+	__REG(S5P_VIDOSD0B) =
+			S5P_VIDOSDxB_OSD_RBX_F(PANEL_WIDTH - 1 + s5pcfb_fimd.xoffset) |
+			S5P_VIDOSDxB_OSD_RBY_F(PANEL_HEIGHT - 1 + s5pcfb_fimd.yoffset);
 
 	/* set framebuffer start address */
-	__REG(S5PC_VIDW00ADD0B0) = s5pcfb_fimd.screen;
+	__REG(S5P_VIDW00ADD0B0) = s5pcfb_fimd.screen;
 
 	/* set framebuffer end address  */
-	__REG(S5PC_VIDW00ADD1B0) = (__raw_readl(S5PC_VIDW00ADD0B0) +
+	__REG(S5P_VIDW00ADD1B0) = (__raw_readl(S5P_VIDW00ADD0B0) +
 			(page_width + offset) * s5pcfb_fimd.yres);
 	
 	/* set framebuffer size */
-	fb_size = S5PC_VIDWxxADD2_OFFSIZE_F(offset) |
-			(S5PC_VIDWxxADD2_PAGEWIDTH_F(page_width));
+	fb_size = S5P_VIDWxxADD2_OFFSIZE_F(offset) |
+			(S5P_VIDWxxADD2_PAGEWIDTH_F(page_width));
 
-	__REG(S5PC_VIDW00ADD2) = fb_size;
+	__REG(S5P_VIDW00ADD2) = fb_size;
 
 	udebug("fb_size at s5pc_lcd_init=%d, page_width=%d\n", fb_size, page_width);
 
 	/* set window0 conguration register */
-	s5pcfb_fimd.wincon0 = S5PC_WINCONx_WSWP_ENABLE |
-			S5PC_WINCONx_BURSTLEN_16WORD |
-			S5PC_WINCONx_BPPMODE_F_24BPP_888;
+	s5pcfb_fimd.wincon0 = S5P_WINCONx_WSWP_ENABLE |
+			S5P_WINCONx_BURSTLEN_16WORD |
+			S5P_WINCONx_BPPMODE_F_24BPP_888;
 
-	s5pcfb_fimd.bpp = S5PC_LCD_BPP;
+	s5pcfb_fimd.bpp = S5P_LCD_BPP;
 	s5pcfb_fimd.bytes_per_pixel = s5pcfb_fimd.bpp / 8;
 
 	/* set registers */
-	__REG(S5PC_WINCON0) = s5pcfb_fimd.wincon0;
-	__REG(S5PC_VIDCON0) = s5pcfb_fimd.vidcon0;
-	__REG(S5PC_VIDCON1) = s5pcfb_fimd.vidcon1;
-	__REG(S5PC_VIDTCON0) = s5pcfb_fimd.vidtcon0;
-	__REG(S5PC_VIDTCON1) = s5pcfb_fimd.vidtcon1;
-	__REG(S5PC_VIDTCON2) = s5pcfb_fimd.vidtcon2;
-	__REG(S5PC_VIDINTCON0) = s5pcfb_fimd.vidintcon0;
-	__REG(S5PC_VIDINTCON1) = s5pcfb_fimd.vidintcon1;
+	__REG(S5P_WINCON0) = s5pcfb_fimd.wincon0;
+	__REG(S5P_VIDCON0) = s5pcfb_fimd.vidcon0;
+	__REG(S5P_VIDCON1) = s5pcfb_fimd.vidcon1;
+	__REG(S5P_VIDTCON0) = s5pcfb_fimd.vidtcon0;
+	__REG(S5P_VIDTCON1) = s5pcfb_fimd.vidtcon1;
+	__REG(S5P_VIDTCON2) = s5pcfb_fimd.vidtcon2;
+	__REG(S5P_VIDINTCON0) = s5pcfb_fimd.vidintcon0;
+	__REG(S5P_VIDINTCON1) = s5pcfb_fimd.vidintcon1;
 
-	__REG(S5PC_VIDOSD0A) = s5pcfb_fimd.vidosd0a;
-	__REG(S5PC_VIDOSD0B) = s5pcfb_fimd.vidosd0b;
-	__REG(S5PC_VIDOSD0C) = s5pcfb_fimd.vidosd0c;
-	__REG(S5PC_WPALCON) = s5pcfb_fimd.wpalcon;
+	__REG(S5P_VIDOSD0A) = s5pcfb_fimd.vidosd0a;
+	__REG(S5P_VIDOSD0B) = s5pcfb_fimd.vidosd0b;
+	__REG(S5P_VIDOSD0C) = s5pcfb_fimd.vidosd0c;
+	__REG(S5P_WPALCON) = s5pcfb_fimd.wpalcon;
 
 	/* enable window0 */
-	__REG(S5PC_WINCON0) = (__raw_readl(S5PC_WINCON0) |
-			S5PC_WINCONx_ENWIN_F_ENABLE);
-	__REG(S5PC_VIDCON0) = (__raw_readl(S5PC_VIDCON0) |
-			S5PC_VIDCON0_ENVID_ENABLE |
-			S5PC_VIDCON0_ENVID_F_ENABLE);
+	__REG(S5P_WINCON0) = (__raw_readl(S5P_WINCON0) |
+			S5P_WINCONx_ENWIN_F_ENABLE);
+	__REG(S5P_VIDCON0) = (__raw_readl(S5P_VIDCON0) |
+			S5P_VIDCON0_ENVID_ENABLE |
+			S5P_VIDCON0_ENVID_F_ENABLE);
 }
 
 static void fill_fb(void)
