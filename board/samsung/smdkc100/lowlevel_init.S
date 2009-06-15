@@ -202,27 +202,14 @@ system_clock_init:
  */
 uart_asm_init:
 	/* set GPIO to enable UART */
-	ldr	r0, =S5P_GPIO_A1_CON
-	ldr	r1, =0x22
+	ldr	r0, =S5P_GPIO_A0_CON
+	ldr	r1, =0x22222222
 	str	r1, [r0]
 
 	/* uart_sel GPK0[5] */
-	ldr	r0, =S5P_GPIO_K0_CON
+	ldr	r0, =S5P_GPIO_A1_CON
+	ldr	r1, =0x2222
 	ldr	r1, [r0]
-	bic	r1, r1, #0xf00000
-	orr	r1, r1, #0x100000
-	str   	r1, [r0]
-
-	ldr	r0, =S5P_GPIO_K0_PULL
-	ldr	r1, [r0]
-	bic	r1, r1, #0xc00
-	orr	r1, r1, #0x800
-	str	r1, [r0]
-
-	ldr	r0, =S5P_GPIO_K0_DAT
-	ldr	r1, [r0]
-	orr	r1, r1, #0x20
-	str	r1, [r0]
 
 	mov	pc, lr
 #endif

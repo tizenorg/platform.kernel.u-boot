@@ -131,10 +131,10 @@
 #endif
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
-		" console=ttySAC2,115200n8" \
+		" console=ttySAC0,115200n8" \
 		" mem=80M"
 
-#define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
+#define CONFIG_COMMON_BOOT	"console=ttySAC0,115200n8" \
 		" mem=128M " \
 		" " MTDPARTS_DEFAULT
 
@@ -193,8 +193,8 @@
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
-#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)	/* 80 MB in DRAM */
+#define CONFIG_SYS_LOAD_ADDR		CONFIG_SYS_SDRAM_BASE
 
 #define CONFIG_SYS_HZ		2085900		/* at PCLK 66.75MHz */
 
