@@ -84,7 +84,7 @@
 /*
  * select serial console configuration
  */
-#define CONFIG_SERIAL0          1	/* we use SERIAL 2 on S5PC100 */
+#define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
