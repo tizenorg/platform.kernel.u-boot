@@ -71,7 +71,6 @@
 #define MACH_TYPE		1826
 
 #define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
 
 #undef CONFIG_SKIP_RELOCATE_UBOOT
 
@@ -155,11 +154,11 @@
 
 #ifdef CONFIG_USE_BIG_UBOOT
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x22008000 0x0 0x40000\0"
+			" onenand write 0x20008000 0x0 0x40000\0"
 #else
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x22008000 0x0 0x20000;" \
-			" onenand write 0x22008000 0x20000 0x20000\0"
+			" onenand write 0x20008000 0x0 0x20000;" \
+			" onenand write 0x20008000 0x20000 0x20000\0"
 #endif
 
 #define CONFIG_ENV_OVERWRITE
@@ -203,13 +202,13 @@
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
-#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x4e00000)
 
-#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x5e00000)
+#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x4e00000)
 
 #define CONFIG_SYS_TIMERBASE		(OMAP34XX_GPT2)
 #define CONFIG_SYS_PTV			2       /* Divisor: 2^(PTV+1) => 8 */
-#define CONFIG_SYS_HZ					2085900		/* at PCLK 66.75MHz */
+#define CONFIG_SYS_HZ			2085900		/* at PCLK 66.75MHz */
 
 /* valid baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
@@ -242,8 +241,8 @@
 
 /* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
 #define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x05000000		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #1 */
+#define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -251,12 +250,6 @@
  * FLASH and environment organization
  */
 #define CONFIG_SYS_NO_FLASH		1
-
-/* **** PISMO SUPPORT *** */
-
-/* Configure the PISMO */
-#define PISMO1_NAND_SIZE		GPMC_SIZE_128M
-#define PISMO1_ONEN_SIZE		GPMC_SIZE_128M
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
