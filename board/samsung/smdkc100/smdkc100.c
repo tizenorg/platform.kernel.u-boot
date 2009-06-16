@@ -60,7 +60,7 @@ int dram_init(void)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
-	printf("Board:\tSMDKC100(S5PC100)\n");
+	printf("Board:\tSMDKC100\n");
 	return 0;
 }
 #endif
