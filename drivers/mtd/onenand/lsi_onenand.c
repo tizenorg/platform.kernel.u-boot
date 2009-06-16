@@ -78,6 +78,8 @@ static void onenand_writel(unsigned int value, void __iomem *addr)
 
 static void onenand_irq_wait(struct onenand_chip *chip, int stat)
 {
+	int value = chip->read(chip->base + ONENAND_REG_INT_ERR_STAT);
+	printf("%s[%d] stat 0x%x, 0x%x\n", __func__, __LINE__, value, stat);
 	while (!chip->read(chip->base + ONENAND_REG_INT_ERR_STAT) & stat);
 }
 
@@ -315,7 +317,7 @@ static u_int onenand_addr_field(int dev_id, int fba, int fpa, int fsa)
 	u_int mem_addr = 0;
 	int ddp, density;	
 
-	ddp = dev_id & ONENAND_DEVICE_IS_DDP;
+	ddp = !!(dev_id & ONENAND_DEVICE_IS_DDP);
 	density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
 
 	switch (density & 0xf) {
@@ -367,6 +369,9 @@ static u_int onenand_addr_field(int dev_id, int fba, int fpa, int fsa)
 
 	case ONENAND_DEVICE_DENSITY_4Gb:
 		if (ddp) {
+			if (fba < 2048)
+				ddp = 0;
+
 			mem_addr = ((ddp << ONENAND_DDP_SHIFT_4Gb) | \
 					((fba & ONENAND_FBA_MASK_4Gb_DDP) << ONENAND_FBA_SHIFT) | \
 					((fpa & ONENAND_FPA_MASK) << ONENAND_FPA_SHIFT) | \
@@ -1084,6 +1089,7 @@ int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 	uint *buf_poi = (uint *)buf;
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "onenand_write: to = 0x%08x, len = %i\n", (unsigned int) to, (int) len);
+	printf("%s[%d]\n", __func__, __LINE__);
 
 	/* Initialize retlen, in case of early exit */
 	*retlen = 0;
@@ -1117,6 +1123,7 @@ int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 		/* get address to write data */
 		cmd_addr = (void __iomem *)chip->command(mtd, ONENAND_CMD_PROG, to);
 
+		printf("%s[%d] 0x%x, 0x%x\n", __func__, __LINE__, buf_poi, cmd_addr);
 		/* write all data of 1 page by 4 bytes at a time */
 		for (i = 0; i < (mtd->writesize / 4); i++) {
 			chip->write(*buf_poi, cmd_addr);
@@ -1528,6 +1535,7 @@ int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 	void __iomem *cmd_addr = 0;
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "onenand_erase: start = 0x%08x, len = %i\n", (unsigned int) instr->addr, (unsigned int) instr->len);
+	printf("%s[%d]\n", __func__, __LINE__);
 
 	block_size = (1 << chip->erase_shift);
 
@@ -1758,9 +1766,9 @@ static int onenand_unlock_all(struct mtd_info *mtd)
 			loff_t ofs;
 			size_t len;
 
-			/* 1st block on another chip */
+			/* all blocks on another chip */
 			ofs = chip->chipsize >> 1;
-			len = 1 << chip->erase_shift;
+			len = chip->chipsize >> 1;
 
 			onenand_unlock(mtd, ofs, len);
 		}
