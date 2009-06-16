@@ -1,14 +1,8 @@
 /*
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- * Gary Jennejohn <gj@denx.de>
- * David Mueller <d.mueller@elsoft.ch>
+ * Copyright (C) 2009 Samsung Electronics
+ * Minkyu Kang <mk7.kang@samsung.com>
  *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
- *
- * Configuation settings for the SAMSUNG SMDK6400(mDirac-III) board.
+ * Configuation settings for the SAMSUNG Universal (s5pc100) board.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -62,13 +56,13 @@
 
 
 /* Clock Defines */
-#define V_OSCK			26000000	/* Clock output from T2 */
-#define V_SCLK			(V_OSCK >> 1)
+#define V_OSCK		26000000	/* Clock output from T2 */
+#define V_SCLK		(V_OSCK >> 1)
 
 /*
  * Architecture magic and machine type
  */
-#define MACH_TYPE		1826
+#define MACH_TYPE	1826
 
 #define CONFIG_DISPLAY_CPUINFO
 
@@ -85,7 +79,7 @@
  */
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
-#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
+#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #endif
@@ -126,7 +120,7 @@
 
 #define CONFIG_MTD_PARTITIONS
 
-#define MTDIDS_DEFAULT "onenand0=s3c-onenand"
+#define MTDIDS_DEFAULT 		"onenand0=s3c-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
 				",2m@0x60000(kernel)"\
