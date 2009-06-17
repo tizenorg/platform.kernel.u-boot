@@ -208,3 +208,21 @@ ulong get_tbclk(void)
 	/* We overrun in 100s */
 	return CONFIG_SYS_HZ * 100;
 }
+
+void reset_cpu(ulong ignored)
+{
+	unsigned int pid = __REG(S5P_PRO_ID);
+
+	pid >>= 12;
+	pid &= 0x00fff;
+	pid |= (0x3 << 14);
+
+	__REG(S5P_SW_RST) = pid;
+
+	while (1) {
+		if (serial_tstc()) {
+			serial_getc();
+			break;
+		}
+	}
+}

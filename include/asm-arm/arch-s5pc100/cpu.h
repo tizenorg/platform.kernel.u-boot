@@ -32,6 +32,7 @@
 #define S5P_ADDR_BASE		(0xe0000000)
 #define S5P_ADDR(x)		(S5P_ADDR_BASE + (x))
 
+#define S5P_PA_ID		S5P_ADDR(0x00000000)	/* Chip ID Base */
 #define S5P_PA_CLK		S5P_ADDR(0x00100000)	/* Clock Base */
 #define S5P_PA_PWR		S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */

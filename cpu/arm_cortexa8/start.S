@@ -522,10 +522,10 @@ finished_inval:
 	ldmfd	r13!, {r0 - r5, r7, r9 - r12, pc}
 
 
+#if (CONFIG_OMAP34XX)
 	.align	5
 .global reset_cpu
 reset_cpu:
-#if (CONFIG_OMAP34XX)
 	ldr	r1, rstctl			@ get addr for global reset
 						@ reg
 	mov	r3, #0x2			@ full reset pll + mpu
