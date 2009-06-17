@@ -465,7 +465,7 @@ static int process_data(struct usbd_ops *usbd)
 		usbd->usb_stop();
 		return 0;
 
-	case COMMAND_BOOT:
+	case COMMAND_RAM_BOOT:
 		usbd->usb_stop();
 		boot_cmd(ramaddr);
 		return 0;
