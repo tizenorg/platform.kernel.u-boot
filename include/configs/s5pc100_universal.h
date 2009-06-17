@@ -137,10 +137,10 @@
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
 		" console=ttySAC2,115200n8" \
-		" mem=80M"
+		" ${meminfo}"
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" mem=80M " \
+		" ${memifo} " \
 		" " MTDPARTS_DEFAULT
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
