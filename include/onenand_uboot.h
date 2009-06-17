@@ -29,13 +29,6 @@ extern void onenand_board_init(struct mtd_info *);
 
 /* Functions */
 extern void onenand_init(void);
-extern int onenand_read(struct mtd_info *mtd, loff_t from, size_t len,
-			size_t * retlen, u_char * buf);
-extern int onenand_read_oob(struct mtd_info *mtd, loff_t from, struct mtd_oob_ops *ops);
-extern int onenand_write(struct mtd_info *mtd, loff_t from, size_t len,
-			 size_t * retlen, const u_char * buf);
-extern int onenand_erase(struct mtd_info *mtd, struct erase_info *instr);
-
 extern char *onenand_print_device_info(int device, int version);
 
 /* S3C64xx */

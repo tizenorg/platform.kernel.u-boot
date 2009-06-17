@@ -54,6 +54,8 @@ struct onenand_bufferram {
  * @param writew	[REPLACEABLE] hardware specific function for write short
  * @param command	[REPLACEABLE] hardware specific function for writing commands to the chip
  * @param wait		[REPLACEABLE] hardware specific function for wait on ready
+ * @bbt_wait:          [REPLACEABLE] hardware specific function for bbt wait on ready
+ * @unlock_all:                [REPLACEABLE] hardware specific function for unlock all
  * @param read_bufferram	[REPLACEABLE] hardware specific function for BufferRAM Area
  * @param write_bufferram	[REPLACEABLE] hardware specific function for BufferRAM Area
  * @param chip_lock	[INTERN] spinlock used to protect access to this structure and the chip
@@ -83,9 +85,8 @@ struct onenand_chip {
 			size_t len);
 	int (*wait) (struct mtd_info *mtd, int state);
 	int (*bbt_wait) (struct mtd_info *mtd, int state);
+	void (*unlock_all) (struct mtd_info *mtd);
 	int (*read_bufferram) (struct mtd_info *mtd, loff_t addr, int area,
-			       unsigned char *buffer, int offset, size_t count);
-	int (*read_spareram) (struct mtd_info *mtd, loff_t addr, int area,
 			       unsigned char *buffer, int offset, size_t count);
 	int (*write_bufferram) (struct mtd_info *mtd, loff_t addr, int area,
 				const unsigned char *buffer, int offset,

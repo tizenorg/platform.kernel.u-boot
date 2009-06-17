@@ -475,7 +475,7 @@ static int onenand_check_bufferram(struct mtd_info *mtd, loff_t addr)
 	int blockpage, found = 0;
 	unsigned int i;
 
-#ifdef CONFIG_S3C64XX
+#if defined(CONFIG_S3C64XX) || defined(CONFIG_S5PC100)
 	return 0;
 #endif
 
@@ -868,7 +868,7 @@ static int onenand_read_oob_nolock(struct mtd_info *mtd, loff_t from,
  *
  * This function simply calls onenand_read_ecc with oob buffer and oobsel = NULL
 */
-int onenand_read(struct mtd_info *mtd, loff_t from, size_t len,
+static int onenand_read(struct mtd_info *mtd, loff_t from, size_t len,
 		 size_t * retlen, u_char * buf)
 {
 	struct mtd_oob_ops ops = {
@@ -895,7 +895,7 @@ int onenand_read(struct mtd_info *mtd, loff_t from, size_t len,
  *
  * OneNAND main and/or out-of-band
  */
-int onenand_read_oob(struct mtd_info *mtd, loff_t from,
+static int onenand_read_oob(struct mtd_info *mtd, loff_t from,
 			struct mtd_oob_ops *ops)
 {
 	int ret;
@@ -1010,7 +1010,7 @@ int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
 		if (ret)
 			break;
 
-		this->read_spareram(mtd, 0, ONENAND_SPARERAM, buf, column, thislen);
+		this->read_bufferram(mtd, from, ONENAND_SPARERAM, buf, column, thislen);
 		read += thislen;
 		if (read == len)
 			break;
@@ -1235,7 +1235,7 @@ static int onenand_write_ops_nolock(struct mtd_info *mtd, loff_t to,
 		} else
 			oobbuf = (u_char *) ffchars;
 
-		this->write_bufferram(mtd, 0, ONENAND_SPARERAM, oobbuf, 0, mtd->oobsize);
+		this->write_bufferram(mtd, to, ONENAND_SPARERAM, oobbuf, 0, mtd->oobsize);
 
 		this->command(mtd, ONENAND_CMD_PROG, to, mtd->writesize);
 
@@ -1392,7 +1392,7 @@ static int onenand_write_oob_nolock(struct mtd_info *mtd, loff_t to,
  *
  * Write with ECC
  */
-int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
+static int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 		  size_t * retlen, const u_char * buf)
 {
 	struct mtd_oob_ops ops = {
@@ -1471,7 +1471,7 @@ static int onenand_block_isbad_nolock(struct mtd_info *mtd, loff_t ofs, int allo
  *
  * Erase one ore more blocks
  */
-int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
+static int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 {
 	struct onenand_chip *this = mtd->priv;
 	unsigned int block_size;
@@ -1551,8 +1551,6 @@ int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 					  (unsigned)(addr >> this->erase_shift));
 			instr->state = MTD_ERASE_FAILED;
 			instr->fail_addr = addr;
-
-			goto erase_exit;
 		}
 
 		len -= block_size;
@@ -1580,7 +1578,7 @@ erase_exit:
  *
  * Sync is actually a wait for chip ready function
  */
-void onenand_sync(struct mtd_info *mtd)
+static void onenand_sync(struct mtd_info *mtd)
 {
 	MTDDEBUG (MTD_DEBUG_LEVEL3, "onenand_sync: called\n");
 
@@ -1598,7 +1596,7 @@ void onenand_sync(struct mtd_info *mtd)
  *
  * Check whether the block is bad
  */
-int onenand_block_isbad(struct mtd_info *mtd, loff_t ofs)
+static int onenand_block_isbad(struct mtd_info *mtd, loff_t ofs)
 {
 	int ret;
 
@@ -1650,7 +1648,7 @@ static int onenand_default_block_markbad(struct mtd_info *mtd, loff_t ofs)
  *
  * Mark the block as bad
  */
-int onenand_block_markbad(struct mtd_info *mtd, loff_t ofs)
+static int onenand_block_markbad(struct mtd_info *mtd, loff_t ofs)
 {
 	struct onenand_chip *this = mtd->priv;
 	int ret;
@@ -1846,8 +1844,6 @@ static void onenand_unlock_all(struct mtd_info *mtd)
 		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
 				& ONENAND_CTRL_ONGO)
 			continue;
-
-		return;
 
 		/* Check lock status */
 		if (onenand_check_lock_status(this))
@@ -2065,7 +2061,8 @@ static int onenand_probe(struct mtd_info *mtd)
 	mtd->flags = MTD_CAP_NANDFLASH;
 	mtd->erase = onenand_erase;
 	mtd->read = onenand_read;
-	mtd->write = onenand_write;
+	if (!mtd->write)
+		mtd->write = onenand_write;
 	mtd->read_oob = onenand_read_oob;
 	mtd->write_oob = onenand_write_oob;
 	mtd->sync = onenand_sync;
@@ -2101,11 +2098,11 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 		this->wait = onenand_wait;
 	if (!this->bbt_wait)
 		this->bbt_wait = onenand_bbt_wait;
+	if (!this->unlock_all)
+		this->unlock_all = onenand_unlock_all;
 
 	if (!this->read_bufferram)
 		this->read_bufferram = onenand_read_bufferram;
-	if (!this->read_spareram)
-		this->read_spareram = onenand_read_bufferram;
 	if (!this->write_bufferram)
 		this->write_bufferram = onenand_write_bufferram;
 
@@ -2186,7 +2183,7 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	mtd->ecclayout = this->ecclayout;
 
 	/* Unlock whole block */
-	onenand_unlock_all(mtd);
+	this->unlock_all(mtd);
 
 	return this->scan_bbt(mtd);
 }
