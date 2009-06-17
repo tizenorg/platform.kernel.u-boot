@@ -27,7 +27,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_ONENAND_IPL
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
 	ldr	r6, =S5P_CONCONTROL			@ 0xE6000000
@@ -60,16 +59,31 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
 	/*
-	 * BL%LE %LONG4, 2 chip, LPDDR, dynamic self refresh,
-	 * force precharge, dynamic power down off
+	 * Burst Length 4, 2 chips, 32-bit, LPDDR
+	 * OFF: dynamic self refresh, force precharge, dynamic power down off
 	 */
 	ldr	r1, =0x00212100
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
-	/* 128MB config, 4banks */
+	/*
+	 * 0x20 -> 0x20000000
+	 * 0xf8 -> 0x27FFFFFF
+	 * [15:12] 0: Linear
+	 * [11:8 ] 2: 9 bits
+	 * [ 7:4 ] 2: 14 bits
+	 * [ 3:0 ] 2: 4 banks
+	 */
 	ldr	r1, =0x20f80222
 	str	r1, [r6, #0x008]			@ S5P_MEMCONFIG0
 
+	/*
+	 * 0x28 -> 0x28000000
+	 * 0xf8 -> 0x2fFFFFFF
+	 * [15:12] 0: Linear
+	 * [11:8 ] 2: 9 bits
+	 * [ 7:4 ] 2: 14 bits
+	 * [ 3:0 ] 2: 4 banks
+	 */
 	ldr	r1, =0x28f80222
 	str	r1, [r6, #0x00c]			@ S5P_MEMCONFIG1
 
@@ -78,15 +92,16 @@ mem_ctrl_asm_init:
 
 	/*
 	 * FIXME: Please verify these values
-	 * 7.8us*166MHz%LE %LONG1294(0x50E) 7.8us*133MHz%LE %LONG1038(0x40E),
-	 * 100MHz%LE %LONG780(0x30C),
-	 * 20MHz%LE %LONG156(0x9C),
-	 * 10MHz%LE %LONG78(0x4E)
+	 * 7.8us * 166MHz %LE %LONG1294(0x50E)
+	 * 7.8us * 133MHz %LE %LONG1038(0x40E),
+	 * 7.8us * 100MHz %LE %LONG780(0x30C),
+	 * 7.8us * 20MHz  %LE %LONG156(0x9C),
+	 * 7.8us * 10MHz  %LE %LONG78(0x4E)
 	 */
 	ldr	r1, =0x0000050e
 	str	r1, [r6, #0x030]			@ S5P_TIMINGAREF
 
-	/* 133MHz */
+	/* 166 MHz */
 	ldr	r1, =0x0c233287
 	str	r1, [r6, #0x034]			@ S5P_TIMINGROW
 
@@ -109,9 +124,7 @@ mem_ctrl_asm_init:
 	/* chip0 REFA */
 	ldr	r1, =0x05000000
 	str	r1, [r6, #0x010]			@ S5P_DIRECTCMD
-
 	/* chip0 REFA */
-	ldr	r1, =0x05000000
 	str	r1, [r6, #0x010]			@ S5P_DIRECTCMD
 
 	/* chip0 MRS, CL%LE %LONG3, BL%LE %LONG4 */
@@ -149,6 +162,5 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
 	mov	pc, lr
-#endif
 
 	.ltorg

@@ -120,7 +120,7 @@
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_MTDPARTS
 
-#define CONFIG_BOOTDELAY	10	
+#define CONFIG_BOOTDELAY	1
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
@@ -154,11 +154,11 @@
 
 #ifdef CONFIG_USE_BIG_UBOOT
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x20008000 0x0 0x40000\0"
+			" onenand write 0x22008000 0x0 0x40000\0"
 #else
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x20008000 0x0 0x20000;" \
-			" onenand write 0x20008000 0x20000 0x20000\0"
+			" onenand write 0x22008000 0x0 0x20000;" \
+			" onenand write 0x22008000 0x20000 0x20000\0"
 #endif
 
 #define CONFIG_ENV_OVERWRITE
@@ -239,10 +239,12 @@
 #define CONFIG_SYNC_MODE
 */
 
-/* SMDK6400 has 2 banks of DRAM, but we use only one in U-Boot */
-#define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #1 */
+/* Universal has 2 banks of DRAM */
+#define CONFIG_NR_DRAM_BANKS	2
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
+#define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #0 */
+#define PHYS_SDRAM_2		0x28000000		/* MobileDDR Bank #1 */
+#define PHYS_SDRAM_2_SIZE	0x08000000		/* 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
