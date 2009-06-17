@@ -179,7 +179,7 @@
 	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"meminfo=mem=80M\0" \
+	"meminfo=mem=80M,128M@0x28000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"bootblock=5\0" \
 	"ubiblock=4\0" \
