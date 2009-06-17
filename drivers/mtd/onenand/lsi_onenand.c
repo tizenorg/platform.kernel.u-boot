@@ -78,8 +78,6 @@ static void onenand_writel(unsigned int value, void __iomem *addr)
 
 static void onenand_irq_wait(struct onenand_chip *chip, int stat)
 {
-	int value = chip->read(chip->base + ONENAND_REG_INT_ERR_STAT);
-	printf("%s[%d] stat 0x%x, 0x%x\n", __func__, __LINE__, value, stat);
 	while (!chip->read(chip->base + ONENAND_REG_INT_ERR_STAT) & stat);
 }
 
@@ -1089,7 +1087,6 @@ int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 	uint *buf_poi = (uint *)buf;
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "onenand_write: to = 0x%08x, len = %i\n", (unsigned int) to, (int) len);
-	printf("%s[%d]\n", __func__, __LINE__);
 
 	/* Initialize retlen, in case of early exit */
 	*retlen = 0;
@@ -1123,7 +1120,6 @@ int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 		/* get address to write data */
 		cmd_addr = (void __iomem *)chip->command(mtd, ONENAND_CMD_PROG, to);
 
-		printf("%s[%d] 0x%x, 0x%x\n", __func__, __LINE__, buf_poi, cmd_addr);
 		/* write all data of 1 page by 4 bytes at a time */
 		for (i = 0; i < (mtd->writesize / 4); i++) {
 			chip->write(*buf_poi, cmd_addr);
@@ -1535,7 +1531,6 @@ int onenand_erase(struct mtd_info *mtd, struct erase_info *instr)
 	void __iomem *cmd_addr = 0;
 
 	MTDDEBUG(MTD_DEBUG_LEVEL3, "onenand_erase: start = 0x%08x, len = %i\n", (unsigned int) instr->addr, (unsigned int) instr->len);
-	printf("%s[%d]\n", __func__, __LINE__);
 
 	block_size = (1 << chip->erase_shift);
 
