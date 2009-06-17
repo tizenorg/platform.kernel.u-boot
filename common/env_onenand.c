@@ -58,6 +58,7 @@ uchar env_get_char_spec(int index)
 
 void env_relocate_spec(void)
 {
+	struct mtd_info *mtd = &onenand_mtd;
 	unsigned long env_addr;
 	int use_default = 0;
 	size_t retlen;
@@ -65,12 +66,12 @@ void env_relocate_spec(void)
 	env_addr = CONFIG_ENV_ADDR;
 
 	/* Check OneNAND exist */
-	if (onenand_mtd.writesize)
+	if (mtd->writesize)
 		/* Ignore read fail */
-		onenand_read(&onenand_mtd, env_addr, onenand_mtd.writesize,
+		mtd->read(mtd, env_addr, mtd->writesize,
 			     &retlen, (u_char *) env_ptr);
 	else
-		onenand_mtd.writesize = MAX_ONENAND_PAGESIZE;
+		mtd->writesize = MAX_ONENAND_PAGESIZE;
 
 	if (crc32(0, env_ptr->data, ONENAND_ENV_SIZE(onenand_mtd)) !=
 	    env_ptr->crc)
@@ -89,6 +90,7 @@ void env_relocate_spec(void)
 
 int saveenv(void)
 {
+	struct mtd_info *mtd = &onenand_mtd;
 	unsigned long env_addr = CONFIG_ENV_ADDR;
 	struct erase_info instr = {
 		.callback	= NULL,
@@ -97,8 +99,8 @@ int saveenv(void)
 
 	instr.len = CONFIG_ENV_SIZE;
 	instr.addr = env_addr;
-	instr.mtd = &onenand_mtd;
-	if (onenand_erase(&onenand_mtd, &instr)) {
+	instr.mtd = mtd;
+	if (mtd->erase(mtd, &instr)) {
 		printf("OneNAND: erase failed at 0x%08lx\n", env_addr);
 		return 1;
 	}
@@ -107,7 +109,7 @@ int saveenv(void)
 	env_ptr->crc =
 	    crc32(0, env_ptr->data, ONENAND_ENV_SIZE(onenand_mtd));
 
-	if (onenand_write(&onenand_mtd, env_addr, onenand_mtd.writesize, &retlen,
+	if (mtd->write(mtd, env_addr, mtd->writesize, &retlen,
 	     (u_char *) env_ptr)) {
 		printf("OneNAND: write failed at 0x%08x\n", instr.addr);
 		return 2;
