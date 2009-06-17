@@ -29,7 +29,7 @@
 #ifndef __S5PC100_H__
 #define __S5PC100_H__
 
-#define S5P_ADDR_BASE		(0xe0000000)
+#define S5P_ADDR_BASE		0xe0000000
 #define S5P_ADDR(x)		(S5P_ADDR_BASE + (x))
 
 #define S5P_PA_ID		S5P_ADDR(0x00000000)	/* Chip ID Base */

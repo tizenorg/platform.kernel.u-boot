@@ -10,7 +10,7 @@
 #ifndef ___ASM_ARCH_MAP_BASE_H
 #define ___ASM_ARCH_MAP_BASE_H
 
-#define S5P_ADDR_BASE	(0xE1F00000)
+#define S5P_ADDR_BASE	0xE1F00000
 
 #define S5P_ADDR(x)	(S5P_ADDR_BASE + (x))
 
