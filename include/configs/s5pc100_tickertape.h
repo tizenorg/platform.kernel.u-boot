@@ -202,10 +202,12 @@
  */
 #define CONFIG_STACKSIZE	SZ_256K		/* regular stack 256KB, 0x40000 */
 
-/* TickerTape has 1 banks of DRAM, we use only one in U-Boot */
-#define CONFIG_NR_DRAM_BANKS	1
+/* TickerTape has 2 banks of DRAM */
+#define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	SZ_128M		/* 0x8000000, 128 MB in Bank #1 */
+#define PHYS_SDRAM_1_SIZE	SZ_128M			/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_2		0x28000000		/* SDRAM Bank #2 */
+#define PHYS_SDRAM_2_SIZE	0x05000000		/* 80 MB in Bank #2 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -254,6 +256,6 @@
 #define CONFIG_CMD_USBDOWN
 #define CONFIG_SAMSUNG_USB
 #define CONFIG_OTG_CLK_OSCC
-#define USBDOWN_RAM_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_DOWN_ADDR		CONFIG_SYS_SDRAM_BASE
 
 #endif	/* __CONFIG_H */
