@@ -45,6 +45,7 @@ enum {
 #define COMMAND_RESET_PDA	214
 #define COMMAND_RESET_USB	215
 #define COMMAND_RAM_BOOT	216
+#define COMMAND_RAMDISK_MODE	217
 #ifdef CONFIG_DOWN_PHONE
 #define COMMAND_DOWN_PHONE	220
 #define COMMAND_CHANGE_USB	221
@@ -52,16 +53,16 @@ enum {
 
 /*
  * USB Downloader Operations
- * usb_init		: initialize the USB Controller and check the connection
- * usb_stop		: stop and release USB
+ * usb_init	: initialize the USB Controller and check the connection
+ * usb_stop	: stop and release USB
  * send_data	: send the data (BULK ONLY!!)
  * recv_data	: receive the data and returns received size (BULK ONLY!!)
  * recv_setup	: setup download address, length and DMA setting for receive
- * tx_data		: send data address
- * rx_data		: receive data address
- * tx_len		: size of send data
- * rx_len		: size of receive data
- * ram_addr		: address of will be stored data on RAM
+ * tx_data	: send data address
+ * rx_data	: receive data address
+ * tx_len	: size of send data
+ * rx_len	: size of receive data
+ * ram_addr	: address of will be stored data on RAM
  */
 struct usbd_ops {
 	void (*usb_init) (void);

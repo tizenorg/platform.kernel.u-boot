@@ -142,6 +142,12 @@ static void boot_cmd(char *addr)
 	do_bootm(NULL, 0, 2, argv);
 }
 
+static void run_cmd(char *cmd)
+{
+	char *argv[] = { "run", cmd };
+	do_run(NULL, 0, 2, argv);
+}
+
 #if defined(CONFIG_CMD_NAND)
 extern int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 #elif defined(CONFIG_CMD_ONENAND)
@@ -469,6 +475,18 @@ static int process_data(struct usbd_ops *usbd)
 		usbd->usb_stop();
 		boot_cmd(ramaddr);
 		return 0;
+
+	case COMMAND_RAMDISK_MODE:
+		printf("COMMAND_RAMDISK_MODE\n");
+#ifdef CONFIG_RAMDISK_ADDR
+		if (arg) {
+			down_ram_addr = usbd->ram_addr;
+		} else {
+			down_ram_addr = CONFIG_RAMDISK_ADDR;
+			run_cmd("ramboot");
+		}
+#endif
+		return 1;
 
 #ifdef CONFIG_DOWN_PHONE
 	case COMMAND_DOWN_PHONE:
