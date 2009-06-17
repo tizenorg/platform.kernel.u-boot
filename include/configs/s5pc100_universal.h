@@ -179,7 +179,7 @@
 	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"meminfo=mem=80M,128M@0x28000000\0" \
+	"meminfo=mem=208M" \
 	"nfsroot=/nfsroot/arm\0" \
 	"bootblock=5\0" \
 	"ubiblock=4\0" \
@@ -233,8 +233,9 @@
 #define CONFIG_SYNC_MODE
 */
 
-/* Universal has 2 banks of DRAM */
+/* Universal has 2 banks of DRAM, but swap the bank */
 #define CONFIG_NR_DRAM_BANKS	2
+#define CONFIG_S5PC1XX_SWAP_MEMORY_BANK		1
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
 #define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #0 */
 #define PHYS_SDRAM_2		0x28000000		/* MobileDDR Bank #1 */

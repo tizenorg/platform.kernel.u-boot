@@ -66,6 +66,7 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
 	/*
+	 * Bank0: Mobile DDR
 	 * 0x20 -> 0x20000000
 	 * 0xf8 -> 0x27FFFFFF
 	 * [15:12] 0: Linear
@@ -74,9 +75,14 @@ mem_ctrl_asm_init:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	ldr	r1, =0x20f80222
+#ifdef CONFIG_S5PC1XX_SWAP_MEMORY_BANK
+	/* Bank0: OneDRAM is located at 0x28000000 */
+	orr	r1, r1, #0x08000000
+#endif
 	str	r1, [r6, #0x008]			@ S5P_MEMCONFIG0
 
 	/*
+	 * Bank1: OneDRAM
 	 * 0x28 -> 0x28000000
 	 * 0xf8 -> 0x2fFFFFFF
 	 * [15:12] 0: Linear
@@ -85,6 +91,10 @@ mem_ctrl_asm_init:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	ldr	r1, =0x28f80222
+#ifdef CONFIG_S5PC1XX_SWAP_MEMORY_BANK
+	/* Bank1: Mobile DDR is located at 0x20000000 */
+	bic	r1, r1, #0x08000000
+#endif
 	str	r1, [r6, #0x00c]			@ S5P_MEMCONFIG1
 
 	ldr	r1, =0x20000000
