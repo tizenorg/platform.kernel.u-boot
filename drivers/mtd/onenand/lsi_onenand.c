@@ -735,7 +735,7 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf, int col
 }
 
 /**
- * onenand_do_read_oob - [MTD Interface] OneNAND read out-of-band
+ * onenand_read_oob_nolock - [MTD Interface] OneNAND read out-of-band
  * @param mtd		MTD device structure
  * @param from		offset to read from
  * @param len		number of bytes to read
@@ -745,7 +745,7 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf, int col
  *
  * OneNAND read out-of-band data from the spare area
  */
-static int onenand_do_read_oob(struct mtd_info *mtd, loff_t from, size_t len,
+static int onenand_read_oob_nolock(struct mtd_info *mtd, loff_t from, size_t len,
 			size_t *retlen, u_char *buf, mtd_oob_mode_t mode)
 {
 	struct onenand_chip *chip = mtd->priv;
@@ -780,9 +780,6 @@ static int onenand_do_read_oob(struct mtd_info *mtd, loff_t from, size_t len,
 		printk(KERN_ERR "onenand_read_oob: Attempted to read beyond end of device\n");
 		return -EINVAL;
 	}
-
-	/* Grab the lock and see if the device is available */
-	onenand_get_device(mtd, FL_READING);
 
 #if	defined(CONFIG_CPU_S5PC100)
 	/* setting for read oob area only */
@@ -873,9 +870,6 @@ static int onenand_do_read_oob(struct mtd_info *mtd, loff_t from, size_t len,
 	/* off the TRANSFER SPARE bit */
 	chip->write(~ONENAND_TRANS_SPARE_TSRF_INC, chip->base + ONENAND_REG_TRANS_SPARE);
 
-	/* Deselect and wake up anyone waiting on the device */
-	onenand_release_device(mtd);
-
 	*retlen = read;
 	return ret;
 }
@@ -889,8 +883,30 @@ static int onenand_do_read_oob(struct mtd_info *mtd, loff_t from, size_t len,
 static int onenand_read_oob(struct mtd_info *mtd, loff_t from,
 			    struct mtd_oob_ops *ops)
 {
-	return onenand_do_read_oob(mtd, from, ops->ooblen,
-				   &ops->oobretlen, ops->oobbuf, ops->mode);
+	int ret;
+
+        switch (ops->mode) {
+        case MTD_OOB_PLACE:
+        case MTD_OOB_AUTO:
+                break;
+        case MTD_OOB_RAW:
+                /* Not implemented yet */
+        default:
+                return -EINVAL;
+        }
+
+        onenand_get_device(mtd, FL_READING);
+        if (ops->datbuf) {
+                ret = onenand_read(mtd, from, ops->len,
+				&ops->retlen, ops->datbuf);
+        } else {
+		ret = onenand_read_oob_nolock(mtd, from, ops->ooblen,
+				&ops->oobretlen, ops->oobbuf, ops->mode);
+	}
+        onenand_release_device(mtd);
+
+        return ret;
+
 }
 
 #ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
