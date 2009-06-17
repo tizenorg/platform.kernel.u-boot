@@ -140,7 +140,7 @@
 		" ${meminfo}"
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" ${memifo} " \
+		" ${meminfo} " \
 		" " MTDPARTS_DEFAULT
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
@@ -179,7 +179,7 @@
 	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"meminfo=mem=208M" \
+	"meminfo=mem=208M\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"bootblock=5\0" \
 	"ubiblock=4\0" \
