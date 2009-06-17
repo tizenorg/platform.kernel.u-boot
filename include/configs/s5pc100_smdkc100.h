@@ -1,18 +1,10 @@
 /*
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- * Gary Jennejohn <gj@denx.de>
- * David Mueller <d.mueller@elsoft.ch>
- *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
- *
  * (C) Copyright 2009
  * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
  * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ * HeungJun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
  *
- * Configuation settings for the SAMSUNG SMDK6400(mDirac-III) board.
+ * Configuation settings for the SAMSUNG SMDKC100 board.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -171,7 +163,7 @@
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
-	 " initrd=0x24800000,8M ramdisk=8192\0" \
+	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=128M\0" \
@@ -258,6 +250,6 @@
 #define CONFIG_CMD_USBDOWN
 #define CONFIG_SAMSUNG_USB
 #define CONFIG_OTG_CLK_OSCC
-#define USBDOWN_RAM_START	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 
 #endif	/* __CONFIG_H */

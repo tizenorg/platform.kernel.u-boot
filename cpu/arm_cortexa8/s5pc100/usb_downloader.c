@@ -54,7 +54,7 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->rx_data = rx_data;
 	usbd->tx_len = tx_len;
 	usbd->rx_len = rx_len;
-	usbd->ram_addr = USBDOWN_RAM_START;
+	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
 
 	return usbd;
 }

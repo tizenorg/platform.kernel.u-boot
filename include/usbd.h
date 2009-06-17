@@ -1,7 +1,7 @@
 /*
  * USB Downloader for SAMSUNG Platform
  *
- * Copyright (C) 2007-2008 Samsung Electronics
+ * Copyright (C) 2007-2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
  */
 
@@ -44,7 +44,7 @@ enum {
 #define COMMAND_ERASE_PARAMETER	213
 #define COMMAND_RESET_PDA	214
 #define COMMAND_RESET_USB	215
-#define COMMAND_BOOT		216
+#define COMMAND_RAM_BOOT	216
 #ifdef CONFIG_DOWN_PHONE
 #define COMMAND_DOWN_PHONE	220
 #define COMMAND_CHANGE_USB	221
