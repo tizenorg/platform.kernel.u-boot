@@ -24,7 +24,7 @@ CFLAGS	+= -DCONFIG_ONENAND_IPL -g
 OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o
-SOBJS	+= start.o cpu_init.o
+SOBJS	+= start.o mem_setup.o
 COBJS	+= onenand_read.o
 COBJS	+= onenand_boot.o
 
@@ -59,8 +59,8 @@ $(obj)start.S:
 	@rm -f $@
 	ln -s $(SRCTREE)/cpu/$(CPU)/start.S $@
 
-$(obj)cpu_init.S:
-	ln -s $(SRCTREE)/cpu/$(CPU)/s5pc100/cpu_init.S $@
+$(obj)mem_setup.S:
+	ln -s $(SRCTREE)/cpu/$(CPU)/s5pc100/mem_setup.S $@
 
 $(obj)lowlevel_init.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/lowlevel_init.S $@
