@@ -215,14 +215,9 @@ void reset_cpu(ulong ignored)
 
 	pid >>= 12;
 	pid &= 0x00fff;
-	pid |= (0x3 << 14);
+	pid |= (0xC << 12);
 
 	__REG(S5P_SW_RST) = pid;
 
-	while (1) {
-		if (serial_tstc()) {
-			serial_getc();
-			break;
-		}
-	}
+	while (1) ;
 }
