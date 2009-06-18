@@ -63,6 +63,19 @@ void raise(void)
 {
 }
 
+#ifdef CONFIG_MISC_INIT_R
+int misc_init_r(void)
+{
+	/* check H/W revision */
+	unsigned int rev  = __REG(S5P_GPIO_J0_DAT);
+
+	/* GPJ0[4:2] */
+	rev &= 0x1C;
+	rev >>= 2;
+	printf("HW Revision:\t%x\n", rev);
+}
+#endif
+
 #ifdef CONFIG_CMD_USBDOWN
 #include <i2c.h>
 
