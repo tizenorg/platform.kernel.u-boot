@@ -250,8 +250,6 @@
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
-#define CONFIG_IDENT_STRING	" for Universal"
-
 #ifdef CONFIG_ENABLE_MMU
 #define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
 #else
