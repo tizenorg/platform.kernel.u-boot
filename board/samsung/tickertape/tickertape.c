@@ -34,7 +34,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int board_init(void)
 {
-
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
@@ -64,15 +63,26 @@ void raise(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
+static const char *board_name[] = {
+	"Unknown",
+	"Universal",
+	"Unknown",
+	"TickerTape",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+};
+
 int misc_init_r(void)
 {
 	/* check H/W revision */
 	unsigned int rev  = __REG(S5P_GPIO_J0_DAT);
 
 	/* GPJ0[4:2] */
-	rev &= 0x1C;
 	rev >>= 2;
-	printf("HW Revision:\t%x\n", rev);
+	rev &= 0x7;
+	printf("HW Revision:\t%x (%s)\n", rev, board_name[rev]);
 }
 #endif
 
