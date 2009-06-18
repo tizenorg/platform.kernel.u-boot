@@ -677,7 +677,6 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 	/* Do first load to bufferRAM */
 	if (read < len) {
 		if (!onenand_check_bufferram(mtd, from)) {
-			this->main_buf = buf;
 			this->command(mtd, ONENAND_CMD_READ, from, writesize);
 			ret = this->wait(mtd, FL_READING);
 			onenand_update_bufferram(mtd, from, !ret);
@@ -695,7 +694,6 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 		/* If there is more to load then start next load */
 		from += thislen;
 		if (read + thislen < len) {
-			this->main_buf = buf + thislen;
 			this->command(mtd, ONENAND_CMD_READ, from, writesize);
 			/*
 			 * Chip boundary handling in DDP
@@ -816,7 +814,6 @@ static int onenand_read_oob_nolock(struct mtd_info *mtd, loff_t from,
 		thislen = oobsize - column;
 		thislen = min_t(int, thislen, len);
 
-		this->spare_buf = buf;
 		this->command(mtd, ONENAND_CMD_READOOB, from, mtd->oobsize);
 
 		onenand_update_bufferram(mtd, from, 0);
@@ -1001,7 +998,6 @@ int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
 		thislen = mtd->oobsize - column;
 		thislen = min_t(int, thislen, len);
 
-		this->spare_buf = buf;
 		this->command(mtd, ONENAND_CMD_READOOB, from, mtd->oobsize);
 
 		onenand_update_bufferram(mtd, from, 0);
@@ -1605,7 +1601,7 @@ static int onenand_block_isbad(struct mtd_info *mtd, loff_t ofs)
 		return -EINVAL;
 
 	onenand_get_device(mtd, FL_READING);
-	ret = onenand_block_isbad_nolock(mtd,ofs, 0);
+	ret = onenand_block_isbad_nolock(mtd, ofs, 0);
 	onenand_release_device(mtd);
 	return ret;
 }
@@ -2061,8 +2057,7 @@ static int onenand_probe(struct mtd_info *mtd)
 	mtd->flags = MTD_CAP_NANDFLASH;
 	mtd->erase = onenand_erase;
 	mtd->read = onenand_read;
-	if (!mtd->write)
-		mtd->write = onenand_write;
+	mtd->write = onenand_write;
 	mtd->read_oob = onenand_read_oob;
 	mtd->write_oob = onenand_write_oob;
 	mtd->sync = onenand_sync;

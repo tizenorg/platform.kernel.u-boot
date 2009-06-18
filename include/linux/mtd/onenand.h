@@ -97,8 +97,6 @@ struct onenand_chip {
 	int (*block_markbad)(struct mtd_info *mtd, loff_t ofs);
 	int (*scan_bbt)(struct mtd_info *mtd);
 
-	unsigned char		*main_buf;
-	unsigned char		*spare_buf;
 #ifdef DONT_USE_UBOOT
 	spinlock_t chip_lock;
 	wait_queue_head_t wq;
