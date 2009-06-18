@@ -367,13 +367,10 @@ static u_int onenand_addr_field(int dev_id, int fba, int fpa, int fsa)
 
 	case ONENAND_DEVICE_DENSITY_4Gb:
 		if (ddp) {
-			if (fba < 2048)
-				ddp = 0;
-
-			mem_addr = ((ddp << ONENAND_DDP_SHIFT_4Gb) | \
-					((fba & ONENAND_FBA_MASK_4Gb_DDP) << ONENAND_FBA_SHIFT) | \
-					((fpa & ONENAND_FPA_MASK) << ONENAND_FPA_SHIFT) | \
-					((fsa & ONENAND_FSA_MASK) << ONENAND_FSA_SHIFT));
+			mem_addr = (fba << ONENAND_FBA_SHIFT) |
+					(fpa << ONENAND_FPA_SHIFT) |
+					(fsa << ONENAND_FSA_SHIFT);
+		
 		} else {
 			mem_addr = (((fba & ONENAND_FBA_MASK_4Gb) << ONENAND_FBA_SHIFT) | \
 					((fpa & ONENAND_FPA_MASK) << ONENAND_FPA_SHIFT) | \
@@ -425,8 +422,6 @@ static uint onenand_command_address(struct mtd_info *mtd, int cmd_type, int fba,
 		cmd_addr = 0;
 		break;
 	}
-
-//	printf("%s[%d] cmd_type 0x%x, cmd_addr 0x%x\n", __func__, __LINE__, cmd_type, cmd_addr);
 
 	return cmd_addr;
 }
