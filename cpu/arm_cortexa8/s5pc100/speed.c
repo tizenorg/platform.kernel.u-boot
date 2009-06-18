@@ -168,7 +168,12 @@ ulong get_UCLK(void)
 
 int print_cpuinfo(void)
 {
-	printf("CPU:\tS5PC100@%luMHz\n", get_ARMCLK() / 1000000);
+	unsigned int pid = __REG(S5P_PRO_ID);
+
+	pid >>= 12;
+	pid &= 0x00fff;
+
+	printf("CPU:\tS5PC%x@%luMHz\n", pid, get_ARMCLK() / 1000000);
 	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
 		" PclkD1 = %luMHz\n",
 			get_FCLK() / 1000000, get_HCLK() / 1000000,
