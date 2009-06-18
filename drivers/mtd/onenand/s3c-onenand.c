@@ -609,17 +609,14 @@ void s3c_onenand_init(struct mtd_info *mtd)
 #ifdef USE_STATIC_BUFFER
 	onenand = &static_onenand;
 #else
-	printf("%s[%d]\n", __func__, __LINE__);
 	onenand = malloc(sizeof(struct s3c_onenand));
 	if (!onenand)
 		return;
 
-	printf("%s[%d]\n", __func__, __LINE__);
 	onenand->page_buf = malloc(SZ_4K * sizeof(char));
 	if (!onenand->page_buf)
 		return;
 
-	printf("%s[%d]\n", __func__, __LINE__);
 	onenand->oob_buf = malloc(128 * sizeof(char));
 	if (!onenand->oob_buf)
 		return;
