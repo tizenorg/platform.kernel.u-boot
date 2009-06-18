@@ -334,7 +334,7 @@ struct onenand_manufacturers {
 /*
  *  * Mask for Mapping table
  *   */
-#define ONENAND_MEM_ADDR_MASK           (0xffffff)
+#define ONENAND_MEM_ADDR_MASK           (0x3ffffff)
 #define ONENAND_DDP_SHIFT_1Gb           (22)
 #define ONENAND_DDP_SHIFT_2Gb           (23)
 #define ONENAND_DDP_SHIFT_4Gb           (24)
