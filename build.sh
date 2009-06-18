@@ -33,4 +33,7 @@ build_uboot $*
 
 if [ "$USER" = "kmpark" ]; then
 	cp -f u-boot.bin /tftpboot
+	pushd ../images
+	./system.sh
+	popd
 fi
