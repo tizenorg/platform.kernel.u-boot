@@ -1,10 +1,11 @@
 /*
  * Originates from Samsung's u-boot 1.1.6 port to S5PC1xx
  *
- * Copyright (C) 2009
- * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
- * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
- * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ * Copyright (C) 2009 Samsung Electrnoics
+ * Inki Dae <inki.dae@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
+ * Minkyu Kang <mk7.kang@samsung.com>
+ * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -66,7 +67,15 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
 	/*
-	 * Bank0: Mobile DDR
+	 * Note:
+	 * If Bank0 has OneDRAM we place it at 0x2800'0000
+	 * So finally Bank1 should address start at at 0x2000'0000
+	 */
+	mov	r4, #0x0
+
+swap_memory:
+	/*
+	 * Bank0
 	 * 0x20 -> 0x20000000
 	 * 0xf8 -> 0x27FFFFFF
 	 * [15:12] 0: Linear
@@ -75,14 +84,13 @@ mem_ctrl_asm_init:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	ldr	r1, =0x20f80222
-#ifdef CONFIG_S5PC1XX_SWAP_MEMORY_BANK
-	/* Bank0: OneDRAM is located at 0x28000000 */
-	orr	r1, r1, #0x08000000
-#endif
+	/* if r4 is 1, swap the bank */
+	cmp	r4, #0x1
+	orreq	r1, r1, #0x08000000
 	str	r1, [r6, #0x008]			@ S5P_MEMCONFIG0
 
 	/*
-	 * Bank1: OneDRAM
+	 * Bank1
 	 * 0x28 -> 0x28000000
 	 * 0xf8 -> 0x2fFFFFFF
 	 * [15:12] 0: Linear
@@ -91,10 +99,9 @@ mem_ctrl_asm_init:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	ldr	r1, =0x28f80222
-#ifdef CONFIG_S5PC1XX_SWAP_MEMORY_BANK
-	/* Bank1: Mobile DDR is located at 0x20000000 */
-	bic	r1, r1, #0x08000000
-#endif
+	/* if r4 is 1, swap the bank */
+	cmp	r4, #0x1
+	biceq	r1, r1, #0x08000000
 	str	r1, [r6, #0x00c]			@ S5P_MEMCONFIG1
 
 	ldr	r1, =0x20000000
@@ -171,6 +178,20 @@ mem_ctrl_asm_init:
 	ldr	r1, =0xff212100
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
+
+	/* Try to test memory area */
+	cmp	r4, #0x1
+	beq	1f
+
+	mov	r4, #0x1
+	ldr	r1, =0x27ffff00
+	str	r4, [r1]
+	str	r4, [r1, #0x4]				@ dummy write
+	ldr	r0, [r1]
+	cmp	r0, r4
+	bne	swap_memory
+
+1:
 	mov	pc, lr
 
 	.ltorg
