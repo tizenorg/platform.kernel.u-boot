@@ -103,6 +103,7 @@ struct s3c_onenand {
 	void __iomem	*page_buf;
 	void __iomem	*oob_buf;
 #endif
+	int		s5pc100;
 
 	unsigned int	(*mem_addr)(int fba, int fpa, int fsa);
 };
@@ -120,6 +121,7 @@ static int s3c_read_reg(int offset)
 static void s3c_write_reg(int value, int offset)
 {
 	writel(value, onenand->base + offset);
+	readl(onenand->base + offset);
 }
 
 static int s3c_read_cmd(unsigned int cmd)
@@ -359,13 +361,13 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		/* Main */
 		for (i = 0; i < mcount; i++)
 			*m++ = s3c_read_cmd(CMD_MAP_01(mem_addr));
-		break;
+		return 0;
 
 	case ONENAND_CMD_READOOB:
 		s3c_write_reg(TSRF, TRANS_SPARE_OFFSET);
-		/* Main - dummy read */
+		/* Main */
 		for (i = 0; i < mcount; i++)
-			dummy = s3c_read_cmd(CMD_MAP_01(mem_addr));
+			*m++ = s3c_read_cmd(CMD_MAP_01(mem_addr));
 
 		/* Spare */
 		for (i = 0; i < scount; i++)
@@ -524,9 +526,7 @@ static void s3c_onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len
 		s3c_write_cmd(ONENAND_UNLOCK_END, CMD_MAP_10(end_mem_addr));
 	}
 
-	printk("%s[%d]\n", __func__, __LINE__);
 	this->wait(mtd, FL_LOCKING);
-	printk("%s[%d]\n", __func__, __LINE__);
 }
 
 static void s3c_unlock_all(struct mtd_info *mtd)
@@ -535,7 +535,6 @@ static void s3c_unlock_all(struct mtd_info *mtd)
 	loff_t ofs = 0;
 	size_t len = this->chipsize;
 
-	printk("%s[%d]\n", __func__, __LINE__);
 	if (this->options & ONENAND_HAS_UNLOCK_ALL) {
 		/* Write unlock command */
 		this->command(mtd, ONENAND_CMD_UNLOCK_ALL, 0, 0);
@@ -625,6 +624,7 @@ void s3c_onenand_init(struct mtd_info *mtd)
 	onenand->mtd = mtd;
 
 	/* S5PC100 specific values */
+	onenand->s5pc100 = 1;
 	onenand->base = (void *) 0xE7100000;
 	onenand->ahb_addr = (void *) 0xB0000000;
 	onenand->mem_addr = s5pc100_mem_addr;
