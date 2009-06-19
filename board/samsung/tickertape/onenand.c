@@ -63,7 +63,7 @@ void onenand_board_init(struct mtd_info *mtd)
 
 	ACC_CLOCK0_REG = 0x3;
 
-	INT_ERR_MASK0_REG = 0x03ff;
+	INT_ERR_MASK0_REG = 0x3fff;
 	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */
 
 	value = INT_ERR_MASK0_REG;
@@ -83,8 +83,8 @@ void onenand_board_init(struct mtd_info *mtd)
 	MEM_CFG0_REG |=	ONENAND_SYS_CFG1_INT; 
 	MEM_CFG0_REG |= ONENAND_SYS_CFG1_IOBE;
 #endif
-	MEM_CFG0_REG |= ONENAND_SYS_CFG1_VHF;
-	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
+//	MEM_CFG0_REG |= ONENAND_SYS_CFG1_VHF;
+//	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
 
 	this->base = (void *) 0xe7100000;
 //	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
