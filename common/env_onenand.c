@@ -37,15 +37,17 @@ extern struct onenand_chip onenand_chip;
 /* References to names in env_common.c */
 extern uchar default_environment[];
 
-#define ONENAND_ENV_SIZE(mtd)	(mtd.writesize - ENV_HEADER_SIZE)
-
 char *env_name_spec = "OneNAND";
+
+#define ONENAND_MAX_ENV_SIZE	4096
+
+#define ONENAND_ENV_SIZE(mtd)	(ONENAND_MAX_ENV_SIZE - ENV_HEADER_SIZE)
 
 #ifdef ENV_IS_EMBEDDED
 extern uchar environment[];
 env_t *env_ptr = (env_t *) (&environment[0]);
 #else /* ! ENV_IS_EMBEDDED */
-static unsigned char onenand_env[MAX_ONENAND_PAGESIZE];
+static unsigned char onenand_env[ONENAND_MAX_ENV_SIZE];
 env_t *env_ptr = (env_t *) onenand_env;
 #endif /* ENV_IS_EMBEDDED */
 
@@ -68,20 +70,17 @@ void env_relocate_spec(void)
 	/* Check OneNAND exist */
 	if (mtd->writesize)
 		/* Ignore read fail */
-		mtd->read(mtd, env_addr, mtd->writesize,
+		mtd->read(mtd, env_addr, ONENAND_MAX_ENV_SIZE,
 			     &retlen, (u_char *) env_ptr);
 	else
 		mtd->writesize = MAX_ONENAND_PAGESIZE;
 
-	if (crc32(0, env_ptr->data, ONENAND_ENV_SIZE(onenand_mtd)) !=
-	    env_ptr->crc)
+	if (crc32(0, env_ptr->data, ONENAND_ENV_SIZE(mtd)) != env_ptr->crc)
 		use_default = 1;
 
 	if (use_default) {
-		memcpy(env_ptr->data, default_environment,
-		       ONENAND_ENV_SIZE(onenand_mtd));
-		env_ptr->crc =
-		    crc32(0, env_ptr->data, ONENAND_ENV_SIZE(onenand_mtd));
+		memcpy(env_ptr->data, default_environment, ONENAND_ENV_SIZE(mtd));
+		env_ptr->crc = crc32(0, env_ptr->data, ONENAND_ENV_SIZE(mtd));
 	}
 
 	gd->env_addr = (ulong) & env_ptr->data;
@@ -106,10 +105,9 @@ int saveenv(void)
 	}
 
 	/* update crc */
-	env_ptr->crc =
-	    crc32(0, env_ptr->data, ONENAND_ENV_SIZE(onenand_mtd));
+	env_ptr->crc = crc32(0, env_ptr->data, ONENAND_ENV_SIZE(mtd));
 
-	if (mtd->write(mtd, env_addr, mtd->writesize, &retlen,
+	if (mtd->write(mtd, env_addr, ONENAND_MAX_ENV_SIZE, &retlen,
 	     (u_char *) env_ptr)) {
 		printf("OneNAND: write failed at 0x%08x\n", instr.addr);
 		return 2;
