@@ -1,5 +1,5 @@
 #
-#  Samsung TickerTape(S5PC100) board OneNAND IPL
+#  Samsung SMDKC100(S5PC100) board OneNAND IPL
 #
 #  Copyright (C) 2009 Samsung Electronics
 #  Minkyu Kang <mk7.kang@samsung.com>
@@ -11,8 +11,6 @@
 #
 
 include $(TOPDIR)/config.mk
-#TEXT_BASE = 0x22008000
-#TEXT_BASE = 0x00034000
 TEXT_BASE = 0xD0034000
 TEXT_BASE2K = 0xD0034800
 TEXT_BASE4K = 0xD0035000
