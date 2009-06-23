@@ -29,7 +29,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).a
 
 COBJS-y	= interrupts.o
-COBJS-$(CONFIG_S5PC100)	+= mem_setup.o speed.o
+COBJS-$(CONFIG_S5PC100)	+= speed.o
 COBJS-$(CONFIG_CMD_USBDOWN) += usb-hs-otg.o usb_downloader.o
 
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS-y))
