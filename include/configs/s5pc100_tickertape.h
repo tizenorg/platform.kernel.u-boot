@@ -201,6 +201,24 @@
  */
 #define CONFIG_STACKSIZE	SZ_256K		/* regular stack 256KB, 0x40000 */
 
+/*******************************
+ Support Clock Settings(APLL)
+ *******************************
+ ARMCLK		HCLKD0		PCLKD0
+ -------------------------------
+ 667		166			83
+ 600		150			75
+ 533		133			66
+ 467		117			59
+ 400		100			50
+ *******************************/
+
+#define CONFIG_CLK_667_166_83
+/*#define CONFIG_CLK_600_150_75*/
+/*#define CONFIG_CLK_533_133_66*/
+/*#define CONFIG_CLK_467_117_59*/
+/*#define CONFIG_CLK_400_100_50*/
+
 /* TickerTape has 2 banks of DRAM */
 #define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */

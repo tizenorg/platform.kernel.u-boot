@@ -167,7 +167,17 @@ system_clock_init:
 	str	r1, [r8, #0x008]		@ S5P_EPLL_LOCK
 
 	/* S5P_APLL_CON */
-	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
+#ifdef CONFIG_CLK_667_166_83
+	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 445 (1333MHz)
+#elif defined(CONFIG_CLK_600_150_75)
+	ldr	r1, =0x812C0300		@ SDIV 0, PDIV 3, MDIV 300 (1200MHz)
+#elif defined(CONFIG_CLK_533_133_66)
+	ldr	r1, =0x810b0300		@ SDIV 0, PDIV 3, MDIV 267 (1066MHz)
+#elif defined(CONFIG_CLK_467_117_59)
+	ldr	r1, =0x826E0401		@ SDIV 1, PDIV 4, MDIV 622 (933MHz)
+#elif defined(CONFIG_CLK_400_100_50)
+	ldr	r1, =0x81900301		@ SDIV 1, PDIV 3, MDIV 400 (800MHz)
+#endif
 	str	r1, [r8, #0x100]
 	/* S5P_MPLL_CON */
 	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
