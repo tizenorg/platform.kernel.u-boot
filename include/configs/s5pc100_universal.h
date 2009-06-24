@@ -225,13 +225,7 @@
  400_100_50	 O	  O
  **********************************/
 
-/*#define CONFIG_CLK_667_133_66*/
-#define CONFIG_CLK_533_133_66
-/*
-#define CONFIG_CLK_400_100_50
-#define CONFIG_CLK_400_133_66
-#define CONFIG_SYNC_MODE
-*/
+#define CONFIG_CLK_667_166_83
 
 /* Universal has 2 banks of DRAM, but swap the bank */
 #define CONFIG_NR_DRAM_BANKS	2
