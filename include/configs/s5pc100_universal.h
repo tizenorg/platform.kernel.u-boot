@@ -214,18 +214,23 @@
  */
 #define CONFIG_STACKSIZE	0x40000		/* regular stack 256KB */
 
-/**********************************
- Support Clock Settings
- **********************************
- Setting	SYNC	ASYNC
- ----------------------------------
- 667_133_66	 X	  O
- 533_133_66	 O	  O
- 400_133_66	 X	  O
- 400_100_50	 O	  O
- **********************************/
+/*******************************
+ Support Clock Settings(APLL)
+ *******************************
+ ARMCLK		HCLKD0		PCLKD0
+ -------------------------------
+ 667		166			83
+ 600		150			75
+ 533		133			66
+ 467		117			59
+ 400		100			50
+ *******************************/
 
 #define CONFIG_CLK_667_166_83
+/*#define CONFIG_CLK_600_150_75*/
+/*#define CONFIG_CLK_533_133_66*/
+/*#define CONFIG_CLK_467_117_59*/
+/*#define CONFIG_CLK_400_100_50*/
 
 /* Universal has 2 banks of DRAM, but swap the bank */
 #define CONFIG_NR_DRAM_BANKS	2
