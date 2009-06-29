@@ -69,7 +69,7 @@ void raise(void)
 {
 }
 
-#ifdef CONFIG_CMD_USBDOWN
+#if defined(CONFIG_CMD_USBDOWN) && !defined(CONFIG_SMDKC100)
 #include <i2c.h>
 
 int usb_board_init(void)

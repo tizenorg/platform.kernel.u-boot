@@ -78,10 +78,12 @@ void s3c_usb_clear_upfile_info(void)
 /* start the usb controller */
 void usb_init(void)
 {
+#if !defined(CONFIG_SMDKC100)
 	if (usb_board_init()) {
 		printf("Failed to usb_board_init\n");
 		return;
 	}
+#endif
 
 	s3c_usbctl_init();
 	s3c_usbc_activate();
