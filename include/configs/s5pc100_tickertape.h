@@ -52,7 +52,7 @@
 /*
  * Architecture magic and machine type
  */
-#define MACH_TYPE		1826
+#define MACH_TYPE		3001
 
 #define CONFIG_DISPLAY_CPUINFO
 

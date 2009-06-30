@@ -83,6 +83,10 @@ int misc_init_r(void)
 	rev >>= 2;
 	rev &= 0x7;
 	printf("HW Revision:\t%x (%s)\n", rev, board_name[rev]);
+	if (rev == 1)
+		gd->bd->bi_arch_number = 3000;	/* Universal */
+	if (rev == 3)
+		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 }
 #endif
 
