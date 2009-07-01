@@ -114,7 +114,7 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =S5P_OTHERS_BASE
+	ldr	r0, =S5P_RST_STAT
 	ldr	r1, [r0]
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
