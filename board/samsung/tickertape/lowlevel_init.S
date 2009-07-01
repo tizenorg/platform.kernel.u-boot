@@ -50,6 +50,13 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r9, lr
 
+	/* IO retension release */
+	ldr	r0, =S5P_OTHERS				@0xE0108200
+	ldr	r1, [r0]
+	ldr	r2, =(1 << 31)				@IO_RET_REL
+	orr	r1, r1, r2
+	str	r1, [r0]
+
 	/* Disable Watchdog */
 	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
 	orr	r0, r0, #0x0
@@ -86,10 +93,10 @@ lowlevel_init:
 	str	r5, [r2, #VIC_INTADDRESS_OFFSET]
 #endif
 
+#ifndef CONFIG_ONENAND_IPL
 	/* init system clock */
 	bl system_clock_init
 
-#ifndef CONFIG_ONENAND_IPL
 	/* for UART */
 	bl uart_asm_init
 #endif
@@ -98,6 +105,8 @@ lowlevel_init:
 	ldr	r0, =S5P_MEM_SYS_CFG
 	str	r5, [r0]
 
+#if 0
+#ifndef CONFIG_ONENAND_IPL
 	/* DRAM I/O Drive-Strength */
 	ldr	r0, =S5P_MP_0DRV
 	ldr	r1, =0x5555
@@ -109,6 +118,8 @@ lowlevel_init:
 	str	r1, [r0, #S5P_MP_5_OFFSET]
 	str	r1, [r0, #S5P_MP_6_OFFSET]
 	str	r1, [r0, #S5P_MP_7_OFFSET]
+#endif
+#endif
 
 #ifdef CONFIG_ONENAND_IPL
 	bl	mem_ctrl_asm_init
@@ -145,6 +156,7 @@ wakeup_reset:
 	nop
 #endif
 
+#ifndef CONFIG_ONENAND_IPL
 /*
  * system_clock_init: Initialize core clock and bus clock.
  * void system_clock_init(void)
@@ -152,23 +164,16 @@ wakeup_reset:
 system_clock_init:
 	ldr	r8, =S5P_PA_CLK			@ 0xE0100000
 
-	/* Set Clock divider */
-	ldr	r1, =0x00011110
-	str	r1, [r8, #0x304]
-	ldr	r1, =0x1
-	str	r1, [r8, #0x308]
-	ldr	r1, =0x00011301
-	str	r1, [r8, #0x300]
-
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r8, #0x000]		@ S5P_APLL_LOCK
 	str	r1, [r8, #0x004]		@ S5P_MPLL_LOCK
 	str	r1, [r8, #0x008]		@ S5P_EPLL_LOCK
+	str	r1, [r8, #0x00C]		@ S5P_HPLL_LOCK
 
 	/* S5P_APLL_CON */
 #ifdef CONFIG_CLK_667_166_83
-	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 445 (1333MHz)
+	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1333MHz)
 #elif defined(CONFIG_CLK_600_150_75)
 	ldr	r1, =0x812C0300		@ SDIV 0, PDIV 3, MDIV 300 (1200MHz)
 #elif defined(CONFIG_CLK_533_133_66)
@@ -186,8 +191,20 @@ system_clock_init:
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
 	str	r1, [r8, #0x108]
 	/* S5P_HPLL_CON */
-	ldr	r1, =0x80600603
+	ldr	r1, =0x80600603		@ SDIV 3, PDIV 6, MDIV 96
 	str	r1, [r8, #0x10C]
+
+	/* Set Clock divider */
+#ifdef CONFIG_CLK_800_166_66
+	ldr	r1, =0x00011401
+#else
+	ldr	r1, =0x00011301
+#endif
+	str	r1, [r8, #0x300]
+	ldr	r1, =0x00011110
+	str	r1, [r8, #0x304]
+	ldr	r1, =0x00000001
+	str	r1, [r8, #0x308]
 
 	/* Set Source Clock */
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
@@ -205,6 +222,7 @@ system_clock_init:
 	bne	1b
 
 	mov	pc, lr
+#endif
 
 #ifndef CONFIG_ONENAND_IPL
 /*
