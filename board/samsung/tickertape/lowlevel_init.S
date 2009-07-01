@@ -178,10 +178,14 @@ system_clock_init:
 	ldr	r1, =0x812C0300		@ SDIV 0, PDIV 3, MDIV 300 (1200MHz)
 #elif defined(CONFIG_CLK_533_133_66)
 	ldr	r1, =0x810b0300		@ SDIV 0, PDIV 3, MDIV 267 (1066MHz)
+#elif defined(CONFIG_CLK_500_166_66)
+	ldr	r1, =0x81f40301		@ SDIV 1, PDIV 3, MDIV 500 (1000MHz)
 #elif defined(CONFIG_CLK_467_117_59)
 	ldr	r1, =0x826E0401		@ SDIV 1, PDIV 4, MDIV 622 (933MHz)
 #elif defined(CONFIG_CLK_400_100_50)
 	ldr	r1, =0x81900301		@ SDIV 1, PDIV 3, MDIV 400 (800MHz)
+#else
+#error you should set the correct clock configuration
 #endif
 	str	r1, [r8, #0x100]
 	/* S5P_MPLL_CON */
@@ -195,13 +199,21 @@ system_clock_init:
 	str	r1, [r8, #0x10C]
 
 	/* Set Clock divider */
+	ldr	r1, [r8, #0x300]
+	ldr	r2, =0x00003fff
+	bic	r1, r1, r2
 #ifdef CONFIG_CLK_800_166_66
-	ldr	r1, =0x00011401
+	ldr	r2, =0x00011401
+#elif defined(CONFIG_CLK_500_166_66)
+	ldr	r2, =0x00011201
 #else
-	ldr	r1, =0x00011301
+	ldr	r2, =0x00011301
 #endif
+	orr	r1, r1, r2
 	str	r1, [r8, #0x300]
-	ldr	r1, =0x00011110
+	ldr	r1, [r8, #0x304]
+	ldr	r2, =0x00011110
+	orr	r1, r1, r2
 	str	r1, [r8, #0x304]
 	ldr	r1, =0x00000001
 	str	r1, [r8, #0x308]
