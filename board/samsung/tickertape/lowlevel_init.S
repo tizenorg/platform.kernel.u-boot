@@ -139,6 +139,18 @@ lowlevel_init:
 #ifdef CONFIG_ONENAND_IPL
 wakeup_reset:
 
+	/* Turn on 7color [GPJ4(2)] */
+	ldr	r0, =S5P_GPIO_J4_CON
+	ldr	r1, [r0]
+	bic	r1, r1, #(0xf << 8)
+	orr	r1, r1, #(0x1 << 8)
+	str	r1, [r0]
+
+	ldr	r0, =S5P_GPIO_J4_DAT
+	ldr	r1, [r0]
+	orr	r1, r1, #(1 << 2)
+	str	r1, [r0]
+
 	/* Clear wakeup status register */
 	ldr	r0, =S5P_WAKEUP_STAT
 	ldr	r1, [r0]
