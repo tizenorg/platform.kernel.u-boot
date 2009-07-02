@@ -98,23 +98,11 @@ lowlevel_init:
 	ldr	r0, =S5P_MEM_SYS_CFG
 	str	r5, [r0]
 
-	/* DRAM I/O Drive-Strength */
-	ldr	r0, =S5P_MP_0DRV
-	ldr	r1, =0x5555
-	str	r1, [r0, #S5P_MP_0_OFFSET]
-	str	r1, [r0, #S5P_MP_1_OFFSET]
-	str	r1, [r0, #S5P_MP_2_OFFSET]
-	str	r1, [r0, #S5P_MP_3_OFFSET]
-	str	r1, [r0, #S5P_MP_4_OFFSET]
-	str	r1, [r0, #S5P_MP_5_OFFSET]
-	str	r1, [r0, #S5P_MP_6_OFFSET]
-	str	r1, [r0, #S5P_MP_7_OFFSET]
-
 #ifdef CONFIG_ONENAND_IPL
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =S5P_OTHERS_BASE
+	ldr	r0, =S5P_RST_STAT
 	ldr	r1, [r0]
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
