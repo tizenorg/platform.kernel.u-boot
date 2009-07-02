@@ -85,8 +85,10 @@ int misc_init_r(void)
 	printf("HW Revision:\t%x (%s)\n", rev, board_name[rev]);
 	if (rev == 1)
 		gd->bd->bi_arch_number = 3000;	/* Universal */
-	if (rev == 3)
+	if (rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
+		setenv ("meminfo", "mem=128M");
+	}
 }
 #endif
 
