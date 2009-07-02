@@ -129,6 +129,10 @@
 #define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
 #endif
 
+#define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
+		" console=ttySAC2,115200n8" \
+		" ${meminfo}"
+
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
 		" mem=128M " \
 		" " MTDPARTS_DEFAULT
@@ -165,6 +169,8 @@
 	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
+	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=128M\0" \
@@ -274,5 +280,6 @@
 #define CONFIG_SAMSUNG_USB
 #define CONFIG_OTG_CLK_OSCC
 #define CONFIG_SYS_DOWN_ADDR		CONFIG_SYS_SDRAM_BASE
+#define CONFIG_RAMDISK_ADDR	0x23000000
 
 #endif	/* __CONFIG_H */
