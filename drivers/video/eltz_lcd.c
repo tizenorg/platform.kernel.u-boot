@@ -187,9 +187,9 @@ static void sublcd_power_on(void)
 	/* DISPLAY ON */
 	sublcd_write_register_16(0x05, 0x0001);
 
-	/* initialize GRAM region to write color*/
+	/* initialize GRAM region to black color*/
 	sublcd_write_GRAM();
-	read_image16((char *)SUBLCD_BASE, 0, 0, 240, 320, makepixel565(255,255,255));
+	read_image16((char *)SUBLCD_BASE, 0, 0, 240, 320, makepixel565(0,0,0));
 }
 
 static void srom_write_setup(void)
