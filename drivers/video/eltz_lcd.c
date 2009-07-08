@@ -68,16 +68,14 @@ static unsigned short makepixel565(char r, char g, char b)
 	return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
 }
 
-static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos,
+static void read_image16(unsigned short* pImg, int x1pos, int y1pos, int x2pos,
 	int y2pos, unsigned short pixel)
 {
-	unsigned short *pDst = (unsigned short *)pImg;
-	unsigned int offset_s;
 	int i, j;
 
 	for(i = y1pos; i < y2pos; i++) {
 		for(j = x1pos; j < x2pos; j++) {
-			*(pDst) = pixel;
+			*(pImg) = pixel;
 		}
 	}
 
@@ -196,7 +194,7 @@ static void srom_write_setup(void)
 {
 	/* set access cycle of SROM Controller for SROM BANK0 */
 	__raw_writel(__raw_readl(SMC_BC0) & ~0xFFFFFF00, SMC_BC0);
-	__raw_writel(__raw_readl(SMC_BC0) | 0x220411300, SMC_BC0);
+	__raw_writel(__raw_readl(SMC_BC0) | 0x22411300, SMC_BC0);
 }
 
 
@@ -229,7 +227,7 @@ static void draw_test(void)
 
 	sublcd_write_GRAM();
 
-	read_image16((char *)SUBLCD_BASE, 0, 0, 240, 320,
+	read_image16(SUBLCD_BASE, 0, 0, 240, 320,
 		makepixel565((i * 12345678) & 255, (i * 50) & 255, (i * 87654321) & 255));
 	
 	if (++i > 255) i = 0;
