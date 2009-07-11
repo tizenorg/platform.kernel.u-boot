@@ -112,5 +112,7 @@ int usb_board_init(void)
 		printf("i2c_write error\n");
 		return 1;
 	}
+
+	return 0;
 }
 #endif
