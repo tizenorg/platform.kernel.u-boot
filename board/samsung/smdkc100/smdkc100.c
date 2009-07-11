@@ -69,25 +69,11 @@ void raise(void)
 {
 }
 
-#if defined(CONFIG_CMD_USBDOWN) && !defined(CONFIG_SMDKC100)
+#if defined(CONFIG_CMD_USBDOWN)
 #include <i2c.h>
 
 int usb_board_init(void)
 {
-	uchar val[2] ={0,};
-
-	/* PMIC */
-	if (i2c_read(0x66, 0, 1, val, 2)) {
-		printf("i2c_read error\n");
-		return 1;
-	}
-
-	val[0] |= (1 << 3);
-	val[1] |= (1 << 5);
-
-	if (i2c_write(0x66, 0, 1, val, 2)) {
-		printf("i2c_write error\n");
-		return 1;
-	}
+	return 0;
 }
 #endif
