@@ -70,8 +70,6 @@ void raise(void)
 }
 
 #if defined(CONFIG_CMD_USBDOWN)
-#include <i2c.h>
-
 int usb_board_init(void)
 {
 	return 0;
