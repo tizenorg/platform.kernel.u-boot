@@ -86,8 +86,6 @@ do {									\
 #define CMD_MAP_10(mem_addr)		(MAP_10 | (mem_addr))
 #define CMD_MAP_11(addr)		(MAP_11 | ((addr) << 2))
 
-//#define USE_STATIC_BUFFER
-
 struct s3c_onenand {
 	struct mtd_info	*mtd;
 
@@ -96,21 +94,12 @@ struct s3c_onenand {
 
 	int		bootram_command;
 
-#ifdef USE_STATIC_BUFFER
-	char		page_buf[4096];
-	char		oob_buf[128];
-#else
 	void __iomem	*page_buf;
 	void __iomem	*oob_buf;
-#endif
-	int		s5pc100;
 
 	unsigned int	(*mem_addr)(int fba, int fpa, int fsa);
 };
 
-#ifdef USE_STATIC_BUFFER
-static struct s3c_onenand static_onenand;
-#endif
 static struct s3c_onenand *onenand;
 
 static int s3c_read_reg(int offset)
@@ -121,7 +110,6 @@ static int s3c_read_reg(int offset)
 static void s3c_write_reg(int value, int offset)
 {
 	writel(value, onenand->base + offset);
-	readl(onenand->base + offset);
 }
 
 static int s3c_read_cmd(unsigned int cmd)
@@ -136,7 +124,7 @@ static void s3c_write_cmd(int value, unsigned int cmd)
 
 static unsigned int s5pc100_mem_addr(int fba, int fpa, int fsa)
 {
-	return ((fba << 13) | (fpa << 7) | (fsa << 5));
+	return (fba << 13) | (fpa << 7) | (fsa << 5);
 }
 
 static void s3c_onenand_reset(void)
@@ -147,7 +135,7 @@ static void s3c_onenand_reset(void)
 	s3c_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
 	while (1 && timeout--) {
 		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-		if (stat & INT_ACT)
+		if (stat & RST_CMP)
 			break;
 	}
 	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
@@ -176,6 +164,8 @@ static unsigned short s3c_onenand_readw(void __iomem * addr)
 		return s3c_read_reg(FLASH_VER_ID_OFFSET);
 	case ONENAND_REG_DATA_BUFFER_SIZE:
 		return s3c_read_reg(DATA_BUF_SIZE_OFFSET);
+	case ONENAND_REG_TECHNOLOGY:
+		return s3c_read_reg(TECH_OFFSET);
 	case ONENAND_REG_SYS_CFG1:
 		return s3c_read_reg(MEM_CFG_OFFSET);
 
@@ -191,7 +181,7 @@ static unsigned short s3c_onenand_readw(void __iomem * addr)
 	}
 
 	/* BootRAM access control */
-	if ((unsigned int) addr < ONENAND_DATARAM && onenand->bootram_command) {
+	if (reg < ONENAND_DATARAM && onenand->bootram_command) {
 		if (word_addr == 0)
 			return s3c_read_reg(MANUFACT_ID_OFFSET);
 		if (word_addr == 1)
@@ -231,7 +221,7 @@ static void s3c_onenand_writew(unsigned short value, void __iomem * addr)
 	}
 
 	/* BootRAM access control */
-	if ((unsigned int) addr < ONENAND_DATARAM) {
+	if (reg < ONENAND_DATARAM) {
 		if (value == ONENAND_CMD_READID) {
 			onenand->bootram_command = 1;
 			return;
@@ -253,7 +243,7 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 {
 	unsigned int flags = INT_ACT;
 	unsigned int stat, ecc;
-	unsigned int timeout = 0x100000;
+	unsigned long timeout = 0x100000;
 
 	switch (state) {
 	case FL_READING:
@@ -276,12 +266,13 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
 		if (stat & flags)
 			break;
+		for (stat = 0; stat < 2000; stat++)
+			continue;
 	}
 
 	/* To get correct interrupt status in timeout case */
 	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
 	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
-	printf("enter stat 0x%04x, flags 0x%04x\n", stat, flags);
 
 	/*
 	 * 	
@@ -322,8 +313,8 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 	unsigned int *m, *s;
 	int fba, fpa, fsa = 0;
 	unsigned int mem_addr;
-	int i, ret, mcount, scount;
-	int dummy, index;
+	int i, mcount, scount;
+	int index;
 
 	fba = (int) (addr >> this->erase_shift);
 	fpa = (int) (addr >> this->page_shift);
@@ -402,12 +393,6 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 
 	case ONENAND_CMD_ERASE:
 		s3c_write_cmd(ONENAND_ERASE_START, CMD_MAP_10(mem_addr));
-
-		ret = this->wait(mtd, FL_ERASING);
-		if (ret)
-			return ret;
-
-		s3c_write_cmd(ONENAND_ERASE_VERIFY, CMD_MAP_10(mem_addr));
 		return 0;
 
 	default:
@@ -460,17 +445,16 @@ static int onenand_write_bufferram(struct mtd_info *mtd, loff_t addr, int area,
 
 static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 {
-	unsigned int flags = INT_ACT;
+	unsigned int flags = INT_ACT | LOAD_CMP;
 	unsigned int stat;
-	unsigned int timeout = 0x10000;
-
-	flags |= BLK_RW_CMP | LOAD_CMP;
+	unsigned long timeout = 0x10000;
 
 	while (1 && timeout--) {
 		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
 		if (stat & flags)
 			break;
 	}
+	/* To get correct interrupt status in timeout case */
 	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
 	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
 
@@ -480,7 +464,7 @@ static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 	}
 
 	if (stat & LOAD_CMP) {
-		int ecc = ECC_ERR_STAT0_REG;
+		int ecc = s3c_read_reg(ECC_ERR_STAT_OFFSET);
 		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
 			s3c_onenand_reset();
 			return ONENAND_BBT_READ_ERROR;
@@ -529,7 +513,7 @@ static void s3c_onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len
 	this->wait(mtd, FL_LOCKING);
 }
 
-static void s3c_unlock_all(struct mtd_info *mtd)
+static void s3c_onenand_unlock_all(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
 	loff_t ofs = 0;
@@ -558,7 +542,7 @@ static void s3c_unlock_all(struct mtd_info *mtd)
 //	s3c_onenand_check_lock_status(mtd);
 }
 
-#if 0
+#ifdef CONFIG_S3C64XX
 static void s3c_set_width_regs(struct onenand_chip *this)
 {
 	int dev_id, density;
@@ -592,12 +576,10 @@ static void s3c_set_width_regs(struct onenand_chip *this)
 
 	DEV_PAGE_SIZE_REG = 0x1;
 
-#ifdef CONFIG_S3C64XX
 	FBA_WIDTH0_REG = fba;
 	FPA_WIDTH0_REG = fpa;
 	FSA_WIDTH0_REG = fsa;
 	DBS_DFS_WIDTH0_REG = dbs_dfs;
-#endif
 }
 #endif
 
@@ -605,9 +587,6 @@ void s3c_onenand_init(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
 
-#ifdef USE_STATIC_BUFFER
-	onenand = &static_onenand;
-#else
 	onenand = malloc(sizeof(struct s3c_onenand));
 	if (!onenand)
 		return;
@@ -615,16 +594,16 @@ void s3c_onenand_init(struct mtd_info *mtd)
 	onenand->page_buf = malloc(SZ_4K * sizeof(char));
 	if (!onenand->page_buf)
 		return;
+	memset(onenand->page_buf, 0xFF, SZ_4K);
 
 	onenand->oob_buf = malloc(128 * sizeof(char));
 	if (!onenand->oob_buf)
 		return;
-#endif
+	memset(onenand->oob_buf, 0xFF, 128);
 
 	onenand->mtd = mtd;
 
 	/* S5PC100 specific values */
-	onenand->s5pc100 = 1;
 	onenand->base = (void *) 0xE7100000;
 	onenand->ahb_addr = (void *) 0xB0000000;
 	onenand->mem_addr = s5pc100_mem_addr;
@@ -634,9 +613,11 @@ void s3c_onenand_init(struct mtd_info *mtd)
 
 	this->wait = s3c_onenand_wait;
 	this->bbt_wait = s3c_onenand_bbt_wait;
-//	this->unlock_all = s3c_unlock_all;
+	this->unlock_all = s3c_onenand_unlock_all;
 	this->command = s3c_onenand_command;
 
 	this->read_bufferram = onenand_read_bufferram;
 	this->write_bufferram = onenand_write_bufferram;
+
+	this->options |= ONENAND_RUNTIME_BADBLOCK_CHECK;
 }
