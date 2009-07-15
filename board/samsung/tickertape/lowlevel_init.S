@@ -261,19 +261,19 @@ uart_asm_init:
 	/* uart_sel GPK0[5] */
 	ldr	r0, =S5P_GPIO_K0_CON
 	ldr	r1, [r0]
-	bic	r1, r1, #0xf00000
-	orr	r1, r1, #0x100000
+	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
+	orr	r1, r1, #(0x1 << 20)
 	str   	r1, [r0]
 
 	ldr	r0, =S5P_GPIO_K0_PULL
 	ldr	r1, [r0]
-	bic	r1, r1, #0xc00
-	orr	r1, r1, #0x800
+	bic	r1, r1, #(0x3 << 10)		@ 10 = 5 * 2-bit
+	orr	r1, r1, #(0x2 << 10)		@ Enables Pull-up
 	str	r1, [r0]
 
 	ldr	r0, =S5P_GPIO_K0_DAT
 	ldr	r1, [r0]
-	orr	r1, r1, #0x20
+	orr	r1, r1, #(1 << 5)		@ 5 = 1 * 1-bit
 	str	r1, [r0]
 
 	mov	pc, lr
