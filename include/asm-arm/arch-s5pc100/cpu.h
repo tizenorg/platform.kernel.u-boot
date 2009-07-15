@@ -222,14 +222,9 @@
 #define VIC_INTADDRESS_OFFSET		0xf00	/* Vector Priority Register for Daisy Chain */
 
 
-/*
- * SROMC Controller
- */
 /* DRAM Memory Controller */
 #define S5P_DMC_BASE(x)		(S5P_PA_DMC + (x))
-/* SROMC Base */
-#define S5P_SROMC_BASE(x)	(S5P_PA_SROMC + (x))
-/* SROMC offset */
+/* DMC offset */
 #define CONCONTROL_OFFSET	0x0	/* Controller Control Register */
 #define MEMCONTROL_OFFSET	0x04	/* Memory Control Register */
 #define MEMCONFIG0_OFFSET	0x08	/* Memory Chip0 Configuration Register */
@@ -276,6 +271,11 @@
 #define S5P_PHYTEST0		S5P_DMC_BASE(PHYTEST0_OFFSET)
 #define S5P_PHYTEST1		S5P_DMC_BASE(PHYTEST1_OFFSET)
 
+/*
+ * SROMC Controller
+ */
+/* SROMC Base */
+#define S5P_SROMC_BASE(x)	(S5P_PA_SROMC + (x))
 
 /*
  * PWM Timer 
