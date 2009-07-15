@@ -253,10 +253,12 @@ system_clock_init:
  * uart_asm_init: Initialize UART's pins
  */
 uart_asm_init:
-	/* set GPIO to enable UART */
-	ldr	r0, =S5P_GPIO_A1_CON
-	ldr	r1, =0x22
-	str	r1, [r0]
+	/* set GPIO to enable UART0-UART4 */
+	ldr	r0, =S5P_PA_GPIO
+	ldr	r1, =0x22222222
+	str	r1, [r0, #0x000]		@ GPA0_CON
+	ldr	r1, =0x00002222
+	str	r1, [r0, #0x020]		@ GPA1_CON
 
 	/* uart_sel GPK0[5] */
 	ldr	r0, =S5P_GPIO_K0_CON
