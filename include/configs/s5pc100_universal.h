@@ -123,7 +123,7 @@
 #define MTDIDS_DEFAULT 		"onenand0=s3c-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
-				",2m@0x60000(kernel)"\
+				",3m@0x60000(kernel)"\
 				",16m@0x260000(test)"\
 				",-(UBI)"
 
@@ -162,7 +162,7 @@
 	" onenand write 0x21008000 0x60000 0x200000\0" \
 	"updateu=onenand erase block 147-4095;" \
 	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x20007FC0 0x60000 0x200000;" \
+	"bootk=onenand read 0x20007FC0 0x60000 0x300000;" \
 	" bootm 0x20007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
