@@ -50,6 +50,22 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r9, lr
 
+	/* Turn on KEY_LED_ON [GPJ4(1)] */
+	ldr	r0, =S5P_GPIO_J4_CON
+	ldr	r1, [r0]
+	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
+	orr	r1, r1, #(0x1 << 4)
+	str	r1, [r0]
+
+	ldr	r0, =S5P_GPIO_J4_DAT
+	ldr	r1, [r0]
+#ifdef CONFIG_ONENAND_IPL
+	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
+#else
+	bic	r1, r1, #(1 << 1)
+#endif
+	str	r1, [r0]
+
 	/* IO retension release */
 	ldr	r0, =S5P_OTHERS				@0xE0108200
 	ldr	r1, [r0]
