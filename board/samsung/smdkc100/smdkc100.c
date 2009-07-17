@@ -68,10 +68,3 @@ int checkboard(void)
 void raise(void)
 {
 }
-
-#if defined(CONFIG_CMD_USBDOWN)
-int usb_board_init(void)
-{
-	return 0;
-}
-#endif
