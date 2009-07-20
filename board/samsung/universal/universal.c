@@ -55,7 +55,7 @@ int dram_init(void)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
-	printf("Board:\tTickerTape\n");
+	printf("Board:\tUniversal\n");
 	return 0;
 }
 #endif
@@ -94,6 +94,7 @@ int misc_init_r(void)
 		gd->bd->bi_arch_number = 3000;	/* Universal */
 	if (board_rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
+		/* Workaround: OneDRAM is broken*/
 		setenv ("meminfo", "mem=128M");
 	}
 
