@@ -1,9 +1,8 @@
 /*
- * (C) Copyright 2002
- * David Mueller, ELSOFT AG, d.mueller@elsoft.ch
- *
  * Copyright (C) 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ *
+ * based on s3c24x0_i2c.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -362,7 +361,7 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		xaddr[2] = (addr >> 8) & 0xFF;
 		xaddr[3] = addr & 0xFF;
 	}
-#ifdef CFG_I2C_EEPROM_ADDR_OVERFLOW
+#ifdef CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW
 	/*
 	 * EEPROM chips that implement "address overflow" are ones
 	 * like Catalyst 24WC04/08/16 which has 9/10/11 bits of
@@ -375,7 +374,7 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	 * hidden in the chip address.
 	 */
 	if (alen > 0)
-		chip |= ((addr >> (alen * 8)) & CFG_I2C_EEPROM_ADDR_OVERFLOW);
+		chip |= ((addr >> (alen * 8)) & CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
 #endif
 	return (i2c_transfer(I2C_WRITE, chip << 1, &xaddr[4 - alen], alen,
 				buffer, len) != 0);
