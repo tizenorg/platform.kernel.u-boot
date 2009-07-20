@@ -1,9 +1,6 @@
 #
-# (C) Copyright 2000, 2001, 2002
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# (C) Copyright 2008
-# Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+# (C) Copyright 2009
+# Kyungmin Park, Samsung Electronics
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -28,7 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS-y	:= tickertape.o onenand.o
+COBJS-y	:= universal.o onenand.o
 SOBJS	:= lowlevel_init.o
 
 SRCS    := $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
