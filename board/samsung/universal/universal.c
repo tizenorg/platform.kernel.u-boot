@@ -32,6 +32,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+static unsigned int board_rev;
+
 int board_init(void)
 {
 	gd->bd->bi_arch_number = MACH_TYPE;
@@ -62,6 +64,11 @@ void raise(void)
 {
 }
 
+u32 get_board_rev(void)
+{
+	return board_rev;
+}
+
 #ifdef CONFIG_MISC_INIT_R
 static const char *board_name[] = {
 	"Unknown",
@@ -69,7 +76,7 @@ static const char *board_name[] = {
 	"Unknown",
 	"TickerTape",
 	"Unknown",
-	"Unknown",
+	"Aquila",
 	"Unknown",
 	"Unknown",
 };
@@ -77,18 +84,20 @@ static const char *board_name[] = {
 int misc_init_r(void)
 {
 	/* check H/W revision */
-	unsigned int rev  = __REG(S5P_GPIO_J0_DAT);
+	board_rev  = __REG(S5P_GPIO_J0_DAT);
 
 	/* GPJ0[4:2] */
-	rev >>= 2;
-	rev &= 0x7;
-	printf("HW Revision:\t%x (%s)\n", rev, board_name[rev]);
-	if (rev == 1)
+	board_rev >>= 2;
+	board_rev &= 0x7;
+	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
+	if (board_rev == 1)
 		gd->bd->bi_arch_number = 3000;	/* Universal */
-	if (rev == 3) {
+	if (board_rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 		setenv ("meminfo", "mem=128M");
 	}
+
+	return 0;
 }
 #endif
 
