@@ -1,7 +1,7 @@
 /*
  * S3C64XX/S5PC100 OneNAND driver at U-Boot
  *
- *  Copyright (C) 2008 Samsung Electronics
+ *  Copyright (C) 2008-2009 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,19 +28,13 @@
 #include <asm/io.h>
 #include <asm/errno.h>
 
-#if 0
+#ifdef ONENAND_DEBUG
 #define DPRINTK(format, args...)					\
 do {									\
 	printk("%s[%d]: " format "\n", __func__, __LINE__, ##args);	\
 } while (0)
 #else
 #define DPRINTK(...)			do { } while (0)
-#endif
-
-#if defined(CONFIG_S3C64XX)
-#define AHB_ADDR			0x20000000
-#elif defined(CONFIG_S5PC1XX)
-#define AHB_ADDR			0xB0000000
 #endif
 
 #define ONENAND_ERASE_STATUS		0x00
@@ -61,23 +55,23 @@ do {									\
 #define ONENAND_PIPELINE_READ		0x4000
 
 #if defined(CONFIG_S3C64XX)
+#define AHB_ADDR			0x20000000
 #define MAP_00				(0x0 << 24)
 #define MAP_01				(0x1 << 24)
 #define MAP_10				(0x2 << 24)
 #define MAP_11				(0x3 << 24)
+
+/* TODO Please verify it at s3c6400. It has different offsets */
+#define MEM_ADDR(fba, fpa, fsa)		((fba) << 12 | (fpa) << 6 | (fsa) << 4)
+
 #elif defined(CONFIG_S5PC1XX)
+#define AHB_ADDR			0xB0000000
 #define MAP_00				(0x0 << 26)
 #define MAP_01				(0x1 << 26)
 #define MAP_10				(0x2 << 26)
 #define MAP_11				(0x3 << 26)
-#endif
 
-#if defined(CONFIG_S3C64XX)
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 12 | (fpa) << 6 | \
-					(fsa) << 4))
-#elif defined(CONFIG_S5PC1XX)
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 7 | \
-					(fsa) << 5))
+#define MEM_ADDR(fba, fpa, fsa)		((fba) << 13 | (fpa) << 7 | (fsa) << 5)
 #endif
 
 /* The 'addr' is byte address. It makes a 16-bit word */
@@ -266,8 +260,6 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
 		if (stat & flags)
 			break;
-		for (stat = 0; stat < 2000; stat++)
-			continue;
 	}
 
 	/* To get correct interrupt status in timeout case */
@@ -287,12 +279,6 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 			mtd->ecc_stats.failed++;
 			return -EBADMSG;
 		}
-#if 0
-		} else if (ecc & ONENAND_ECC_1BIT_ALL) {
-			printk(KERN_INFO "onenand_wait: correctable ECC error = 0x%04x\n", ecc);
-			mtd->ecc_stats.corrected++;
-		}
-#endif
 	}
 
 	if (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | LD_FAIL_ECC_ERR)) {
@@ -539,7 +525,7 @@ static void s3c_onenand_unlock_all(struct mtd_info *mtd)
 
 	s3c_onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
 
-//	s3c_onenand_check_lock_status(mtd);
+	s3c_onenand_check_lock_status(mtd);
 }
 
 #ifdef CONFIG_S3C64XX
@@ -603,10 +589,14 @@ void s3c_onenand_init(struct mtd_info *mtd)
 
 	onenand->mtd = mtd;
 
+#ifdef CONFIG_S5PC1XX
 	/* S5PC100 specific values */
 	onenand->base = (void *) 0xE7100000;
 	onenand->ahb_addr = (void *) 0xB0000000;
 	onenand->mem_addr = s5pc100_mem_addr;
+#else
+#error Please fix it at s3c6410
+#endif
 
 	this->read_word = s3c_onenand_readw;
 	this->write_word = s3c_onenand_writew;
