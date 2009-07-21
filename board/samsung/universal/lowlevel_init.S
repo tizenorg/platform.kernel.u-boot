@@ -110,37 +110,17 @@ lowlevel_init:
 #endif
 
 #ifndef CONFIG_ONENAND_IPL
-	/* init system clock */
-	bl system_clock_init
-
 	/* for UART */
-	bl uart_asm_init
+	bl	uart_asm_init
 
 	/* for DMA */
-	bl dma_asm_init
-#endif
-
-	/* Memory subsystem address 0xe0200200 */
-	ldr	r0, =S5P_MEM_SYS_CFG
-	str	r5, [r0]
-
-#if 0
-#ifndef CONFIG_ONENAND_IPL
-	/* DRAM I/O Drive-Strength */
-	ldr	r0, =S5P_MP_0DRV
-	ldr	r1, =0x5555
-	str	r1, [r0, #S5P_MP_0_OFFSET]
-	str	r1, [r0, #S5P_MP_1_OFFSET]
-	str	r1, [r0, #S5P_MP_2_OFFSET]
-	str	r1, [r0, #S5P_MP_3_OFFSET]
-	str	r1, [r0, #S5P_MP_4_OFFSET]
-	str	r1, [r0, #S5P_MP_5_OFFSET]
-	str	r1, [r0, #S5P_MP_6_OFFSET]
-	str	r1, [r0, #S5P_MP_7_OFFSET]
-#endif
+	bl	dma_asm_init
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
+	/* init system clock */
+	bl	system_clock_init
+
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
