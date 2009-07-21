@@ -87,7 +87,7 @@ void onenand_board_init(struct mtd_info *mtd)
 //	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
 
 	this->base = (void *) 0xe7100000;
-//	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
+	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
 
-//	s3c_onenand_init(mtd);
+	s3c_onenand_init(mtd);
 }
