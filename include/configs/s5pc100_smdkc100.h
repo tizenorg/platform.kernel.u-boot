@@ -105,6 +105,7 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 
 #define MTDIDS_DEFAULT "onenand0=s3c-onenand"
