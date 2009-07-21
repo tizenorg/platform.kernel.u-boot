@@ -115,6 +115,9 @@ lowlevel_init:
 
 	/* for UART */
 	bl uart_asm_init
+
+	/* for DMA */
+	bl dma_asm_init
 #endif
 
 	/* Memory subsystem address 0xe0200200 */
@@ -295,4 +298,27 @@ uart_asm_init:
 	str	r1, [r0]
 
 	mov	pc, lr
+
+/*
+ * dma_asm_init: Initialize DMA
+ */
+dma_asm_init:
+	ldr     r0, =0xE3800000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
+
+	ldr	r0, =0xE2800000
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
+	str	r1, [r0, #0x81C]
+
+	ldr	r0, =0xE2900000
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
+
+	mov	pc, lr
+
 #endif
