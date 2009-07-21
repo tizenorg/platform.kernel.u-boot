@@ -68,7 +68,7 @@ struct usbd_ops {
 	void (*usb_init) (void);
 	void (*usb_stop) (void);
 	void (*send_data) (char *, int);
-	int (*recv_data) (struct usbd_ops *);
+	int (*recv_data) (void);
 	void (*recv_setup) (char *, int);
 	char *tx_data;
 	char *rx_data;

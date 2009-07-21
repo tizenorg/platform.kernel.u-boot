@@ -425,9 +425,8 @@ int s3c_usbc_activate(void)
 	return 0;
 }
 
-int s3c_usb_stop(void)
+void s3c_usb_stop(void)
 {
-	return 0;
 }
 
 void s3c_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
@@ -590,8 +589,6 @@ void s3c_usb_clear_feature(void)
 
 void s3c_usb_set_feature(void)
 {
-	u32 tmp;
-
 	switch (otg.dev_req.bmRequestType) {
 	case DEVICE_RECIPIENT:
 		if (otg.dev_req.wValue_L == 1)
