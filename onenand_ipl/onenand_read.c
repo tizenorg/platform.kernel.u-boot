@@ -49,7 +49,7 @@ static inline int onenand_read_page(ulong block, ulong page,
 	pagesize >>= 2;
 
 	for (i = 0; i < pagesize; i++)
-		*p++ = *(volatile unsigned int *)(CMD_MAP_01(mem_addr));
+		*p++ = readl(CMD_MAP_01(mem_addr));
 
 	return 0;
 }
