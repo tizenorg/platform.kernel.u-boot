@@ -230,6 +230,7 @@
  *******************************/
 
 #define CONFIG_CLK_667_166_83
+/*#define CONFIG_CLK_666_166_66*/
 /*#define CONFIG_CLK_600_150_75*/
 /*#define CONFIG_CLK_533_133_66*/
 /*#define CONFIG_CLK_500_166_66*/

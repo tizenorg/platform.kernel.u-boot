@@ -167,7 +167,6 @@ wakeup_reset:
 	nop
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
 /*
  * system_clock_init: Initialize core clock and bus clock.
  * void system_clock_init(void)
@@ -185,6 +184,8 @@ system_clock_init:
 	/* S5P_APLL_CON */
 #ifdef CONFIG_CLK_667_166_83
 	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1333MHz)
+#elif defined(CONFIG_CLK_666_166_66)
+	ldr	r1, =0x814d0301		@ SDIV 1, PDIV 3, MDIV 333 (1333MHz)
 #elif defined(CONFIG_CLK_600_150_75)
 	ldr	r1, =0x812C0300		@ SDIV 0, PDIV 3, MDIV 300 (1200MHz)
 #elif defined(CONFIG_CLK_533_133_66)
@@ -217,6 +218,8 @@ system_clock_init:
 	ldr	r2, =0x00011401
 #elif defined(CONFIG_CLK_500_166_66)
 	ldr	r2, =0x00011201
+#elif defined(CONFIG_CLK_666_166_66)
+	ldr	r2, =0x00011300
 #else
 	ldr	r2, =0x00011301
 #endif
@@ -233,11 +236,13 @@ system_clock_init:
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
 	str	r1, [r8, #0x200]		@ S5P_CLK_SRC0
 
+#if 0
 	ldr	r1, =0x1000001			@ Uart Clock & CLK48M Muxing
 	str	r1, [r8, #0x204]		@ S5P_CLK_SRC1
 
 	ldr	r1, =0x9000			@ ARMCLK/4
 	str	r1, [r8, #0x400]		@ S5P_CLK_OUT
+#endif
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
@@ -245,7 +250,6 @@ system_clock_init:
 	bne	1b
 
 	mov	pc, lr
-#endif
 
 #ifndef CONFIG_ONENAND_IPL
 /*
