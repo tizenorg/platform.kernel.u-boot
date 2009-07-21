@@ -333,7 +333,7 @@ static int process_data(struct usbd_ops *usbd)
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 
 		/* Receive image by using dma */
-		recvlen = usbd->recv_data(usbd);
+		recvlen = usbd->recv_data();
 		if (recvlen < len) {
 			printf("Error: wrong image size -> %d/%d\n",
 					(int)recvlen, (int)len);
@@ -599,7 +599,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	usbd->recv_setup(usbd->rx_data, usbd->rx_len);
 
 	/* detect the download request from Host PC */
-	if (usbd->recv_data(usbd)) {
+	if (usbd->recv_data()) {
 		if (strncmp(usbd->rx_data, recv_key, strlen(recv_key)) == 0) {
 			printf("Download request from the Host PC\n");
 			msleep(30);
@@ -621,7 +621,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	while (1) {
 		usbd->recv_setup(usbd->rx_data, usbd->rx_len);
 
-		if (usbd->recv_data(usbd)) {
+		if (usbd->recv_data()) {
 			if (process_data(usbd) == 0)
 				return 0;
 		}

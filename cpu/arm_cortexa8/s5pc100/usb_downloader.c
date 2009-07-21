@@ -23,11 +23,11 @@
 #include "usbd.h"
 #include "usb-hs-otg.h"
 
-static unsigned char tx_data[8] = "MPL";
-static unsigned long tx_len = 4;
+static char tx_data[8] = "MPL";
+static long tx_len = 4;
 
-static unsigned char rx_data[2048];
-static unsigned long rx_len = 64;
+static char rx_data[2048];
+static long rx_len = 64;
 
 struct usbd_ops *usbd_set_interface(struct usbd_ops *);
 
@@ -131,7 +131,7 @@ void recv_setup(char *addr, int len)
 {
 	s3c_usb_clear_dnfile_info();
 
-	otg.dn_addr = addr;
-	otg.dn_ptr = addr;
+	otg.dn_addr = (u32)addr;
+	otg.dn_ptr = (u32)addr;
 	otg.dn_filesize = len;
 }

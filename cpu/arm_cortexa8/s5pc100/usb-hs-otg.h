@@ -267,7 +267,7 @@ enum STANDARD_REQUEST_CODE {
 
 int s3c_usbctl_init(void);
 int s3c_usbc_activate(void);
-int s3c_usb_stop(void);
+void s3c_usb_stop(void);
 void s3c_udc_int_hndlr(void);
 void s3c_usb_tx(char *tx_data, int tx_size);
 
