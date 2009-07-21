@@ -33,8 +33,7 @@
 
 #ifdef CONFIG_S5PC1XX
 #define AHB_ADDR			0xB0000000
-#define MEM_ADDR(fba, fpa, fsa)		(((fba) << 13 | (fpa) << 7 | \
-					(fsa) << 5) & 0x3ffffff)
+#define MEM_ADDR(fba, fpa, fsa)		((fba) << 13 | (fpa) << 7 | (fsa) << 5)
 #define CMD_MAP_01(mem_addr) 		(AHB_ADDR | (1 << 26) | (mem_addr))
 #define CMD_MAP_11(addr)		(AHB_ADDR | (3 << 26) | ((addr) << 2))
 #undef onenand_readw
