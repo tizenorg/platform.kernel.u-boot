@@ -50,6 +50,13 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r9, lr
 
+	/* IO retension release */
+	ldr	r0, =S5P_OTHERS                         @0xE0108200
+	ldr	r1, [r0]
+	ldr	r2, =(1 << 31)                          @IO_RET_REL
+	orr	r1, r1, r2
+	str	r1, [r0]
+
 	/* Disable Watchdog */
 	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
 	orr	r0, r0, #0x0
@@ -92,11 +99,9 @@ lowlevel_init:
 #ifndef CONFIG_ONENAND_IPL
 	/* for UART */
 	bl uart_asm_init
-#endif
 
-	/* Memory subsystem address 0xe0200200 */
-	ldr	r0, =S5P_MEM_SYS_CFG
-	str	r5, [r0]
+	bl dma_asm_init
+#endif
 
 #ifdef CONFIG_ONENAND_IPL
 	bl	mem_ctrl_asm_init
@@ -127,7 +132,7 @@ wakeup_reset:
 	/* r1 = physical address of s5pc100_cpu_resume function */
 	ldr	r1, [r0]
 
-	/* Jump to kernel (sleep-s5pc100.S) */
+	/* Jump to kernel (sleep.S) */
 	mov	pc, r1
 	nop
 	nop
@@ -153,6 +158,7 @@ system_clock_init:
 	str	r1, [r8, #0x000]		@ S5P_APLL_LOCK
 	str	r1, [r8, #0x004]		@ S5P_MPLL_LOCK
 	str	r1, [r8, #0x008]		@ S5P_EPLL_LOCK
+	str	r1, [r8, #0x00C]		@ S5P_HPLL_LOCK
 
 	/* S5P_APLL_CON */
 	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
@@ -198,6 +204,28 @@ uart_asm_init:
 	ldr	r0, =S5P_GPIO_A1_CON
 	ldr	r1, =0x2222
 	ldr	r1, [r0]
+
+	mov	pc, lr
+
+/*
+ * dma_asm_init: Initialize DMA
+ */
+dma_asm_init:
+	ldr	r0, =0xE3800000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
+
+	ldr	r0, =0xE2800000
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
+	str	r1, [r0, #0x81C]
+
+	ldr	r0, =0xE2900000
+	str	r1, [r0, #0x804]
+	str	r1, [r0, #0x810]
 
 	mov	pc, lr
 #endif
