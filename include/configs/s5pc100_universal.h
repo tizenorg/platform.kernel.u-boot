@@ -92,6 +92,8 @@
 #define CONFIG_BAUDRATE		115200
 #define CONFIG_L2_OFF
 
+/* It should define before config_cmd_default.h */
+#define CONFIG_SYS_NO_FLASH		1
 /***********************************************************
  * Command definition
  ***********************************************************/
@@ -110,8 +112,6 @@
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
-#define CONFIG_CMD_ELF
-#define CONFIG_CMD_FAT
 #define CONFIG_CMD_MTDPARTS
 
 #define CONFIG_BOOTDELAY	1
@@ -249,7 +249,6 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CONFIG_SYS_NO_FLASH		1
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
 
