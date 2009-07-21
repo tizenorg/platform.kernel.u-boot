@@ -53,7 +53,7 @@ v1.2   03/18/2003       Weilun Huang <weilun_huang@davicom.com.tw>:
 			  notes (i.e. double reset)
 			- some minor code cleanups
 			These changes are tested with DM9000{A,EP,E} together
-			with a 200MHz Atmel AT91SAM92161 core
+			with a 200MHz Atmel AT91SAM9261 core
 
 TODO: external MII is not functional, only internal at the moment.
 */
@@ -62,6 +62,7 @@ TODO: external MII is not functional, only internal at the moment.
 #include <command.h>
 #include <net.h>
 #include <asm/io.h>
+#include <dm9000.h>
 
 #include "dm9000x.h"
 
@@ -102,18 +103,15 @@ typedef struct board_info {
 	void (*outblk)(volatile void *data_ptr, int count);
 	void (*inblk)(void *data_ptr, int count);
 	void (*rx_status)(u16 *RxStatus, u16 *RxLen);
+	struct eth_device netdev;
 } board_info_t;
 static board_info_t dm9000_info;
 
+
 /* function declaration ------------------------------------- */
-int eth_init(bd_t * bd);
-int eth_send(volatile void *, int);
-int eth_rx(void);
-void eth_halt(void);
 static int dm9000_probe(void);
 static u16 phy_read(int);
 static void phy_write(int, u16);
-static void read_srom_word(int, u8 *);
 static u8 DM9000_ior(int);
 static void DM9000_iow(int reg, u8 value);
 
@@ -279,17 +277,16 @@ dm9000_reset(void)
 		printf("ERROR: resetting DM9000 -> not responding\n");
 }
 
-/* Initilize dm9000 board
+/* Initialize dm9000 board
 */
-int
-eth_init(bd_t * bd)
+static int dm9000_init(struct eth_device *dev, bd_t *bd)
 {
 	int i, oft, lnk;
 	u8 io_mode;
 	struct board_info *db = &dm9000_info;
 	uchar enetaddr[6];
 
-	DM9000_DBG("eth_init()\n");
+	DM9000_DBG("%s\n", __func__);
 
 	/* RESET device */
 	dm9000_reset();
@@ -347,9 +344,9 @@ eth_init(bd_t * bd)
 
 	/* Set Node address */
 	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
-#if !defined(CONFIG_AT91SAM9261EK)
+#if !defined(CONFIG_DM9000_NO_SROM)
 		for (i = 0; i < 3; i++)
-			read_srom_word(i, enetaddr + 2 * i);
+			dm9000_read_srom_word(i, enetaddr + 2 * i);
 		eth_setenv_enetaddr("ethaddr", enetaddr);
 #endif
 	}
@@ -411,13 +408,13 @@ eth_init(bd_t * bd)
   Hardware start transmission.
   Send a packet to media from the upper layer.
 */
-int
-eth_send(volatile void *packet, int length)
+static int dm9000_send(struct eth_device *netdev, volatile void *packet,
+		     int length)
 {
 	int tmo;
 	struct board_info *db = &dm9000_info;
 
-	DM9000_DMP_PACKET("eth_send", packet, length);
+	DM9000_DMP_PACKET(__func__ , packet, length);
 
 	DM9000_iow(DM9000_ISR, IMR_PTM); /* Clear Tx bit in ISR */
 
@@ -453,10 +450,9 @@ eth_send(volatile void *packet, int length)
   Stop the interface.
   The interface is stopped when it is brought.
 */
-void
-eth_halt(void)
+static void dm9000_halt(struct eth_device *netdev)
 {
-	DM9000_DBG("eth_halt\n");
+	DM9000_DBG("%s\n", __func__);
 
 	/* RESET devie */
 	phy_write(0, 0x8000);	/* PHY RESET */
@@ -468,8 +464,7 @@ eth_halt(void)
 /*
   Received a packet and pass to upper layer
 */
-int
-eth_rx(void)
+static int dm9000_rx(struct eth_device *netdev)
 {
 	u8 rxbyte, *rdptr = (u8 *) NetRxPackets[0];
 	u16 RxStatus, RxLen = 0;
@@ -529,7 +524,7 @@ eth_rx(void)
 				dm9000_reset();
 			}
 		} else {
-			DM9000_DMP_PACKET("eth_rx", rdptr, RxLen);
+			DM9000_DMP_PACKET(__func__ , rdptr, RxLen);
 
 			DM9000_DBG("passing packet to upper layer\n");
 			NetReceive(NetRxPackets[0], RxLen);
@@ -541,7 +536,8 @@ eth_rx(void)
 /*
   Read a word data from SROM
 */
-static void read_srom_word(int offset, u8 *to)
+#if !defined(CONFIG_DM9000_NO_SROM)
+void dm9000_read_srom_word(int offset, u8 *to)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPCR, 0x4);
@@ -551,8 +547,7 @@ static void read_srom_word(int offset, u8 *to)
 	to[1] = DM9000_ior(DM9000_EPDRH);
 }
 
-void
-write_srom_word(int offset, u16 val)
+void dm9000_write_srom_word(int offset, u16 val)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPDRH, ((val >> 8) & 0xff));
@@ -561,7 +556,7 @@ write_srom_word(int offset, u16 val)
 	udelay(8000);
 	DM9000_iow(DM9000_EPCR, 0);
 }
-
+#endif
 
 /*
    Read a byte from I/O port
@@ -620,4 +615,19 @@ phy_write(int reg, u16 value)
 	udelay(500);			/* Wait write complete */
 	DM9000_iow(DM9000_EPCR, 0x0);	/* Clear phyxcer write command */
 	DM9000_DBG("phy_write(reg:0x%x, value:0x%x)\n", reg, value);
+}
+
+int dm9000_initialize(bd_t *bis)
+{
+	struct eth_device *dev = &(dm9000_info.netdev);
+
+	dev->init = dm9000_init;
+	dev->halt = dm9000_halt;
+	dev->send = dm9000_send;
+	dev->recv = dm9000_rx;
+	sprintf(dev->name, "dm9000");
+
+	eth_register(dev);
+
+	return 0;
 }

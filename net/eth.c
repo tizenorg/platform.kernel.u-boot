@@ -57,9 +57,6 @@ int eth_setenv_enetaddr(char *name, const uchar *enetaddr)
 
 #if defined(CONFIG_CMD_NET) && defined(CONFIG_NET_MULTI)
 
-static char *act = NULL;
-static int  env_changed_id = 0;
-
 /*
  * CPU and board-specific Ethernet initializations.  Aliased function
  * signals caller to move on
@@ -471,6 +468,8 @@ void eth_try_another(int first_restart)
 #ifdef CONFIG_NET_MULTI
 void eth_set_current(void)
 {
+	static char *act = NULL;
+	static int  env_changed_id = 0;
 	struct eth_device* old_current;
 	int	env_id;
 
@@ -502,10 +501,8 @@ char *eth_get_name (void)
 #elif defined(CONFIG_CMD_NET) && !defined(CONFIG_NET_MULTI)
 
 extern int at91rm9200_miiphy_initialize(bd_t *bis);
-extern int emac4xx_miiphy_initialize(bd_t *bis);
 extern int mcf52x2_miiphy_initialize(bd_t *bis);
 extern int ns7520_miiphy_initialize(bd_t *bis);
-extern int davinci_eth_miiphy_initialize(bd_t *bis);
 
 
 int eth_initialize(bd_t *bis)
@@ -517,17 +514,11 @@ int eth_initialize(bd_t *bis)
 #if defined(CONFIG_AT91RM9200)
 	at91rm9200_miiphy_initialize(bis);
 #endif
-#if defined(CONFIG_PPC4xx_EMAC)
-	emac4xx_miiphy_initialize(bis);
-#endif
 #if defined(CONFIG_MCF52x2)
 	mcf52x2_miiphy_initialize(bis);
 #endif
 #if defined(CONFIG_DRIVER_NS7520_ETHERNET)
 	ns7520_miiphy_initialize(bis);
-#endif
-#if defined(CONFIG_DRIVER_TI_EMAC)
-	davinci_eth_miiphy_initialize(bis);
 #endif
 	return 0;
 }

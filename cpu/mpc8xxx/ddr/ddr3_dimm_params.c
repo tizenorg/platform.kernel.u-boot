@@ -52,10 +52,10 @@
  * 	011		32bits
  *
  */
-static phys_size_t
+static unsigned long long
 compute_ranksize(const ddr3_spd_eeprom_t *spd)
 {
-	phys_size_t bsize;
+	unsigned long long bsize;
 
 	int nbit_sdram_cap_bsize = 0;
 	int nbit_primary_bus_width = 0;
@@ -68,7 +68,7 @@ compute_ranksize(const ddr3_spd_eeprom_t *spd)
 	if ((spd->organization & 0x7) < 4)
 		nbit_sdram_width = (spd->organization & 0x7) + 2;
 
-	bsize = 1 << (nbit_sdram_cap_bsize - 3
+	bsize = 1ULL << (nbit_sdram_cap_bsize - 3
 		    + nbit_primary_bus_width - nbit_sdram_width);
 
 	debug("DDR: DDR III rank density = 0x%08x\n", bsize);

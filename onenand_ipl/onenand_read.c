@@ -132,9 +132,6 @@ int onenand_read_block(unsigned char *buf)
 
 	erasesize = ONENAND_PAGES_PER_BLOCK * pagesize;
 	nblocks = (CONFIG_SYS_MONITOR_LEN + erasesize - 1) >> erase_shift;
-#ifdef CONFIG_S5PC1XX
-	nblocks = 1;
-#endif
 
 	/* NOTE: you must read page from page 1 of block 0 */
 	/* read the block page by page*/

@@ -36,6 +36,7 @@
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
+#include <asm/cache.h>
 
 extern omap3_sysinfo sysinfo;
 
@@ -335,8 +336,8 @@ usage:
 U_BOOT_CMD(
 	nandecc, 2, 1,	do_switch_ecc,
 	"nandecc - switch OMAP3 NAND ECC calculation algorithm\n",
-	"[hw/sw] - Switch between NAND hardware (hw) or software (sw) ecc algorithm\n"
-	);
+	"[hw/sw] - Switch between NAND hardware (hw) or software (sw) ecc algorithm"
+);
 
 #endif /* CONFIG_NAND_OMAP_GPMC */
 

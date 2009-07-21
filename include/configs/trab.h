@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2002-2005
- * Gary Jennejohn <gj@denx.de>
+ * Gary Jennejohn <garyj@denx.de>
  *
  * Configuation settings for the TRAB board.
  *
@@ -375,6 +375,8 @@
 
 /* Dynamic MTD partition support */
 #define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
+#define CONFIG_FLASH_CFI_MTD
 #define MTDIDS_DEFAULT		"nor0=0"
 
 /* production flash layout */

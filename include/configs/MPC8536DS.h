@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Freescale Semiconductor, Inc.
+ * Copyright 2008-2009 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -337,7 +337,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_HARD_I2C		/* I2C with hardware support */
 #undef	CONFIG_SOFT_I2C		/* I2C bit-banged */
 #define CONFIG_I2C_MULTI_BUS
-#define CONFIG_I2C_CMD_TREE
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 #define CONFIG_SYS_I2C_NOPROBES	{{0, 0x29}}	/* Don't probe these addrs */
@@ -428,12 +427,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #undef CONFIG_TULIP
 #undef CONFIG_RTL8139
 
-#ifdef CONFIG_RTL8139
-/* This macro is used by RTL8139 but not defined in PPC architecture */
-#define KSEG1ADDR(x)		({u32 _x=le32_to_cpu(*(u32 *)(x)); (&_x);})
-#define _IO_BASE	0x00000000
-#endif
-
 #ifndef CONFIG_PCI_PNP
 	#define PCI_ENET0_IOADDR	CONFIG_SYS_PCI1_IO_BUS
 	#define PCI_ENET0_MEMADDR	CONFIG_SYS_PCI1_IO_BUS
@@ -462,6 +455,15 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_DOS_PARTITION
 #define CONFIG_CMD_EXT2
 #endif
+
+/*
+ * USB
+ */
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_FSL
+#define CONFIG_EHCI_HCD_INIT_AFTER_RESET
 
 #if defined(CONFIG_TSEC_ENET)
 
@@ -628,7 +630,8 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
  "ramdiskfile=8536ds/ramdisk.uboot\0"		\
  "fdtaddr=c00000\0"				\
  "fdtfile=8536ds/mpc8536ds.dtb\0"		\
- "bdev=sda3\0"
+ "bdev=sda3\0"					\
+ "usb_phy_type=ulpi\0"
 
 #define CONFIG_HDBOOT				\
  "setenv bootargs root=/dev/$bdev rw "		\

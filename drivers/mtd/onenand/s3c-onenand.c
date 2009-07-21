@@ -618,6 +618,4 @@ void s3c_onenand_init(struct mtd_info *mtd)
 
 	this->read_bufferram = onenand_read_bufferram;
 	this->write_bufferram = onenand_write_bufferram;
-
-	this->options |= ONENAND_RUNTIME_BADBLOCK_CHECK;
 }

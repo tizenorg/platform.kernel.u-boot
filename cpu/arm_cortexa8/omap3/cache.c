@@ -1,7 +1,4 @@
 /*
- * (C) Copyright 2009
- * Samsung Electornics, HeungJun Kim <riverful.kim@samsung.com>
- *
  * (C) Copyright 2008 Texas Insturments
  *
  * (C) Copyright 2002
@@ -31,14 +28,14 @@
  */
 
 /*
- * L2 cache specific code
+ * omap3 L2 cache code
  */
 
 #include <common.h>
-#include <command.h>
 #include <asm/arch/sys_proto.h>
+#include <asm/cache.h>
 
-void l2_cache_enable()
+void l2_cache_enable(void)
 {
 	unsigned long i;
 	volatile unsigned int j;
@@ -68,7 +65,7 @@ void l2_cache_enable()
 
 }
 
-void l2_cache_disable()
+void l2_cache_disable(void)
 {
 	unsigned long i;
 	volatile unsigned int j;
@@ -96,4 +93,3 @@ void l2_cache_disable()
 		__asm__ __volatile__("mov r12, %0":"=r"(j));
 	}
 }
-

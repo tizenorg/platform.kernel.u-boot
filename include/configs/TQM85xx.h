@@ -166,15 +166,6 @@
 #endif /* CONFIG_TQM8541 || CONFIG_TQM8555 || CONFIG_TQM8548 */
 
 /*
- * Old TQM85xx boards have 'M' type Spansion Flashes from the S29GLxxxM
- * series while new boards have 'N' type Flashes from the S29GLxxxN
- * series, which have bigger sectors: 2 x 128 instead of 2 x 64 KB.
- */
-#ifdef CONFIG_TQM8548
-#define CONFIG_TQM_FLASH_N_TYPE
-#endif /* CONFIG_TQM8548 */
-
-/*
  * Flash on the Local Bus
  */
 #ifdef CONFIG_TQM_BIGFLASH
@@ -360,8 +351,6 @@
 /* NAND FLASH */
 #ifdef CONFIG_NAND
 
-#undef CONFIG_NAND_LEGACY
-
 #define CONFIG_NAND_FSL_UPM	1
 
 #define	CONFIG_MTD_NAND_ECC_JFFS2	1	/* use JFFS2 ECC	*/
@@ -382,6 +371,8 @@
 #define CONFIG_SYS_OR3_PRELIM		(P2SZ_TO_AM(CONFIG_SYS_NAND_SIZE) | OR_UPM_BI)
 
 #define NAND_BIG_DELAY_US		25	/* max tR for Samsung devices	*/
+
+#define CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 
 #endif /* CONFIG_NAND */
 
@@ -547,11 +538,7 @@
  */
 #define CONFIG_ENV_IS_IN_FLASH	1
 
-#ifdef CONFIG_TQM_FLASH_N_TYPE
 #define CONFIG_ENV_SECT_SIZE	0x40000 /* 256K (one sector) for env	*/
-#else /* !CONFIG_TQM_FLASH_N_TYPE */
-#define CONFIG_ENV_SECT_SIZE	0x20000 /* 128K (one sector) for env	*/
-#endif /* CONFIG_TQM_FLASH_N_TYPE */
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
 #define CONFIG_ENV_SIZE		0x2000
 #define CONFIG_ENV_ADDR_REDUND	(CONFIG_ENV_ADDR - CONFIG_ENV_SECT_SIZE)
@@ -580,6 +567,8 @@
 #define	CONFIG_JFFS2_NAND	1
 
 #ifdef CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
+#define CONFIG_FLASH_CFI_MTD
 #define MTDIDS_DEFAULT		"nand0=TQM85xx-nand"
 #define MTDPARTS_DEFAULT	"mtdparts=TQM85xx-nand:-"
 #else
@@ -680,7 +669,7 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_ENV_BOOTFILE						\
 	CONFIG_ENV_FDT_FILE						\
-	CONFIG_ENV_CONSDEV							\
+	CONFIG_ENV_CONSDEV						\
 	"netdev=eth0\0"							\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
 		"nfsroot=$serverip:$rootpath\0"				\
@@ -704,12 +693,11 @@
 	"fdt_addr=ffec0000\0"						\
 	"kernel_addr=ffd00000\0"					\
 	"ramdisk_addr=ff800000\0"					\
-	CONFIG_ENV_UBOOT							\
+	CONFIG_ENV_UBOOT						\
 	"load=tftp 100000 $uboot\0"					\
 	"update=protect off $uboot_addr +$filesize;"			\
 		"erase $uboot_addr +$filesize;"				\
-		"cp.b 100000 $uboot_addr $filesize;"			\
-		"setenv filesize;saveenv\0"				\
+		"cp.b 100000 $uboot_addr $filesize"			\
 	"upd=run load update\0"						\
 	""
 #define CONFIG_BOOTCOMMAND	"run flash_self"

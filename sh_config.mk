@@ -21,4 +21,9 @@
 # MA 02111-1307 USA
 #
 
+CROSS_COMPILE ?= sh4-linux-
+
 PLATFORM_CPPFLAGS += -DCONFIG_SH -D__SH__
+PLATFORM_LDFLAGS += -e $(TEXT_BASE) --defsym reloc_dst=$(TEXT_BASE)
+
+LDSCRIPT := $(SRCTREE)/cpu/$(CPU)/u-boot.lds

@@ -138,6 +138,7 @@
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of */
 							/* NAND devices */
+#define CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 
 #define CONFIG_JFFS2_NAND
 /* nand device jffs2 lives on */
@@ -148,6 +149,8 @@
 
 /* Environment information */
 #define CONFIG_BOOTDELAY	10
+
+#define CONFIG_BOOTFILE		uImage
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"loadaddr=0x82000000\0" \

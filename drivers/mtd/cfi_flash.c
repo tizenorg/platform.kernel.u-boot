@@ -835,14 +835,19 @@ static int flash_write_cfiword (flash_info_t * info, ulong dest,
 		break;
 	case CFI_CMDSET_AMD_EXTENDED:
 	case CFI_CMDSET_AMD_STANDARD:
-#ifdef CONFIG_FLASH_CFI_LEGACY
-	case CFI_CMDSET_AMD_LEGACY:
-#endif
 		sect = find_sector(info, dest);
 		flash_unlock_seq (info, sect);
 		flash_write_cmd (info, sect, info->addr_unlock1, AMD_CMD_WRITE);
 		sect_found = 1;
 		break;
+#ifdef CONFIG_FLASH_CFI_LEGACY
+	case CFI_CMDSET_AMD_LEGACY:
+		sect = find_sector(info, dest);
+		flash_unlock_seq (info, 0);
+		flash_write_cmd (info, 0, info->addr_unlock1, AMD_CMD_WRITE);
+		sect_found = 1;
+		break;
+#endif
 	}
 
 	switch (info->portwidth) {
@@ -2098,7 +2103,7 @@ unsigned long flash_init (void)
 #ifdef CONFIG_ENV_ADDR_REDUND
 	flash_protect (FLAG_PROTECT_SET,
 		       CONFIG_ENV_ADDR_REDUND,
-		       CONFIG_ENV_ADDR_REDUND + CONFIG_ENV_SIZE_REDUND - 1,
+		       CONFIG_ENV_ADDR_REDUND + CONFIG_ENV_SECT_SIZE - 1,
 		       flash_get_info(CONFIG_ENV_ADDR_REDUND));
 #endif
 

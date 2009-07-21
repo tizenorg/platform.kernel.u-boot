@@ -68,7 +68,7 @@ static inline ulong READ_TIMER(void)
 	return timers->TCNTO4;
 }
 
-int interrupt_init(void)
+int timer_init(void)
 {
 	s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *) S5P_TIMER_BASE;
 
@@ -110,7 +110,6 @@ int interrupt_init(void)
 
 	return 0;
 }
-
 
 /*
  * timer without interrupts

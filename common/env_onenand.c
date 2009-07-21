@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2005-2007 Samsung Electronics
+ * (C) Copyright 2005-2009 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -61,7 +61,7 @@ uchar env_get_char_spec(int index)
 void env_relocate_spec(void)
 {
 	struct mtd_info *mtd = &onenand_mtd;
-	unsigned long env_addr;
+	loff_t env_addr;
 	int use_default = 0;
 	size_t retlen;
 
@@ -79,8 +79,10 @@ void env_relocate_spec(void)
 		use_default = 1;
 
 	if (use_default) {
-		memcpy(env_ptr->data, default_environment, ONENAND_ENV_SIZE(mtd));
-		env_ptr->crc = crc32(0, env_ptr->data, ONENAND_ENV_SIZE(mtd));
+		memcpy(env_ptr->data, default_environment,
+		       ONENAND_ENV_SIZE(mtd));
+		env_ptr->crc =
+		    crc32(0, env_ptr->data, ONENAND_ENV_SIZE(mtd));
 	}
 
 	gd->env_addr = (ulong) & env_ptr->data;
@@ -90,7 +92,7 @@ void env_relocate_spec(void)
 int saveenv(void)
 {
 	struct mtd_info *mtd = &onenand_mtd;
-	unsigned long env_addr = CONFIG_ENV_ADDR;
+	loff_t env_addr = CONFIG_ENV_ADDR;
 	struct erase_info instr = {
 		.callback	= NULL,
 	};
@@ -109,7 +111,7 @@ int saveenv(void)
 
 	if (mtd->write(mtd, env_addr, ONENAND_MAX_ENV_SIZE, &retlen,
 	     (u_char *) env_ptr)) {
-		printf("OneNAND: write failed at 0x%08x\n", instr.addr);
+		printf("OneNAND: write failed at 0x%llx\n", instr.addr);
 		return 2;
 	}
 

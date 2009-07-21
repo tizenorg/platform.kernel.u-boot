@@ -28,7 +28,6 @@
 #define __CONFIG_H
 
 /* ARM asynchronous clock */
-#define AT91_CPU_NAME		"AT91SAM9RL"
 #define AT91_MAIN_CLOCK		12000000	/* 12 MHz crystal */
 #define CONFIG_SYS_HZ		1000
 
@@ -119,6 +118,8 @@
 #define CONFIG_SYS_NAND_MASK_CLE		(1 << 22)
 #define CONFIG_SYS_NAND_ENABLE_PIN		AT91_PIN_PB6
 #define CONFIG_SYS_NAND_READY_PIN		AT91_PIN_PD17
+
+#define CONFIG_SYS_64BIT_VSPRINTF		/* needed for nand_util.c */
 #endif
 
 /* Ethernet - not present */

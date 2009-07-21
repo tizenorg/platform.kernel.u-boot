@@ -33,8 +33,8 @@
  * High Level Configuration Options
  */
 #define CONFIG_E300		1	/* E300 Family */
-#define CONFIG_MPC83XX		1	/* MPC83XX family */
-#define CONFIG_MPC834X		1	/* MPC834X family */
+#define CONFIG_MPC83xx		1	/* MPC83xx family */
+#define CONFIG_MPC834x		1	/* MPC834x family */
 #define CONFIG_MPC8349		1	/* MPC8349 specific */
 #define CONFIG_MPC8349EMDS	1	/* MPC8349EMDS board specific */
 
@@ -201,7 +201,7 @@
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_LEN		(256 * 1024)		/* Reserve 256 kB for Mon */
+#define CONFIG_SYS_MONITOR_LEN		(384 * 1024)		/* Reserve 384 kB for Mon */
 #define CONFIG_SYS_MALLOC_LEN		(128 * 1024)		/* Reserved for malloc */
 
 /*
@@ -315,7 +315,6 @@
 #undef CONFIG_SOFT_I2C			/* I2C bit-banged */
 #define CONFIG_FSL_I2C
 #define CONFIG_I2C_MULTI_BUS
-#define CONFIG_I2C_CMD_TREE
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 #define CONFIG_SYS_I2C_NOPROBES	{{0,0x69}}	/* Don't probe these addrs */
@@ -598,7 +597,7 @@
 #define CONFIG_SYS_SCCR_TSEC2CM	1	/* TSEC2 & I2C0 clock mode (0-3) */
 
 /* System IO Config */
-#define CONFIG_SYS_SICRH SICRH_TSOBI1
+#define CONFIG_SYS_SICRH 0
 #define CONFIG_SYS_SICRL SICRL_LDP_A
 
 #define CONFIG_SYS_HID0_INIT	0x000000000

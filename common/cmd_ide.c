@@ -45,10 +45,6 @@
 #include <mpc5xxx.h>
 #endif
 
-#ifdef CONFIG_MPC512X
-#include <mpc512x.h>
-#endif
-
 #include <ide.h>
 #include <ata.h>
 
@@ -532,7 +528,7 @@ __ide_outb(int dev, int port, unsigned char val)
 		dev, port, val, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)));
 	outb(val, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)));
 }
-void inline ide_outb (int dev, int port, unsigned char val)
+void ide_outb (int dev, int port, unsigned char val)
 		__attribute__((weak, alias("__ide_outb")));
 
 unsigned char inline
@@ -544,7 +540,7 @@ __ide_inb(int dev, int port)
 		dev, port, (ATA_CURR_BASE(dev)+CONFIG_SYS_ATA_PORT_ADDR(port)), val);
 	return val;
 }
-unsigned char inline ide_inb(int dev, int port)
+unsigned char ide_inb(int dev, int port)
 			__attribute__((weak, alias("__ide_inb")));
 
 #ifdef CONFIG_TUNE_PIO
@@ -2108,11 +2104,11 @@ U_BOOT_CMD(
 	"ide read  addr blk# cnt\n"
 	"ide write addr blk# cnt - read/write `cnt'"
 	" blocks starting at block `blk#'\n"
-	"    to/from memory address `addr'\n"
+	"    to/from memory address `addr'"
 );
 
 U_BOOT_CMD(
 	diskboot,	3,	1,	do_diskboot,
 	"boot from IDE device",
-	"loadAddr dev:part\n"
+	"loadAddr dev:part"
 );

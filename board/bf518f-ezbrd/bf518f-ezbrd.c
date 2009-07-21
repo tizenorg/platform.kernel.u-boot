@@ -72,7 +72,7 @@ static void board_init_enetaddr(uchar *mac_addr)
 #define KSZ_REG_P3C0  0x30	/* Register 48: Port 3 Control 0 */
 
 static int ksz8893m_transfer(struct spi_slave *slave, uchar dir, uchar reg,
-                             uchar data, uchar result[3])
+			     uchar data, uchar result[3])
 {
 	unsigned char dout[3] = { dir, reg, data, };
 	return spi_xfer(slave, sizeof(dout) * 8, dout, result, SPI_XFER_BEGIN | SPI_XFER_END);
@@ -144,5 +144,21 @@ int misc_init_r(void)
 		board_init_enetaddr(enetaddr);
 #endif
 
+	return 0;
+}
+
+int board_early_init_f(void)
+{
+#if !defined(CONFIG_SYS_NO_FLASH)
+	/* setup BF518-EZBRD GPIO pin PG11 to AMS2. */
+	bfin_write_PORTG_MUX((bfin_read_PORTG_MUX() & ~PORT_x_MUX_6_MASK) | PORT_x_MUX_6_FUNC_2);
+	bfin_write_PORTG_FER(bfin_read_PORTG_FER() | PG11);
+
+# if !defined(CONFIG_BFIN_SPI)
+	/* setup BF518-EZBRD GPIO pin PG15 to AMS3. */
+	bfin_write_PORTG_MUX((bfin_read_PORTG_MUX() & ~PORT_x_MUX_7_MASK) | PORT_x_MUX_7_FUNC_3);
+	bfin_write_PORTG_FER(bfin_read_PORTG_FER() | PG15);
+# endif
+#endif
 	return 0;
 }

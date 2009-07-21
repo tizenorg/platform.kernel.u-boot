@@ -60,6 +60,7 @@ LIST_5xxx="		\
 	munices		\
 	MVBC_P		\
 	o2dnt		\
+	pcm030		\
 	pf5200		\
 	PM520		\
 	TB5200		\
@@ -77,7 +78,9 @@ LIST_5xxx="		\
 #########################################################################
 
 LIST_512x="		\
-	ads5121		\
+	aria		\
+	mecp5123	\
+	mpc5121ads	\
 "
 
 #########################################################################
@@ -284,6 +287,7 @@ LIST_824x="		\
 	debris		\
 	eXalion		\
 	HIDDEN_DRAGON	\
+	IDS8247		\
 	linkstation_HGLAN	\
 	MOUSSE		\
 	MUSENKI		\
@@ -379,6 +383,8 @@ LIST_85xx="		\
 	MPC8569MDS	\
 	MPC8572DS	\
 	MPC8572DS_36BIT	\
+	P2020DS		\
+	P2020DS_36BIT	\
 	PM854		\
 	PM856		\
 	sbc8540		\
@@ -406,6 +412,7 @@ LIST_86xx="		\
 	MPC8610HPCD	\
 	MPC8641HPCN	\
 	sbc8641d	\
+	XPEDITE5170	\
 "
 
 #########################################################################
@@ -507,7 +514,8 @@ LIST_ARM9="			\
 	mx1ads			\
 	mx1fs2			\
 	netstar			\
-	nmdk8815		\
+	nhk8815			\
+	nhk8815_onenand		\
 	omap1510inn		\
 	omap1610h2		\
 	omap1610inn		\
@@ -527,6 +535,7 @@ LIST_ARM9="			\
 	davinci_schmoogie	\
 	davinci_sffsdr		\
 	davinci_sonata		\
+	davinci_dm355evm	\
 "
 
 #########################################################################
@@ -548,6 +557,8 @@ LIST_ARM11="			\
 	imx31_phycore		\
 	imx31_phycore_eet	\
 	mx31ads			\
+	mx31pdk			\
+	mx31pdk_nand		\
 	qong			\
 	smdk6400		\
 "
@@ -561,28 +572,33 @@ LIST_ARM_CORTEX_A8="		\
 	omap3_evm		\
 	omap3_pandora		\
 	omap3_zoom1		\
+	omap3_zoom2		\
 "
 
 #########################################################################
 ## AT91 Systems
 #########################################################################
 
-LIST_at91="		\
-	afeb9260	\
-	at91cap9adk	\
-	at91rm9200dk	\
-	at91rm9200ek	\
-	at91sam9260ek	\
-	at91sam9261ek	\
-	at91sam9263ek	\
-	at91sam9g20ek	\
-	at91sam9rlek	\
-	cmc_pu2		\
-	csb637		\
-	kb9202		\
-	mp2usb		\
-	m501sk		\
-	pm9263		\
+LIST_at91="			\
+	afeb9260		\
+	at91cap9adk		\
+	at91rm9200dk		\
+	at91rm9200ek		\
+	at91sam9260ek		\
+	at91sam9261ek		\
+	at91sam9263ek		\
+	at91sam9g10ek	\
+	at91sam9g20ek		\
+	at91sam9m10g45ek	\
+	at91sam9rlek		\
+	cmc_pu2			\
+	csb637			\
+	kb9202			\
+	meesc			\
+	mp2usb			\
+	m501sk			\
+	pm9261			\
+	pm9263			\
 "
 
 #########################################################################
@@ -597,7 +613,9 @@ LIST_pxa="		\
 	innokom		\
 	lubbock		\
 	pleb2		\
+	polaris		\
 	pxa255_idp	\
+	trizepsiv	\
 	wepep250	\
 	xaeniax		\
 	xm250		\
@@ -795,10 +813,21 @@ LIST_blackfin="		\
 	bf527-ezkit	\
 	bf533-ezkit	\
 	bf533-stamp	\
+	bf537-minotaur	\
+	bf537-pnav	\
+	bf537-srv1	\
 	bf537-stamp	\
 	bf538f-ezkit	\
 	bf548-ezkit	\
 	bf561-ezkit	\
+	blackstamp	\
+	cm-bf527	\
+	cm-bf533	\
+	cm-bf537e	\
+	cm-bf548	\
+	cm-bf561	\
+	ibf-dsp561	\
+	tcm-bf537	\
 "
 
 #########################################################################
@@ -822,6 +851,7 @@ LIST_sh4="		\
 	sh7763rdp	\
 	sh7785lcr	\
 	ap325rxa	\
+	espt		\
 "
 
 LIST_sh="		\

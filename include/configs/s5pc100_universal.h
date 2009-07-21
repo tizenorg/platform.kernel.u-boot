@@ -118,6 +118,7 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 
 #define MTDIDS_DEFAULT 		"onenand0=s3c-onenand"
@@ -146,6 +147,7 @@
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
+#define CONFIG_USE_BIG_UBOOT		1
 #ifdef CONFIG_USE_BIG_UBOOT
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x22008000 0x0 0x40000\0"

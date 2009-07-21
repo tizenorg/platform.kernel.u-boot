@@ -55,8 +55,8 @@
 extern unsigned long get_clock_freq(void);
 #endif
 /* Replace a call to get_clock_freq (after it is implemented)*/
-#define CONFIG_SYS_CLK_FREQ	66000000
-#define CONFIG_DDR_CLK_FREQ	66000000
+#define CONFIG_SYS_CLK_FREQ	66666666
+#define CONFIG_DDR_CLK_FREQ	CONFIG_SYS_CLK_FREQ
 
 /*
  * These can be toggled for performance analysis, otherwise use default.
@@ -156,9 +156,17 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_BR0_PRELIM		0xfe000801
 #define	CONFIG_SYS_OR0_PRELIM		0xfe000ff7
 
-/*Chip slelect 1 - BCSR*/
+/*Chip select 1 - BCSR*/
 #define CONFIG_SYS_BR1_PRELIM		0xf8000801
 #define	CONFIG_SYS_OR1_PRELIM		0xffffe9f7
+
+/*Chip select 4 - PIB*/
+#define CONFIG_SYS_BR4_PRELIM		0xf8008801
+#define CONFIG_SYS_OR4_PRELIM		0xffffe9f7
+
+/*Chip select 5 - PIB*/
+#define CONFIG_SYS_BR5_PRELIM		0xf8010801
+#define CONFIG_SYS_OR5_PRELIM		0xffffe9f7
 
 #define CONFIG_SYS_MAX_FLASH_BANKS	1	/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	512	/* sectors per device */
@@ -194,7 +202,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 #define CONFIG_SYS_MONITOR_LEN	(256 * 1024)	/* Reserve 256 kB for Mon */
-#define CONFIG_SYS_MALLOC_LEN	(128 * 1024)	/* Reserved for malloc */
+#define CONFIG_SYS_MALLOC_LEN	(512 * 1024)	/* Reserved for malloc */
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX		1
@@ -231,7 +239,6 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_HARD_I2C		/* I2C with hardware support*/
 #undef	CONFIG_SOFT_I2C		/* I2C bit-banged */
 #define CONFIG_I2C_MULTI_BUS
-#define CONFIG_I2C_CMD_TREE
 #define CONFIG_SYS_I2C_SPEED	400000	/* I2C speed and slave address */
 #define CONFIG_SYS_I2C_SLAVE	0x7F
 #define CONFIG_SYS_I2C_NOPROBES	{{0,0x69}}	/* Don't probe these addrs */
@@ -275,6 +282,8 @@ extern unsigned long get_clock_freq(void);
 /*
  * QE UEC ethernet configuration
  */
+#define CONFIG_SYS_UCC_RGMII_MODE	/* Set UCC work at RGMII by default */
+#undef CONFIG_SYS_UCC_RMII_MODE		/* Set UCC work at RMII mode */
 
 #define CONFIG_MIIM_ADDRESS	(CONFIG_SYS_CCSRBAR + 0x82120)
 #define CONFIG_UEC_ETH
@@ -287,11 +296,18 @@ extern unsigned long get_clock_freq(void);
 #ifdef CONFIG_UEC_ETH1
 #define CONFIG_SYS_UEC1_UCC_NUM        0       /* UCC1 */
 #define CONFIG_SYS_UEC1_RX_CLK         QE_CLK_NONE
+#if defined(CONFIG_SYS_UCC_RGMII_MODE)
 #define CONFIG_SYS_UEC1_TX_CLK         QE_CLK12
 #define CONFIG_SYS_UEC1_ETH_TYPE       GIGA_ETH
 #define CONFIG_SYS_UEC1_PHY_ADDR       7
 #define CONFIG_SYS_UEC1_INTERFACE_MODE ENET_1000_RGMII_ID
-#endif
+#elif defined(CONFIG_SYS_UCC_RMII_MODE)
+#define CONFIG_SYS_UEC1_TX_CLK         QE_CLK16	/* CLK16 for RMII */
+#define CONFIG_SYS_UEC1_ETH_TYPE       FAST_ETH
+#define CONFIG_SYS_UEC1_PHY_ADDR       8	/* 0x8 for RMII */
+#define CONFIG_SYS_UEC1_INTERFACE_MODE ENET_100_RMII
+#endif /* CONFIG_SYS_UCC_RGMII_MODE */
+#endif /* CONFIG_UEC_ETH1 */
 
 #define CONFIG_UEC_ETH2         /* GETH2 */
 #define CONFIG_HAS_ETH1
@@ -299,11 +315,80 @@ extern unsigned long get_clock_freq(void);
 #ifdef CONFIG_UEC_ETH2
 #define CONFIG_SYS_UEC2_UCC_NUM        1       /* UCC2 */
 #define CONFIG_SYS_UEC2_RX_CLK         QE_CLK_NONE
+#if defined(CONFIG_SYS_UCC_RGMII_MODE)
 #define CONFIG_SYS_UEC2_TX_CLK         QE_CLK17
 #define CONFIG_SYS_UEC2_ETH_TYPE       GIGA_ETH
 #define CONFIG_SYS_UEC2_PHY_ADDR       1
 #define CONFIG_SYS_UEC2_INTERFACE_MODE ENET_1000_RGMII_ID
-#endif
+#elif defined(CONFIG_SYS_UCC_RMII_MODE)
+#define CONFIG_SYS_UEC2_TX_CLK         QE_CLK16	/* CLK 16 for RMII */
+#define CONFIG_SYS_UEC2_ETH_TYPE       FAST_ETH
+#define CONFIG_SYS_UEC2_PHY_ADDR       0x9	/* 0x9 for RMII */
+#define CONFIG_SYS_UEC2_INTERFACE_MODE ENET_100_RMII
+#endif /* CONFIG_SYS_UCC_RGMII_MODE */
+#endif /* CONFIG_UEC_ETH2 */
+
+#define CONFIG_UEC_ETH3         /* GETH3 */
+#define CONFIG_HAS_ETH2
+
+#ifdef CONFIG_UEC_ETH3
+#define CONFIG_SYS_UEC3_UCC_NUM        2       /* UCC3 */
+#define CONFIG_SYS_UEC3_RX_CLK         QE_CLK_NONE
+#if defined(CONFIG_SYS_UCC_RGMII_MODE)
+#define CONFIG_SYS_UEC3_TX_CLK         QE_CLK12
+#define CONFIG_SYS_UEC3_ETH_TYPE       GIGA_ETH
+#define CONFIG_SYS_UEC3_PHY_ADDR       2
+#define CONFIG_SYS_UEC3_INTERFACE_MODE ENET_1000_RGMII_ID
+#elif defined(CONFIG_SYS_UCC_RMII_MODE)
+#define CONFIG_SYS_UEC3_TX_CLK		QE_CLK16 /* CLK_16 for RMII */
+#define CONFIG_SYS_UEC3_ETH_TYPE	FAST_ETH
+#define CONFIG_SYS_UEC3_PHY_ADDR	0xA     /* 0xA for RMII */
+#define CONFIG_SYS_UEC3_INTERFACE_MODE ENET_100_RMII
+#endif /* CONFIG_SYS_UCC_RGMII_MODE */
+#endif /* CONFIG_UEC_ETH3 */
+
+#define CONFIG_UEC_ETH4         /* GETH4 */
+#define CONFIG_HAS_ETH3
+
+#ifdef CONFIG_UEC_ETH4
+#define CONFIG_SYS_UEC4_UCC_NUM        3       /* UCC4 */
+#define CONFIG_SYS_UEC4_RX_CLK         QE_CLK_NONE
+#if defined(CONFIG_SYS_UCC_RGMII_MODE)
+#define CONFIG_SYS_UEC4_TX_CLK         QE_CLK17
+#define CONFIG_SYS_UEC4_ETH_TYPE       GIGA_ETH
+#define CONFIG_SYS_UEC4_PHY_ADDR       3
+#define CONFIG_SYS_UEC4_INTERFACE_MODE ENET_1000_RGMII_ID
+#elif defined(CONFIG_SYS_UCC_RMII_MODE)
+#define CONFIG_SYS_UEC4_TX_CLK		QE_CLK16 /* CLK16 for RMII */
+#define CONFIG_SYS_UEC4_ETH_TYPE	FAST_ETH
+#define CONFIG_SYS_UEC4_PHY_ADDR	0xB     /* 0xB for RMII */
+#define CONFIG_SYS_UEC4_INTERFACE_MODE ENET_100_RMII
+#endif /* CONFIG_SYS_UCC_RGMII_MODE */
+#endif /* CONFIG_UEC_ETH4 */
+
+#undef CONFIG_UEC_ETH6         /* GETH6 */
+#define CONFIG_HAS_ETH5
+
+#ifdef CONFIG_UEC_ETH6
+#define CONFIG_SYS_UEC6_UCC_NUM        5       /* UCC6 */
+#define CONFIG_SYS_UEC6_RX_CLK         QE_CLK_NONE
+#define CONFIG_SYS_UEC6_TX_CLK         QE_CLK_NONE
+#define CONFIG_SYS_UEC6_ETH_TYPE       GIGA_ETH
+#define CONFIG_SYS_UEC6_PHY_ADDR       4
+#define CONFIG_SYS_UEC6_INTERFACE_MODE ENET_1000_SGMII
+#endif /* CONFIG_UEC_ETH6 */
+
+#undef CONFIG_UEC_ETH8         /* GETH8 */
+#define CONFIG_HAS_ETH7
+
+#ifdef CONFIG_UEC_ETH8
+#define CONFIG_SYS_UEC8_UCC_NUM        7       /* UCC8 */
+#define CONFIG_SYS_UEC8_RX_CLK         QE_CLK_NONE
+#define CONFIG_SYS_UEC8_TX_CLK         QE_CLK_NONE
+#define CONFIG_SYS_UEC8_ETH_TYPE       GIGA_ETH
+#define CONFIG_SYS_UEC8_PHY_ADDR       6
+#define CONFIG_SYS_UEC8_INTERFACE_MODE ENET_1000_SGMII
+#endif /* CONFIG_UEC_ETH8 */
 
 #endif /* CONFIG_QE */
 
@@ -327,9 +412,9 @@ extern unsigned long get_clock_freq(void);
  * Environment
  */
 #define CONFIG_ENV_IS_IN_FLASH	1
-#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE + 0x40000)
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
 #define CONFIG_ENV_SECT_SIZE	0x20000	/* 256K(one sector) for env */
-#define CONFIG_ENV_SIZE		0x2000
+#define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
 
 #define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
