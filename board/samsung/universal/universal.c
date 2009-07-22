@@ -29,6 +29,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -84,7 +85,7 @@ static const char *board_name[] = {
 int misc_init_r(void)
 {
 	/* check H/W revision */
-	board_rev  = __REG(S5P_GPIO_J0_DAT);
+	board_rev  = readl(S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET));
 
 	/* GPJ0[4:2] */
 	board_rev >>= 2;

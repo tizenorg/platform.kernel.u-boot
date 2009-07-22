@@ -133,8 +133,8 @@ void i2c_init(int speed, int slaveadd)
 	else
 		gpio_shift = 12;
 
-	__REG(S5P_GPIO_D_CON) &= ~(0xff << gpio_shift);
-	__REG(S5P_GPIO_D_CON) |= (0x22 << gpio_shift);
+	__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) &= ~(0xff << gpio_shift);
+	__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) |= (0x22 << gpio_shift);
 }
 
 /*

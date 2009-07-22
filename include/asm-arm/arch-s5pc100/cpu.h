@@ -36,7 +36,7 @@
 #define S5P_PA_CLK		S5P_ADDR(0x00100000)	/* Clock Base */
 #define S5P_PA_PWR		S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */
-#define S5P_PA_GPIO		S5P_ADDR(0x00300000)    /* GPIO Base */
+#define S5PC100_PA_GPIO		0xE0300000		/* GPIO Base */
 #define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
 #define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
 #define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */

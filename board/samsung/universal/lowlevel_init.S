@@ -51,20 +51,19 @@ lowlevel_init:
 	mov	r9, lr
 
 	/* Turn on KEY_LED_ON [GPJ4(1)] */
-	ldr	r0, =S5P_GPIO_J4_CON
-	ldr	r1, [r0]
+	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_J4_OFFSET)
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
 	orr	r1, r1, #(0x1 << 4)
-	str	r1, [r0]
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
-	ldr	r0, =S5P_GPIO_J4_DAT
-	ldr	r1, [r0]
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 #ifdef CONFIG_ONENAND_IPL
 	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
 #else
 	bic	r1, r1, #(1 << 1)
 #endif
-	str	r1, [r0]
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	/* IO retension release */
 	ldr	r0, =S5P_OTHERS				@0xE0108200
@@ -138,17 +137,16 @@ lowlevel_init:
 #ifdef CONFIG_ONENAND_IPL
 wakeup_reset:
 
-	/* Turn on 7color [GPJ4(2)] */
-	ldr	r0, =S5P_GPIO_J4_CON
-	ldr	r1, [r0]
-	bic	r1, r1, #(0xf << 8)
+	/* Turn on 7color [GPJ4(2)] at universal */
+	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_J4_OFFSET)
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	bic	r1, r1, #(0xf << 8)			@ 2 * 4-bit
 	orr	r1, r1, #(0x1 << 8)
-	str	r1, [r0]
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
-	ldr	r0, =S5P_GPIO_J4_DAT
-	ldr	r1, [r0]
-	orr	r1, r1, #(1 << 2)
-	str	r1, [r0]
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	orr	r1, r1, #(1 << 2)			@ 2 * 1-bit
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	/* Clear wakeup status register */
 	ldr	r0, =S5P_WAKEUP_STAT
@@ -257,29 +255,27 @@ system_clock_init:
  */
 uart_asm_init:
 	/* set GPIO to enable UART0-UART4 */
-	ldr	r0, =S5P_PA_GPIO
+	ldr	r0, =S5PC100_GPIO_BASE(0)
 	ldr	r1, =0x22222222
-	str	r1, [r0, #0x000]		@ GPA0_CON
+	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
 	ldr	r1, =0x00002222
-	str	r1, [r0, #0x020]		@ GPA1_CON
+	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
 
-	/* uart_sel GPK0[5] */
-	ldr	r0, =S5P_GPIO_K0_CON
-	ldr	r1, [r0]
+	/* UART_SEL GPK0[5] at S5PC100 */
+	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_K0_OFFSET)
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
 	orr	r1, r1, #(0x1 << 20)
-	str   	r1, [r0]
+	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
-	ldr	r0, =S5P_GPIO_K0_PULL
-	ldr	r1, [r0]
+	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 	bic	r1, r1, #(0x3 << 10)		@ 10 = 5 * 2-bit
 	orr	r1, r1, #(0x2 << 10)		@ Enables Pull-up
-	str	r1, [r0]
+	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 
-	ldr	r0, =S5P_GPIO_K0_DAT
-	ldr	r1, [r0]
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 	orr	r1, r1, #(1 << 5)		@ 5 = 1 * 1-bit
-	str	r1, [r0]
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	mov	pc, lr
 
