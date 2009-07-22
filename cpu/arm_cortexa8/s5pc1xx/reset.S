@@ -22,17 +22,19 @@
  */
 
 #include <asm/arch/cpu.h>
-#include <asm/arch/clock-others.h>
+
+#define S5P_OTHERS_REG_BASE(x)		(S5P_PA_CLK_OTHERS + (x))
+#define S5PC1XX_SW_RST			S5P_OTHERS_REG_BASE(0x0)
 
 .globl reset_cpu
 reset_cpu:
-	ldr	r1, =S5P_PRO_ID
+	ldr	r1, =S5PC1XX_PRO_ID
 	ldr	r2, [r1]
 	ldr	r3, =0xFFF
 	and	r2, r3, r2, lsr #12
 	ldr	r3, =0xC000
 	orr	r2, r3, r2
-	ldr	r1, =S5P_SW_RST
+	ldr	r1, =S5PC1XX_SW_RST
 	str	r2, [r1]
 _loop_forever:
 	b	_loop_forever

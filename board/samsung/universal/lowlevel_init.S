@@ -32,7 +32,6 @@
 #include <asm/arch/power.h>
 #include <asm/arch/watchdog.h>
 #include <asm/arch/interrupt.h>
-#include <asm/arch/clock-others.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_CONSOLE_BASE	UARTx_OFFSET(0)
@@ -65,7 +64,7 @@ lowlevel_init:
 	ldr	r7, =S5PC100_GPIO_BASE(0)
 	ldr	r8, =S5PC100_GPIO_BASE(0)
 	/* Read CPU ID */
-	ldr	r0, =S5P_PRO_ID
+	ldr	r0, =S5PC1XX_PRO_ID
 	mov	r1, #0x00010000
 	and	r0, r0, r1
 	cmp	r0, r5

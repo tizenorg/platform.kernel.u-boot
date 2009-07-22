@@ -29,7 +29,7 @@
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
-	unsigned int pid = readl(S5P_PRO_ID);
+	unsigned int pid = readl(S5PC1XX_PRO_ID);
 
 	pid >>= 12;
 	pid &= 0x00fff;

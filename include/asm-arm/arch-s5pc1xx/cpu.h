@@ -21,13 +21,10 @@
  *
  */
 
-#ifndef _CPU_H
-#define _CPU_H
+#ifndef _S5PC1XX_CPU_H
+#define _S5PC1XX_CPU_H
 
 #include <asm/hardware.h>
-
-#ifndef __S5PC1XX_H__
-#define __S5PC1XX_H__
 
 #define S5P_ADDR_BASE		0xe0000000
 #define S5P_ADDR(x)		(S5P_ADDR_BASE + (x))
@@ -36,7 +33,6 @@
 #define S5P_PA_CLK		S5P_ADDR(0x00100000)	/* Clock Base */
 #define S5P_PA_PWR		S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */
-#define S5PC100_PA_GPIO		0xE0300000		/* GPIO Base */
 #define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
 #define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
 #define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
@@ -49,10 +45,7 @@
  * Chip ID
  */
 #define S5P_ID(x)		(S5P_PA_ID + (x))
+#define S5PC1XX_PRO_ID		S5P_ID(0)
+#define S5PC1XX_OMR		S5P_ID(4)
 
-#define S5P_PRO_ID		S5P_ID(0)
-#define S5P_OMR			S5P_ID(4)
-
-#endif	/* __S5PC100_H__ */
-
-#endif	/* _CPU_H */
+#endif	/* _S5PC1XX_CPU_H */
