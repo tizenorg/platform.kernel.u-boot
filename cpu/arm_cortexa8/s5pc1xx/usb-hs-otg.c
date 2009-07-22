@@ -26,7 +26,7 @@
 
 #include <command.h>
 #include <asm/errno.h>
-#include <asm/io.h>
+#include <asm/arch/power.h>
 #include "usb-hs-otg.h"
 
 #define SUSPEND_RESUME_ON 0

@@ -30,6 +30,9 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
+#include <asm/arch/clk.h>
+#include <asm/arch/clock.h>
 
 #define APLL 0
 #define MPLL 1
@@ -47,22 +50,22 @@
  */
 /* ------------------------------------------------------------------------- */
 
-static ulong get_PLLCLK(int pllreg)
+static unsigned long get_pll_clk(int pllreg)
 {
-	ulong r, m, p, s, mask;
+	unsigned long r, m, p, s, mask;
 
 	switch (pllreg) {
 	case APLL:
-		r = S5P_APLL_CON_REG;
+		r = readl(S5P_APLL_CON);
 		break;
 	case MPLL:
-		r = S5P_MPLL_CON_REG;
+		r = readl(S5P_MPLL_CON);
 		break;
 	case EPLL:
-		r = S5P_EPLL_CON_REG;
+		r = readl(S5P_EPLL_CON);
 		break;
 	case HPLL:
-		r = S5P_HPLL_CON_REG;
+		r = readl(S5P_HPLL_CON);
 		break;
 	default:
 		hang();
@@ -81,103 +84,87 @@ static ulong get_PLLCLK(int pllreg)
 }
 
 /* return ARMCORE frequency */
-ulong get_ARMCLK(void)
+unsigned long get_arm_clk(void)
 {
-	ulong div;
+	unsigned long div;
 	unsigned long dout_apll, armclk;
 	unsigned int apll_ratio, arm_ratio;;
 
-	div = S5P_CLK_DIV0_REG;
+	div = readl(S5P_CLK_DIV0);
 	/* ARM_RATIO: [6:4] */
 	arm_ratio = (div >> 4) & 0x7;
 	/* APLL_RATIO: [0] */
 	apll_ratio = div & 0x1;
 
-	dout_apll = get_PLLCLK(APLL) / (apll_ratio + 1);
+	dout_apll = get_pll_clk(APLL) / (apll_ratio + 1);
 	armclk = dout_apll / (arm_ratio + 1);
 
 	return armclk;
 }
 
 /* return FCLK frequency */
-ulong get_FCLK(void)
+unsigned long get_fclk(void)
 {
-	return get_PLLCLK(APLL);
+	return get_pll_clk(APLL);
 }
 
 /* return MCLK frequency */
-ulong get_MCLK(void)
+unsigned long get_mclk(void)
 {
-	return get_PLLCLK(MPLL);
+	return get_pll_clk(MPLL);
 }
 
 /* return HCLKD0 frequency */
-ulong get_HCLK(void)
+unsigned long get_hclk(void)
 {
-	ulong hclkd0;
+	unsigned long hclkd0;
 	uint div, d0_bus_ratio;
 
-	div = S5P_CLK_DIV0_REG;
+	div = readl(S5P_CLK_DIV0);
 	/* D0_BUS_RATIO: [10:8] */
 	d0_bus_ratio = (div >> 8) & 0x7;
 
-	hclkd0 = get_ARMCLK() / (d0_bus_ratio + 1);
+	hclkd0 = get_arm_clk() / (d0_bus_ratio + 1);
 
 	return hclkd0;
 }
 
 /* return PCLKD0 frequency */
-ulong get_PCLKD0(void)
+unsigned long get_pclkd0(void)
 {
-	ulong pclkd0;
+	unsigned long pclkd0;
 	uint div, pclkd0_ratio;
 
-	div = S5P_CLK_DIV0_REG;
+	div = readl(S5P_CLK_DIV0);
 	/* PCLKD0_RATIO: [14:12] */
 	pclkd0_ratio = (div >> 12) & 0x7;
 
-	pclkd0 = get_HCLK() / (pclkd0_ratio + 1);
+	pclkd0 = get_hclk() / (pclkd0_ratio + 1);
 
 	return pclkd0;
 }
 
 /* return PCLKD1 frequency */
-ulong get_PCLK(void)
+unsigned long get_pclk(void)
 {
-	ulong d1_bus, pclkd1;
+	unsigned long d1_bus, pclkd1;
 	uint div, d1_bus_ratio, pclkd1_ratio;
 
-	div = S5P_CLK_DIV1_REG;
+	div = readl(S5P_CLK_DIV1);
 	/* D1_BUS_RATIO: [14:12] */
 	d1_bus_ratio = (div >> 12) & 0x7;
 	/* PCLKD1_RATIO: [18:16] */
 	pclkd1_ratio = (div >> 16) & 0x7;
 
 	/* ASYNC Mode */
-	d1_bus = get_PLLCLK(MPLL) / (d1_bus_ratio + 1);
+	d1_bus = get_pll_clk(MPLL) / (d1_bus_ratio + 1);
 	pclkd1 = d1_bus / (pclkd1_ratio + 1);
 
 	return pclkd1;
 }
 
 /* return UCLK frequency */
-ulong get_UCLK(void)
+unsigned long get_uclk(void)
 {
-	return get_PLLCLK(EPLL);
-}
-
-int print_cpuinfo(void)
-{
-	unsigned int pid = __REG(S5P_PRO_ID);
-
-	pid >>= 12;
-	pid &= 0x00fff;
-
-	printf("CPU:\tS5PC%x@%luMHz\n", pid, get_ARMCLK() / 1000000);
-	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
-		" PclkD1 = %luMHz\n",
-			get_FCLK() / 1000000, get_HCLK() / 1000000,
-			get_PCLKD0() / 1000000, get_PCLK() / 1000000);
-
-	return 0;
+	return get_pll_clk(EPLL);
 }

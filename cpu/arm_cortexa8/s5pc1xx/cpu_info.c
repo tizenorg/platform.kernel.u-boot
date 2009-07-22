@@ -1,8 +1,11 @@
 /*
- * Copyright (C) 2009 Samsung Electronics
- * Minkyu Kang <mk7.kang@samsung.com>
+ * (C) Copyright 2009
+ * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
+ * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
+ * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
  *
- * based on s3c24x0_i2c.c
+ * See file CREDITS for list of people who contributed to this
+ * project.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,22 +22,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+#include <common.h>
+#include <asm/io.h>
+#include <asm/arch/clk.h>
 
-#ifndef __ASM_ARCH_I2C_H_
-#define __ASM_ARCH_I2C_H_
+#ifdef CONFIG_DISPLAY_CPUINFO
+int print_cpuinfo(void)
+{
+	unsigned int pid = readl(S5P_PRO_ID);
 
-/* I2C */
-#define S5P_PA_I2C		S5P_ADDR(0x0c100000)
-#define I2Cx_OFFSET(x)		(S5P_PA_I2C + x * 0x100000)
-#define S5P_I2C_BASE		S5P_PA_I2C
+	pid >>= 12;
+	pid &= 0x00fff;
 
-#ifndef __ASSEMBLY__
-typedef struct s5pc1xx_i2c {
-	volatile unsigned long	IICCON;
-	volatile unsigned long	IICSTAT;
-	volatile unsigned long	IICADD;
-	volatile unsigned long	IICDS;
-} s5pc1xx_i2c_t;
-#endif
+	printf("CPU:\tS5PC%x@%luMHz\n", pid, get_arm_clk() / 1000000);
+	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
+		" PclkD1 = %luMHz\n",
+		get_fclk() / 1000000, get_hclk() / 1000000,
+		get_pclkd0() / 1000000, get_pclk() / 1000000);
 
+	return 0;
+}
 #endif

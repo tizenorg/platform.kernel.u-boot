@@ -22,6 +22,9 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <asm/arch/i2c.h>
+#include <asm/arch/clk.h>
+#include <asm/arch/gpio.h>
 
 #ifdef CONFIG_HARD_I2C
 
@@ -108,7 +111,7 @@ void i2c_init(int speed, int slaveadd)
 	}
 
 	/* calculate prescaler and divisor values */
-	freq = get_PCLK();
+	freq = get_pclk();
 
 	if (((freq >> 4) / speed) > 0xf) {
 		pres = 1;

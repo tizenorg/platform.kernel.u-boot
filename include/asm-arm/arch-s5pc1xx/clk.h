@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2009 Samsung Electronics
+ * (C) Copyright 2009
+ * Samsung Electronics, <www.samsung.com/sec>
+ * Heungjun Kim <riverful.kim@samsung.com>
  * Minkyu Kang <mk7.kang@samsung.com>
- *
- * based on s3c24x0_i2c.c
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -18,23 +18,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
+ *
  */
 
-#ifndef __ASM_ARCH_I2C_H_
-#define __ASM_ARCH_I2C_H_
+#ifndef __ASM_ARM_ARCH_CLK_H_
+#define __ASM_ARM_ARCH_CLK_H_
 
-/* I2C */
-#define S5P_PA_I2C		S5P_ADDR(0x0c100000)
-#define I2Cx_OFFSET(x)		(S5P_PA_I2C + x * 0x100000)
-#define S5P_I2C_BASE		S5P_PA_I2C
-
-#ifndef __ASSEMBLY__
-typedef struct s5pc1xx_i2c {
-	volatile unsigned long	IICCON;
-	volatile unsigned long	IICSTAT;
-	volatile unsigned long	IICADD;
-	volatile unsigned long	IICDS;
-} s5pc1xx_i2c_t;
-#endif
+static unsigned long get_pll_clk(int pllreg);
+unsigned long get_arm_clk(void);
+unsigned long get_fclk(void);
+unsigned long get_mclk(void);
+unsigned long get_hclk(void);
+unsigned long get_pclkd0(void);
+unsigned long get_pclk(void);
+unsigned long get_uclk(void);
 
 #endif

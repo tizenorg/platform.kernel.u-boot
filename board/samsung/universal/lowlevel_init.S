@@ -26,6 +26,13 @@
 #include <config.h>
 #include <version.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/mem.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/power.h>
+#include <asm/arch/watchdog.h>
+#include <asm/arch/interrupt.h>
+#include <asm/arch/clock-others.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_CONSOLE_BASE	UARTx_OFFSET(0)

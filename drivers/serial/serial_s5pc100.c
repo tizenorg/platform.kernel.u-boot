@@ -1,9 +1,9 @@
 /*
- * (C) Copyright 2002
- * Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+ * (C) Copyright 2009 SAMSUNG Electronics
+ * Minkyu Kang <mk7.kang@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
  *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+ * based on drivers/serial/s3c64xx.c
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
+#include <asm/arch/uart.h>
+#include <asm/arch/clk.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_NR	S5PC1XX_UART0
@@ -35,7 +38,7 @@
 #error "Bad: you didn't configure serial ..."
 #endif
 
-#define barrier() asm volatile("" ::: "memory")
+#define barrier() asm volatile("" : : : "memory")
 
 static inline s5pc1xx_uart_t *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 {
@@ -72,7 +75,7 @@ void serial_setbrg(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
-	u32 pclk = get_PCLK();
+	u32 pclk = get_pclk();
 	u32 baudrate = gd->baudrate;
 	int i;
 
@@ -80,9 +83,6 @@ void serial_setbrg(void)
 
 	uart->UBRDIV = pclk / baudrate / 16 - 1;
 	uart->UDIVSLOT = udivslot[i];
-
-	for (i = 0; i < 100; i++);
-		barrier();
 }
 
 /*
@@ -116,7 +116,8 @@ int serial_getc(void)
 	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(UART_NR);
 
 	/* wait for character to arrive */
-	while (!(uart->UTRSTAT & 0x1));
+	while (!(uart->UTRSTAT & 0x1))
+		;
 
 	return uart->URXH & 0xff;
 }
@@ -148,7 +149,8 @@ void serial_putc(const char c)
 #endif
 
 	/* wait for room in the tx FIFO */
-	while (!(uart->UTRSTAT & 0x2));
+	while (!(uart->UTRSTAT & 0x2))
+		;
 
 	uart->UTXH = c;
 

@@ -22,9 +22,10 @@
 #ifndef __USBD_HS_OTG_H__
 #define __USBD_HS_OTG_H__
 
+#include <asm/io.h>
 #include <asm/byteorder.h>
 #include <asm/arch/hardware.h>
-#include <asm/io.h>
+#include <asm/arch/usb-hs-otg.h>
 
 #define S5P_USBD_DETECT_IRQ()	(readl(S5P_OTG_GINTSTS) & 0x800c3810)
 #define S5P_USBD_CLEAR_IRQ()	do { \

@@ -1,24 +1,4 @@
 /*
- * (C) Copyright 2003
- * Texas Instruments <www.ti.com>
- *
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- *
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Alex Zuepke <azu@sysgo.de>
- *
- * (C) Copyright 2002-2004
- * Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
- *
- * (C) Copyright 2004
- * Philippe Robin, ARM Ltd. <philippe.robin@arm.com>
- *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
- *
  * (C) Copyright 2009
  * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
  * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
@@ -44,33 +24,35 @@
  */
 
 #include <common.h>
+#include <asm/arch/pwm.h>
+#include <asm/arch/clk.h>
 
 #define PRESCALER_1		(16 - 1)	/* prescaler of timer 2, 3, 4 */
-#define MUX_DIV_2		(1)		/* 1/2 period */
-#define MUX_DIV_4		(2)		/* 1/4 period */
-#define MUX_DIV_8		(3)		/* 1/8 period */
-#define MUX_DIV_16		(4)		/* 1/16 period */
+#define MUX_DIV_2		1		/* 1/2 period */
+#define MUX_DIV_4		2		/* 1/4 period */
+#define MUX_DIV_8		3		/* 1/8 period */
+#define MUX_DIV_16		4		/* 1/16 period */
 #define MUX4_DIV_SHIFT		16
 
 #define TCON_TIMER4_SHIFT	20
 
-static ulong count_value;
+static unsigned long count_value;
 
 /* Internal tick units */
 static unsigned long long timestamp;	/* Monotonic incrementing timer */
-static unsigned long lastdec;	/* Last decremneter snapshot */
+static unsigned long lastdec;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
-static inline ulong READ_TIMER(void)
+static inline unsigned long READ_TIMER(void)
 {
-	const s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *) S5P_TIMER_BASE;
+	const s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
 
 	return timers->TCNTO4;
 }
 
 int timer_init(void)
 {
-	s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *) S5P_TIMER_BASE;
+	s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
 
 	/*
 	 * @ PWM Timer 4
@@ -84,10 +66,9 @@ int timer_init(void)
 	timers->TCFG1 = (MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT;
 
 	if (count_value == 0) {
-
 		/* reset initial value */
 		/* count_value = 2085937.5(HZ) (per 1 sec)*/
-		count_value = get_PCLK() / ((PRESCALER_1 + 1) *
+		count_value = get_pclk() / ((PRESCALER_1 + 1) *
 				(MUX_DIV_2 + 1));
 
 		/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
@@ -119,12 +100,12 @@ void reset_timer(void)
 	reset_timer_masked();
 }
 
-ulong get_timer(ulong base)
+unsigned long get_timer(unsigned long base)
 {
 	return get_timer_masked() - base;
 }
 
-void set_timer(ulong t)
+void set_timer(unsigned long t)
 {
 	timestamp = t;
 }
@@ -132,7 +113,7 @@ void set_timer(ulong t)
 /* delay x useconds */
 void udelay(unsigned long usec)
 {
-	ulong tmo, tmp;
+	unsigned long tmo, tmp;
 
 	if (usec >= 1000) {
 		/*
@@ -174,10 +155,10 @@ void reset_timer_masked(void)
 	timestamp = 0;
 }
 
-ulong get_timer_masked(void)
+unsigned long get_timer_masked(void)
 {
 	/* current tick value */
-	ulong now = READ_TIMER();
+	unsigned long now = READ_TIMER();
 
 	if (lastdec >= now)
 		timestamp += lastdec - now;
@@ -202,7 +183,7 @@ unsigned long long get_ticks(void)
  * This function is derived from PowerPC code (timebase clock frequency).
  * On ARM it returns the number of timer ticks per second.
  */
-ulong get_tbclk(void)
+unsigned long get_tbclk(void)
 {
 	/* We overrun in 100s */
 	return CONFIG_SYS_HZ * 100;

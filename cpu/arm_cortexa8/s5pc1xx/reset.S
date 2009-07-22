@@ -22,6 +22,7 @@
  */
 
 #include <asm/arch/cpu.h>
+#include <asm/arch/clock-others.h>
 
 .globl reset_cpu
 reset_cpu:

@@ -18,12 +18,7 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
 
-#if defined(CONFIG_S3C64XX)
-#include <s3c6400.h>
-#include <s3c64xx-onenand.h>
-#elif defined(CONFIG_S5PC1XX)
-#include <s5pc1xx-onenand.h>
-#endif
+#include <samsung_onenand.h>
 
 #include <asm/io.h>
 #include <asm/errno.h>
