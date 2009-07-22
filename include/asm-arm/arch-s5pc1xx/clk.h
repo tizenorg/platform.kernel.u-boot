@@ -24,7 +24,7 @@
 #ifndef __ASM_ARM_ARCH_CLK_H_
 #define __ASM_ARM_ARCH_CLK_H_
 
-static unsigned long get_pll_clk(int pllreg);
+unsigned long get_pll_clk(int pllreg);
 unsigned long get_arm_clk(void);
 unsigned long get_fclk(void);
 unsigned long get_mclk(void);
