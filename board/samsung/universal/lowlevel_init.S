@@ -265,16 +265,36 @@ uart_asm_init:
 	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_K0_OFFSET)
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
-	orr	r1, r1, #(0x1 << 20)
+	orr	r1, r1, #(0x1 << 20)		@ Output
 	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 	bic	r1, r1, #(0x3 << 10)		@ 10 = 5 * 2-bit
-	orr	r1, r1, #(0x2 << 10)		@ Enables Pull-up
+	orr	r1, r1, #(0x2 << 10)		@ Pull-up enabled
 	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-	orr	r1, r1, #(1 << 5)		@ 5 = 1 * 1-bit
+	orr	r1, r1, #(1 << 5)		@ 5 = 5 * 1-bit
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+
+	/*
+	 * Note that the following address
+	 * 0xE020'0360 is reserved address at S5PC100
+	 */
+	/* UART_SEL MP0_5[7] at S5PC110 */
+	ldr	r0, =S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	bic	r1, r1, #(0xf << 20)		@ 28 = 7 * 4-bit
+	orr	r1, r1, #(0x1 << 20)		@ Output
+	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+
+	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
+	orr	r1, r1, #(0x2 << 14)		@ Pull-up enabled
+	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	mov	pc, lr
