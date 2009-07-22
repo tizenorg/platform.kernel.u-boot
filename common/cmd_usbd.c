@@ -10,6 +10,10 @@
 #include <usbd.h>
 #include <asm/errno.h>
 
+/* version of USB Downloader Application */
+#define APP_VERSION	"1.2.7"
+#define APP_DATE	"17 June 2009"
+
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
 static struct part_info *parts[6];
@@ -585,7 +589,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	struct usbd_ops *usbd;
 	int err;
 
-	printf("Start USB Downloader (ver1 - %s, %s)\n", __DATE__, __TIME__);
+	printf("Start USB Downloader v%s (%s)\n", APP_VERSION, APP_DATE);
 
 	/* get partition info */
 	err = get_part_info();
