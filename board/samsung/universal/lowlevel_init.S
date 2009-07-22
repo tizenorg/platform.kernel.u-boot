@@ -48,6 +48,8 @@
  * Register usages:
  *
  * r5 has zero always
+ * r7 has S5PC100 GPIO base, 0xE0300000
+ * r8 has real GPIO base, 0xE0300000, 0xE0200000 at S5PC100, S5PC110 repectively
  */
 
 _TEXT_BASE:
@@ -57,8 +59,23 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r9, lr
 
+	/* r5 has always zero */
+	mov	r5, #0
+
+	ldr	r7, =S5PC100_GPIO_BASE(0)
+	ldr	r8, =S5PC100_GPIO_BASE(0)
+	/* Read CPU ID */
+	ldr	r0, =S5P_PRO_ID
+	mov	r1, #0x00010000
+	and	r0, r0, r1
+	cmp	r0, r5
+	beq	100f
+	ldr	r8, =S5PC110_GPIO_BASE(0)
+100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] */
-	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_J4_OFFSET)
+	cmp	r7, r8
+	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
+	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
 	orr	r1, r1, #(0x1 << 4)
@@ -82,7 +99,6 @@ lowlevel_init:
 	/* Disable Watchdog */
 	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
 	orr	r0, r0, #0x0
-	mov	r5, #0
 	str	r5, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
@@ -145,7 +161,9 @@ lowlevel_init:
 wakeup_reset:
 
 	/* Turn on 7color [GPJ4(2)] at universal */
-	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_J4_OFFSET)
+	cmp	r7, r8
+	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
+	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 8)			@ 2 * 4-bit
 	orr	r1, r1, #(0x1 << 8)
@@ -262,14 +280,18 @@ system_clock_init:
  */
 uart_asm_init:
 	/* set GPIO to enable UART0-UART4 */
-	ldr	r0, =S5PC100_GPIO_BASE(0)
+	mov	r0, r8
 	ldr	r1, =0x22222222
 	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
 	ldr	r1, =0x00002222
 	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
 
+	/* Check S5PC100 */
+	cmp	r7, r8
+	bne	110f
+
 	/* UART_SEL GPK0[5] at S5PC100 */
-	ldr	r0, =S5PC100_GPIO_BASE(S5PC100_GPIO_K0_OFFSET)
+	add	r0, r8, #S5PC100_GPIO_K0_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
 	orr	r1, r1, #(0x1 << 20)		@ Output
@@ -283,13 +305,14 @@ uart_asm_init:
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 	orr	r1, r1, #(1 << 5)		@ 5 = 5 * 1-bit
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-
+	b	200f
+110:
 	/*
 	 * Note that the following address
 	 * 0xE020'0360 is reserved address at S5PC100
 	 */
 	/* UART_SEL MP0_5[7] at S5PC110 */
-	ldr	r0, =S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)
+	add	r0, r8, #S5PC110_GPIO_MP0_5_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
@@ -303,7 +326,7 @@ uart_asm_init:
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-
+200:
 	mov	pc, lr
 
 /*
