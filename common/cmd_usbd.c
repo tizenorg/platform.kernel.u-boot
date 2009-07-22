@@ -36,6 +36,10 @@ static unsigned long down_ram_addr;
 /* cpu/${CPU} dependent */
 extern void do_reset(void);
 
+/* common commands */
+extern int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+extern int do_run(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]);
+
 int mtdparts_init(void);
 int find_dev_and_part(const char*, struct mtd_device**, u8*, struct part_info**);
 
