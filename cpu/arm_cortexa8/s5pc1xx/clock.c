@@ -50,7 +50,7 @@
  */
 /* ------------------------------------------------------------------------- */
 
-static unsigned long get_pll_clk(int pllreg)
+unsigned long get_pll_clk(int pllreg)
 {
 	unsigned long r, m, p, s, mask;
 
