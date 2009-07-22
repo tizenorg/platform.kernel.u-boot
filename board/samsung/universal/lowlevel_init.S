@@ -284,8 +284,8 @@ uart_asm_init:
 	/* UART_SEL MP0_5[7] at S5PC110 */
 	ldr	r0, =S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
-	bic	r1, r1, #(0xf << 20)		@ 28 = 7 * 4-bit
-	orr	r1, r1, #(0x1 << 20)		@ Output
+	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
+	orr	r1, r1, #(0x1 << 28)		@ Output
 	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
