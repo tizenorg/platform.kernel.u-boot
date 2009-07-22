@@ -26,8 +26,8 @@
 
 #include <asm/hardware.h>
 
-#ifndef __S5PC100_H__
-#define __S5PC100_H__
+#ifndef __S5PC1XX_H__
+#define __S5PC1XX_H__
 
 #define S5P_ADDR_BASE		0xe0000000
 #define S5P_ADDR(x)		(S5P_ADDR_BASE + (x))
