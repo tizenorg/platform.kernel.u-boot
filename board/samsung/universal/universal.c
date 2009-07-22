@@ -84,8 +84,11 @@ static const char *board_name[] = {
 
 int misc_init_r(void)
 {
+	unsigned long pin = S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET);
+	pin += S5PC1XX_GPIO_DAT_OFFSET;
+
 	/* check H/W revision */
-	board_rev  = readl(S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET));
+	board_rev  = readl(pin);
 
 	/* GPJ0[4:2] */
 	board_rev >>= 2;
