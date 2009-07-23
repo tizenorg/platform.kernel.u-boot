@@ -47,8 +47,9 @@ $(onenandobj)onenand-ipl-2k.bin:	$(onenandobj)onenand-ipl
 $(onenandobj)onenand-ipl-4k.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE4K) -O binary $< $@
 
-$(onenandobj)onenand-ipl-8k.bin:	$(onenandobj)onenand-ipl
+$(onenandobj)onenand-ipl-8k.bin:	$(onenandobj)onenand-ipl checksum
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE8K) -O binary $< $@
+	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-8k.bin
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
@@ -56,6 +57,9 @@ $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 $(onenandobj)onenand-ipl:	$(OBJS)
 	cd $(LNDIR) && $(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
 		-Map $@.map -o $@
+
+checksum: checksum.c
+	$(HOSTCC) -o $@ $<
 
 # create symbolic links from common files
 
