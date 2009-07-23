@@ -26,15 +26,16 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
+unsigned int s5pc1xx_cpu_id;
+
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
-	unsigned int pid = readl(S5PC1XX_PRO_ID);
+	s5pc1xx_cpu_id = readl(S5PC1XX_PRO_ID);
 
-	pid >>= 12;
-	pid &= 0x00fff;
+	s5pc1xx_cpu_id = 0xC000 | ((s5pc1xx_cpu_id & 0x00FFF000) >> 12);
 
-	printf("CPU:\tS5PC%x@%luMHz\n", pid, get_arm_clk() / 1000000);
+	printf("CPU:\tS5P%X@%luMHz\n", s5pc1xx_cpu_id, get_arm_clk() / 1000000);
 	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
 		" PclkD1 = %luMHz\n",
 		get_fclk() / 1000000, get_hclk() / 1000000,

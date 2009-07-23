@@ -48,4 +48,21 @@
 #define S5PC1XX_PRO_ID		S5P_ID(0)
 #define S5PC1XX_OMR		S5P_ID(4)
 
+#ifndef __ASSEMBLY__
+/* CPU detection macros */
+extern unsigned int s5pc1xx_cpu_id;
+
+#define IS_SAMSUNG_TYPE(type, id)					\
+static inline int is_##type(void)					\
+{									\
+	return (s5pc1xx_cpu_id == (id)) ? 1 : 0;			\
+}
+
+IS_SAMSUNG_TYPE(s5pc100, 0xc100)
+IS_SAMSUNG_TYPE(s5pc110, 0xc110)
+
+#define cpu_is_s5pc100()	is_s5pc100()
+#define cpu_is_s5pc110()	is_s5pc110()
+#endif
+
 #endif	/* _S5PC1XX_CPU_H */
