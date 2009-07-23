@@ -33,16 +33,6 @@
 #include <asm/arch/watchdog.h>
 #include <asm/arch/interrupt.h>
 
-#ifdef CONFIG_SERIAL0
-#define UART_CONSOLE_BASE	UARTx_OFFSET(0)
-#elif defined(CONFIG_SERIAL1)
-#define UART_CONSOLE_BASE	UARTx_OFFSET(1)
-#elif defined(CONFIG_SERIAL2)
-#define UART_CONSOLE_BASE	UARTx_OFFSET(2)
-#else
-#define UART_CONSOLE_BASE	UARTx_OFFSET(3)
-#endif
-
 /*
  * Register usages:
  *
