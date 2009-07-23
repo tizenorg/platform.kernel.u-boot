@@ -278,7 +278,7 @@
 #define CONFIG_S5PC1XXFB	1
 #define BOARD_LATE_INIT
 //#define CONFIG_S5PC1XXFB_TEST		/* for LCD Panel test */
-//#define CONFIG_S5PC1XXFB_LOGO		/* draw samsung logo */
+#define CONFIG_S5PC1XXFB_LOGO		/* default: samsung logo */
 #endif
 
 #endif	/* __CONFIG_H */
