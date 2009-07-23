@@ -29,6 +29,7 @@
  */
 
 #include <common.h>
+#include <lcd.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 
@@ -103,6 +104,16 @@ int misc_init_r(void)
 		setenv ("meminfo", "mem=128M");
 	}
 
+	return 0;
+}
+#endif
+
+#ifdef BOARD_LATE_INIT
+int board_late_init(void)
+{
+#ifdef CONFIG_LCD
+	lcd_is_enabled = 0;
+#endif
 	return 0;
 }
 #endif
