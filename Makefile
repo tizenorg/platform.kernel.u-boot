@@ -2853,6 +2853,9 @@ lpd7a400_config \
 lpd7a404_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm lh7a40x lpd7a40x
 
+mv88f6281gtw_ge_config: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood
+
 mx1ads_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t mx1ads NULL imx
 
@@ -2918,11 +2921,17 @@ omap730p2_cs3boot_config :	unconfig
 	fi;
 	@$(MKCONFIG) -a $(call xtract_omap730p2,$@) arm arm926ejs omap730p2 NULL omap
 
+rd6281a_config: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood
+
 sbc2410x_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t sbc2410x NULL s3c24x0
 
 scb9328_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t scb9328 NULL imx
+
+sheevaplug_config: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood
 
 smdk2400_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t smdk2400 samsung s3c24x0
@@ -3178,7 +3187,6 @@ omap2420h4_config	: unconfig
 
 qong_config		: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 qong davedenx mx31
-
 
 #########################################################################
 ## ARM1176 Systems
