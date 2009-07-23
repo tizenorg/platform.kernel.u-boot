@@ -259,8 +259,8 @@
 #define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
 #endif
 
-/* Boot configuration (define only one of next 3) */
-//#define CONFIG_BOOT_ONENAND
+/* OneNAND IPL uses 8KiB */
+#define CONFIG_ONENAND_START_PAGE	4
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
 #define CONFIG_ENV_SIZE			0x20000
