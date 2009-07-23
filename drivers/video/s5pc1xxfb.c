@@ -30,6 +30,7 @@
 #include <asm/arch/regs-lcd.h>
 #include <asm/arch/hardware.h>
 #include "s5pcfb.h"
+#include "opening_wvga_32.h"
 
 /* clock definitions */
 #define SELECT_CLOCK_SOURCE2	0xE0100208
@@ -337,7 +338,7 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 			S5P_VIDCON0_ENVID_F_ENABLE);
 }
 
-static void fill_fb(void)
+static void lcd_test(void)
 {
 	/* red */
 	read_image32((char *)s5pcfb_fimd.screen, 0, 0, 480, 200,
@@ -353,6 +354,30 @@ static void fill_fb(void)
 			makepixel8888(0, 255, 255, 255));
 }
 
+void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
+{
+	int i, j, k = 0;
+	unsigned long *fb = (unsigned  long*)lcdbase;
+
+	for (j = y; j < (y + h); j++) {
+		for (i = x; i < (w + x); i++) {
+			*(fb + (j * PANEL_WIDTH) + i) =
+			    *(unsigned long *)(bmp + k);
+			k++;
+		}
+	}
+}
+
+static void draw_samsung_logo(void* lcdbase)
+{
+	int x, y;
+
+	x = (PANEL_WIDTH - 138) / 2;
+	y = (PANEL_HEIGHT - 28) / 2 - 5;
+
+	draw_bitmap(lcdbase, x, y, 138, 28, opening_32);
+}
+
 static void lcd_panel_on(void)
 {
 	tl2796_panel_init();
@@ -366,8 +391,14 @@ void lcd_ctrl_init(void *lcdbase)
 
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
-	fill_fb();
-
+#if defined(CONFIG_S5PC1XXFB_TEST)
+	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP/8);
+	lcd_test();
+#endif
+#if defined(CONFIG_S5PC1XXFB_LOGO)
+	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP/8);
+	draw_samsung_logo(lcdbase);
+#endif
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
