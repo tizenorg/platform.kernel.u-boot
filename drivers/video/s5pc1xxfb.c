@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <linux/types.h>
 #include <asm/io.h>
-#include <devices.h>
 #include <lcd.h>
 
 #include <asm/arch/regs-lcd.h>
@@ -61,6 +60,8 @@
 #define S5PCFB_VRES_OSD		800
 
 #define S5P_VFRAME_FREQ		60
+
+#define MPLL 1
 
 #define DEBUG 
 #ifdef DEBUG
@@ -274,11 +275,11 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	__REG(S5P_VIDCON0) = s5pcfb_fimd.vidcon0;
 
 	mpll_ratio = (__raw_readl(CLOCK_DIV1) & 0x000000f0) >> 4;
-	s5pcfb_fimd.vidcon0 |= S5P_VIDCON0_CLKVAL_F((int)(((get_MCLK() / mpll_ratio)
+	s5pcfb_fimd.vidcon0 |= S5P_VIDCON0_CLKVAL_F((int)(((get_pll_clk(MPLL) / mpll_ratio)
 					/ s5pcfb_fimd.pixclock) - 1));
 
 	udebug("mpll_ratio = %d, MCLK = %d, pixclock=%d, vidcon0 = %d\n",
-			mpll_ratio, get_MCLK(), s5pcfb_fimd.pixclock,
+			mpll_ratio, get_pll_clk(MPLL), s5pcfb_fimd.pixclock,
 			s5pcfb_fimd.vidcon0);
 
 	/* set window size */
