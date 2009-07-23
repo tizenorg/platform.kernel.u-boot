@@ -1,8 +1,9 @@
 #
-#  Samsung TickerTape(S5PC100) board OneNAND IPL
+#  Samsung Universal(S5PC100/S5PC110) board OneNAND IPL
 #
 #  Copyright (C) 2009 Samsung Electronics
 #  Minkyu Kang <mk7.kang@samsung.com>
+#  Kyungmin Park <kyungmin.park@samsung.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -16,6 +17,7 @@ include $(TOPDIR)/config.mk
 TEXT_BASE = 0xD0034000
 TEXT_BASE2K = 0xD0034800
 TEXT_BASE4K = 0xD0035000
+TEXT_BASE8K = 0xD0036000
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -35,7 +37,7 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-2k.bin $(onenandobj)onenand-ipl-4k.bin
+ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-2k.bin $(onenandobj)onenand-ipl-4k.bin $(onenandobj)onenand-ipl-8k.bin
 
 all:	$(obj).depend $(ALL)
 
@@ -44,6 +46,9 @@ $(onenandobj)onenand-ipl-2k.bin:	$(onenandobj)onenand-ipl
 
 $(onenandobj)onenand-ipl-4k.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE4K) -O binary $< $@
+
+$(onenandobj)onenand-ipl-8k.bin:	$(onenandobj)onenand-ipl
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE8K) -O binary $< $@
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
