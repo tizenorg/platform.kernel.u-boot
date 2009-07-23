@@ -376,6 +376,14 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		s3c_write_cmd(ONENAND_ERASE_START, CMD_MAP_10(mem_addr));
 		return 0;
 
+	case ONENAND_CMD_MULTIBLOCK_ERASE:
+		s3c_write_cmd(ONENAND_MULTI_ERASE_SET, CMD_MAP_10(mem_addr));
+		return 0;
+
+	case ONENAND_CMD_ERASE_VERIFY:
+		s3c_write_cmd(ONENAND_ERASE_VERIFY, CMD_MAP_10(mem_addr));
+		return 0;
+
 	default:
 		break;
 	}
@@ -603,4 +611,6 @@ void s3c_onenand_init(struct mtd_info *mtd)
 
 	this->read_bufferram = onenand_read_bufferram;
 	this->write_bufferram = onenand_write_bufferram;
+
+	this->options |= ONENAND_RUNTIME_BADBLOCK_CHECK;
 }
