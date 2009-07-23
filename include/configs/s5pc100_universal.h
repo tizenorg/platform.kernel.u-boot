@@ -272,4 +272,10 @@
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_RAMDISK_ADDR	0x23000000
 
+/* LCD */
+#if 0		/* For LCD test */
+#define CONFIG_LCD		1
+#define CONFIG_S5PC1XXFB	1
+#endif
+
 #endif	/* __CONFIG_H */
