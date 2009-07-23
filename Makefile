@@ -257,6 +257,7 @@ endif
 ifeq ($(CONFIG_ONENAND_U_BOOT),y)
 ONENAND_IPL = onenand_ipl
 U_BOOT_ONENAND = $(obj)u-boot-onenand.bin
+ONENAND_BIN ?= $(obj)onenand_ipl/onenand-ipl-2k.bin
 endif
 
 __OBJS := $(subst $(obj),,$(OBJS))
@@ -341,7 +342,7 @@ $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 		$(MAKE) -C onenand_ipl/board/$(BOARDDIR) all
 
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
-		cat $(obj)onenand_ipl/onenand-ipl-2k.bin $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
+		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 		cat $(obj)onenand_ipl/onenand-ipl-4k.bin $(obj)u-boot.bin > $(obj)u-boot-flexonenand.bin
 
 $(VERSION_FILE):
