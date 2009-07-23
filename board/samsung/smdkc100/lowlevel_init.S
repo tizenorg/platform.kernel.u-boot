@@ -26,6 +26,12 @@
 #include <config.h>
 #include <version.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/mem.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/power.h>
+#include <asm/arch/watchdog.h>
+#include <asm/arch/interrupt.h>
 
 #ifdef CONFIG_SERIAL0
 #define UART_CONSOLE_BASE	UARTx_OFFSET(0)
@@ -50,17 +56,23 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r9, lr
 
+	/* r5 has always zero */
+	mov	r5, #0
+
+	ldr	r8, =S5PC100_GPIO_BASE(0)
+
+#if 0
 	/* IO retension release */
 	ldr	r0, =S5P_OTHERS                         @0xE0108200
 	ldr	r1, [r0]
 	ldr	r2, =(1 << 31)                          @IO_RET_REL
 	orr	r1, r1, r2
 	str	r1, [r0]
+#endif
 
 	/* Disable Watchdog */
 	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
 	orr	r0, r0, #0x0
-	mov	r5, #0
 	str	r5, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
@@ -93,9 +105,6 @@ lowlevel_init:
 	str	r5, [r2, #VIC_INTADDRESS_OFFSET]
 #endif
 
-	/* init system clock */
-	bl system_clock_init
-
 #ifndef CONFIG_ONENAND_IPL
 	/* for UART */
 	bl uart_asm_init
@@ -104,6 +113,9 @@ lowlevel_init:
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
+	/* init system clock */
+	bl	system_clock_init
+
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
@@ -195,15 +207,11 @@ system_clock_init:
  * uart_asm_init: Initialize UART's pins
  */
 uart_asm_init:
-	/* set GPIO to enable UART */
-	ldr	r0, =S5P_GPIO_A0_CON
+	mov	r0, r8
 	ldr	r1, =0x22222222
-	str	r1, [r0]
-
-	/* uart_sel GPK0[5] */
-	ldr	r0, =S5P_GPIO_A1_CON
-	ldr	r1, =0x2222
-	ldr	r1, [r0]
+	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
+	ldr	r1, =0x00022222
+	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
 
 	mov	pc, lr
 

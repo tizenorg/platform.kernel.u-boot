@@ -27,6 +27,7 @@
  */
 
 #include <config.h>
+#include <asm/arch/mem.h>
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:

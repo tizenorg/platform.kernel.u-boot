@@ -9,66 +9,78 @@
 
 #include <onenand_uboot.h>
 
-#include <s5pc1xx-onenand.h>
+#include <samsung_onenand.h>
 
 #include <asm/io.h>
+#include <asm/arch/clock.h>
 
-#define DPRINTK(format, args...)					\
-do {									\
-	printk("%s[%d]: " format "\n", __func__, __LINE__, ##args);	\
-} while (0)
+extern void s3c_onenand_init(struct mtd_info *);
+
+static inline int onenand_read_reg(int offset)
+{
+	return readl(CONFIG_SYS_ONENAND_BASE + offset);
+}
+
+static inline void onenand_write_reg(int value, int offset)
+{
+	writel(value, CONFIG_SYS_ONENAND_BASE + offset);
+}
 
 void onenand_board_init(struct mtd_info *mtd)
 {
         struct onenand_chip *this = mtd->priv;
         int value;
 
+	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
+
+#if 0
 	/* D0 Domain system 1 clock gating */
-	value = S5P_CLK_GATE_D00_REG;
+	value = readl(S5P_CLK_GATE_D00);
 	value &= ~(1 << 2);		/* CFCON */
 	value |= (1 << 2);
-	S5P_CLK_GATE_D00_REG = value;
+	writel(value, S5P_CLK_GATE_D00);
 
 	/* D0 Domain memory clock gating */
-	value = S5P_CLK_GATE_D01_REG;
+	value = readl(S5P_CLK_GATE_D01);
 	value &= ~(1 << 2);		/* CLK_ONENANDC */
 	value |= (1 << 2);
-	S5P_CLK_GATE_D01_REG = value;
+	writel(value, S5P_CLK_GATE_D01);
+#endif
 
 	/* System Special clock gating */
-	value = S5P_CLK_GATE_SCLK0_REG;
+	value = readl(S5P_CLK_GATE_SCLK0);
 	value &= ~(1 << 2);		/* OneNAND */
 	value |= (1 << 2);
-	S5P_CLK_GATE_SCLK0_REG = value;
+	writel(value, S5P_CLK_GATE_SCLK0);
 
-	value = S5P_CLK_SRC0_REG;
+	value = readl(S5P_CLK_SRC0);
 	value &= ~(1 << 24);		/* MUX_1nand: 0 from HCLKD0 */
 //	value |= (1 << 24);		/* MUX_1nand: 1 from DIV_D1_BUS */
 	value &= ~(1 << 20);		/* MUX_HREF: 0 from FIN_27M */
-	S5P_CLK_SRC0_REG = value;
+	writel(value, S5P_CLK_SRC0);
 
-	value = S5P_CLK_DIV1_REG;
+	value = readl(S5P_CLK_DIV1);
 //	value &= ~(3 << 20);		/* DIV_1nand: 1 / (ratio+1) */
 //	value |= (0 << 20);		/* ratio = 1 */
 	value &= ~(3 << 16);
 	value |= (1 << 16);
-	S5P_CLK_DIV1_REG = value;
+	writel(value, S5P_CLK_DIV1);
 
-	MEM_RESET0_REG = ONENAND_MEM_RESET_COLD;
+	onenand_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
 
-	while (!(INT_ERR_STAT0_REG & RST_CMP))
+	while (!(onenand_read_reg(INT_ERR_STAT_OFFSET) & RST_CMP))
 		continue;
 
-	INT_ERR_ACK0_REG = RST_CMP;
+	onenand_write_reg(RST_CMP, INT_ERR_ACK_OFFSET);
 
-	ACC_CLOCK0_REG = 0x3;
+	onenand_write_reg(0x3, ACC_CLOCK_OFFSET);
 
-	INT_ERR_MASK0_REG = 0x3fff;
-	INT_PIN_ENABLE0_REG = (1 << 0); /* Enable */
+	onenand_write_reg(0x3fff, INT_ERR_MASK_OFFSET);
+	onenand_write_reg(1 << 0, INT_PIN_ENABLE_OFFSET); /* Enable */
 
-	value = INT_ERR_MASK0_REG;
+	value = onenand_read_reg(INT_ERR_MASK_OFFSET);
 	value &= ~RDY_ACT;
-	INT_ERR_MASK0_REG = value;
+	onenand_write_reg(value, INT_ERR_MASK_OFFSET);
 
 #if 0
 	MEM_CFG0_REG |=
@@ -85,9 +97,6 @@ void onenand_board_init(struct mtd_info *mtd)
 #endif
 //	MEM_CFG0_REG |= ONENAND_SYS_CFG1_VHF;
 //	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
-
-	this->base = (void *) 0xe7100000;
-	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
 
 	s3c_onenand_init(mtd);
 }

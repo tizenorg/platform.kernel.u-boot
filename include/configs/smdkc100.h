@@ -134,6 +134,7 @@
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
+#define CONFIG_USE_BIG_UBOOT
 #ifdef CONFIG_USE_BIG_UBOOT
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x22008000 0x0 0x40000\0"
