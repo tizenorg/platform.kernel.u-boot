@@ -44,10 +44,6 @@
 /* input clock of PLL: Universal has 12MHz input clock */
 #define CONFIG_SYS_CLK_FREQ	12000000
 
-#if !defined(CONFIG_NAND_SPL) && (TEXT_BASE >= 0xc0000000)
-#define CONFIG_ENABLE_MMU
-#endif
-
 #define CONFIG_MEMORY_UPPER_CODE
 
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -121,11 +117,12 @@
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 
-#define MTDIDS_DEFAULT 		"onenand0=s3c-onenand"
-#define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
+/* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
+#define MTDIDS_DEFAULT 		"onenand0=samsung-onenand"
+#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
 				",3m@0x60000(kernel)"\
-				",16m@0x260000(test)"\
+				",18m@0x360000(modem)"\
 				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
@@ -147,15 +144,8 @@
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
-#define CONFIG_USE_BIG_UBOOT		1
-#ifdef CONFIG_USE_BIG_UBOOT
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x22008000 0x0 0x40000\0"
-#else
-#define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x22008000 0x0 0x20000;" \
-			" onenand write 0x22008000 0x20000 0x20000\0"
-#endif
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
@@ -252,12 +242,6 @@
  */
 
 #define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
-
-#ifdef CONFIG_ENABLE_MMU
-#define CONFIG_SYS_MAPPED_RAM_BASE	0xc0000000
-#else
-#define CONFIG_SYS_MAPPED_RAM_BASE	CONFIG_SYS_SDRAM_BASE
-#endif
 
 /* OneNAND IPL uses 8KiB */
 #define CONFIG_ONENAND_START_PAGE	4
