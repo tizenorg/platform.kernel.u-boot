@@ -29,13 +29,13 @@ static inline void onenand_write_reg(int value, int offset)
 
 void onenand_board_init(struct mtd_info *mtd)
 {
-        struct onenand_chip *this = mtd->priv;
-        int value;
+	struct onenand_chip *this = mtd->priv;
+	int value;
 
 	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
 
 	if (cpu_is_s5pc110())
-		this->base = 0xB0000000;
+		this->base = (void *)0xB0000000;
 
 	/* D0 Domain system 1 clock gating */
 	value = readl(S5P_CLK_GATE_D00);
