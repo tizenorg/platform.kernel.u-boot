@@ -48,6 +48,43 @@ static int check_short_pattern(uint8_t * buf, int len, int paglen,
 	return 0;
 }
 
+static int read_page_oob(struct mtd_info *mtd, loff_t from, u_char *buf)
+{
+	struct onenand_chip *this = mtd->priv;
+	struct bbm_info *bbm = this->bbm;
+	struct nand_bbt_descr *bd = bbm->badblock_pattern;
+	struct mtd_oob_ops ops;
+	int ret, scanlen, block, j, res;
+
+	scanlen = 0;
+
+	ops.mode = MTD_OOB_PLACE;
+	ops.ooblen = 16;
+	ops.oobbuf = buf;
+	ops.len = ops.ooboffs = ops.retlen = ops.oobretlen = 0;
+
+	/* Get block number * 2 */
+	block = (int)(from >> (bbm->bbt_erase_shift - 1));
+
+	/* Set as normal block */
+	res = 0x00;
+	bbm->bbt[block >> 3] |= 0x00 << (block & 0x6);
+
+	for (j = 0; j < 2; j++) {
+		ret = onenand_bbt_read_oob(mtd, from + j * mtd->writesize + bd->offs, &ops);
+		if (ret || check_short_pattern(&buf[j * scanlen], scanlen, mtd->writesize, bd)) {
+			bbm->bbt[block >> 3] |= 0x03 << (block & 0x6);
+			res = 0x03;
+			printk(KERN_WARNING "Bad eraseblock %d at 0x%08x\n",
+					block >> 1, (unsigned int) from);
+			mtd->ecc_stats.badblocks++;
+			break;
+		}
+	}
+
+	return ret;
+}
+
 /**
  * create_bbt - [GENERIC] Create a bad block table by scanning the device
  * @param mtd		MTD device structure
@@ -155,6 +192,11 @@ static int onenand_isbad_bbt(struct mtd_info *mtd, loff_t offs, int allowbbt)
 	block = (int)(offs >> (bbm->bbt_erase_shift - 1));
 	res = (bbm->bbt[block >> 3] >> (block & 0x06)) & 0x03;
 
+	if (this->options & ONENAND_RUNTIME_BADBLOCK_CHECK) {
+		if (res == 0x02)
+			res = read_page_oob(mtd, offs, this->oob_buf);
+	}
+
 	MTDDEBUG (MTD_DEBUG_LEVEL2,
 		"onenand_isbad_bbt: bbt info for offs 0x%08x: (block %d) 0x%02x\n",
 		(unsigned int)offs, block >> 1, res);
@@ -209,6 +251,12 @@ int onenand_scan_bbt(struct mtd_info *mtd, struct nand_bbt_descr *bd)
 
 	if (!bbm->isbad_bbt)
 		bbm->isbad_bbt = onenand_isbad_bbt;
+
+	if (this->options & ONENAND_RUNTIME_BADBLOCK_CHECK) {
+		printk(KERN_INFO "Scanning device for bad blocks (skipped)\n");
+		memset(bbm->bbt, 0xaa, len);
+		return 0;
+	}
 
 	/* Scan the device to build a memory based bad block table */
 	if ((ret = onenand_memory_bbt(mtd, bd))) {
