@@ -13,6 +13,7 @@
 
 #include <asm/io.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/cpu.h>
 
 extern void s3c_onenand_init(struct mtd_info *);
 
@@ -32,6 +33,9 @@ void onenand_board_init(struct mtd_info *mtd)
         int value;
 
 	this->base = (void *)CONFIG_SYS_ONENAND_BASE;
+
+	if (cpu_is_s5pc110())
+		this->base = 0xB0000000;
 
 	/* D0 Domain system 1 clock gating */
 	value = readl(S5P_CLK_GATE_D00);
@@ -64,37 +68,37 @@ void onenand_board_init(struct mtd_info *mtd)
 	value |= (1 << 16);
 	writel(value, S5P_CLK_DIV1);
 
-	onenand_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
+	if (cpu_is_s5pc100()) {
+		onenand_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
 
-	while (!(onenand_read_reg(INT_ERR_STAT_OFFSET) & RST_CMP))
-		continue;
+		while (!(onenand_read_reg(INT_ERR_STAT_OFFSET) & RST_CMP))
+			continue;
 
-	onenand_write_reg(RST_CMP, INT_ERR_ACK_OFFSET);
+		onenand_write_reg(RST_CMP, INT_ERR_ACK_OFFSET);
 
-	onenand_write_reg(0x3, ACC_CLOCK_OFFSET);
+		onenand_write_reg(0x3, ACC_CLOCK_OFFSET);
 
-	onenand_write_reg(0x3fff, INT_ERR_MASK_OFFSET);
-	onenand_write_reg(1 << 0, INT_PIN_ENABLE_OFFSET); /* Enable */
+		onenand_write_reg(0x3fff, INT_ERR_MASK_OFFSET);
+		onenand_write_reg(1 << 0, INT_PIN_ENABLE_OFFSET); /* Enable */
 
-	value = onenand_read_reg(INT_ERR_MASK_OFFSET);
-	value &= ~RDY_ACT;
-	onenand_write_reg(value, INT_ERR_MASK_OFFSET);
+		value = onenand_read_reg(INT_ERR_MASK_OFFSET);
+		value &= ~RDY_ACT;
+		onenand_write_reg(value, INT_ERR_MASK_OFFSET);
 
 #if 0
-	MEM_CFG0_REG |=
-		ONENAND_SYS_CFG1_SYNC_READ |
-		ONENAND_SYS_CFG1_BRL_4 |
-		ONENAND_SYS_CFG1_BL_16 |
-		ONENAND_SYS_CFG1_RDY |
-		ONENAND_SYS_CFG1_INT |
-		ONENAND_SYS_CFG1_IOBE
-		;
-	MEM_CFG0_REG |= ONENAND_SYS_CFG1_RDY;
-	MEM_CFG0_REG |=	ONENAND_SYS_CFG1_INT; 
-	MEM_CFG0_REG |= ONENAND_SYS_CFG1_IOBE;
+		MEM_CFG0_REG |=
+			ONENAND_SYS_CFG1_SYNC_READ |
+			ONENAND_SYS_CFG1_BRL_4 |
+			ONENAND_SYS_CFG1_BL_16 |
+			ONENAND_SYS_CFG1_RDY |
+			ONENAND_SYS_CFG1_INT |
+			ONENAND_SYS_CFG1_IOBE
+			;
+		MEM_CFG0_REG |= ONENAND_SYS_CFG1_RDY;
+		MEM_CFG0_REG |=	ONENAND_SYS_CFG1_INT; 
+		MEM_CFG0_REG |= ONENAND_SYS_CFG1_IOBE;
 #endif
-//	MEM_CFG0_REG |= ONENAND_SYS_CFG1_VHF;
-//	MEM_CFG0_REG |= ONENAND_SYS_CFG1_HF;
 
-	s3c_onenand_init(mtd);
+		s3c_onenand_init(mtd);
+	}
 }
