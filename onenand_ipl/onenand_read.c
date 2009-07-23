@@ -107,8 +107,8 @@ static inline int onenand_read_page(ulong block, ulong page,
 }
 #endif
 
-#ifndef ONENAND_START_PAGE
-#define ONENAND_START_PAGE		1
+#ifndef CONFIG_ONENAND_START_PAGE
+#define CONFIG_ONENAND_START_PAGE	1
 #endif
 #define ONENAND_PAGES_PER_BLOCK		64
 
@@ -120,7 +120,7 @@ static inline int onenand_read_page(ulong block, ulong page,
 int onenand_read_block(unsigned char *buf)
 {
 	int block;
-	int page = ONENAND_START_PAGE, offset = 0;
+	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
 	int pagesize = 0, erase_shift = 0;
 	int erasesize = 0, nblocks = 0;
 
