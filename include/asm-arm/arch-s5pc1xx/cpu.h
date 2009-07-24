@@ -38,8 +38,21 @@
 #define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
 #define S5P_PA_DMC		S5P_ADDR(0x06000000)    /* Dram Memory Controller */
 #define S5P_PA_SROMC		S5P_ADDR(0x07000000)    /* SROM Controller */
-#define S5P_PA_WATCHDOG		S5P_ADDR(0x0a200000)    /* Watchdog Timer */
 #define S5P_PA_PWMTIMER		S5P_ADDR(0x0a000000)    /* PWM Timer */
+
+/* Note that write the macro by address order */
+#define S5PC100_VIC0_BASE	0xE4000000
+#define S5PC100_VIC1_BASE	0xE4100000
+#define S5PC100_VIC2_BASE	0xE4200000
+#define S5PC100_SROMC_BASE	0xE7000000
+#define S5PC100_WATCHDOG_BASE	0xEA200000
+
+#define S5PC110_WATCHDOG_BASE	0xE2700000
+#define S5PC110_SROMC_BASE	0xE8000000
+#define S5PC110_VIC0_BASE	0xF2000000
+#define S5PC110_VIC1_BASE	0xF2100000
+#define S5PC110_VIC2_BASE	0xF2200000
+#define S5PC110_VIC3_BASE	0xF2300000
 
 /*
  * Chip ID

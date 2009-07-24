@@ -87,21 +87,26 @@ lowlevel_init:
 	str	r1, [r0]
 
 	/* Disable Watchdog */
-	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
-	orr	r0, r0, #0x0
+	cmp	r7, r8
+	ldreq	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
+	ldrne	r0, =S5PC110_WATCHDOG_BASE		@0xE2700000
 	str	r5, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
 	/* setting SRAM */
-	ldr	r0, =S5P_SROMC_BASE(0x0)
+	cmp	r7, r8
+	ldreq	r0, =S5PC100_SROMC_BASE
+	ldrne	r0, =S5PC110_SROMC_BASE
 	ldr	r1, =0x9
 	str	r1, [r0]
 #endif
 
 	/* S5PC100 has 3 groups of interrupt sources */
-	ldr	r0, =S5P_VIC0_BASE(0x0)			@0xE4000000
-	ldr	r1, =S5P_VIC1_BASE(0x0)			@0xE4000000
-	ldr	r2, =S5P_VIC2_BASE(0x0)			@0xE4000000
+	cmp	r7, r8
+	ldreq	r0, =S5PC100_VIC0_BASE			@0xE4000000
+	ldrne	r0, =S5PC110_VIC0_BASE			@0xF2000000
+	add	r1, r0, #0x00100000
+	add	r2, r0, #0x00200000
 
 	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
@@ -323,19 +328,25 @@ uart_asm_init:
  * dma_asm_init: Initialize DMA
  */
 dma_asm_init:
-	ldr     r0, =0xE3800000
+	cmp	r7, r8
+	ldreq	r0, =0xE3800000			@ TZPC0
+	ldrne	r0, =0xF1500000			@ TZPC0
 	mov	r1, #0x0
 	str	r1, [r0]
 	mov	r1, #0xff
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
 
-	ldr	r0, =0xE2800000
+	cmp	r7, r8
+	ldreq	r0, =0xE2800000			@ TZPC1
+	ldrne	r0, =0xFAD00000			@ TZPC1
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
 	str	r1, [r0, #0x81C]
 
-	ldr	r0, =0xE2900000
+	cmp	r7, r8
+	ldreq	r0, =0xE2900000			@ TZPC2
+	ldrne	r0, =0xE0600000			@ TZPC2
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
 
