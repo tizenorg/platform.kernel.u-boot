@@ -539,15 +539,6 @@ static int process_data(struct usbd_ops *usbd)
 		nand_cmd(0, offset, length, NULL);
 #endif
 	case KERNEL_PART_ID:
-		sprintf(offset, "%x", parts[part_id]->offset);
-		sprintf(length, "%x", parts[part_id]->size);
-
-		/* Erase */
-		nand_cmd(0, offset, length, NULL);
-		/* Write */
-		ret = nand_cmd(1, ramaddr, offset, length);
-		break;
-
 	case MODEM_PART_ID:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);

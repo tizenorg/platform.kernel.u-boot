@@ -54,7 +54,8 @@ lowlevel_init:
 	ldr	r7, =S5PC100_GPIO_BASE(0)
 	ldr	r8, =S5PC100_GPIO_BASE(0)
 	/* Read CPU ID */
-	ldr	r0, =S5PC1XX_PRO_ID
+	ldr	r2, =S5PC1XX_PRO_ID
+	ldr	r0, [r2]
 	mov	r1, #0x00010000
 	and	r0, r0, r1
 	cmp	r0, r5
