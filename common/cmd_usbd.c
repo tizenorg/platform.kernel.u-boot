@@ -11,8 +11,7 @@
 #include <asm/errno.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.2.7"
-#define APP_DATE	"17 June 2009"
+#define APP_VERSION	"1.3.0"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -381,6 +380,8 @@ static int process_data(struct usbd_ops *usbd)
 
 		if (part_id == FILESYSTEM3_PART_ID)
 			part_id = get_part_id("UBI", FILESYSTEM_PART_ID);
+		else if (part_id == MODEM_PART_ID)
+			part_id = get_part_id("modem", MODEM_PART_ID);
 #endif
 #ifdef CONFIG_MIRAGE
 		if (part_id)
@@ -439,6 +440,11 @@ static int process_data(struct usbd_ops *usbd)
 		ubi_update = 0;
 		/* someday, it will be deleted */
 		get_part_info();
+		break;
+
+	case COMMAND_WRITE_PART_8:
+		printf("COMMAND_WRITE_MODEM\n");
+		part_id = get_part_id("modem", MODEM_PART_ID);
 		break;
 
 	case COMMAND_WRITE_UBI_INFO:
@@ -542,6 +548,16 @@ static int process_data(struct usbd_ops *usbd)
 		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
 
+	case MODEM_PART_ID:
+		sprintf(offset, "%x", parts[part_id]->offset);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		nand_cmd(0, offset, length, NULL);
+		/* Write */
+		ret = nand_cmd(1, ramaddr, offset, length);
+		break;
+
 	/* File System */
 	case RAMDISK_PART_ID:		/* rootfs */
 	case FILESYSTEM_PART_ID:	/* factoryfs */
@@ -589,7 +605,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	struct usbd_ops *usbd;
 	int err;
 
-	printf("Start USB Downloader v%s (%s)\n", APP_VERSION, APP_DATE);
+	printf("USB Downloader v%s\n", APP_VERSION);
 
 	/* get partition info */
 	err = get_part_info();
