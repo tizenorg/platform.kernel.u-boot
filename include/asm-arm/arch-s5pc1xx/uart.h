@@ -1,11 +1,36 @@
+/*
+ * (C) Copyright 2009
+ * Samsung Electronics, <www.samsung.com/sec>
+ * Heungjun Kim <riverful.kim@samsung.com>
+ * Minkyu Kang <mk7.kang@samsung.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
+ */
+
+#ifndef __ASM_ARCH_UART_H_
+#define __ASM_ARCH_UART_H_
 
 /* 
  * UART
  */
 /* uart base address */
-#define S5P_PA_UART		S5P_ADDR(0x0c000000)    /* UART */
-#define UARTx_OFFSET(x)		(S5P_PA_UART + x * 0x400)
-#define S5P_UART_BASE		(S5P_PA_UART)
+#define S5PC100_PA_UART		0xEC000000
+#define S5PC110_PA_UART		0xE2900000
+
 /* uart offset */
 #define ULCON_OFFSET		0x00
 #define UCON_OFFSET		0x04
@@ -66,3 +91,4 @@ enum s5pc1xx_uarts_nr {
 };
 #endif	/* __ASSEMBLY__ */
 
+#endif

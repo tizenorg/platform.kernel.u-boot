@@ -42,7 +42,10 @@
 
 static inline s5pc1xx_uart_t *s5pc1xx_get_base_uart(enum s5pc1xx_uarts_nr nr)
 {
-	return (s5pc1xx_uart_t *)(S5P_UART_BASE + (nr * 0x400));
+	if (cpu_is_s5pc100())
+		return (s5pc1xx_uart_t *)(S5PC100_PA_UART + (nr * 0x400));
+	else
+		return (s5pc1xx_uart_t *)(S5PC110_PA_UART + (nr * 0x400));
 }
 
 /*
