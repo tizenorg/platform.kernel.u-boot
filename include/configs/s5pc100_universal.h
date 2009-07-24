@@ -119,10 +119,10 @@
 
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT 		"onenand0=samsung-onenand"
-#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
+#define MTDPARTS_DEFAULT	"mtdparts=s3c-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
 				",3m@0x60000(kernel)"\
-				",18m@0x360000(modem)"\
+				",16m@0x260000(test)"\
 				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
