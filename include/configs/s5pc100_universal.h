@@ -39,6 +39,8 @@
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
+#define CONFIG_ARCH_CPU_INIT
+
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
 /* input clock of PLL: Universal has 12MHz input clock */

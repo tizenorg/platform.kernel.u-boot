@@ -28,13 +28,19 @@
 
 unsigned int s5pc1xx_cpu_id;
 
+#ifdef CONFIG_ARCH_CPU_INIT
+int arch_cpu_init(void)
+{
+	s5pc1xx_cpu_id = readl(S5PC1XX_PRO_ID);
+	s5pc1xx_cpu_id = 0xC000 | ((s5pc1xx_cpu_id & 0x00FFF000) >> 12);
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
-	s5pc1xx_cpu_id = readl(S5PC1XX_PRO_ID);
-
-	s5pc1xx_cpu_id = 0xC000 | ((s5pc1xx_cpu_id & 0x00FFF000) >> 12);
-
 	printf("CPU:\tS5P%X@%luMHz\n", s5pc1xx_cpu_id, get_arm_clk() / 1000000);
 	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
 		" PclkD1 = %luMHz\n",
