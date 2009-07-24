@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2000-2006
+ * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -417,6 +417,24 @@ static int bootm_load_os(image_info_t os, ulong *load_end, int boot_progress)
 	return 0;
 }
 
+static int bootm_start_standalone(ulong iflag, int argc, char *argv[])
+{
+	char  *s;
+	int   (*appl)(int, char *[]);
+
+	/* Don't start if "autostart" is set to "no" */
+	if (((s = getenv("autostart")) != NULL) && (strcmp(s, "no") == 0)) {
+		char buf[32];
+		sprintf(buf, "%lX", images.os.image_len);
+		setenv("filesize", buf);
+		return 0;
+	}
+	appl = (int (*)(int, char *[]))ntohl(images.ep);
+	(*appl)(argc-1, &argv[1]);
+
+	return 0;
+}
+
 /* we overload the cmd field with our state machine info instead of a
  * function pointer */
 cmd_tbl_t cmd_bootm_sub[] = {
@@ -548,7 +566,8 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	if (!relocated) {
 		int i;
 		for (i = 0; i < ARRAY_SIZE(boot_os); i++)
-			boot_os[i] += gd->reloc_off;
+			if (boot_os[i] != NULL)
+				boot_os[i] += gd->reloc_off;
 		relocated = 1;
 	}
 
@@ -628,6 +647,14 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	lmb_reserve(&images.lmb, images.os.load, (load_end - images.os.load));
 
+	if (images.os.type == IH_TYPE_STANDALONE) {
+		if (iflag)
+			enable_interrupts();
+		/* This may return when 'autostart' is 'no' */
+		bootm_start_standalone(iflag, argc, argv);
+		return 0;
+	}
+
 	show_boot_progress (8);
 
 #ifdef CONFIG_SILENT_CONSOLE
@@ -636,6 +663,16 @@ int do_bootm (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 #endif
 
 	boot_fn = boot_os[images.os.os];
+
+	if (boot_fn == NULL) {
+		if (iflag)
+			enable_interrupts();
+		printf ("ERROR: booting os '%s' (%d) is not supported\n",
+			genimg_get_os_name(images.os.os), images.os.os);
+		show_boot_progress (-8);
+		return 1;
+	}
+
 	boot_fn(0, argc, argv, &images);
 
 	show_boot_progress (-9);
@@ -816,6 +853,13 @@ static void *boot_get_kernel (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]
 			break;
 		case IH_TYPE_MULTI:
 			image_multi_getimg (hdr, 0, os_data, os_len);
+			break;
+		case IH_TYPE_STANDALONE:
+			if (argc >2) {
+				hdr->ih_load = htonl(simple_strtoul(argv[2], NULL, 16));
+			}
+			*os_data = image_get_data (hdr);
+			*os_len = image_get_data_size (hdr);
 			break;
 		default:
 			printf ("Wrong Image Type for %s command\n", cmdtp->name);
