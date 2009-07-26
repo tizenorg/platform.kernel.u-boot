@@ -86,7 +86,13 @@ static const char *board_name[] = {
 
 int misc_init_r(void)
 {
-	unsigned long pin = S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET);
+	unsigned long pin;
+
+	if (cpu_is_s5pc110())
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J0_OFFSET);
+	else
+		pin = S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET);
+
 	pin += S5PC1XX_GPIO_DAT_OFFSET;
 
 	/* check H/W revision */
