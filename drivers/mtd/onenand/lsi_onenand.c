@@ -3,7 +3,7 @@
 
 #include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
-#include <linux/mtd/lsi_onenand.h>
+#include "lsi_onenand.h"
 #include <linux/mtd/bbm.h>
 
 #include <asm/io.h>
