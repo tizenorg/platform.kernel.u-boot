@@ -1,7 +1,6 @@
 /*
- * (C) Copyright 2009
- * Samsung Electronics, <www.samsung.com/sec>
- * Heungjun Kim <riverful.kim@samsung.com>
+ * Copyright (C) 2009 Samsung Electronics
+ * Kyungmin Park <kyungmin.park@samsung.com>
  * Minkyu Kang <mk7.kang@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
- *
  */
 
 #ifndef __ASM_ARM_ARCH_PWM_H_
@@ -27,10 +25,15 @@
 /*
  * PWM Timer
  */
-#define S5P_PWMTIMER_BASE(x)	(S5P_PA_PWMTIMER + (x))
+#define S5PC100_PWMTIMER_BASE	0xEA000000
+#define S5PC110_PWMTIMER_BASE	0xE2500000
+
+/* PWM timer addressing */
+#define S5PC100_TIMER_BASE	S5PC100_PWMTIMER_BASE
+#define S5PC110_TIMER_BASE	S5PC110_PWMTIMER_BASE
 
 /* PWM timer offset */
-#define PWM_TCFG0_OFFSET	0x0
+#define PWM_TCFG0_OFFSET	0x00
 #define PWM_TCFG1_OFFSET	0x04
 #define PWM_TCON_OFFSET		0x08
 #define PWM_TCNTB0_OFFSET	0x0c
@@ -48,33 +51,12 @@
 #define PWM_TCNTO4_OFFSET	0x40
 #define PWM_TINT_CSTAT_OFFSET	0x44
 
-/* PWM timer register */
-#define S5P_PWM_TCFG0		S5P_PWMTIMER_BASE(PWM_TCFG0_OFFSET)
-#define S5P_PWM_TCFG1		S5P_PWMTIMER_BASE(PWM_TCFG1_OFFSET)
-#define S5P_PWM_TCON		S5P_PWMTIMER_BASE(PWM_TCON_OFFSET)
-#define S5P_PWM_TCNTB0		S5P_PWMTIMER_BASE(PWM_TCNTB0_OFFSET)
-#define S5P_PWM_TCMPB0		S5P_PWMTIMER_BASE(PWM_TCMPB0_OFFSET)
-#define S5P_PWM_TCNTO0		S5P_PWMTIMER_BASE(PWM_TCNTO0_OFFSET)
-#define S5P_PWM_TCNTB1		S5P_PWMTIMER_BASE(PWM_TCNTB1_OFFSET)
-#define S5P_PWM_TCMPB1		S5P_PWMTIMER_BASE(PWM_TCMPB1_OFFSET)
-#define S5P_PWM_TCNTO1		S5P_PWMTIMER_BASE(PWM_TCNTO1_OFFSET)
-#define S5P_PWM_TCNTB2		S5P_PWMTIMER_BASE(PWM_TCNTB2_OFFSET)
-#define S5P_PWM_TCMPB2		S5P_PWMTIMER_BASE(PWM_TCMPB2_OFFSET)
-#define S5P_PWM_TCNTO2		S5P_PWMTIMER_BASE(PWM_TCNTO2_OFFSET)
-#define S5P_PWM_TCNTB3		S5P_PWMTIMER_BASE(PWM_TCNTB3_OFFSET)
-#define S5P_PWM_TCNTO3		S5P_PWMTIMER_BASE(PWM_TCNTO3_OFFSET)
-#define S5P_PWM_TCNTB4		S5P_PWMTIMER_BASE(PWM_TCNTB4_OFFSET)
-#define S5P_PWM_TCNTO4		S5P_PWMTIMER_BASE(PWM_TCNTO4_OFFSET)
-#define S5P_PWM_TINT_CSTAT	S5P_PWMTIMER_BASE(PWM_TINT_CSTAT_OFFSET)
-
-/* PWM timer addressing */
-#define S5P_TIMER_BASE		S5P_PWMTIMER_BASE(0x0)
-
-/* PWM timer value */
-#define S5P_TCON4_AUTO_RELOAD	(1 << 22)
-				/* Interval mode(Auto Reload) of PWM Timer 4 */
-#define S5P_TCON4_UPDATE	(1 << 21)  /* Update TCNTB4 */
-#define S5P_TCON4_ON		(1 << 20)  /* start bit of PWM Timer 4 */
+/* Interval mode(Auto Reload) of PWM Timer 4 */
+#define S5PC1XX_TCON4_AUTO_RELOAD	(1 << 22)
+/* Update TCNTB4 */
+#define S5PC1XX_TCON4_UPDATE		(1 << 21)
+/* start bit of PWM Timer 4 */
+#define S5PC1XX_TCON4_START		(1 << 20)
 
 #ifndef __ASSEMBLY__
 typedef struct s5pc1xx_timer {

@@ -45,14 +45,24 @@ static unsigned long lastdec;		/* Last decremneter snapshot */
 /* macro to read the 16 bit timer */
 static inline unsigned long READ_TIMER(void)
 {
-	const s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
+	s5pc1xx_timers_t *timers;
+
+	if (cpu_is_s5pc110())
+		timers = (s5pc1xx_timers_t *) S5PC110_TIMER_BASE;
+	else
+		timers = (s5pc1xx_timers_t *) S5PC100_TIMER_BASE;
 
 	return timers->TCNTO4;
 }
 
 int timer_init(void)
 {
-	s5pc1xx_timers_t *timers = (s5pc1xx_timers_t *)S5P_TIMER_BASE;
+	s5pc1xx_timers_t *timers;
+
+	if (cpu_is_s5pc110())
+		timers = (s5pc1xx_timers_t *) S5PC110_TIMER_BASE;
+	else
+		timers = (s5pc1xx_timers_t *) S5PC100_TIMER_BASE;
 
 	/*
 	 * @ PWM Timer 4
@@ -81,11 +91,11 @@ int timer_init(void)
 
 	/* auto reload & manual update */
 	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
-		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_UPDATE;
+		S5PC1XX_TCON4_AUTO_RELOAD | S5PC1XX_TCON4_UPDATE;
 
 	/* start PWM timer 4 */
 	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
-		S5P_TCON4_AUTO_RELOAD | S5P_TCON4_ON;
+		S5PC1XX_TCON4_AUTO_RELOAD | S5PC1XX_TCON4_START;
 
 	timestamp = 0;
 
