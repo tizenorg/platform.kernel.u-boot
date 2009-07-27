@@ -1,13 +1,7 @@
 /*
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- *
- * (C) Copyright 2002
- * David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
- *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+ * Copyright (C) 2009 Samsung Electronics
+ * Kyungmin Park <kyungmin.park@samsung.com>
+ * Minkyu Kang <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -30,6 +24,7 @@
 
 #include <common.h>
 #include <lcd.h>
+#include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 
@@ -125,8 +120,6 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_CMD_USBDOWN
-#include <i2c.h>
-
 int usb_board_init(void)
 {
 	uchar val[2] ={0,};
