@@ -26,7 +26,8 @@
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 
-unsigned int s5pc1xx_cpu_id;
+/* Default is s5pc100 */
+unsigned int s5pc1xx_cpu_id = 0xC100;
 
 #ifdef CONFIG_ARCH_CPU_INIT
 int arch_cpu_init(void)
