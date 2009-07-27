@@ -22,9 +22,9 @@
 #
 
 VERSION = 2009
-PATCHLEVEL = 06
+PATCHLEVEL = 08
 SUBLEVEL =
-EXTRAVERSION =
+EXTRAVERSION = -rc1
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -254,7 +254,17 @@ LIBBOARD = board/$(BOARDDIR)/lib$(BOARD).a
 LIBBOARD := $(addprefix $(obj),$(LIBBOARD))
 
 # Add GCC lib
-PLATFORM_LIBS += -L $(shell dirname `$(CC) $(CFLAGS) -print-libgcc-file-name`) -lgcc
+ifdef USE_PRIVATE_LIBGCC
+ifeq ("$(USE_PRIVATE_LIBGCC)", "yes")
+PLATFORM_LIBGCC = -L $(OBJTREE)/lib_$(ARCH) -lgcc
+else
+PLATFORM_LIBGCC = -L $(USE_PRIVATE_LIBGCC) -lgcc
+endif
+else
+PLATFORM_LIBGCC = -L $(shell dirname `$(CC) $(CFLAGS) -print-libgcc-file-name`) -lgcc
+endif
+PLATFORM_LIBS += $(PLATFORM_LIBGCC)
+export PLATFORM_LIBS
 
 ifeq ($(CONFIG_NAND_U_BOOT),y)
 NAND_SPL = nand_spl
@@ -1298,6 +1308,9 @@ csb472_config:	unconfig
 DASA_SIM_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx dasa_sim esd
 
+dlvision_config: unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx dlvision gdsys
+
 DP405_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx dp405 esd
 
@@ -1457,6 +1470,9 @@ PLU405_config:	unconfig
 PMC405_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx pmc405 esd
 
+PMC405DE_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx pmc405de esd
+
 PMC440_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx pmc440 esd
 
@@ -1605,8 +1621,8 @@ xilinx-ppc440-generic_config: unconfig
 		>> $(obj)board/xilinx/ppc440-generic/config.tmp
 	@$(MKCONFIG) xilinx-ppc440-generic ppc ppc4xx ppc440-generic xilinx
 
-XPEDITE1K_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc ppc4xx xpedite1k
+XPEDITE1000_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) ppc ppc4xx xpedite1000 xes
 
 yosemite_config \
 yellowstone_config: unconfig

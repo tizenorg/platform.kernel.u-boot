@@ -1,6 +1,9 @@
 /*
- * (C) Copyright 2005
- * BuS Elektronik GmbH & Co.KG <esw@bus-elektonik.de>
+ * (C) Copyright 2008-2009
+ * Stefan Roese, DENX Software Engineering, sr@denx.de.
+ *
+ * (C) Copyright 2009
+ * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -19,30 +22,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
+ *
  */
 
-#ifndef __VCXK_H_
-#define __VCXK_H_
+#ifndef __PPC4xx_CONFIG_H
+#define __PPC4xx_CONFIG_H
 
-extern int init_vcxk(void);
-void	vcxk_loadimage(ulong source);
+#include <common.h>
 
-#define VIDEO_ACKNOWLEDGE_PORT	MCFGPTB_GPTPORT
-#define VIDEO_ACKNOWLEDGE_DDR	MCFGPTB_GPTDDR
-#define VIDEO_ACKNOWLEDGE_PIN	0x0001
+struct ppc4xx_config {
+	char label[16];
+	char description[64];
+	u8 val[CONFIG_4xx_CONFIG_BLOCKSIZE];
+};
 
-#define VIDEO_ENABLE_PORT	MCFGPTB_GPTPORT
-#define VIDEO_ENABLE_DDR	MCFGPTB_GPTDDR
-#define VIDEO_ENABLE_PIN	0x0002
+extern struct ppc4xx_config ppc4xx_config_val[];
+extern int ppc4xx_config_count;
 
-#define VIDEO_REQUEST_PORT	MCFGPTB_GPTPORT
-#define VIDEO_REQUEST_DDR	MCFGPTB_GPTDDR
-#define VIDEO_REQUEST_PIN	0x0004
-
-#define VIDEO_Invert_CFG	MCFGPIO_PEPAR
-#define VIDEO_Invert_IO		MCFGPIO_PEPAR_PEPA2
-#define VIDEO_INVERT_PORT	MCFGPIO_PORTE
-#define VIDEO_INVERT_DDR	MCFGPIO_DDRE
-#define VIDEO_INVERT_PIN	MCFGPIO_PORT2
-
-#endif
+#endif /* __PPC4xx_CONFIG_H */

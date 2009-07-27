@@ -404,9 +404,9 @@ void lcd_ctrl_init(void *lcdbase)
 	s5pc_lcd_init(&panel_info);
 }
 
-void lcd_setcolreg(short regno, ushort red, ushort green, ushort blud)
+
+void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)
 {
-	return;
 }
 
 void lcd_enable(void)
