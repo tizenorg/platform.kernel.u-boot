@@ -40,6 +40,13 @@
 #define HPLL 3
 #define VPLL 4
 
+#ifndef CONFIG_SYS_CLK_FREQ_C100
+#define CONFIG_SYS_CLK_FREQ_C100	12000000
+#endif
+#ifndef CONFIG_SYS_CLK_FREQ_C110
+#define CONFIG_SYS_CLK_FREQ_C110	24000000
+#endif
+
 static int s5p1xx_clock_read_reg(int offset)
 {
 	return readl(S5PC1XX_CLOCK_BASE + offset);
@@ -103,14 +110,14 @@ unsigned long get_pll_clk(int pllreg)
 	s = r & 0x7;
 
 	if (cpu_is_s5pc110()) {
-		if (pllreg == APLL)
-			fout = m * (CONFIG_SYS_CLK_FREQ / (p * (s * 2 - 1)));
-		else
-			fout = m * (CONFIG_SYS_CLK_FREQ / (p * s * 2));
-	}
-	else {
-		fout = m * (CONFIG_SYS_CLK_FREQ / (p * (1 << s)));
-	}
+		if (pllreg == APLL) {
+			if (s < 1)
+				s = 1;
+			fout = m * (CONFIG_SYS_CLK_FREQ_C110 / (p * (1 << (s - 1))));
+		} else
+			fout = m * (CONFIG_SYS_CLK_FREQ_C110 / (p * (1 << s)));
+	} else
+		fout = m * (CONFIG_SYS_CLK_FREQ_C100 / (p * (1 << s)));
 
 	return fout;
 }

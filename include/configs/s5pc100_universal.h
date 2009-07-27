@@ -35,6 +35,7 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
+#define CONFIG_S5PC110		1	/* which is in a S5PC100 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
@@ -43,8 +44,9 @@
 
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
-/* input clock of PLL: Universal has 12MHz input clock */
-#define CONFIG_SYS_CLK_FREQ	12000000
+/* input clock of PLL: Universal has 12MHz/24MHz input clock at S5PC100/C110 */
+#define CONFIG_SYS_CLK_FREQ_C100	12000000
+#define CONFIG_SYS_CLK_FREQ_C110	24000000
 
 #define CONFIG_MEMORY_UPPER_CODE
 
