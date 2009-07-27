@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ * Kyungnin Park <kyungmin.park@samsung.com>
  *
  * based on s3c24x0_i2c.c
  *
@@ -24,9 +25,10 @@
 #define __ASM_ARCH_I2C_H_
 
 /* I2C */
-#define S5P_PA_I2C		S5P_ADDR(0x0c100000)
-#define I2Cx_OFFSET(x)		(S5P_PA_I2C + x * 0x100000)
-#define S5P_I2C_BASE		S5P_PA_I2C
+#define S5PC100_I2C0_BASE	0xEC100000
+#define S5PC100_I2C1_BASE	0xEC200000
+#define S5PC110_I2C0_BASE	0xE1800000
+#define S5PC110_I2C2_BASE	0xE1A00000
 
 #ifndef __ASSEMBLY__
 typedef struct s5pc1xx_i2c {
@@ -34,6 +36,7 @@ typedef struct s5pc1xx_i2c {
 	volatile unsigned long	IICSTAT;
 	volatile unsigned long	IICADD;
 	volatile unsigned long	IICDS;
+	volatile unsigned long	IICLC;
 } s5pc1xx_i2c_t;
 #endif
 

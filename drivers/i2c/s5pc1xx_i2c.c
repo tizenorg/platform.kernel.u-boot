@@ -22,17 +22,13 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <asm/io.h>
 #include <asm/arch/i2c.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/cpu.h>
 
 #ifdef CONFIG_HARD_I2C
-
-#ifdef CONFIG_SYS_I2C_1
-#define I2C_NR		1
-#else
-#define I2C_NR		0
-#endif
 
 #define	I2C_WRITE	0
 #define I2C_READ	1
@@ -53,9 +49,17 @@
 
 #define I2C_TIMEOUT 	1		/* 1 second */
 
+static unsigned int default_channel;
+
 static inline s5pc1xx_i2c_t *s5pc1xx_get_base_i2c(void)
 {
-	return (s5pc1xx_i2c_t *)(I2Cx_OFFSET(I2C_NR));
+	if (cpu_is_s5pc110()) {
+		default_channel = 2;
+		return (s5pc1xx_i2c_t *) S5PC110_I2C2_BASE;
+	}
+
+	default_channel = 0;
+	return (s5pc1xx_i2c_t *) S5PC100_I2C0_BASE;
 }
 
 static int WaitForXfer(void)
@@ -97,7 +101,7 @@ void i2c_init(int speed, int slaveadd)
 	u32 pres = 16;
 	u32 div;
 	int i;
-	int status;
+	int status, value, reg;
 	int gpio_shift;
 
 	/* wait for some time to give previous transfer a chance to finish */
@@ -130,14 +134,35 @@ void i2c_init(int speed, int slaveadd)
 	/* program Master Transmit (and implicit STOP) */
 	i2c->IICSTAT = I2C_MODE_MT | I2C_TXRX_ENA;
 
-	/* set I2C0 pad conf */
-	if (I2C_NR)
-		gpio_shift = 20;
-	else
-		gpio_shift = 12;
+	if (cpu_is_s5pc110()) {
+		/* set I2C0 pad conf */
+		switch (default_channel) {
+		case 2:
+			gpio_shift = 16;
+		case 1:
+			gpio_shift = 8;
+		case 0:
+			gpio_shift = 0;
+		deafult:
+			break;
+		}
 
-	__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) &= ~(0xff << gpio_shift);
-	__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) |= (0x22 << gpio_shift);
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
+		value = readl(reg);
+		value &= ~(0xff << gpio_shift);
+		value |= (0x22 << gpio_shift);
+		writel(value, reg);
+	} else {
+		/* set I2C0 pad conf */
+		if (default_channel)
+			gpio_shift = 20;
+		else
+			gpio_shift = 12;
+
+		__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) &= ~(0xff << gpio_shift);
+		__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) |= (0x22 << gpio_shift);
+	}
 }
 
 /*
