@@ -27,6 +27,17 @@
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
+	ldr	r7, =0xC100
+	ldr	r8, =0xC100
+	/* Read CPU ID */
+	ldr	r2, =S5PC1XX_PRO_ID
+	ldr	r0, [r2]
+	mov	r1, #0x00010000
+	and	r0, r0, r1
+	cmp	r0, r5
+	beq	100f
+	ldr	r8, =0xC110
+100:
 	cmp	r7, r8
 	ldreq	r6, =S5PC100_DMC_BASE			@ 0xE6000000
 	ldrne	r6, =S5PC110_DMC0_BASE			@ 0xF0000000
