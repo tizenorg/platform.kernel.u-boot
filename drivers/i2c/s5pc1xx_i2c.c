@@ -135,7 +135,7 @@ void i2c_init(int speed, int slaveadd)
 	i2c->IICSTAT = I2C_MODE_MT | I2C_TXRX_ENA;
 
 	if (cpu_is_s5pc110()) {
-		/* set I2C0 pad conf */
+		/* set I2C pad conf */
 		switch (default_channel) {
 		case 2:
 			gpio_shift = 16;
@@ -149,20 +149,20 @@ void i2c_init(int speed, int slaveadd)
 
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 		reg += S5PC1XX_GPIO_CON_OFFSET;
-		value = readl(reg);
-		value &= ~(0xff << gpio_shift);
-		value |= (0x22 << gpio_shift);
-		writel(value, reg);
 	} else {
-		/* set I2C0 pad conf */
+		/* set I2C pad conf */
 		if (default_channel)
 			gpio_shift = 20;
 		else
 			gpio_shift = 12;
 
-		__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) &= ~(0xff << gpio_shift);
-		__REG(S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET)) |= (0x22 << gpio_shift);
+		reg = S5PC100_GPIO_BASE(S5PC100_GPIO_D_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
 	}
+	value = readl(reg);
+	value &= ~(0xff << gpio_shift);
+	value |= (0x22 << gpio_shift);
+	writel(value, reg);
 }
 
 /*
