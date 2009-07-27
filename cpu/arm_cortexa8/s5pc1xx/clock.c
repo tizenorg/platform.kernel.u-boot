@@ -104,12 +104,12 @@ unsigned long get_pll_clk(int pllreg)
 
 	if (cpu_is_s5pc110()) {
 		if (pllreg == APLL)
-			fout = m * CONFIG_SYS_CLK_FREQ / (p * (s * 2 - 1));
+			fout = m * (CONFIG_SYS_CLK_FREQ / (p * (s * 2 - 1)));
 		else
-			fout = m * CONFIG_SYS_CLK_FREQ / (p * s * 2);
+			fout = m * (CONFIG_SYS_CLK_FREQ / (p * s * 2));
 	}
 	else {
-		fout = m * CONFIG_SYS_CLK_FREQ / (p * (1 << s));
+		fout = m * (CONFIG_SYS_CLK_FREQ / (p * (1 << s)));
 	}
 
 	return fout;
