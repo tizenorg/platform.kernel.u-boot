@@ -322,6 +322,7 @@ static int onenand_dump(struct mtd_info *mtd, ulong off, int only_oob)
 		p += 16;
 	}
 	puts("OOB:\n");
+	p = oobbuf;
 	i = mtd->oobsize >> 3;
 	while (i--) {
 		printf("\t%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -385,7 +386,8 @@ int do_onenand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			int erase;
 
 			erase = strcmp(cmd, "erase") == 0; /* 1 = erase, 0 = test */
-			printf("\nOneNAND %s: ", erase ? "erase" : "test");
+			printf("\nOneNAND %s %s: ", erase ? "erase" : "test",
+				force ? "force" : "");
 
 			/* skip first two or three arguments, look for offset and size */
 			if (arg_off_size(argc - o, argv + o, &ofs, &len) != 0)
