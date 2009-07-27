@@ -57,7 +57,4 @@
 #define PHYTEST0_OFFSET		0x58
 #define PHYTEST1_OFFSET		0x5c
 
-/* SROMC Base */
-#define S5PC100_SROMC_BASE	0xE7000000
-
 #endif

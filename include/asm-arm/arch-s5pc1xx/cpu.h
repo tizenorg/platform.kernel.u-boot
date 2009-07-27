@@ -26,16 +26,12 @@
 
 #include <asm/hardware.h>
 
-#define S5P_ADDR_BASE		0xe0000000
-#define S5P_ADDR(x)		(S5P_ADDR_BASE + (x))
+#define S5PC1XX_ADDR_BASE	0xe0000000
+#define S5P_ADDR(x)		(S5PC1XX_ADDR_BASE + (x))
 
-#define S5P_PA_ID		S5P_ADDR(0x00000000)	/* Chip ID Base */
 #define S5P_PA_CLK		S5P_ADDR(0x00100000)	/* Clock Base */
 #define S5P_PA_PWR		S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */
-#define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
-#define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
-#define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
 
 /* Note that write the macro by address order */
 #define S5PC100_VIC0_BASE	0xE4000000
@@ -54,9 +50,9 @@
 /*
  * Chip ID
  */
-#define S5P_ID(x)		(S5P_PA_ID + (x))
-#define S5PC1XX_PRO_ID		S5P_ID(0)
-#define S5PC1XX_OMR		S5P_ID(4)
+#define S5PC1XX_CHIP_ID(x)	(0xE0000000 + (x))
+#define S5PC1XX_PRO_ID		S5PC1XX_CHIP_ID(0)
+#define S5PC1XX_OMR		S5PC1XX_CHIP_ID(4)
 
 #ifndef __ASSEMBLY__
 /* CPU detection macros */

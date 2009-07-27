@@ -24,15 +24,6 @@
 #ifndef __ASM_ARM_ARCH_INTERRUPT_H_
 #define __ASM_ARM_ARCH_INTERRUPT_H_
 
-/*
- * Vector Interrupt Controller
- * : VIC0, VIC1, VIC2
- */
-/* VIC0 */
-#define S5P_VIC0_BASE(x)		(S5P_PA_VIC0 + (x))
-#define S5P_VIC1_BASE(x)		(S5P_PA_VIC1 + (x))
-#define S5P_VIC2_BASE(x)		(S5P_PA_VIC2 + (x))
-
 /* Vector Interrupt Offset */
 #define VIC_IRQSTATUS_OFFSET		0x0
 #define VIC_FIQSTATUS_OFFSET		0x4
