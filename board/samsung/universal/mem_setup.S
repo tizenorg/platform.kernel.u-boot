@@ -1,9 +1,5 @@
 /*
- * Originates from Samsung's u-boot 1.1.6 port to S5PC1xx
- *
  * Copyright (C) 2009 Samsung Electrnoics
- * Inki Dae <inki.dae@samsung.com>
- * Heungjun Kim <riverful.kim@samsung.com>
  * Minkyu Kang <mk7.kang@samsung.com>
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
@@ -31,41 +27,49 @@
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
-	ldr	r6, =S5P_CONCONTROL			@ 0xE6000000
+	cmp	r7, r8
+	ldreq	r6, =S5PC100_DMC_BASE			@ 0xE6000000
+	ldrne	r6, =S5PC110_DMC0_BASE			@ 0xF0000000
 
 	/* DLL parameter setting */
-	ldr	r1, =0x50101000
-	str	r1, [r6, #0x018]			@ S5P_PHYCONTROL0
-	ldr	r1, =0xf4
-	str	r1, [r6, #0x01C]			@ S5P_PHYCONTROL1
-	ldr	r1, =0x0
-	str	r1, [r6, #0x020]			@ S5P_PHYCONTROL2
+	ldreq	r1, =0x50101000
+	ldrne	r1, =0x003B3B00
+	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	ldreq	r1, =0xf4
+	ldrne	r1, =0x04
+	str	r1, [r6, #PHYCONTROL1_OFFSET]
+	ldreq	r1, =0x0
+	streq	r1, [r6, #PHYCONTROL2_OFFSET]
 
 	/* DLL on */
-	ldr	r1, =0x50101002
-	str	r1, [r6, #0x018]			@ S5P_PHYCONTROL0
+	ldreq	r1, =0x50101002
+	ldrne	r1, =0x003B3B02
+	str	r1, [r6, #PHYCONTROL0_OFFSET]
 
 	/* DLL start */
-	ldr	r1, =0x50101003
-	str	r1, [r6, #0x018]			@ S5P_PHYCONTROL0
+	ldreq	r1, =0x50101003
+	ldrne	r1, =0x003B3B03
+	str	r1, [r6, #PHYCONTROL0_OFFSET]
 
 	/* Force value locking for DLL off */
-	str	r1, [r6, #0x018]			@ S5P_PHYCONTROL0
+	str	r1, [r6, #PHYCONTROL0_OFFSET]
 
 	/* DLL off */
-	ldr	r1, =0x50101001
-	str	r1, [r6, #0x018]			@ S5P_PHYCONTROL0
+	ldreq	r1, =0x50101001
+	ldrne	r1, =0x003B3B01
+	str	r1, [r6, #PHYCONTROL0_OFFSET]
 
 	/* auto refresh off */
 	ldr	r1, =0xff001010
-	str	r1, [r6, #0x000]			@ S5P_CONCONTROL
+	str	r1, [r6, #CONCONTROL_OFFSET]
 
 	/*
 	 * Burst Length 4, 2 chips, 32-bit, LPDDR
 	 * OFF: dynamic self refresh, force precharge, dynamic power down off
 	 */
-	ldr	r1, =0x00212100
-	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
+	ldreq	r1, =0x00212100
+	ldrne	r1, =0x00202100
+	str	r1, [r6, #MEMCONTROL_OFFSET]
 
 	/*
 	 * Note:
@@ -88,7 +92,7 @@ swap_memory:
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	orreq	r1, r1, #0x08000000
-	str	r1, [r6, #0x008]			@ S5P_MEMCONFIG0
+	str	r1, [r6, #MEMCONFIG0_OFFSET]
 
 	/*
 	 * Bank1
@@ -103,10 +107,12 @@ swap_memory:
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	biceq	r1, r1, #0x08000000
-	str	r1, [r6, #0x00c]			@ S5P_MEMCONFIG1
+	str	r1, [r6, #MEMCONFIG1_OFFSET]
 
-	ldr	r1, =0x20000000
-	str	r1, [r6, #0x014]			@ S5P_PRECHCONFIG
+	cmp	r7, r8
+	ldreq	r1, =0x20000000
+	ldrne	r1, =0xF0000000
+	str	r1, [r6, #PRECHCONFIG_OFFSET]
 
 	/*
 	 * FIXME: Please verify these values
@@ -119,16 +125,19 @@ swap_memory:
 	ldr	r1, =0x0000050e
 	str	r1, [r6, #0x030]			@ S5P_TIMINGAREF
 
-	/* 166 MHz */
-	ldr	r1, =0x0c233287
+	/* 166/200 MHz */
+	ldreq	r1, =0x0c233287
+	ldrne	r1, =0x14233287
 	str	r1, [r6, #0x034]			@ S5P_TIMINGROW
 
 	/* twtr=3 twr=2 trtp=3 cl=3 wl=3 rl=3 */
-	ldr	r1, =0x32330303
+	ldreq	r1, =0x32330303
+	ldrne	r1, =0x12130005
 	str	r1, [r6, #0x038]			@ S5P_TIMINGDATA
 
 	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
-	ldr	r1, =0x04141433
+	ldreq	r1, =0x04141433
+	ldrne	r1, =0x0E140222
 	str	r1, [r6, #0x03C]			@ S5P_TIMINGPOWER
 
 	/* chip0 Deselect */
@@ -168,7 +177,8 @@ swap_memory:
 	str	r1, [r6, #0x010]			@ S5P_DIRECTCMD
 
 	/* auto refresh on */
-	ldr	r1, =0xff002030
+	ldreq	r1, =0xff002030
+	ldrne	r1, =0xff001030
 	str	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
 	/* PwrdnConfig */

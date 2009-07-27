@@ -36,8 +36,6 @@
 #define S5P_PA_VIC0		S5P_ADDR(0x04000000)    /* Vector Interrupt Controller 0 */
 #define S5P_PA_VIC1		S5P_ADDR(0x04100000)    /* Vector Interrupt Controller 1 */
 #define S5P_PA_VIC2		S5P_ADDR(0x04200000)    /* Vector Interrupt Controller 2 */
-#define S5P_PA_DMC		S5P_ADDR(0x06000000)    /* Dram Memory Controller */
-#define S5P_PA_SROMC		S5P_ADDR(0x07000000)    /* SROM Controller */
 
 /* Note that write the macro by address order */
 #define S5PC100_VIC0_BASE	0xE4000000
