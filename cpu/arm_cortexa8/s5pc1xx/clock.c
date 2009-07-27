@@ -42,7 +42,7 @@
 
 static int s5p1xx_clock_read_reg(int offset)
 {
-	return readl(S5P_CLOCK_BASE + offset);
+	return readl(S5PC1XX_CLOCK_BASE + offset);
 }
 
 /* ------------------------------------------------------------------------- */
