@@ -190,18 +190,18 @@ wakeup_reset:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r6, =S5P_PA_CLK			@ 0xE0100000
+	ldr	r0, =S5PC1XX_CLOCK_BASE		@ 0xE0100000
 
 	/* Check S5PC100 */
 	cmp	r7, r8
 	bne	110f
-
+100:
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
-	str	r1, [r6, #0x000]		@ S5P_APLL_LOCK
-	str	r1, [r6, #0x004]		@ S5P_MPLL_LOCK
-	str	r1, [r6, #0x008]		@ S5P_EPLL_LOCK
-	str	r1, [r6, #0x00C]		@ S5P_HPLL_LOCK
+	str	r1, [r0, #0x000]		@ S5PC100_APLL_LOCK
+	str	r1, [r0, #0x004]		@ S5PC100_MPLL_LOCK
+	str	r1, [r0, #0x008]		@ S5PC100_EPLL_LOCK
+	str	r1, [r0, #0x00C]		@ S5PC100_HPLL_LOCK
 
 	/* S5P_APLL_CON */
 #ifdef CONFIG_CLK_667_166_83
@@ -221,24 +221,24 @@ system_clock_init:
 #else
 #error you should set the correct clock configuration
 #endif
-	str	r1, [r6, #0x100]
+	str	r1, [r0, #0x100]
 	/* S5P_MPLL_CON */
 	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
-	str	r1, [r6, #0x104]
+	str	r1, [r0, #0x104]
 	/* S5P_EPLL_CON */
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
-	str	r1, [r6, #0x108]
+	str	r1, [r0, #0x108]
 	/* S5P_HPLL_CON */
 	ldr	r1, =0x80600603		@ SDIV 3, PDIV 6, MDIV 96
-	str	r1, [r6, #0x10C]
+	str	r1, [r0, #0x10C]
 	b	200f
 110:
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
-	str	r1, [r6, #0x000]		@ S5P_APLL_LOCK
-	str	r1, [r6, #0x008]		@ S5P_MPLL_LOCK
-	str	r1, [r6, #0x010]		@ S5P_EPLL_LOCK
-	str	r1, [r6, #0x020]		@ S5P_VPLL_LOCK
+	str	r1, [r0, #0x000]		@ S5PC110_APLL_LOCK
+	str	r1, [r0, #0x008]		@ S5PC110_MPLL_LOCK
+	str	r1, [r0, #0x010]		@ S5PC110_EPLL_LOCK
+	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
 
 	/* S5P_APLL_CON */
 #ifdef CONFIG_CLK_667_166_83
@@ -259,20 +259,20 @@ system_clock_init:
 #error you should set the correct clock configuration
 #endif
 	ldr	r1, =0x80C80601
-	str	r1, [r6, #0x100]
+	str	r1, [r0, #0x100]
 	/* S5P_MPLL_CON */
 	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
-	str	r1, [r6, #0x108]
+	str	r1, [r0, #0x108]
 	/* S5P_EPLL_CON */
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
-	str	r1, [r6, #0x110]
+	str	r1, [r0, #0x110]
 	/* S5P_VPLL_CON */
 	ldr	r1, =0x80600603		@ SDIV 3, PDIV 6, MDIV 96
-	str	r1, [r6, #0x120]
+	str	r1, [r0, #0x120]
 
 200:
 	/* Set Clock divider */
-	ldr	r1, [r6, #0x300]
+	ldr	r1, [r0, #0x300]
 	ldr	r2, =0x00003fff
 	bic	r1, r1, r2
 #ifdef CONFIG_CLK_800_166_66
@@ -285,17 +285,17 @@ system_clock_init:
 	ldr	r2, =0x00011301
 #endif
 	orr	r1, r1, r2
-	str	r1, [r6, #0x300]
-	ldr	r1, [r6, #0x304]
+	str	r1, [r0, #0x300]
+	ldr	r1, [r0, #0x304]
 	ldr	r2, =0x00011110
 	orr	r1, r1, r2
-	str	r1, [r6, #0x304]
+	str	r1, [r0, #0x304]
 	ldr	r1, =0x00000001
-	str	r1, [r6, #0x308]
+	str	r1, [r0, #0x308]
 
 	/* Set Source Clock */
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
-	str	r1, [r6, #0x200]		@ S5P_CLK_SRC0
+	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
