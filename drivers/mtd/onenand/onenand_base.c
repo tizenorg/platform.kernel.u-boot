@@ -475,10 +475,6 @@ static int onenand_check_bufferram(struct mtd_info *mtd, loff_t addr)
 	int blockpage, found = 0;
 	unsigned int i;
 
-#if defined(CONFIG_S3C64XX) || defined(CONFIG_S5PC100)
-	return 0;
-#endif
-
 	if (ONENAND_IS_2PLANE(this))
 		blockpage = onenand_get_2x_blockpage(mtd, addr);
 	else
@@ -693,6 +689,10 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 	while (!ret) {
 		/* If there is more to load then start next load */
 		from += thislen;
+
+		if (this->options & ONENAND_DISABLE_READ_WHILE_LOAD)
+			goto skip_read_while_load;
+
 		if (read + thislen < len) {
 			this->command(mtd, ONENAND_CMD_READ, from, writesize);
 			/*
@@ -708,7 +708,7 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 				boundary = 0;
 			ONENAND_SET_PREV_BUFFERRAM(this);
 		}
-
+skip_read_while_load:
 		/* While load is going, read from last bufferRAM */
 		this->read_bufferram(mtd, from - thislen, ONENAND_DATARAM, buf, column, thislen);
 
@@ -733,7 +733,10 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 		/* Set up for next read from bufferRAM */
 		if (unlikely(boundary))
 			this->write_word(ONENAND_DDP_CHIP1, this->base + ONENAND_REG_START_ADDRESS2);
-		ONENAND_SET_NEXT_BUFFERRAM(this);
+		if (this->options & ONENAND_DISABLE_READ_WHILE_LOAD)
+			this->command(mtd, ONENAND_CMD_READ, from, writesize);
+		else
+			ONENAND_SET_NEXT_BUFFERRAM(this);
 		buf += thislen;
 		thislen = min_t(int, writesize, len - read);
 		column = 0;
