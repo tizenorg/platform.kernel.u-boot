@@ -80,7 +80,8 @@ lowlevel_init:
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	/* IO retension release */
-	ldr	r0, =S5P_OTHERS				@0xE0108200
+	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
+	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
 	ldr	r1, [r0]
 	ldr	r2, =(1 << 31)				@IO_RET_REL
 	orr	r1, r1, r2
@@ -140,14 +141,22 @@ lowlevel_init:
 
 	bl	mem_ctrl_asm_init
 
+	cmp	r7, r8
 	/* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =S5P_RST_STAT
+	ldreq	r0, =S5PC100_RST_STAT
+	ldrne	r0, =S5PC110_RST_STAT
 	ldr	r1, [r0]
+	bne	110f
 	bic	r1, r1, #0xfffffff7
-	cmp	r1, #0x8
+	mov	r2, #(1 << 3)
+	b	200f
+110:
+	bic	r1, r1, #0xfffeffff
+	mov	r2, #(1 << 16)
+200:
+	cmp	r1, r2
 	beq	wakeup_reset
 #endif
-
 1:
 	mov	lr, r9
 	mov	pc, lr
@@ -169,12 +178,14 @@ wakeup_reset:
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 
 	/* Clear wakeup status register */
-	ldr	r0, =S5P_WAKEUP_STAT
+	ldreq	r0, =S5PC100_WAKEUP_STAT
+	ldrne	r0, =S5PC110_WAKEUP_STAT
 	ldr	r1, [r0]
 	str	r1, [r0]
 
 	/* Load return address and jump to kernel */
-	ldr	r0, =S5P_INFORM0
+	ldreq	r0, =S5PC100_INFORM0
+	ldrne	r0, =S5PC110_INFORM0
 
 	/* r1 = physical address of s5pc100_cpu_resume function */
 	ldr	r1, [r0]
@@ -231,13 +242,43 @@ system_clock_init:
 	/* S5P_HPLL_CON */
 	ldr	r1, =0x80600603		@ SDIV 3, PDIV 6, MDIV 96
 	str	r1, [r0, #0x10C]
+
+	ldr     r1, [r0, #0x300]
+	ldr     r2, =0x00003fff
+	bic     r1, r1, r2
+#ifdef CONFIG_CLK_800_166_66
+	ldr     r2, =0x00011401
+#elif defined(CONFIG_CLK_500_166_66)
+	ldr     r2, =0x00011201
+#elif defined(CONFIG_CLK_666_166_66)
+	ldr     r2, =0x00011300
+#else
+	ldr     r2, =0x00011301
+#endif
+	orr	r1, r1, r2
+	str	r1, [r0, #0x300]
+	ldr     r1, [r0, #0x304]
+	ldr     r2, =0x00011110
+	orr     r1, r1, r2
+	str     r1, [r0, #0x304]
+	ldr     r1, =0x00000001
+	str     r1, [r0, #0x308]
+
+	/* Set Source Clock */
+	ldr	r1, =0x00001111			@ A, M, E, HPLL Muxing
+	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
+
 	b	200f
 110:
+	/* Set Clock divider */
+	ldr	r1, =0x14131330		@ 1:1:4:4, 1:4:5
+	str	r1, [r0, #0x300]
+
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r0, #0x000]		@ S5PC110_APLL_LOCK
-	str	r1, [r0, #0x008]		@ S5PC110_MPLL_LOCK
-	str	r1, [r0, #0x010]		@ S5PC110_EPLL_LOCK
+	str	r1, [r0, #0x010]		@ S5PC110_MPLL_LOCK
+	str	r1, [r0, #0x018]		@ S5PC110_EPLL_LOCK
 	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
 
 	/* S5PC110_APLL_CON */
@@ -253,22 +294,20 @@ system_clock_init:
 	ldr	r1, =0x806C0603		@  54MHz
 	str	r1, [r0, #0x120]
 
-200:
-	/* Set Clock divider */
-	ldr	r2, =0x14131330		@ 1:1:4:4, 1:4:5
-	str	r1, [r0, #0x300]
-
 	/* Set Source Clock */
 	ldr	r1, =0x10001111			@ A, M, E, VPLL Muxing
 	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
 
 	/* OneDRAM(DMC0) clock setting */
-	ldr	r2, =0x01000000
-	orr	r1, r1, r2
+	ldr	r1, =0x01000000
 	str	r1, [r0, #0x218]
 	ldr	r1, =0x30000000
 	str	r1, [r0, #0x318]
 
+	ldr	r1, =0x00909000
+	str	r1, [r0, #0x500]
+
+200:
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1

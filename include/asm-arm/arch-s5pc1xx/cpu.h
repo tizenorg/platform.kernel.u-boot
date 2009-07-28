@@ -30,7 +30,6 @@
 #define S5P_ADDR(x)		(S5PC1XX_ADDR_BASE + (x))
 
 #define S5PC1XX_CLOCK_BASE	0xE0100000
-#define S5P_PA_PWR		S5P_ADDR(0x00108000)	/* Power Base */
 #define S5P_PA_CLK_OTHERS	S5P_ADDR(0x00200000)	/* Clock Others Base */
 
 /* Note that write the macro by address order */
