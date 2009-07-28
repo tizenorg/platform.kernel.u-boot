@@ -34,9 +34,9 @@
 u32 remode_wakeup;
 u16 config_value;
 
-int s3c_receive_done;
-int s3c_got_header;
-int s3c_usb_connected;
+int s5p_receive_done;
+int s5p_got_header;
+int s5p_usb_connected;
 
 USB_OPMODE op_mode = USB_CPU;
 USB_SPEED speed = USB_HIGH;
@@ -295,7 +295,7 @@ enum DESCRIPTOR_SIZE {
 #define CONFIG_DESC_TOTAL_SIZE	\
 	(CONFIG_DESC_SIZE+INTERFACE_DESC_SIZE+ENDPOINT_DESC_SIZE*2)
 
-void s3c_usb_init_phy(void)
+void s5p_usb_init_phy(void)
 {
 	writel(0x0, S5P_OTG_PHYPWR);
 #ifdef CONFIG_OTG_CLK_OSCC
@@ -309,7 +309,7 @@ void s3c_usb_init_phy(void)
 	udelay(20);
 }
 
-void s3c_usb_core_soft_reset(void)
+void s5p_usb_core_soft_reset(void)
 {
 	u32 tmp;
 
@@ -320,7 +320,7 @@ void s3c_usb_core_soft_reset(void)
 	} while (!(tmp & AHB_MASTER_IDLE));
 }
 
-void s3c_usb_wait_cable_insert(void)
+void s5p_usb_wait_cable_insert(void)
 {
 	u32 tmp;
 	int ucFirst = 1;
@@ -339,7 +339,7 @@ void s3c_usb_wait_cable_insert(void)
 	} while (1);
 }
 
-void s3c_usb_init_core(void)
+void s5p_usb_init_core(void)
 {
 	writel(PTXFE_HALF | NPTXFE_HALF | MODE_SLAVE | BURST_SINGLE |
 			GBL_INT_UNMASK, S5P_OTG_GAHBCFG);
@@ -357,7 +357,7 @@ void s3c_usb_init_core(void)
 	       S5P_OTG_GUSBCFG);
 }
 
-void s3c_usb_check_current_mode(u8 *pucMode)
+void s5p_usb_check_current_mode(u8 *pucMode)
 {
 	u32 tmp;
 
@@ -365,7 +365,7 @@ void s3c_usb_check_current_mode(u8 *pucMode)
 	*pucMode = tmp & 0x1;
 }
 
-void s3c_usb_set_soft_disconnect(void)
+void s5p_usb_set_soft_disconnect(void)
 {
 	u32 tmp;
 
@@ -374,7 +374,7 @@ void s3c_usb_set_soft_disconnect(void)
 	writel(tmp, S5P_OTG_DCTL);
 }
 
-void s3c_usb_clear_soft_disconnect(void)
+void s5p_usb_clear_soft_disconnect(void)
 {
 	u32 tmp;
 
@@ -383,7 +383,7 @@ void s3c_usb_clear_soft_disconnect(void)
 	writel(tmp, S5P_OTG_DCTL);
 }
 
-void s3c_usb_init_device(void)
+void s5p_usb_init_device(void)
 {
 	writel(1 << 18 | otg.speed << 0, S5P_OTG_DCFG);
 
@@ -391,7 +391,7 @@ void s3c_usb_init_device(void)
 			INT_SUSPEND | INT_RX_FIFO_NOT_EMPTY, S5P_OTG_GINTMSK);
 }
 
-int s3c_usbctl_init(void)
+int s5p_usbctl_init(void)
 {
 	u8 ucMode;
 
@@ -402,17 +402,17 @@ int s3c_usbctl_init(void)
 	otg.ep0_state = EP0_STATE_INIT;
 	otg.ep0_substate = 0;
 
-	s3c_usb_init_phy();
-	s3c_usb_core_soft_reset();
-	s3c_usb_wait_cable_insert();
-	s3c_usb_init_core();
-	s3c_usb_check_current_mode(&ucMode);
+	s5p_usb_init_phy();
+	s5p_usb_core_soft_reset();
+	s5p_usb_wait_cable_insert();
+	s5p_usb_init_core();
+	s5p_usb_check_current_mode(&ucMode);
 
 	if (ucMode == INT_DEV_MODE) {
-		s3c_usb_set_soft_disconnect();
+		s5p_usb_set_soft_disconnect();
 		udelay(10);
-		s3c_usb_clear_soft_disconnect();
-		s3c_usb_init_device();
+		s5p_usb_clear_soft_disconnect();
+		s5p_usb_init_device();
 		return 0;
 	} else {
 		printf("Error : Current Mode is Host\n");
@@ -420,16 +420,16 @@ int s3c_usbctl_init(void)
 	}
 }
 
-int s3c_usbc_activate(void)
+int s5p_usbc_activate(void)
 {
 	return 0;
 }
 
-void s3c_usb_stop(void)
+void s5p_usb_stop(void)
 {
 }
 
-void s3c_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
+void s5p_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 {
 	if (type == EP_TYPE_CONTROL) {
 		writel((pktcnt << 19) | (xfersize << 0),
@@ -440,7 +440,7 @@ void s3c_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 	}
 }
 
-void s3c_usb_set_outep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
+void s5p_usb_set_outep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 {
 	if (type == EP_TYPE_CONTROL) {
 		writel((1 << 29) | (pktcnt << 19) | (xfersize << 0),
@@ -451,7 +451,7 @@ void s3c_usb_set_outep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 	}
 }
 
-void s3c_usb_write_ep0_fifo(u8 *buf, int num)
+void s5p_usb_write_ep0_fifo(u8 *buf, int num)
 {
 	int i;
 	u32 Wr_Data = 0;
@@ -466,7 +466,7 @@ void s3c_usb_write_ep0_fifo(u8 *buf, int num)
 	}
 }
 
-void s3c_usb_write_in_fifo(u8 *buf, int num)
+void s5p_usb_write_in_fifo(u8 *buf, int num)
 {
 	int i;
 	u32 data = 0;
@@ -481,7 +481,7 @@ void s3c_usb_write_in_fifo(u8 *buf, int num)
 	}
 }
 
-void s3c_usb_read_out_fifo(u8 *buf, int num)
+void s5p_usb_read_out_fifo(u8 *buf, int num)
 {
 	int i;
 	u32 data;
@@ -496,7 +496,7 @@ void s3c_usb_read_out_fifo(u8 *buf, int num)
 	}
 }
 
-void s3c_usb_get_desc(void)
+void s5p_usb_get_desc(void)
 {
 	switch (otg.dev_req.wValue_H) {
 	case DEVICE_DESCRIPTOR:
@@ -558,7 +558,7 @@ void s3c_usb_get_desc(void)
 	}
 }
 
-void s3c_usb_clear_feature(void)
+void s5p_usb_clear_feature(void)
 {
 	switch (otg.dev_req.bmRequestType) {
 	case DEVICE_RECIPIENT:
@@ -587,7 +587,7 @@ void s3c_usb_clear_feature(void)
 	otg.ep0_state = EP0_STATE_INIT;
 }
 
-void s3c_usb_set_feature(void)
+void s5p_usb_set_feature(void)
 {
 	switch (otg.dev_req.bmRequestType) {
 	case DEVICE_RECIPIENT:
@@ -627,7 +627,7 @@ void s3c_usb_set_feature(void)
 	otg.ep0_state = EP0_STATE_INIT;
 }
 
-void s3c_usb_get_status(void)
+void s5p_usb_get_status(void)
 {
 	switch (otg.dev_req.bmRequestType) {
 	case (0x80):	/*device */
@@ -656,7 +656,7 @@ void s3c_usb_get_status(void)
 	}
 }
 
-void s3c_usb_ep0_int_hndlr(void)
+void s5p_usb_ep0_int_hndlr(void)
 {
 	u16 i;
 	u32 buf[2] = {0x0000, };
@@ -693,11 +693,11 @@ void s3c_usb_ep0_int_hndlr(void)
 			otg.set_config = 1;
 			otg.ep0_state = EP0_STATE_INIT;
 
-			s3c_usb_connected = 1;
+			s5p_usb_connected = 1;
 			break;
 
 		case STANDARD_GET_CONFIGURATION:
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 
 			/*ep0 enable, clear nak, next ep0, 8byte */
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
@@ -706,19 +706,19 @@ void s3c_usb_ep0_int_hndlr(void)
 			break;
 
 		case STANDARD_GET_DESCRIPTOR:
-			s3c_usb_get_desc();
+			s5p_usb_get_desc();
 			break;
 
 		case STANDARD_CLEAR_FEATURE:
-			s3c_usb_clear_feature();
+			s5p_usb_clear_feature();
 			break;
 
 		case STANDARD_SET_FEATURE:
-			s3c_usb_set_feature();
+			s5p_usb_set_feature();
 			break;
 
 		case STANDARD_GET_STATUS:
-			s3c_usb_get_status();
+			s5p_usb_get_status();
 			break;
 
 		case STANDARD_GET_INTERFACE:
@@ -739,7 +739,7 @@ void s3c_usb_ep0_int_hndlr(void)
 		}
 	}
 
-	s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, otg.ctrl_max_pktsize);
+	s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, otg.ctrl_max_pktsize);
 
 	if (otg.speed == USB_HIGH) {
 		/*clear nak, next ep0, 64byte */
@@ -753,39 +753,39 @@ void s3c_usb_ep0_int_hndlr(void)
 
 }
 
-void s3c_usb_set_otherspeed_conf_desc(u32 length)
+void s5p_usb_set_otherspeed_conf_desc(u32 length)
 {
 	/* Standard device descriptor */
 	if (otg.speed == USB_HIGH) {
 		if (length == 9) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 9);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 9);
 			writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo((u8 *) &config_full, 9);
+			s5p_usb_write_ep0_fifo((u8 *) &config_full, 9);
 		} else if (length == 32) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 32);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 32);
 			writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo((u8 *) &config_full_total, 32);
+			s5p_usb_write_ep0_fifo((u8 *) &config_full_total, 32);
 		}
 		otg.ep0_state = EP0_STATE_INIT;
 	} else {
 		if (length == 9) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo((u8 *) &config_high, 8);
+			s5p_usb_write_ep0_fifo((u8 *) &config_high, 8);
 		} else if (length == 32) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
 			writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo((u8 *) &config_high_total, 8);
+			s5p_usb_write_ep0_fifo((u8 *) &config_high_total, 8);
 		}
 		otg.ep0_state = EP0_STATE_GD_OTHER_SPEED_HIGH_1;
 	}
 }
 
-void s3c_usb_transfer_ep0(void)
+void s5p_usb_transfer_ep0(void)
 {
 	switch (otg.ep0_state) {
 	case EP0_STATE_INIT:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 0);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 0);
 
 		/*ep0 enable, clear nak, next ep0, 8byte */
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
@@ -796,33 +796,33 @@ void s3c_usb_transfer_ep0(void)
 			/*ep0 enable, clear nak, next ep0, max 64byte */
 			writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < DEVICE_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						DEVICE_DESC_SIZE);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
 						DEVICE_DESC_SIZE);
 			}
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < DEVICE_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						DEVICE_DESC_SIZE);
 			}
 
 			if (otg.req_length < FS_CTRL_PKT_SIZE) {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
 						otg.req_length);
 				otg.ep0_state = EP0_STATE_INIT;
 			} else {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)),
 						FS_CTRL_PKT_SIZE);
 				otg.ep0_state = EP0_STATE_GD_DEV_1;
 			}
@@ -832,12 +832,12 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_DEV_1:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < (2 * FS_CTRL_PKT_SIZE)) {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
 					FS_CTRL_PKT_SIZE,
 					otg.req_length - FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
 					FS_CTRL_PKT_SIZE, FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_GD_DEV_2;
 		}
@@ -846,11 +846,11 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_DEV_2:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < DEVICE_DESC_SIZE) {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
 					(2 * FS_CTRL_PKT_SIZE),
 					otg.req_length - 2 * FS_CTRL_PKT_SIZE);
 		} else {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.dev)) +
 					(2 * FS_CTRL_PKT_SIZE),
 					DEVICE_DESC_SIZE - 2 * FS_CTRL_PKT_SIZE);
 		}
@@ -861,32 +861,32 @@ void s3c_usb_transfer_ep0(void)
 		if (otg.speed == USB_HIGH) {
 			writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < CONFIG_DESC_TOTAL_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						CONFIG_DESC_TOTAL_SIZE);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						CONFIG_DESC_TOTAL_SIZE);
 			}
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < CONFIG_DESC_TOTAL_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						CONFIG_DESC_TOTAL_SIZE);
 			}
 			if (otg.req_length < FS_CTRL_PKT_SIZE) {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						otg.req_length);
 				otg.ep0_state = EP0_STATE_INIT;
 			} else {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						FS_CTRL_PKT_SIZE);
 				otg.ep0_state = EP0_STATE_GD_CFG_1;
 			}
@@ -896,12 +896,12 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_CFG_1:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < (2 * FS_CTRL_PKT_SIZE)) {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					FS_CTRL_PKT_SIZE,
 					(otg.req_length - FS_CTRL_PKT_SIZE));
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					FS_CTRL_PKT_SIZE, FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_GD_CFG_2;
 		}
@@ -910,12 +910,12 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_CFG_2:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < (3 * FS_CTRL_PKT_SIZE)) {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					(2 * FS_CTRL_PKT_SIZE),
 					otg.req_length - 2 * FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					(2 * FS_CTRL_PKT_SIZE), FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_GD_CFG_3;
 		}
@@ -924,12 +924,12 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_CFG_3:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < (4 * FS_CTRL_PKT_SIZE)) {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					(3 * FS_CTRL_PKT_SIZE),
 					otg.req_length - 3 * FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
-			s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+			s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 					(3 * FS_CTRL_PKT_SIZE), FS_CTRL_PKT_SIZE);
 			otg.ep0_state = EP0_STATE_GD_CFG_4;
 		}
@@ -942,80 +942,80 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_DEV_QUALIFIER:
 		writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
 		if (otg.req_length < 10) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 					otg.req_length);
-			s3c_usb_write_ep0_fifo((u8 *)qualifier_desc,
+			s5p_usb_write_ep0_fifo((u8 *)qualifier_desc,
 					otg.req_length);
 		} else {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 10);
-			s3c_usb_write_ep0_fifo((u8 *)qualifier_desc, 10);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 10);
+			s5p_usb_write_ep0_fifo((u8 *)qualifier_desc, 10);
 		}
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GD_OTHER_SPEED:
-		s3c_usb_set_otherspeed_conf_desc(otg.req_length);
+		s5p_usb_set_otherspeed_conf_desc(otg.req_length);
 		break;
 
 	case EP0_STATE_GD_OTHER_SPEED_HIGH_1:
 		if (otg.req_length == 9) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo(((u8 *) &config_high) + 8, 1);
+			s5p_usb_write_ep0_fifo(((u8 *) &config_high) + 8, 1);
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
-			s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
+			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo(((u8 *) &config_high) + 8, 8);
+			s5p_usb_write_ep0_fifo(((u8 *) &config_high) + 8, 8);
 			otg.ep0_state = EP0_STATE_GD_OTHER_SPEED_HIGH_2;
 		}
 		break;
 
 	case EP0_STATE_GD_OTHER_SPEED_HIGH_2:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo(((u8 *) &config_high) + 16, 8);
+		s5p_usb_write_ep0_fifo(((u8 *) &config_high) + 16, 8);
 		otg.ep0_state = EP0_STATE_GD_OTHER_SPEED_HIGH_3;
 		break;
 
 	case EP0_STATE_GD_OTHER_SPEED_HIGH_3:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 8);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo(((u8 *) &config_high) + 24, 8);
+		s5p_usb_write_ep0_fifo(((u8 *) &config_high) + 24, 8);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GD_CFG_ONLY_0:
 		if (otg.speed == USB_HIGH) {
 			if (otg.req_length < CONFIG_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 				writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						CONFIG_DESC_SIZE);
 				writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						CONFIG_DESC_SIZE);
 			}
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < CONFIG_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						CONFIG_DESC_SIZE);
 			}
 			if (otg.req_length < FS_CTRL_PKT_SIZE) {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						otg.req_length);
 				otg.ep0_state = EP0_STATE_INIT;
 			} else {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)),
 						FS_CTRL_PKT_SIZE);
 				otg.ep0_state = EP0_STATE_GD_CFG_ONLY_1;
 			}
@@ -1024,7 +1024,7 @@ void s3c_usb_transfer_ep0(void)
 
 	case EP0_STATE_GD_CFG_ONLY_1:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
+		s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.config)) +
 				FS_CTRL_PKT_SIZE,
 				CONFIG_DESC_SIZE - FS_CTRL_PKT_SIZE);
 		otg.ep0_state = EP0_STATE_INIT;
@@ -1033,34 +1033,34 @@ void s3c_usb_transfer_ep0(void)
 	case EP0_STATE_GD_IF_ONLY_0:
 		if (otg.speed == USB_HIGH) {
 			if (otg.req_length < INTERFACE_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 				writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						INTERFACE_DESC_SIZE);
 				writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
 						INTERFACE_DESC_SIZE);
 			}
 			otg.ep0_state = EP0_STATE_INIT;
 		} else {
 			writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 			if (otg.req_length < INTERFACE_DESC_SIZE) {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						otg.req_length);
 			} else {
-				s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
+				s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1,
 						INTERFACE_DESC_SIZE);
 			}
 			if (otg.req_length < FS_CTRL_PKT_SIZE) {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
 						otg.req_length);
 				otg.ep0_state = EP0_STATE_INIT;
 			} else {
-				s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
+				s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)),
 						FS_CTRL_PKT_SIZE);
 				otg.ep0_state = EP0_STATE_GD_IF_ONLY_1;
 			}
@@ -1069,7 +1069,7 @@ void s3c_usb_transfer_ep0(void)
 
 	case EP0_STATE_GD_IF_ONLY_1:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)) +
+		s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.intf)) +
 				FS_CTRL_PKT_SIZE,
 				INTERFACE_DESC_SIZE - FS_CTRL_PKT_SIZE);
 		otg.ep0_state = EP0_STATE_INIT;
@@ -1077,29 +1077,29 @@ void s3c_usb_transfer_ep0(void)
 
 	case EP0_STATE_GD_EP0_ONLY_0:
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, ENDPOINT_DESC_SIZE);
-		s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.ep1)),
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, ENDPOINT_DESC_SIZE);
+		s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.ep1)),
 				ENDPOINT_DESC_SIZE);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GD_EP1_ONLY_0:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, ENDPOINT_DESC_SIZE);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, ENDPOINT_DESC_SIZE);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo(((u8 *) &(otg.desc.ep2)),
+		s5p_usb_write_ep0_fifo(((u8 *) &(otg.desc.ep2)),
 				ENDPOINT_DESC_SIZE);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GD_STR_I0:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, STRING_DESC0_SIZE);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, STRING_DESC0_SIZE);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *)string_desc0, STRING_DESC0_SIZE);
+		s5p_usb_write_ep0_fifo((u8 *)string_desc0, STRING_DESC0_SIZE);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GD_STR_I1:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, sizeof(string_desc1));
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, sizeof(string_desc1));
 		if ((otg.ep0_substate * otg.ctrl_max_pktsize +
 			otg.ctrl_max_pktsize) <	sizeof(string_desc1)) {
 			if (otg.speed == USB_HIGH)
@@ -1107,7 +1107,7 @@ void s3c_usb_transfer_ep0(void)
 			else
 				writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 
-			s3c_usb_write_ep0_fifo((u8 *)string_desc1 +
+			s5p_usb_write_ep0_fifo((u8 *)string_desc1 +
 					(otg.ep0_substate * otg.ctrl_max_pktsize),
 					otg.ctrl_max_pktsize);
 			otg.ep0_state = EP0_STATE_GD_STR_I1;
@@ -1118,7 +1118,7 @@ void s3c_usb_transfer_ep0(void)
 			else
 				writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 
-			s3c_usb_write_ep0_fifo((u8 *)string_desc1 +
+			s5p_usb_write_ep0_fifo((u8 *)string_desc1 +
 					(otg.ep0_substate * otg.ctrl_max_pktsize),
 					sizeof(string_desc1) - (otg.ep0_substate *
 						otg.ctrl_max_pktsize));
@@ -1128,7 +1128,7 @@ void s3c_usb_transfer_ep0(void)
 		break;
 
 	case EP0_STATE_GD_STR_I2:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, sizeof(string_desc2));
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, sizeof(string_desc2));
 		if ((otg.ep0_substate * otg.ctrl_max_pktsize +
 			otg.ctrl_max_pktsize) < sizeof(string_desc2)) {
 			if (otg.speed == USB_HIGH)
@@ -1136,7 +1136,7 @@ void s3c_usb_transfer_ep0(void)
 			else
 				writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
 
-			s3c_usb_write_ep0_fifo((u8 *) string_desc2 +
+			s5p_usb_write_ep0_fifo((u8 *) string_desc2 +
 					(otg.ep0_substate * otg.ctrl_max_pktsize),
 					otg.ctrl_max_pktsize);
 			otg.ep0_state = EP0_STATE_GD_STR_I2;
@@ -1146,7 +1146,7 @@ void s3c_usb_transfer_ep0(void)
 				writel(EPEN_CNAK_EP0_64, S5P_OTG_DIEPCTL0);
 			else
 				writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-			s3c_usb_write_ep0_fifo((u8 *) string_desc2 +
+			s5p_usb_write_ep0_fifo((u8 *) string_desc2 +
 					(otg.ep0_substate * otg.ctrl_max_pktsize),
 					sizeof(string_desc2) - (otg.ep0_substate *
 						otg.ctrl_max_pktsize));
@@ -1156,44 +1156,44 @@ void s3c_usb_transfer_ep0(void)
 		break;
 
 	case EP0_STATE_INTERFACE_GET:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_intf, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_intf, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GET_STATUS0:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_status, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_status, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GET_STATUS1:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_status + 1, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_status + 1, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GET_STATUS2:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_status + 2, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_status + 2, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GET_STATUS3:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_status + 3, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_status + 3, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
 	case EP0_STATE_GET_STATUS4:
-		s3c_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 1);
 		writel(EPEN_CNAK_EP0_8, S5P_OTG_DIEPCTL0);
-		s3c_usb_write_ep0_fifo((u8 *) &get_status + 4, 1);
+		s5p_usb_write_ep0_fifo((u8 *) &get_status + 4, 1);
 		otg.ep0_state = EP0_STATE_INIT;
 		break;
 
@@ -1202,7 +1202,7 @@ void s3c_usb_transfer_ep0(void)
 	}
 }
 
-void s3c_usb_tx(char *tx_data, int tx_size)
+void s5p_usb_tx(char *tx_data, int tx_size)
 {
 	otg.up_ptr = (u8 *) tx_data;
 	otg.up_addr = (u8 *) tx_data;
@@ -1210,17 +1210,17 @@ void s3c_usb_tx(char *tx_data, int tx_size)
 
 	if (otg.op_mode == USB_CPU) {
 		if (otg.up_size > otg.bulkin_max_pktsize) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, 1,
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, 1,
 					otg.bulkin_max_pktsize);
 		} else {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, 1, otg.up_size);
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, 1, otg.up_size);
 		}
 
 		/*ep1 enable, clear nak, bulk, usb active, max pkt */
 		writel(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 |
 				otg.bulkin_max_pktsize << 0, S5P_OTG_DIEPCTL_IN);
 
-		s3c_usb_write_in_fifo(otg.up_ptr, otg.up_size);
+		s5p_usb_write_in_fifo(otg.up_ptr, otg.up_size);
 	} else if ((otg.op_mode == USB_DMA) && (otg.up_size > 0)) {
 		u32 pktcnt, remainder;
 
@@ -1236,10 +1236,10 @@ void s3c_usb_tx(char *tx_data, int tx_size)
 			pktcnt += 1;
 
 		if (pktcnt > 1023) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, 1023,
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, 1023,
 					otg.bulkin_max_pktsize * 1023);
 		} else {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, pktcnt,
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, pktcnt,
 					otg.up_size);
 		}
 
@@ -1249,13 +1249,13 @@ void s3c_usb_tx(char *tx_data, int tx_size)
 	}
 }
 
-void s3c_usb_rx(u32 fifo_cnt_byte)
+void s5p_usb_rx(u32 fifo_cnt_byte)
 {
 	if (otg.op_mode == USB_CPU) {
-		s3c_usb_read_out_fifo((u8 *)otg.dn_ptr, fifo_cnt_byte);
+		s5p_usb_read_out_fifo((u8 *)otg.dn_ptr, fifo_cnt_byte);
 		otg.dn_ptr += fifo_cnt_byte;
 
-		s3c_usb_set_outep_xfersize(EP_TYPE_BULK, 1,
+		s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1,
 				otg.bulkout_max_pktsize);
 
 		/*ep3 enable, clear nak, bulk, usb active, next ep3, max pkt */
@@ -1263,7 +1263,7 @@ void s3c_usb_rx(u32 fifo_cnt_byte)
 				otg.bulkout_max_pktsize << 0, S5P_OTG_DOEPCTL_OUT);
 
 		if (((u32)otg.dn_ptr - otg.dn_addr) >= (otg.dn_filesize))
-			s3c_receive_done = 1;
+			s5p_receive_done = 1;
 	} else if (otg.dn_filesize > otg.bulkout_max_pktsize) {
 		u32 pkt_cnt, remain_cnt;
 
@@ -1280,10 +1280,10 @@ void s3c_usb_rx(u32 fifo_cnt_byte)
 			pkt_cnt += 1;
 
 		if (pkt_cnt > 1023) {
-			s3c_usb_set_outep_xfersize(EP_TYPE_BULK, 1023,
+			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1023,
 					otg.bulkout_max_pktsize * 1023);
 		} else {
-			s3c_usb_set_outep_xfersize(EP_TYPE_BULK, pkt_cnt,
+			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, pkt_cnt,
 					otg.dn_filesize - otg.bulkout_max_pktsize);
 		}
 
@@ -1293,12 +1293,12 @@ void s3c_usb_rx(u32 fifo_cnt_byte)
 	}
 }
 
-void s3c_usb_int_bulkout(u32 fifo_cnt_byte)
+void s5p_usb_int_bulkout(u32 fifo_cnt_byte)
 {
-	s3c_usb_rx(fifo_cnt_byte);
+	s5p_usb_rx(fifo_cnt_byte);
 }
 
-void s3c_usb_dma_in_done(void)
+void s5p_usb_dma_in_done(void)
 {
 	s32 remain_cnt;
 
@@ -1314,10 +1314,10 @@ void s3c_usb_dma_in_done(void)
 			pktcnt += 1;
 
 		if (pktcnt > 1023) {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, 1023,
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, 1023,
 					otg.bulkin_max_pktsize * 1023);
 		} else {
-			s3c_usb_set_inep_xfersize(EP_TYPE_BULK, pktcnt,
+			s5p_usb_set_inep_xfersize(EP_TYPE_BULK, pktcnt,
 					remain_cnt);
 		}
 
@@ -1325,11 +1325,11 @@ void s3c_usb_dma_in_done(void)
 		writel(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 | BULK_IN_EP << 11 |
 				otg.bulkin_max_pktsize << 0, S5P_OTG_DIEPCTL_IN);
 
-		s3c_receive_done = 1;
+		s5p_receive_done = 1;
 	}
 }
 
-void s3c_usb_dma_out_done(void)
+void s5p_usb_dma_out_done(void)
 {
 	s32 remain_cnt;
 
@@ -1346,10 +1346,10 @@ void s3c_usb_dma_out_done(void)
 			pktcnt += 1;
 
 		if (pktcnt > 1023) {
-			s3c_usb_set_outep_xfersize(EP_TYPE_BULK, 1023,
+			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1023,
 					otg.bulkout_max_pktsize * 1023);
 		} else {
-			s3c_usb_set_outep_xfersize(EP_TYPE_BULK, pktcnt,
+			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, pktcnt,
 					remain_cnt);
 		}
 
@@ -1361,7 +1361,7 @@ void s3c_usb_dma_out_done(void)
 	}
 }
 
-void s3c_usb_set_all_outep_nak(void)
+void s5p_usb_set_all_outep_nak(void)
 {
 	u8 i;
 	u32 tmp;
@@ -1373,7 +1373,7 @@ void s3c_usb_set_all_outep_nak(void)
 	}
 }
 
-void s3c_usb_clear_all_outep_nak(void)
+void s5p_usb_clear_all_outep_nak(void)
 {
 	u8 i;
 	u32 tmp;
@@ -1385,7 +1385,7 @@ void s3c_usb_clear_all_outep_nak(void)
 	}
 }
 
-void s3c_usb_set_max_pktsize(USB_SPEED speed)
+void s5p_usb_set_max_pktsize(USB_SPEED speed)
 {
 	if (speed == USB_HIGH) {
 		otg.speed = USB_HIGH;
@@ -1400,7 +1400,7 @@ void s3c_usb_set_max_pktsize(USB_SPEED speed)
 	}
 }
 
-void s3c_usb_set_endpoint(void)
+void s5p_usb_set_endpoint(void)
 {
 	/* Unmask S5P_OTG_DAINT source */
 	writel(0xff, S5P_OTG_DIEPINT0);
@@ -1424,7 +1424,7 @@ void s3c_usb_set_endpoint(void)
 	}
 }
 
-void s3c_usb_set_descriptors(void)
+void s5p_usb_set_descriptors(void)
 {
 #if defined (CONFIG_SAMSUNG_USB)
 	otg.desc.dev.bLength 		= DEVICE_DESC_SIZE;
@@ -1520,7 +1520,7 @@ void s3c_usb_set_descriptors(void)
 	otg.desc.ep2.bInterval 		= 0x0;
 }
 
-void s3c_usb_check_speed(USB_SPEED *speed)
+void s5p_usb_check_speed(USB_SPEED *speed)
 {
 	u32 status;
 
@@ -1529,12 +1529,12 @@ void s3c_usb_check_speed(USB_SPEED *speed)
 	*speed = (USB_SPEED)((status & 0x6) >> 1);
 }
 
-int s3c_usb_check_setconf(void)
+int s5p_usb_check_setconf(void)
 {
 	return otg.set_config;
 }
 
-void s3c_usb_set_opmode(USB_OPMODE mode)
+void s5p_usb_set_opmode(USB_OPMODE mode)
 {
 	otg.op_mode = mode;
 
@@ -1543,8 +1543,8 @@ void s3c_usb_set_opmode(USB_OPMODE mode)
 
 	writel(MODE_SLAVE | BURST_SINGLE | GBL_INT_UNMASK, S5P_OTG_GAHBCFG);
 
-	s3c_usb_set_outep_xfersize(EP_TYPE_BULK, 1, otg.bulkout_max_pktsize);
-	s3c_usb_set_inep_xfersize(EP_TYPE_BULK, 1, 0);
+	s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1, otg.bulkout_max_pktsize);
+	s5p_usb_set_inep_xfersize(EP_TYPE_BULK, 1, 0);
 
 	/*bulk out ep enable, clear nak, bulk, usb active, next ep3, max pkt */
 	writel(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 |
@@ -1555,9 +1555,9 @@ void s3c_usb_set_opmode(USB_OPMODE mode)
 			otg.bulkin_max_pktsize << 0, S5P_OTG_DIEPCTL_IN);
 }
 
-void s3c_usb_reset(void)
+void s5p_usb_reset(void)
 {
-	s3c_usb_set_all_outep_nak();
+	s5p_usb_set_all_outep_nak();
 
 	otg.ep0_state = EP0_STATE_INIT;
 	writel(((1 << BULK_OUT_EP) | (1 << CONTROL_EP)) << 16 |
@@ -1574,7 +1574,7 @@ void s3c_usb_reset(void)
 	writel(NPTX_FIFO_SIZE << 16 | NPTX_FIFO_START_ADDR << 0,
 			S5P_OTG_GNPTXFSIZ);
 
-	s3c_usb_clear_all_outep_nak();
+	s5p_usb_clear_all_outep_nak();
 
 	/*clear device address */
 	writel(readl(S5P_OTG_DCFG) & ~(0x7f << 4), S5P_OTG_DCFG);
@@ -1583,7 +1583,7 @@ void s3c_usb_reset(void)
 		writel(readl(S5P_OTG_PCGCCTRL) & ~(1 << 0), S5P_OTG_PCGCCTRL);
 }
 
-int s3c_usb_set_init(void)
+int s5p_usb_set_init(void)
 {
 	u32 status;
 
@@ -1591,22 +1591,22 @@ int s3c_usb_set_init(void)
 
 	/* Set if Device is High speed or Full speed */
 	if (((status & 0x6) >> 1) == USB_HIGH) {
-		s3c_usb_set_max_pktsize(USB_HIGH);
+		s5p_usb_set_max_pktsize(USB_HIGH);
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
-		s3c_usb_set_max_pktsize(USB_FULL);
+		s5p_usb_set_max_pktsize(USB_FULL);
 	} else {
 		printf("Error:Neither High_Speed nor Full_Speed\n");
 		return 0;
 	}
 
-	s3c_usb_set_endpoint();
-	s3c_usb_set_descriptors();
-	s3c_usb_set_opmode(op_mode);
+	s5p_usb_set_endpoint();
+	s5p_usb_set_descriptors();
+	s5p_usb_set_opmode(op_mode);
 
 	return 1;
 }
 
-void s3c_usb_pkt_receive(void)
+void s5p_usb_pkt_receive(void)
 {
 	u32 rx_status;
 	u32 fifo_cnt_byte;
@@ -1614,12 +1614,12 @@ void s3c_usb_pkt_receive(void)
 	rx_status = readl(S5P_OTG_GRXSTSP);
 
 	if ((rx_status & (0xf << 17)) == SETUP_PKT_RECEIVED) {
-		s3c_usb_ep0_int_hndlr();
+		s5p_usb_ep0_int_hndlr();
 	} else if ((rx_status & (0xf << 17)) == OUT_PKT_RECEIVED) {
 		fifo_cnt_byte = (rx_status & 0x7ff0) >> 4;
 
 		if ((rx_status & BULK_OUT_EP) && (fifo_cnt_byte)) {
-			s3c_usb_int_bulkout(fifo_cnt_byte);
+			s5p_usb_int_bulkout(fifo_cnt_byte);
 			if (otg.op_mode == USB_CPU)
 				writel(INT_RESUME | INT_OUT_EP | INT_IN_EP |
 					INT_ENUMDONE | INT_RESET |
@@ -1639,7 +1639,7 @@ void s3c_usb_pkt_receive(void)
 	}
 }
 
-void s3c_usb_transfer(void)
+void s5p_usb_transfer(void)
 {
 	u32 ep_int;
 	u32 check_dma;
@@ -1656,7 +1656,7 @@ void s3c_usb_transfer(void)
 				uNTxFifoSpace = readl(S5P_OTG_GNPTXSTS) & 0xffff;
 			} while (uNTxFifoSpace < otg.ctrl_max_pktsize);
 
-			s3c_usb_transfer_ep0();
+			s5p_usb_transfer_ep0();
 		}
 
 		writel(ep_int_status, S5P_OTG_DIEPINT0);
@@ -1665,7 +1665,7 @@ void s3c_usb_transfer(void)
 	if (ep_int & ((1 << CONTROL_EP) << 16)) {
 		ep_int_status = readl(S5P_OTG_DOEPINT0);
 
-		s3c_usb_set_outep_xfersize(EP_TYPE_CONTROL, 1, 8);
+		s5p_usb_set_outep_xfersize(EP_TYPE_CONTROL, 1, 8);
 		writel(1u << 31 | 1 << 26, S5P_OTG_DOEPCTL0);
 
 		writel(ep_int_status, S5P_OTG_DOEPINT0);
@@ -1678,7 +1678,7 @@ void s3c_usb_transfer(void)
 		check_dma = readl(S5P_OTG_GAHBCFG);
 
 		if ((check_dma & MODE_DMA) && (ep_int_status & TRANSFER_DONE))
-			s3c_usb_dma_in_done();
+			s5p_usb_dma_in_done();
 	}
 
 	if (ep_int & ((1 << BULK_OUT_EP) << 16)) {
@@ -1688,11 +1688,11 @@ void s3c_usb_transfer(void)
 		check_dma = readl(S5P_OTG_GAHBCFG);
 
 		if ((check_dma & MODE_DMA) && (ep_int_status & TRANSFER_DONE))
-			s3c_usb_dma_out_done();
+			s5p_usb_dma_out_done();
 	}
 }
 
-void s3c_udc_int_hndlr(void)
+void s5p_udc_int_hndlr(void)
 {
 	u32 int_status;
 	int tmp;
@@ -1702,13 +1702,13 @@ void s3c_udc_int_hndlr(void)
 
 	if (int_status & INT_RESET) {
 		writel(INT_RESET, S5P_OTG_GINTSTS);
-		s3c_usb_reset();
+		s5p_usb_reset();
 	}
 
 	if (int_status & INT_ENUMDONE) {
 		writel(INT_ENUMDONE, S5P_OTG_GINTSTS);
 
-		tmp = s3c_usb_set_init();
+		tmp = s5p_usb_set_init();
 		if (tmp == 0)
 			return;
 	}
@@ -1736,7 +1736,7 @@ void s3c_udc_int_hndlr(void)
 				INT_RESET | INT_SUSPEND,
 				S5P_OTG_GINTMSK);
 
-		s3c_usb_pkt_receive();
+		s5p_usb_pkt_receive();
 
 		writel(INT_RESUME | INT_OUT_EP | INT_IN_EP | INT_ENUMDONE |
 				INT_RESET | INT_SUSPEND | INT_RX_FIFO_NOT_EMPTY,
@@ -1744,5 +1744,5 @@ void s3c_udc_int_hndlr(void)
 	}
 
 	if ((int_status & INT_IN_EP) || (int_status & INT_OUT_EP))
-		s3c_usb_transfer();
+		s5p_usb_transfer();
 }

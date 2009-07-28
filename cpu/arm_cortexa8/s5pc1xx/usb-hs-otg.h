@@ -266,16 +266,16 @@ enum STANDARD_REQUEST_CODE {
 	STANDARD_SYNCH_FRAME = 12
 };
 
-int s3c_usbctl_init(void);
-int s3c_usbc_activate(void);
-void s3c_usb_stop(void);
-void s3c_udc_int_hndlr(void);
-void s3c_usb_tx(char *tx_data, int tx_size);
+int s5p_usbctl_init(void);
+int s5p_usbc_activate(void);
+void s5p_usb_stop(void);
+void s5p_udc_int_hndlr(void);
+void s5p_usb_tx(char *tx_data, int tx_size);
 
 /* in usbd-otg-hs.c */
-extern unsigned int s3c_usbd_dn_addr;
-extern unsigned int s3c_usbd_dn_cnt;
-extern int s3c_got_header;
-extern int s3c_receive_done;
+extern unsigned int s5p_usbd_dn_addr;
+extern unsigned int s5p_usbd_dn_cnt;
+extern int s5p_got_header;
+extern int s5p_receive_done;
 
 #endif

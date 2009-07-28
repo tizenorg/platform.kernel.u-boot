@@ -47,7 +47,7 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
-static int s5p1xx_clock_read_reg(int offset)
+static int s5pc1xx_clock_read_reg(int offset)
 {
 	return readl(S5PC1XX_CLOCK_BASE + offset);
 }
@@ -71,31 +71,31 @@ unsigned long get_pll_clk(int pllreg)
 	switch (pllreg) {
 	case APLL:
 		if (cpu_is_s5pc110())
-			r = s5p1xx_clock_read_reg(S5PC110_APLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC110_APLL_CON_OFFSET);
 		else
-			r = s5p1xx_clock_read_reg(S5PC100_APLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC100_APLL_CON_OFFSET);
 		break;
 	case MPLL:
 		if (cpu_is_s5pc110())
-			r = s5p1xx_clock_read_reg(S5PC110_MPLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC110_MPLL_CON_OFFSET);
 		else
-			r = s5p1xx_clock_read_reg(S5PC100_MPLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC100_MPLL_CON_OFFSET);
 		break;
 	case EPLL:
 		if (cpu_is_s5pc110())
-			r = s5p1xx_clock_read_reg(S5PC110_EPLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC110_EPLL_CON_OFFSET);
 		else
-			r = s5p1xx_clock_read_reg(S5PC100_EPLL_CON_OFFSET);
+			r = s5pc1xx_clock_read_reg(S5PC100_EPLL_CON_OFFSET);
 		break;
 	case HPLL:
 		if (cpu_is_s5pc110())
 			hang();
-		r = s5p1xx_clock_read_reg(S5PC100_HPLL_CON_OFFSET);
+		r = s5pc1xx_clock_read_reg(S5PC100_HPLL_CON_OFFSET);
 		break;
 	case VPLL:
 		if (cpu_is_s5pc100())
 			hang();
-		r = s5p1xx_clock_read_reg(S5PC110_VPLL_CON_OFFSET);
+		r = s5pc1xx_clock_read_reg(S5PC110_VPLL_CON_OFFSET);
 		break;
 	default:
 		hang();
@@ -140,7 +140,7 @@ unsigned long get_arm_clk(void)
 	unsigned long dout_apll, armclk;
 	unsigned int apll_ratio, arm_ratio;
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 	if (cpu_is_s5pc110()) {
 		/* APLL_RATIO: [2:0] */
 		apll_ratio = div & 0x7;
@@ -179,7 +179,7 @@ unsigned long get_hclk(void)
 	unsigned long hclkd0;
 	uint div, d0_bus_ratio;
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 	/* D0_BUS_RATIO: [10:8] */
 	d0_bus_ratio = (div >> 8) & 0x7;
 
@@ -194,7 +194,7 @@ unsigned long get_pclkd0(void)
 	unsigned long pclkd0;
 	uint div, pclkd0_ratio;
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 	/* PCLKD0_RATIO: [14:12] */
 	pclkd0_ratio = (div >> 12) & 0x7;
 
@@ -209,7 +209,7 @@ unsigned long get_pclkd1(void)
 	unsigned long d1_bus, pclkd1;
 	uint div, d1_bus_ratio, pclkd1_ratio;
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV1_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV1_OFFSET);
 	/* D1_BUS_RATIO: [14:12] */
 	d1_bus_ratio = (div >> 12) & 0x7;
 	/* PCLKD1_RATIO: [18:16] */
@@ -234,7 +234,7 @@ unsigned long get_hclk_sys(int clk)
 	if (clk == CLK_M)
 		return get_hclk();
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 
 	/* HCLK_MSYS_RATIO: [10:8]
 	 * HCLK_DSYS_RATIO: [19:16]
@@ -256,7 +256,7 @@ unsigned long get_pclk_sys(int clk)
 	unsigned int offset;
 	unsigned int pclk_sys_ratio;
 
-	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 
 	/* PCLK_MSYS_RATIO: [14:12]
 	 * PCLK_DSYS_RATIO: [22:20]

@@ -36,8 +36,8 @@ int usb_receive_packet(void);
 
 void recv_setup(char *, int);
 
-extern int s3c_receive_done;
-extern int s3c_usb_connected;
+extern int s5p_receive_done;
+extern int s5p_usb_connected;
 extern otg_dev_t otg;
 
 int __usb_board_init(void)
@@ -53,8 +53,8 @@ int usb_board_init(void)
 struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 {
 	usbd->usb_init = usb_init;
-	usbd->usb_stop = s3c_usb_stop;
-	usbd->send_data = s3c_usb_tx;
+	usbd->usb_stop = s5p_usb_stop;
+	usbd->send_data = s5p_usb_tx;
 	usbd->recv_data = usb_receive_packet;
 	usbd->recv_setup = recv_setup;
 	usbd->tx_data = tx_data;
@@ -67,7 +67,7 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 }
 
 /* clear download informations */
-void s3c_usb_clear_dnfile_info(void)
+void s5p_usb_clear_dnfile_info(void)
 {
 	otg.dn_addr = 0;
 	otg.dn_filesize = 0;
@@ -75,7 +75,7 @@ void s3c_usb_clear_dnfile_info(void)
 }
 
 /* clear upload informations */
-void s3c_usb_clear_upfile_info(void)
+void s5p_usb_clear_upfile_info(void)
 {
 	otg.up_addr = 0;
 	otg.up_size = 0;
@@ -90,20 +90,20 @@ void usb_init(void)
 		return;
 	}
 
-	s3c_usbctl_init();
-	s3c_usbc_activate();
+	s5p_usbctl_init();
+	s5p_usbc_activate();
 
 	printf("USB Start!! - %s Speed\n",
 			otg.speed ? "Full" : "High");
 
-	while (!s3c_usb_connected) {
+	while (!s5p_usb_connected) {
 		if (S5P_USBD_DETECT_IRQ()) {
-			s3c_udc_int_hndlr();
+			s5p_udc_int_hndlr();
 			S5P_USBD_CLEAR_IRQ();
 		}
 	}
 
-	s3c_usb_clear_dnfile_info();
+	s5p_usb_clear_dnfile_info();
 
 	printf("Connected!!\n");
 }
@@ -115,12 +115,12 @@ int usb_receive_packet(void)
 {
 	while (1) {
 		if (S5P_USBD_DETECT_IRQ()) {
-			s3c_udc_int_hndlr();
+			s5p_udc_int_hndlr();
 			S5P_USBD_CLEAR_IRQ();
 		}
 
-		if (s3c_receive_done) {
-			s3c_receive_done = 0;
+		if (s5p_receive_done) {
+			s5p_receive_done = 0;
 			return otg.dn_filesize;
 		}
 	}
@@ -129,7 +129,7 @@ int usb_receive_packet(void)
 /* setup the download informations */
 void recv_setup(char *addr, int len)
 {
-	s3c_usb_clear_dnfile_info();
+	s5p_usb_clear_dnfile_info();
 
 	otg.dn_addr = (u32)addr;
 	otg.dn_ptr = (u32)addr;
