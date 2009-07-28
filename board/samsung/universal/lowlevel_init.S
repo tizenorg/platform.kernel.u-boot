@@ -240,62 +240,34 @@ system_clock_init:
 	str	r1, [r0, #0x010]		@ S5PC110_EPLL_LOCK
 	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
 
-	/* S5P_APLL_CON */
-#ifdef CONFIG_CLK_667_166_83
-	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1333MHz)
-#elif defined(CONFIG_CLK_666_166_66)
-	ldr	r1, =0x814d0301		@ SDIV 1, PDIV 3, MDIV 333 (1333MHz)
-#elif defined(CONFIG_CLK_600_150_75)
-	ldr	r1, =0x812C0300		@ SDIV 0, PDIV 3, MDIV 300 (1200MHz)
-#elif defined(CONFIG_CLK_533_133_66)
-	ldr	r1, =0x810b0300		@ SDIV 0, PDIV 3, MDIV 267 (1066MHz)
-#elif defined(CONFIG_CLK_500_166_66)
-	ldr	r1, =0x81f40301		@ SDIV 1, PDIV 3, MDIV 500 (1000MHz)
-#elif defined(CONFIG_CLK_467_117_59)
-	ldr	r1, =0x826E0401		@ SDIV 1, PDIV 4, MDIV 622 (933MHz)
-#elif defined(CONFIG_CLK_400_100_50)
-	ldr	r1, =0x81900301		@ SDIV 1, PDIV 3, MDIV 400 (800MHz)
-#else
-#error you should set the correct clock configuration
-#endif
-	ldr	r1, =0x80C80601
+	/* S5PC110_APLL_CON */
+	ldr	r1, =0x80C80601		@ 800MHz
 	str	r1, [r0, #0x100]
-	/* S5P_MPLL_CON */
-	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
+	/* S5PC110_MPLL_CON */
+	ldr	r1, =0x829B0C01		@ 667MHz
 	str	r1, [r0, #0x108]
-	/* S5P_EPLL_CON */
-	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
+	/* S5PC110_EPLL_CON */
+	ldr	r1, =0x80600602		@  96MHz
 	str	r1, [r0, #0x110]
-	/* S5P_VPLL_CON */
-	ldr	r1, =0x80600603		@ SDIV 3, PDIV 6, MDIV 96
+	/* S5PC110_VPLL_CON */
+	ldr	r1, =0x806C0603		@  54MHz
 	str	r1, [r0, #0x120]
 
 200:
 	/* Set Clock divider */
-	ldr	r1, [r0, #0x300]
-	ldr	r2, =0x00003fff
-	bic	r1, r1, r2
-#ifdef CONFIG_CLK_800_166_66
-	ldr	r2, =0x00011401
-#elif defined(CONFIG_CLK_500_166_66)
-	ldr	r2, =0x00011201
-#elif defined(CONFIG_CLK_666_166_66)
-	ldr	r2, =0x00011300
-#else
-	ldr	r2, =0x00011301
-#endif
-	orr	r1, r1, r2
+	ldr	r2, =0x14131330		@ 1:1:4:4, 1:4:5
 	str	r1, [r0, #0x300]
-	ldr	r1, [r0, #0x304]
-	ldr	r2, =0x00011110
-	orr	r1, r1, r2
-	str	r1, [r0, #0x304]
-	ldr	r1, =0x00000001
-	str	r1, [r0, #0x308]
 
 	/* Set Source Clock */
-	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
+	ldr	r1, =0x10001111			@ A, M, E, VPLL Muxing
 	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
+
+	/* OneDRAM(DMC0) clock setting */
+	ldr	r2, =0x01000000
+	orr	r1, r1, r2
+	str	r1, [r0, #0x218]
+	ldr	r1, =0x30000000
+	str	r1, [r0, #0x318]
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
