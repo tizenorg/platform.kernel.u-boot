@@ -27,7 +27,6 @@
 /*
  * Clock control
  */
-#define S5P_CLOCK_BASE			S5P_PA_CLK
 
 /* Clock Register */
 #define S5PC100_APLL_LOCK_OFFSET	0x0
