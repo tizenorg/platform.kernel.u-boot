@@ -73,7 +73,9 @@ lowlevel_init:
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 #ifdef CONFIG_ONENAND_IPL
+#if 0
 	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
+#endif
 #else
 	bic	r1, r1, #(1 << 1)
 #endif
@@ -82,10 +84,10 @@ lowlevel_init:
 	/* IO retension release */
 	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
 	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
-	ldr	r1, [r0]
-	ldr	r2, =(1 << 31)				@IO_RET_REL
-	orr	r1, r1, r2
-	str	r1, [r0]
+	ldreq	r1, [r0]
+	ldreq	r2, =(1 << 31)				@IO_RET_REL
+	orreq	r1, r1, r2
+	streq	r1, [r0]
 
 	/* Disable Watchdog */
 	cmp	r7, r8

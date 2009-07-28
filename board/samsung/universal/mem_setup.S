@@ -88,7 +88,8 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x20f80222
+	ldreq	r1, =0x20f80222
+	ldrne	r1, =0x20f02222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	orreq	r1, r1, #0x08000000
@@ -103,7 +104,9 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x28f80222
+	cmp	r7, r8
+	ldreq	r1, =0x28f80222
+	ldrne	r1, =0x28f02222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	biceq	r1, r1, #0x08000000
@@ -189,6 +192,8 @@ swap_memory:
 	ldr	r1, =0xff212100
 	str	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
+	cmp	r7, r8
+	bne	1f
 
 	/* Try to test memory area */
 	cmp	r4, #0x1
