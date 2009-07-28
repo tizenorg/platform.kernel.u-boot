@@ -113,6 +113,16 @@ static int onenand_block_read(loff_t from, size_t len,
 		*retlen += ops.retlen;
 	}
 
+	if (len < blocksize) {
+		ops.datbuf = buf;
+		ops.len = len;
+		ops.retlen = 0;
+		ret = mtd->read_oob(mtd, ofs, &ops);
+		if (ret)
+			printk("Read failed 0x%x, %d\n", (u32)ofs, ret);
+		*retlen += ops.retlen;
+	}
+
 	return 0;
 }
 
@@ -234,7 +244,7 @@ static int onenand_block_test(u32 start, u32 size)
 		end_block = mtd->size >> this->erase_shift;
 
 	blocks = start_block;
-	ofs = start;
+	ofs = start_block << this->erase_shift;
 	while (blocks < end_block) {
 		printf("\rTesting block %d at 0x%x", (u32)(ofs >> this->erase_shift), (u32)ofs);
 
@@ -265,9 +275,10 @@ static int onenand_block_test(u32 start, u32 size)
 			goto next;
 		}
 
-		if (memcmp(buf, verify_buf, blocksize))
+		if (memcmp(buf, verify_buf, blocksize)) {
 			printk("\nRead/Write test failed at 0x%x\n", (u32)ofs);
-
+			break;
+		}
 next:
 		ofs += blocksize;
 		blocks++;
