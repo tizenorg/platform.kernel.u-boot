@@ -337,6 +337,18 @@ void s5p_usb_init_phy(void)
 	udelay(20);
 }
 
+int s5p_usb_detect_irq(void)
+{
+	u32 status;
+	status = s5pc1xx_otg_read_reg(OTG_GINTSTS);
+	return (status & 0x800c3810);
+}
+
+void s5p_usb_clear_irq(void)
+{
+	s5pc1xx_otg_write_reg(0xffffffff, OTG_GINTSTS);
+}
+
 void s5p_usb_core_soft_reset(void)
 {
 	u32 tmp;

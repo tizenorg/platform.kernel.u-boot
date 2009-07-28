@@ -27,11 +27,6 @@
 #include <asm/arch/hardware.h>
 #include <asm/arch/usb-hs-otg.h>
 
-#define S5P_USBD_DETECT_IRQ()	(readl(S5P_OTG_GINTSTS) & 0x800c3810)
-#define S5P_USBD_CLEAR_IRQ()	do { \
-					writel(0xFFFFFFFF, (S5P_OTG_GINTSTS)); \
-				} while (0)
-
 #define make_word_c(w) __constant_cpu_to_le16(w)
 #define make_word(w)   __cpu_to_le16(w)
 
@@ -271,6 +266,8 @@ int s5p_usbc_activate(void);
 void s5p_usb_stop(void);
 void s5p_udc_int_hndlr(void);
 void s5p_usb_tx(char *tx_data, int tx_size);
+int s5p_usb_detect_irq(void);
+void s5p_usb_clear_irq(void);
 
 /* in usbd-otg-hs.c */
 extern unsigned int s5p_usbd_dn_addr;

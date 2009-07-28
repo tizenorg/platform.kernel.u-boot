@@ -97,9 +97,9 @@ void usb_init(void)
 			otg.speed ? "Full" : "High");
 
 	while (!s5p_usb_connected) {
-		if (S5P_USBD_DETECT_IRQ()) {
+		if (s5p_usb_detect_irq()) {
 			s5p_udc_int_hndlr();
-			S5P_USBD_CLEAR_IRQ();
+			s5p_usb_clear_irq();
 		}
 	}
 
@@ -114,9 +114,9 @@ void usb_init(void)
 int usb_receive_packet(void)
 {
 	while (1) {
-		if (S5P_USBD_DETECT_IRQ()) {
+		if (s5p_usb_detect_irq()) {
 			s5p_udc_int_hndlr();
-			S5P_USBD_CLEAR_IRQ();
+			s5p_usb_clear_irq();
 		}
 
 		if (s5p_receive_done) {
