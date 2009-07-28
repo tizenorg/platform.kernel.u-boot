@@ -325,12 +325,19 @@ static void s5pc1xx_otg_write_reg(int value, int offset)
 
 void s5p_usb_init_phy(void)
 {
-	s5pc1xx_phy_write_reg(0x0, OTG_PHYPWR);
+
+	if (cpu_is_s5pc110()) {
+		s5pc1xx_phy_write_reg(0xA0, OTG_PHYPWR);
+		s5pc1xx_phy_write_reg(0x3, OTG_PHYCTRL);
+	} else {
+		s5pc1xx_phy_write_reg(0x0, OTG_PHYPWR);
 #ifdef CONFIG_OTG_CLK_OSCC
-	s5pc1xx_phy_write_reg(0x22, OTG_PHYCTRL);
+		s5pc1xx_phy_write_reg(0x22, OTG_PHYCTRL);
 #else
-	s5pc1xx_phy_write_reg(0x2, OTG_PHYCTRL);
+		s5pc1xx_phy_write_reg(0x2, OTG_PHYCTRL);
 #endif
+	}
+
 	s5pc1xx_phy_write_reg(0x1, OTG_RSTCON);
 	udelay(20);
 	s5pc1xx_phy_write_reg(0x0, OTG_RSTCON);
@@ -438,9 +445,13 @@ int s5p_usbctl_init(void)
 	u8 ucMode;
 	u32 reg;
 
-	if (cpu_is_s5pc100()) {
+	if (cpu_is_s5pc110()) {
+		reg = readl(S5PC110_USB_PHY_CON);
+		reg |= (1 << 0); /* USB PHY0 enable */
+		writel(reg, S5PC110_USB_PHY_CON);
+	} else {
 		reg = readl(S5PC100_OTHERS);
-		reg |= (1 << 16); /*unmask usb signal */
+		reg |= (1 << 16); /* unmask usb signal */
 		writel(reg, S5PC100_OTHERS);
 	}
 
