@@ -143,6 +143,8 @@ lowlevel_init:
 
 	bl	mem_ctrl_asm_init
 
+	bl	internal_ram_init
+
 	cmp	r7, r8
 	/* Wakeup support. Don't know if it's going to be used, untested. */
 	ldreq	r0, =S5PC100_RST_STAT
@@ -316,6 +318,17 @@ system_clock_init:
 	bne	1b
 
 	mov	pc, lr
+
+#ifdef CONFIG_ONENAND_IPL
+internal_ram_init:
+	cmp	r7, r8
+	ldreq	r0, =0xE3800000
+	ldrne	r0, =0xF1500000
+	ldr	r1, =0x0
+	str	r1, [r0]
+
+	mov	pc, lr
+#endif
 
 #ifndef CONFIG_ONENAND_IPL
 /*
