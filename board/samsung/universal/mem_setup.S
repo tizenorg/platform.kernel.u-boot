@@ -34,34 +34,34 @@ mem_ctrl_asm_init:
 	/* DLL parameter setting */
 	ldreq	r1, =0x50101000
 	ldrne	r1, =0x003B3B00
-	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	str	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 	ldreq	r1, =0xf4
 	ldrne	r1, =0x04
-	str	r1, [r6, #PHYCONTROL1_OFFSET]
+	str	r1, [r6, #0x01C]			@ PHYCONTROL1_OFFSET
 	ldreq	r1, =0x0
-	streq	r1, [r6, #PHYCONTROL2_OFFSET]
+	streq	r1, [r6, #0x020]			@ PHYCONTROL2_OFFSET
 
 	/* DLL on */
 	ldreq	r1, =0x50101002
 	ldrne	r1, =0x003B3B02
-	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	str	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL start */
 	ldreq	r1, =0x50101003
 	ldrne	r1, =0x003B3B03
-	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	str	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* Force value locking for DLL off */
-	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	str	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL off */
 	ldreq	r1, =0x50101001
 	ldrne	r1, =0x003B3B01
-	str	r1, [r6, #PHYCONTROL0_OFFSET]
+	str	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* auto refresh off */
 	ldr	r1, =0xff001010
-	str	r1, [r6, #CONCONTROL_OFFSET]
+	str	r1, [r6, #0x000]			@ CONCONTROL_OFFSET
 
 	/*
 	 * Burst Length 4, 2 chips, 32-bit, LPDDR
@@ -69,7 +69,7 @@ mem_ctrl_asm_init:
 	 */
 	ldreq	r1, =0x00212100
 	ldrne	r1, =0x00202100
-	str	r1, [r6, #MEMCONTROL_OFFSET]
+	str	r1, [r6, #0x004]			@ MEMCONTROL_OFFSET
 
 	/*
 	 * Note:

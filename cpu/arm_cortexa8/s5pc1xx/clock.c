@@ -66,6 +66,7 @@ static int s5pc1xx_clock_read_reg(int offset)
 unsigned long get_pll_clk(int pllreg)
 {
 	unsigned long r, m, p, s, mask, fout;
+	unsigned int freq;
 
 	switch (pllreg) {
 	case APLL:
@@ -117,14 +118,17 @@ unsigned long get_pll_clk(int pllreg)
 	s = r & 0x7;
 
 	if (cpu_is_s5pc110()) {
+		freq = CONFIG_SYS_CLK_FREQ_C110;
 		if (pllreg == APLL) {
 			if (s < 1)
 				s = 1;
-			fout = m * (CONFIG_SYS_CLK_FREQ_C110 / (p * (1 << (s - 1))));
+			fout = m * (freq / (p * (1 << (s - 1))));
 		} else
-			fout = m * (CONFIG_SYS_CLK_FREQ_C110 / (p * (1 << s)));
-	} else
-		fout = m * (CONFIG_SYS_CLK_FREQ_C100 / (p * (1 << s)));
+			fout = m * (freq / (p * (1 << s)));
+	} else {
+		freq = CONFIG_SYS_CLK_FREQ_C100;
+		fout = m * (freq / (p * (1 << s)));
+	}
 
 	return fout;
 }

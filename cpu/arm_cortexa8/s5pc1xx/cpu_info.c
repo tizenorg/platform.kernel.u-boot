@@ -52,7 +52,7 @@ int print_cpuinfo(void)
 			get_hclk_sys(CLK_M) / 1000000,
 			get_hclk_sys(CLK_D) / 1000000,
 			get_hclk_sys(CLK_P) / 1000000);
-		printf("\tPclk: Msys %luMhz, Dsys %luMhz, Psys %luMhz\n",
+		printf("\tPclk: Msys %3luMhz, Dsys %3luMhz, Psys %3luMhz\n",
 			get_pclk_sys(CLK_M) / 1000000,
 			get_pclk_sys(CLK_D) / 1000000,
 			get_pclk_sys(CLK_P) / 1000000);
