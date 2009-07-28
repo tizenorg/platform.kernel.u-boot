@@ -29,8 +29,19 @@ unsigned long get_arm_clk(void);
 unsigned long get_fclk(void);
 unsigned long get_mclk(void);
 unsigned long get_hclk(void);
-unsigned long get_pclkd0(void);
 unsigned long get_pclk(void);
 unsigned long get_uclk(void);
+
+/*s5pc110 */
+#define CLK_M	0
+#define CLK_D	1
+#define CLK_P	2
+
+unsigned long get_hclk_sys(int clk);
+unsigned long get_pclk_sys(int clk);
+
+/* s5pc100 */
+unsigned long get_pclkd0(void);
+unsigned long get_pclkd1(void);
 
 #endif

@@ -43,10 +43,25 @@ int arch_cpu_init(void)
 int print_cpuinfo(void)
 {
 	printf("CPU:\tS5P%X@%luMHz\n", s5pc1xx_cpu_id, get_arm_clk() / 1000000);
-	printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
-		" PclkD1 = %luMHz\n",
-		get_fclk() / 1000000, get_hclk() / 1000000,
-		get_pclkd0() / 1000000, get_pclk() / 1000000);
+	if (cpu_is_s5pc110()) {
+		printf("\tAPLL = %luMHz, MPLL = %luMHz, EPLL = %luMHz\n",
+			get_fclk() / 1000000,
+			get_mclk() / 1000000,
+			get_uclk() / 1000000);
+		printf("\tHclk: Msys %luMhz, Dsys %luMhz, Psys %luMhz\n",
+			get_hclk_sys(CLK_M) / 1000000,
+			get_hclk_sys(CLK_D) / 1000000,
+			get_hclk_sys(CLK_P) / 1000000);
+		printf("\tPclk: Msys %luMhz, Dsys %luMhz, Psys %luMhz\n",
+			get_pclk_sys(CLK_M) / 1000000,
+			get_pclk_sys(CLK_D) / 1000000,
+			get_pclk_sys(CLK_P) / 1000000);
+	} else {
+		printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
+			" PclkD1 = %luMHz\n",
+			get_fclk() / 1000000, get_hclk() / 1000000,
+			get_pclkd0() / 1000000, get_pclkd1() / 1000000);
+	}
 
 	return 0;
 }

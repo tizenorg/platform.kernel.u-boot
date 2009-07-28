@@ -100,10 +100,17 @@ unsigned long get_pll_clk(int pllreg)
 		hang();
 	}
 
-	if (pllreg == APLL)
-		mask = 0x3ff;
-	else
-		mask = 0x0ff;
+	if (cpu_is_s5pc110()) {
+		if (pllreg == APLL || pllreg == MPLL)
+			mask = 0x3ff;
+		else
+			mask = 0x1ff;
+	} else {
+		if (pllreg == APLL)
+			mask = 0x3ff;
+		else
+			mask = 0x0ff;
+	}
 
 	m = (r >> 16) & mask;
 	p = (r >> 8) & 0x3f;
@@ -162,7 +169,7 @@ unsigned long get_mclk(void)
 	return get_pll_clk(MPLL);
 }
 
-/* return HCLKD0 frequency */
+/* s5pc100: return HCLKD0 frequency */
 unsigned long get_hclk(void)
 {
 	unsigned long hclkd0;
@@ -177,7 +184,7 @@ unsigned long get_hclk(void)
 	return hclkd0;
 }
 
-/* return PCLKD0 frequency */
+/* s5pc100: return PCLKD0 frequency */
 unsigned long get_pclkd0(void)
 {
 	unsigned long pclkd0;
@@ -192,8 +199,8 @@ unsigned long get_pclkd0(void)
 	return pclkd0;
 }
 
-/* return PCLKD1 frequency */
-unsigned long get_pclk(void)
+/* s5pc100: return PCLKD1 frequency */
+unsigned long get_pclkd1(void)
 {
 	unsigned long d1_bus, pclkd1;
 	uint div, d1_bus_ratio, pclkd1_ratio;
@@ -209,6 +216,63 @@ unsigned long get_pclk(void)
 	pclkd1 = d1_bus / (pclkd1_ratio + 1);
 
 	return pclkd1;
+}
+
+/* s5pc110: return HCLKs frequency */
+unsigned long get_hclk_sys(int clk)
+{
+	unsigned long hclk;
+	unsigned int div;
+	unsigned int mask;
+	unsigned int offset;
+	unsigned int hclk_sys_ratio;
+
+	if (clk == CLK_M)
+		return get_hclk();
+
+	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+
+	/* HCLK_MSYS_RATIO: [10:8]
+	 * HCLK_DSYS_RATIO: [19:16]
+	 * HCLK_PSYS_RATIO: [27:24] */
+	offset = 8 + clk * 8;
+
+	hclk_sys_ratio = (div >> offset) & 0xf;
+
+	hclk = get_pll_clk(MPLL) / (hclk_sys_ratio + 1);
+
+	return hclk;
+}
+
+/* s5pc110: return PCLKs frequency */
+unsigned long get_pclk_sys(int clk)
+{
+	unsigned long pclk;
+	unsigned int div;
+	unsigned int offset;
+	unsigned int pclk_sys_ratio;
+
+	div = s5p1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
+
+	/* PCLK_MSYS_RATIO: [14:12]
+	 * PCLK_DSYS_RATIO: [22:20]
+	 * PCLK_PSYS_RATIO: [30:28] */
+	offset = 12 + clk * 8;
+
+	pclk_sys_ratio = (div >> offset) & 0x7;
+
+	pclk = get_hclk_sys(clk) / (pclk_sys_ratio + 1);
+
+	return pclk;
+}
+
+/* return peripheral clock */
+unsigned long get_pclk(void)
+{
+	if (cpu_is_s5pc110())
+		return get_pclk_sys(CLK_P);
+	else
+		return get_pclkd1();
 }
 
 /* return UCLK frequency */
