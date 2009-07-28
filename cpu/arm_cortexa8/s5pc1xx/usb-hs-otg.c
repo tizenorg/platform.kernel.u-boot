@@ -426,9 +426,11 @@ int s5p_usbctl_init(void)
 	u8 ucMode;
 	u32 reg;
 
-	reg = readl(S5P_OTHERS);
-	reg |= (1 << 16); /*unmask usb signal */
-	writel(reg, S5P_OTHERS);
+	if (cpu_is_s5pc100()) {
+		reg = readl(S5PC100_OTHERS);
+		reg |= (1 << 16); /*unmask usb signal */
+		writel(reg, S5PC100_OTHERS);
+	}
 
 	otg.speed = speed;
 	otg.set_config = 0;
