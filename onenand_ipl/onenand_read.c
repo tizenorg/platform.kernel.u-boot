@@ -37,8 +37,10 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
-#ifdef CONFIG_S5PC1XX
-static inline int onenand_read_page(ulong block, ulong page,
+static int (*onenand_read_page)(ulong block, ulong page,
+				u_char *buf, int pagesize);
+
+static int s5pc100_onenand_read_page(ulong block, ulong page,
 				u_char * buf, int pagesize)
 {
 	unsigned int *p = (unsigned int *) buf;
@@ -53,9 +55,9 @@ static inline int onenand_read_page(ulong block, ulong page,
 
 	return 0;
 }
-#else
+
 /* read a page with ECC */
-static inline int onenand_read_page(ulong block, ulong page,
+static int generic_onenand_read_page(ulong block, ulong page,
 				u_char * buf, int pagesize)
 {
 	unsigned long *base;
@@ -105,7 +107,6 @@ static inline int onenand_read_page(ulong block, ulong page,
 
 	return 0;
 }
-#endif
 
 #ifndef CONFIG_ONENAND_START_PAGE
 #define CONFIG_ONENAND_START_PAGE	1
@@ -123,8 +124,19 @@ int onenand_read_block(unsigned char *buf)
 	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
 	int pagesize = 0, erase_shift = 0;
 	int erasesize = 0, nblocks = 0;
+	int mlc = 0;
 
-	if (onenand_readw(ONENAND_REG_TECHNOLOGY)) {
+	if ((readl(0xE0000000) & 0x00FFF000) == 0x00110000) {
+		onenand_read_page = generic_onenand_read_page;
+		if (onenand_readw(ONENAND_REG_TECHNOLOGY))
+			mlc = 1;
+	} else {
+		onenand_read_page = s5pc100_onenand_read_page;
+		if (onenand_ahb_readw(ONENAND_REG_TECHNOLOGY))
+			mlc = 1;
+	}
+
+	if (mlc) {
 		pagesize = 4096; /* MLC OneNAND has 4KiB pagesize */
 		erase_shift = 18;
 	} else {

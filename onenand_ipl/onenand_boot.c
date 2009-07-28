@@ -25,6 +25,8 @@
 
 #include <common.h>
 #include <version.h>
+#include <asm/io.h>
+#include <asm/arch/gpio.h>
 
 #include "onenand_ipl.h"
 
@@ -33,10 +35,17 @@ typedef int (init_fnc_t)(void);
 void start_oneboot(void)
 {
 	uchar *buf;
+	unsigned int value;
 
 	buf = (uchar *) CONFIG_SYS_LOAD_ADDR;
 
+#if 0
+	value = readl(0xE0200000 + S5PC110_GPIO_J4_OFFSET + S5PC1XX_GPIO_DAT_OFFSET);
+	value |= (1 << 4);
+	writel(value, 0xE0200000 + S5PC110_GPIO_J4_OFFSET + S5PC1XX_GPIO_DAT_OFFSET);
+#endif
 	onenand_read_block(buf);
+
 
 	((init_fnc_t *)CONFIG_SYS_LOAD_ADDR)();
 

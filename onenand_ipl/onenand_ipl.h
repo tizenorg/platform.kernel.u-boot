@@ -31,14 +31,12 @@
 #define READ_INTERRUPT()                                                \
 	onenand_readw(THIS_ONENAND(ONENAND_REG_INTERRUPT))
 
-#ifdef CONFIG_S5PC1XX
-#define AHB_ADDR			0xB0000000
+/* S5PC100 specific */
+#define S5PC100_AHB_ADDR		0xB0000000
 #define MEM_ADDR(fba, fpa, fsa)		((fba) << 13 | (fpa) << 7 | (fsa) << 5)
-#define CMD_MAP_01(mem_addr) 		(AHB_ADDR | (1 << 26) | (mem_addr))
-#define CMD_MAP_11(addr)		(AHB_ADDR | (3 << 26) | ((addr) << 2))
-#undef onenand_readw
-#define onenand_readw(a)		(readl(CMD_MAP_11((a) >> 1)) & 0xffff)
-#endif
+#define CMD_MAP_01(mem_addr) 	(S5PC100_AHB_ADDR | (1 << 26) | (mem_addr))
+#define CMD_MAP_11(addr)	(S5PC100_AHB_ADDR | (3 << 26) | ((addr) << 2))
+#define onenand_ahb_readw(a)	(readl(CMD_MAP_11((a) >> 1)) & 0xffff)
 
 extern int onenand_read_block(unsigned char *buf);
 #endif
