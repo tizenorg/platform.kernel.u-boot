@@ -31,27 +31,6 @@
 #define S5PC100_PA_UART		0xEC000000
 #define S5PC110_PA_UART		0xE2900000
 
-/* uart offset */
-#define ULCON_OFFSET		0x00
-#define UCON_OFFSET		0x04
-#define UFCON_OFFSET		0x08
-#define UMCON_OFFSET		0x0C
-#define UTRSTAT_OFFSET		0x10
-#define UERSTAT_OFFSET		0x14
-#define UFSTAT_OFFSET		0x18
-#define UMSTAT_OFFSET		0x1C
-#define UTXH_OFFSET		0x20
-#define URXH_OFFSET		0x24
-#define UBRDIV_OFFSET		0x28
-#define UDIVSLOT_OFFSET		0x2C
-#define UINTP_OFFSET		0x30
-#define UINTSP_OFFSET		0x34
-#define UINTM_OFFSET		0x38
-
-#define UTRSTAT_TX_EMPTY	(1 << 2)
-#define UTRSTAT_RX_READY	(1 << 0)
-#define UART_ERR_MASK		0xF
-
 #ifndef __ASSEMBLY__
 typedef struct s5pc1xx_uart {
 	volatile unsigned long	ULCON;
