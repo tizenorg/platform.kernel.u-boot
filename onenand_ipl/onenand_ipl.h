@@ -29,7 +29,7 @@
 #define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
 
 #define READ_INTERRUPT()                                                \
-	onenand_readw(THIS_ONENAND(ONENAND_REG_INTERRUPT))
+				onenand_readw(ONENAND_REG_INTERRUPT)
 
 /* S5PC100 specific */
 #define S5PC100_AHB_ADDR		0xB0000000
