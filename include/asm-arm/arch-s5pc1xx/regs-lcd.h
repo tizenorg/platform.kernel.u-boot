@@ -12,7 +12,9 @@
 #ifndef ___ASM_ARCH_REGS_LCD_H
 #define ___ASM_ARCH_REGS_LCD_H
 
-#include <asm/arch/map-base.h>
+#define S5P_ADDR_BASE		0xE1F00000
+#define S5PCFB_ADDR(x)		(S5P_ADDR_BASE + (x))
+#define S5P_LCD_BASE		S5PCFB_ADDR(0xC100000)
 
 #define S5P_LCDREG(x)		((x) + S5P_LCD_BASE)
 
