@@ -33,26 +33,22 @@ mem_ctrl_asm_init:
 	ldrne	r6, =S5PC110_DMC1_BASE			@ 0xF1400000
 
 	/* DLL parameter setting */
-	ldreq	r1, =0x50101000
-	ldrne	r1, =0x003B3B00
+	ldr	r1, =0x50101000
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
-	ldreq	r1, =0xf4
-	ldrne	r1, =0x04
+	ldr	r1, =0xf4
 	str	r1, [r0, #0x01C]			@ PHYCONTROL1_OFFSET
 	strne	r1, [r6, #0x01C]			@ PHYCONTROL1_OFFSET
 	ldreq	r1, =0x0
 	streq	r1, [r0, #0x020]			@ PHYCONTROL2_OFFSET
 
 	/* DLL on */
-	ldreq	r1, =0x50101002
-	ldrne	r1, =0x003B3B02
+	ldr	r1, =0x50101002
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL start */
-	ldreq	r1, =0x50101003
-	ldrne	r1, =0x003B3B03
+	ldr	r1, =0x50101003
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
@@ -61,8 +57,7 @@ mem_ctrl_asm_init:
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL off */
-	ldreq	r1, =0x50101001
-	ldrne	r1, =0x003B3B01
+	ldr	r1, =0x50101001
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
@@ -75,8 +70,7 @@ mem_ctrl_asm_init:
 	 * Burst Length 4, 2 chips, 32-bit, LPDDR
 	 * OFF: dynamic self refresh, force precharge, dynamic power down off
 	 */
-	ldreq	r1, =0x00212100
-	ldrne	r1, =0x00202100
+	ldr	r1, =0x00212100
 	str	r1, [r0, #0x004]			@ MEMCONTROL_OFFSET
 	strne	r1, [r6, #0x004]			@ MEMCONTROL_OFFSET
 
@@ -98,8 +92,7 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldreq	r1, =0x20f80222
-	ldrne	r1, =0x20f80222
+	ldr	r1, =0x20f80222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	orreq	r1, r1, #0x08000000
@@ -128,16 +121,14 @@ swap_memory:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	cmp	r7, r8
-	ldreq	r1, =0x28f80222
-	ldrne	r1, =0x28f02222
+	ldr	r1, =0x28f80222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	biceq	r1, r1, #0x08000000
 	streq	r1, [r0, #MEMCONFIG1_OFFSET]
 
 	cmp	r7, r8
-	ldreq	r1, =0x20000000
-	ldrne	r1, =0xF0000000
+	ldr	r1, =0x20000000
 	str	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 	strne	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 
@@ -157,23 +148,21 @@ swap_memory:
 	ldr	r1, =0x0000050E
 	str	r1, [r0, #0x030]			@ TIMINGAREF_OFFSET
 	ldrne	r1, =0x00000618
-	strne	r1, [r0, #0x030]			@ TIMINGAREF_OFFSET
+	strne	r1, [r6, #0x030]			@ TIMINGAREF_OFFSET
 
-	ldreq	r1, =0x0c233287
-	ldrne	r1, =0x14233287
+	ldr	r1, =0x0c233287
 	str	r1, [r0, #0x034]			@ TIMINGROW_OFFSET
 	ldrne	r1, =0x11344309
 	strne	r1, [r6, #0x034]			@ TIMINGROW_OFFSET
 
 	/* twtr=3 twr=2 trtp=3 cl=3 wl=3 rl=3 */
-	ldreq	r1, =0x32330303
-	ldrne	r1, =0x12130005
+	ldr	r1, =0x32330303
 	str	r1, [r0, #0x038]			@ TIMINGDATA_OFFSET
+	ldrne	r1, =0x12130005
 	strne	r1, [r6, #0x038]			@ TIMINGDATA_OFFSET
 
 	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
-	ldreq	r1, =0x04141433
-	ldrne	r1, =0x0E140222
+	ldr	r1, =0x04141433
 	str	r1, [r0, #0x03C]			@ TIMINGPOWER_OFFSET
 	ldrne	r1, =0x0E190222
 	strne	r1, [r6, #0x03C]			@ TIMINGPOWER_OFFSET
@@ -225,8 +214,7 @@ swap_memory:
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
 	/* auto refresh on */
-	ldreq	r1, =0xff002030
-	ldrne	r1, =0xff001030
+	ldr	r1, =0xff002030
 	str	r1, [r0, #0x000]			@ S5P_CONCONTROL
 	strne	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
@@ -236,10 +224,11 @@ swap_memory:
 	strne	r1, [r6, #0x028]			@ S5P_PWRDNCONFIG
 
 	/* BL%LE %LONG */
-	ldr	r1, =0xff212100
+	ldr	r1, =0x00202100
 	str	r1, [r0, #0x004]			@ S5P_MEMCONTROL
 	strne	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
+	/* Skip when S5PC110 */
 	cmp	r7, r8
 	bne	1f
 
@@ -254,7 +243,6 @@ swap_memory:
 	ldr	r2, [r1]
 	cmp	r2, r4
 	bne	swap_memory
-
 1:
 	mov	pc, lr
 
