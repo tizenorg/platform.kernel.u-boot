@@ -79,6 +79,7 @@ mem_ctrl_asm_init:
 	mov	r4, #0x0
 
 swap_memory:
+	cmp	r7, r8
 	/*
 	 * Bank0
 	 * 0x20 -> 0x20000000
