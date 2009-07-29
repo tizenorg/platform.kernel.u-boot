@@ -131,6 +131,7 @@ swap_memory:
 	ldr	r1, =0x20000000
 	str	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 	strne	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
+	strne	r1, [r6, #0x014]			@ PRECHCONFIG_OFFSET
 
 	/*
 	 * S5PC100:
