@@ -97,8 +97,13 @@ int misc_init_r(void)
 	board_rev >>= 2;
 	board_rev &= 0x7;
 	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
-	if (board_rev == 1)
-		gd->bd->bi_arch_number = 3000;	/* Universal */
+	if (board_rev == 1) {
+		if (cpu_is_s5pc110()) {
+			gd->bd->bi_arch_number = 3100;	/* Universal */
+			setenv ("meminfo", "mem=80M,128M@0x40000000");
+		} else
+			gd->bd->bi_arch_number = 3000;	/* Universal */
+	}
 	if (board_rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 		/* Workaround: OneDRAM is broken*/
