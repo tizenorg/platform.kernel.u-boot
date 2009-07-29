@@ -17,6 +17,13 @@
 #define ON 	1
 #define OFF	0
 
+#define DEBUG
+#ifdef DEBUG
+#define udebug printf
+#else
+#define udebug
+#endif
+
 typedef struct {
 	int width;
 	int height;
@@ -231,5 +238,11 @@ typedef struct {
 
 }s5pcfb_fimd_info_t;
 
+void s5pc_fimd_lcd_clock_enable(void);
+void s5pc_fimd_lcd_init_mem(unsigned long screen_base, unsigned long fb_size,
+	unsigned long palette_size);
+void s5pc_fimd_lcd_init(vidinfo_t *vid);
+unsigned long s5pc_fimd_calc_fbsize(void);
+void s5pc_fimd_gpio_setup(void);
 #endif
 
