@@ -165,7 +165,7 @@
 	" onenand write 0x21008000 0x60000 0x300000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x20007FC0 0x60000 0x300000;" \
+	"bootk=onenand read 0x20007FC0 0x80000 0x300000;" \
 	" bootm 0x20007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
