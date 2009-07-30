@@ -32,6 +32,8 @@ Reinhard Arlt <reinhard.arlt@esd-electronics.com>
 	mecp5200	MPC5200
 	pf5200		MPC5200
 
+	vme8349		MPC8349
+
 	CPCI750		PPC750FX/GX
 
 Yuli Barcohen <yuli@arabellasw.com>
@@ -135,6 +137,8 @@ Jon Diekema <jon.diekema@smiths-aerospace.com>
 
 Dirk Eibach <eibach@gdsys.de>
 
+	compactcenter	PPC460EX
+	devconcenter	PPC460EX
 	dlvision        PPC405EP
 	gdppc440etx	PPC440EP/GR
 	neo		PPC405EP

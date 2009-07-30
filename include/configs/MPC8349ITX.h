@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Freescale Semiconductor, Inc. 2006. All rights reserved.
+ * Copyright (C) Freescale Semiconductor, Inc. 2006.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -382,7 +382,6 @@ boards, we say we have two, but don't display a message if we find only one. */
 
 #define CONFIG_NET_MULTI
 #define CONFIG_PCI_PNP			/* do pci plug-and-play */
-#define CONFIG_83XX_GENERIC_PCI
 
 #ifndef CONFIG_PCI_PNP
     #define PCI_ENET0_IOADDR	0x00000000
