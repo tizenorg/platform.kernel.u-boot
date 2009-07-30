@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <err.h>
 
-#define IPL_8K	(0x2000 - 0x4)
+#define IPL_14K	(0x3800 - 0x4)
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	for (i = 0; i < IPL_8K; i++) {
+	for (i = 0; i < IPL_14K; i++) {
 		ret = read(fd, &buf, 1);
 
 		if (ret < 0) {
