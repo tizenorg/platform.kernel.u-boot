@@ -130,6 +130,11 @@
 				",3m@0x60000(kernel)"\
 				",18m@0x360000(modem)"\
 				",-(UBI)"
+#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
+				",256k@0x40000(params)"\
+				",3m@0x80000(kernel)"\
+				",18m@0x380000(modem)"\
+				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
@@ -145,7 +150,7 @@
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
 		" ${meminfo} " \
-		" " MTDPARTS_DEFAULT
+		" ${mtdparts}"
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
