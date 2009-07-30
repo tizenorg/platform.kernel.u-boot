@@ -221,6 +221,7 @@ LIBS += drivers/net/phy/libphy.a
 LIBS += drivers/net/sk98lin/libsk98lin.a
 LIBS += drivers/pci/libpci.a
 LIBS += drivers/pcmcia/libpcmcia.a
+LIBS += drivers/power/libpower.a
 LIBS += drivers/spi/libspi.a
 ifeq ($(CPU),mpc83xx)
 LIBS += drivers/qe/qe.a
@@ -1282,6 +1283,14 @@ CATcenter_33_config:	unconfig
 
 CMS700_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx cms700 esd
+
+# Compact-Center & DevCon-Center use different U-Boot images
+compactcenter_config \
+devconcenter_config:	unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_$$(echo $(subst ,,$(@:_config=)) | \
+		tr '[:lower:]' '[:upper:]')" >$(obj)include/config.h
+	@$(MKCONFIG) -n $@ -a compactcenter ppc ppc4xx compactcenter gdsys
 
 CPCI2DP_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx cpci2dp esd
@@ -2388,6 +2397,8 @@ SIMPC8313_SP_config: unconfig
 TQM834x_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc83xx tqm834x tqc
 
+vme8349_config:		unconfig
+	@$(MKCONFIG) $(@:_config=) ppc mpc83xx vme8349 esd
 
 #########################################################################
 ## MPC85xx Systems
@@ -3078,7 +3089,7 @@ s5pc100_universal_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
-	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-8k.bin" >> $(obj)include/config.mk
+	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
 smdkc100_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h

@@ -12,14 +12,19 @@
 #
 
 include $(TOPDIR)/config.mk
-TEXT_BASE   = 0xD0034000
-TEXT_BASE2K = 0xD0034800
-TEXT_BASE4K = 0xD0035000
-TEXT_BASE8K = 0xD0036000
+# S5PC100 loads at 0x34000
+# S5PC110 loads at 0x30000
+# Now it uses the S5PC100 as default
+# If you use the S5PC110, the load address is relocated at start.S
+# XXX Never set it S5PC110 it don't relocate it
+TEXT_BASE    = 0xD0034000
+TEXT_BASE2K  = 0xD0034800
+TEXT_BASE4K  = 0xD0035000
+TEXT_BASE16K = 0xD0038000
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
-AFLAGS	+= -DCONFIG_ONENAND_IPL -g
+AFLAGS	+= -DCONFIG_ONENAND_IPL -g -UTEXT_BASE -DTEXT_BASE=$(TEXT_BASE)
 CFLAGS	+= -DCONFIG_ONENAND_IPL -g
 OBJCFLAGS += --gap-fill=0x00
 
@@ -35,7 +40,7 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-2k.bin $(onenandobj)onenand-ipl-4k.bin $(onenandobj)onenand-ipl-8k.bin
+ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-2k.bin $(onenandobj)onenand-ipl-4k.bin $(onenandobj)onenand-ipl-16k.bin
 
 all:	$(obj).depend $(ALL)
 
@@ -45,9 +50,9 @@ $(onenandobj)onenand-ipl-2k.bin:	$(onenandobj)onenand-ipl
 $(onenandobj)onenand-ipl-4k.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE4K) -O binary $< $@
 
-$(onenandobj)onenand-ipl-8k.bin:	$(onenandobj)onenand-ipl checksum
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE8K) -O binary $< $@
-	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-8k.bin
+$(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl checksum
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K) -O binary $< $@
+	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@

@@ -225,7 +225,7 @@ swap_memory:
 	strne	r1, [r6, #0x028]			@ S5P_PWRDNCONFIG
 
 	/* BL%LE %LONG */
-	ldr	r1, =0x00202100
+	ldr	r1, =0xff212100
 	str	r1, [r0, #0x004]			@ S5P_MEMCONTROL
 	strne	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 

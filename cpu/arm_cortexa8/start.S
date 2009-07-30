@@ -142,8 +142,7 @@ next:
 	bl	cpu_init_crit
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
-#ifndef CONFIG_SKIP_RELOCATE_UBOOT
+#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL)
 relocate:				@ relocate U-Boot to RAM
 	adr	r0, _start		@ r0 <- current position of code
 	ldr	r1, _TEXT_BASE		@ test if we run from flash or RAM
@@ -161,7 +160,6 @@ copy_loop:				@ copy 32 bytes at a time
 	cmp	r0, r2			@ until source end addreee [r2]
 	ble	copy_loop
 #endif	/* CONFIG_SKIP_RELOCATE_UBOOT */
-#endif	/* CONFIG_ONENAND_IPL */
 
 	/* Set up the stack */
 stack_setup:

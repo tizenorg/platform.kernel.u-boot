@@ -37,6 +37,27 @@ static inline void *memcpy_16(void *dst, const void *src, unsigned int len)
 }
 
 /**
+ *  onenand_oob_128 - oob info for Flex-Onenand with 4KB page
+ *  For now, we expose only 64 out of 80 ecc bytes
+ */
+static struct nand_ecclayout onenand_oob_128 = {
+	.eccbytes       = 64,
+	.eccpos         = {
+		6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+		22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+		38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+		54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+		70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+		86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+		102, 103, 104, 105
+	},
+	.oobfree        = {
+		{2, 4}, {18, 4}, {34, 4}, {50, 4},
+		{66, 4}, {82, 4}, {98, 4}, {114, 4}
+	}
+};
+
+/**
  * onenand_oob_64 - oob info for large (2KB) page
  */
 static struct nand_ecclayout onenand_oob_64 = {
@@ -240,8 +261,12 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		this->write_word(value,
 				 this->base + ONENAND_REG_START_ADDRESS2);
 
-		/* Switch to the next data buffer */
-		ONENAND_SET_NEXT_BUFFERRAM(this);
+		if (ONENAND_IS_4KB_PAGE(this))
+			/* It is always BufferRAM0 */
+			ONENAND_SET_BUFFERRAM0(this);
+		else
+			/* Switch to the next data buffer */
+			ONENAND_SET_NEXT_BUFFERRAM(this);
 
 		return 0;
 	}
@@ -264,7 +289,11 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		switch (cmd) {
 		case ONENAND_CMD_READ:
 		case ONENAND_CMD_READOOB:
-			dataram = ONENAND_SET_NEXT_BUFFERRAM(this);
+			if (ONENAND_IS_4KB_PAGE(this))
+				/* It is always BufferRAM0 */
+				dataram = ONENAND_SET_BUFFERRAM0(this);
+			else
+				dataram = ONENAND_SET_NEXT_BUFFERRAM(this);
 			readcmd = 1;
 			break;
 
@@ -690,7 +719,7 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 		/* If there is more to load then start next load */
 		from += thislen;
 
-		if (this->options & ONENAND_DISABLE_READ_WHILE_LOAD)
+		if (ONENAND_IS_4KB_PAGE(this))
 			goto skip_read_while_load;
 
 		if (read + thislen < len) {
@@ -733,7 +762,7 @@ skip_read_while_load:
 		/* Set up for next read from bufferRAM */
 		if (unlikely(boundary))
 			this->write_word(ONENAND_DDP_CHIP1, this->base + ONENAND_REG_START_ADDRESS2);
-		if (this->options & ONENAND_DISABLE_READ_WHILE_LOAD)
+		if (ONENAND_IS_4KB_PAGE(this))
 			this->command(mtd, ONENAND_CMD_READ, from, writesize);
 		else
 			ONENAND_SET_NEXT_BUFFERRAM(this);
@@ -2041,6 +2070,8 @@ static int onenand_probe(struct mtd_info *mtd)
 	/* The data buffer size is equal to page size */
 	mtd->writesize =
 	    this->read_word(this->base + ONENAND_REG_DATA_BUFFER_SIZE);
+	if (ONENAND_IS_4KB_PAGE(this))
+		mtd->writesize <<= 1;
 	mtd->oobsize = mtd->writesize >> 5;
 	/* Pagers per block is always 64 in OneNAND */
 	mtd->erasesize = mtd->writesize << 6;
@@ -2148,6 +2179,11 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	 * Allow subpage writes up to oobsize.
 	 */
 	switch (mtd->oobsize) {
+	case 128:
+		this->ecclayout = &onenand_oob_128;
+		mtd->subpage_sft = 0;
+		break;
+
 	case 64:
 		this->ecclayout = &onenand_oob_64;
 		mtd->subpage_sft = 2;

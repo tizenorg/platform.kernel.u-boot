@@ -79,7 +79,7 @@ static const char *board_name[] = {
 	"Unknown",
 };
 
-int misc_init_r(void)
+static void check_hw_revision(void)
 {
 	unsigned long pin;
 
@@ -100,15 +100,34 @@ int misc_init_r(void)
 	if (board_rev == 1) {
 		if (cpu_is_s5pc110()) {
 			gd->bd->bi_arch_number = 3100;	/* Universal */
-			setenv ("meminfo", "mem=80M,128M@0x40000000");
-		} else
+			setenv("meminfo", "mem=80M,128M@0x40000000");
+			setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
+		} else {
 			gd->bd->bi_arch_number = 3000;	/* Universal */
+			setenv("bootk", "onenand read 0x20007FC0 0x60000 0x300000; bootm 0x20007FC0");
+		}
 	}
 	if (board_rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 		/* Workaround: OneDRAM is broken*/
-		setenv ("meminfo", "mem=128M");
+		setenv("meminfo", "mem=128M");
 	}
+}
+
+static void check_auto_burn(void)
+{
+	if (readl(0x22000000) == 0xa5a55a5a) {
+		printf("Auto burning bootloader\n");
+		setenv("bootcmd", "run updateb");
+	}
+}
+
+int misc_init_r(void)
+{
+	check_hw_revision();
+
+	/* Check auto burning */
+	check_auto_burn();
 
 	return 0;
 }

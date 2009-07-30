@@ -114,6 +114,8 @@
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
 
+#define CONFIG_SYS_64BIT_VSPRINTF	1
+
 #define CONFIG_BOOTDELAY	1
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
@@ -127,6 +129,11 @@
 				",128k@0x40000(params)"\
 				",3m@0x60000(kernel)"\
 				",18m@0x360000(modem)"\
+				",-(UBI)"
+#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
+				",256k@0x40000(params)"\
+				",3m@0x80000(kernel)"\
+				",18m@0x380000(modem)"\
 				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
@@ -143,7 +150,7 @@
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
 		" ${meminfo} " \
-		" " MTDPARTS_DEFAULT
+		" ${mtdparts}"
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
@@ -154,11 +161,11 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0x60000 0x200000;" \
-	" onenand write 0x21008000 0x60000 0x200000\0" \
-	"updateu=onenand erase block 147-4095;" \
+	"updatek=onenand erase 0x60000 0x300000;" \
+	" onenand write 0x21008000 0x60000 0x300000\0" \
+	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x20007FC0 0x60000 0x300000;" \
+	"bootk=onenand read 0x20007FC0 0x80000 0x300000;" \
 	" bootm 0x20007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \

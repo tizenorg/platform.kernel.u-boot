@@ -41,6 +41,7 @@ build_uboot $*
 
 if [ "$USER" = "kmpark" ]; then
 	cp -f u-boot.bin /tftpboot
+	ls -al u-boot.bin u-boot-onenand.bin
 	ls -al onenand_ipl
 	pushd ../images
 	./system.sh

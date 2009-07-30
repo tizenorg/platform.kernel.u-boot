@@ -96,9 +96,14 @@ int saveenv(void)
 	struct erase_info instr = {
 		.callback	= NULL,
 	};
-	size_t retlen;
+	size_t retlen, len;
 
-	instr.len = CONFIG_ENV_SIZE;
+	len = CONFIG_ENV_SIZE;
+
+	if (len < mtd->erasesize)
+		len = ALIGN(len, mtd->erasesize);
+
+	instr.len = len;
 	instr.addr = env_addr;
 	instr.mtd = mtd;
 	if (mtd->erase(mtd, &instr)) {
