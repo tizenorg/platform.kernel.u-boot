@@ -79,15 +79,7 @@ static const char *board_name[] = {
 	"Unknown",
 };
 
-static void check_auto_burn(void)
-{
-	if (readl(0x22000000) == 0xa5a55a5a) {
-		printf("Auto burning bootloader\n");
-		setenv("bootcmd", "run updateb");
-	}
-}
-
-int misc_init_r(void)
+static void check_hw_revision(void)
 {
 	unsigned long pin;
 
@@ -120,6 +112,19 @@ int misc_init_r(void)
 		/* Workaround: OneDRAM is broken*/
 		setenv("meminfo", "mem=128M");
 	}
+}
+
+static void check_auto_burn(void)
+{
+	if (readl(0x22000000) == 0xa5a55a5a) {
+		printf("Auto burning bootloader\n");
+		setenv("bootcmd", "run updateb");
+	}
+}
+
+int misc_init_r(void)
+{
+	check_hw_revision();
 
 	/* Check auto burning */
 	check_auto_burn();
