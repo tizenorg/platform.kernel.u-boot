@@ -1909,7 +1909,10 @@ static void onenand_check_features(struct mtd_info *mtd)
 	/* Lock scheme */
 	switch (density) {
 	case ONENAND_DEVICE_DENSITY_4Gb:
-		this->options |= ONENAND_HAS_2PLANE;
+		if (ONENAND_IS_DDP(this))
+			this->options |= ONENAND_HAS_2PLANE;
+		else
+			this->options |= ONENAND_HAS_4KB_PAGE;
 
 	case ONENAND_DEVICE_DENSITY_2Gb:
 		/* 2Gb DDP don't have 2 plane */
@@ -1938,6 +1941,8 @@ static void onenand_check_features(struct mtd_info *mtd)
 	if (this->options & ONENAND_HAS_2PLANE)
 		printk(KERN_DEBUG "Chip has 2 plane\n");
 #endif
+	if (this->options & ONENAND_HAS_4KB_PAGE)
+		printk(KERN_DEBUG "Chip has 4KiB pagesize\n");
 }
 
 /**
@@ -2058,6 +2063,9 @@ static int onenand_probe(struct mtd_info *mtd)
 	this->device_id = dev_id;
 	this->version_id = ver_id;
 
+	/* Check OneNAND features */
+	onenand_check_features(mtd);
+
 	density = onenand_get_density(dev_id);
 	this->chipsize = (16 << density) << 20;
 	/* Set density mask. it is used for DDP */
@@ -2086,9 +2094,6 @@ static int onenand_probe(struct mtd_info *mtd)
 	/* REVIST: Multichip handling */
 
 	mtd->size = this->chipsize;
-
-	/* Check OneNAND features */
-	onenand_check_features(mtd);
 
 	mtd->flags = MTD_CAP_NANDFLASH;
 	mtd->erase = onenand_erase;
