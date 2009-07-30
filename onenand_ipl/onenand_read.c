@@ -124,21 +124,25 @@ int onenand_read_block(unsigned char *buf)
 	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
 	int pagesize = 0, erase_shift = 0;
 	int erasesize = 0, nblocks = 0;
-	int big = 0;
+	int page_is_4KiB = 0, dev_id, density;
 
 	if ((readl(0xE0000000) & 0x00FFF000) == 0x00110000) {
 		onenand_read_page = generic_onenand_read_page;
 		if (onenand_readw(ONENAND_REG_TECHNOLOGY))
-			big = 1;
-		big = 1;
+			page_is_4KiB = 1;
+		dev_id = onenand_readw(ONENAND_REG_DEVICE_ID);
+		density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
+		if (density >= ONENAND_DEVICE_DENSITY_4Gb &&
+		    !(dev_id & ONENAND_DEVICE_IS_DDP))
+			page_is_4KiB = 1;
 	} else {
 		onenand_read_page = s5pc100_onenand_read_page;
 		if (onenand_ahb_readw(ONENAND_REG_TECHNOLOGY))
-			big = 1;
+			page_is_4KiB = 1;
 		page = 8;
 	}
 
-	if (big) {
+	if (page_is_4KiB) {
 		pagesize = 4096; /* OneNAND has 4KiB pagesize */
 		erase_shift = 18;
 	} else {
