@@ -98,19 +98,23 @@ static void check_hw_revision(void)
 	board_rev &= 0x7;
 	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
 	if (board_rev == 1) {
-		if (cpu_is_s5pc110()) {
+		if (cpu_is_s5pc110())
 			gd->bd->bi_arch_number = 3100;	/* Universal */
-			setenv("meminfo", "mem=80M,128M@0x40000000");
-			setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
-		} else {
+		else
 			gd->bd->bi_arch_number = 3000;	/* Universal */
-			setenv("bootk", "onenand read 0x20007FC0 0x60000 0x300000; bootm 0x20007FC0");
-		}
 	}
 	if (board_rev == 3) {
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 		/* Workaround: OneDRAM is broken*/
 		setenv("meminfo", "mem=128M");
+	}
+
+	/* Architecture Common settings */
+	if (cpu_is_s5pc110()) {
+		setenv("meminfo", "mem=80M,128M@0x40000000");
+		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
+	} else {
+		setenv("bootk", "onenand read 0x20007FC0 0x60000 0x300000; bootm 0x20007FC0");
 	}
 }
 
