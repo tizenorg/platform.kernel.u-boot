@@ -200,16 +200,20 @@ static void lcd_panel_on(void)
 
 void lcd_ctrl_init(void *lcdbase)
 {
+	char *option;
+
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
-#if defined(CONFIG_S5PC1XXFB_TEST)
-	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP/8);
-	lcd_test();
-#endif
-#if defined(CONFIG_S5PC1XXFB_LOGO)
-	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP/8);
-	draw_samsung_logo(lcdbase);
-#endif
+	option = getenv("lcd");
+
+	if (strcmp(option, "test") == 0) {
+		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+		lcd_test();
+	} else {
+		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+		draw_samsung_logo(lcdbase);
+	}
+
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
