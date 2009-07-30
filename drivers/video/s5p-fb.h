@@ -238,11 +238,24 @@ typedef struct {
 
 }s5pcfb_fimd_info_t;
 
-void s5pc_fimd_lcd_clock_enable(void);
+enum s5pcfb_rgb_mode_t {
+	MODE_RGB_P = 0,
+	MODE_BGR_P = 1,
+	MODE_RGB_S = 2,
+	MODE_BGR_S = 3,
+};
+
 void s5pc_fimd_lcd_init_mem(unsigned long screen_base, unsigned long fb_size,
 	unsigned long palette_size);
 void s5pc_fimd_lcd_init(vidinfo_t *vid);
 unsigned long s5pc_fimd_calc_fbsize(void);
-void s5pc_fimd_gpio_setup(void);
+void s5pc_c100_gpio_setup(void);
+void s5pc_c110_gpio_setup(void);
+
+void tl2796_c100_panel_init(void);
+void tl2796_c100_panel_power_on(void);
+void tl2796_c110_panel_init(void);
+void tl2796_c110_panel_power_on(void);
+
 #endif
 

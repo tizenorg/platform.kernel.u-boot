@@ -1,5 +1,5 @@
 /*
- * LCD panel support for the Samsung TickerTape board
+ * LCD panel driver for Board based on S5PC100 and S5PC110. 
  *
  * Author: InKi Dae  <inki.dae@samsung.com>
  *
@@ -22,19 +22,27 @@
 
 #include <linux/types.h>
 #include <asm/io.h>
+#include <asm/arch/cpu.h>
 
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define	DEFMASK			0xFF00
-#define COMMAND_ONLY	0xFE
+#define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
 
-#define S5PCFB_CS_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xdf, 0xE0300304)
-#define S5PCFB_CS_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x20, 0xE0300304)
-#define S5PCFB_CLK_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xbf, 0xE0300304)
-#define S5PCFB_CLK_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x40, 0xE0300304)	
-#define S5PCFB_SDA_LOW	__raw_writel(__raw_readl(0xE0300304) & 0x7f, 0xE0300304)	
-#define S5PCFB_SDA_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x80, 0xE0300304)
+#define S5PCFB_C100_CS_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xdf, 0xE0300304)
+#define S5PCFB_C100_CS_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x20, 0xE0300304)
+#define S5PCFB_C100_CLK_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xbf, 0xE0300304)
+#define S5PCFB_C100_CLK_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x40, 0xE0300304)	
+#define S5PCFB_C100_SDA_LOW	__raw_writel(__raw_readl(0xE0300304) & 0x7f, 0xE0300304)	
+#define S5PCFB_C100_SDA_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x80, 0xE0300304)
+
+#define S5PCFB_C110_CS_LOW	writel(readl(0xE02002E4) & 0xfd, 0xE02002E4)
+#define S5PCFB_C110_CS_HIGH	writel(readl(0xE02002E4) | 0x02, 0xE02002E4)
+#define S5PCFB_C110_CLK_LOW	writel(readl(0xE0200344) & 0xfd, 0xE0200344)
+#define S5PCFB_C110_CLK_HIGH	writel(readl(0xE0200344) | 0x02, 0xE0200344)	
+#define S5PCFB_C110_SDA_LOW	writel(readl(0xE0200344) & 0xf7, 0xE0200344)	
+#define S5PCFB_C110_SDA_HIGH	writel(readl(0xE0200344) | 0x08, 0xE0200344)
 
 const unsigned short SEQ_DISPLAY_ON[] = {
 	0x14, 0x03,
@@ -112,49 +120,92 @@ const unsigned short SEQ_SETTING[] = {
 	ENDDEF, 0x0000
 };
 
-static void tl2796_spi_write_byte(unsigned char address, unsigned char command)
+static void tl2796_c100_spi_write_byte(unsigned char address, unsigned char command)
 {
-    int     j;
+    	int     j;
 	unsigned char DELAY=1;
 	unsigned short data;
 
 	data = (address << 8) + command;
 
-	S5PCFB_CS_HIGH;
-	S5PCFB_SDA_HIGH;
-	S5PCFB_CLK_HIGH;
+	S5PCFB_C100_CS_HIGH;
+	S5PCFB_C100_SDA_HIGH;
+	S5PCFB_C100_CLK_HIGH;
 	udelay(DELAY);
 
-	S5PCFB_CS_LOW;
+	S5PCFB_C100_CS_LOW;
 	udelay(DELAY);
 
 	for (j = 15; j >= 0; j--)
 	{
-		S5PCFB_CLK_LOW;
+		S5PCFB_C100_CLK_LOW;
 
 		/* data high or low */
 		if ((data >> j) & 0x0001) 
-			S5PCFB_SDA_HIGH;
+			S5PCFB_C100_SDA_HIGH;
 		else
-			S5PCFB_SDA_LOW;
+			S5PCFB_C100_SDA_LOW;
 		
 		udelay(DELAY);
 
-		S5PCFB_CLK_HIGH;
+		S5PCFB_C100_CLK_HIGH;
 		udelay(DELAY);
 	}
 
-	S5PCFB_CS_HIGH;
+	S5PCFB_C100_CS_HIGH;
+	udelay(DELAY);
+}
+
+static void tl2796_c110_spi_write_byte(unsigned char address, unsigned char command)
+{
+    	int     j;
+	unsigned char DELAY=1;
+	unsigned short data;
+
+	data = (address << 8) + command;
+
+	S5PCFB_C110_CS_HIGH;
+	S5PCFB_C110_SDA_HIGH;
+	S5PCFB_C110_CLK_HIGH;
+	udelay(DELAY);
+
+	S5PCFB_C110_CS_LOW;
+	udelay(DELAY);
+
+	for (j = 15; j >= 0; j--)
+	{
+		S5PCFB_C110_CLK_LOW;
+
+		/* data high or low */
+		if ((data >> j) & 0x0001) 
+			S5PCFB_C110_SDA_HIGH;
+		else
+			S5PCFB_C110_SDA_LOW;
+		
+		udelay(DELAY);
+
+		S5PCFB_C110_CLK_HIGH;
+		udelay(DELAY);
+	}
+
+	S5PCFB_C110_CS_HIGH;
 	udelay(DELAY);
 }
 
 
 static void tl2796_spi_write(unsigned char address, unsigned char command)
 {
-	if(address != DATA_ONLY)
-		tl2796_spi_write_byte(0x70, address);
+	if (cpu_is_s5pc110()) {
+		if(address != DATA_ONLY)
+			tl2796_c110_spi_write_byte(0x70, address);
 
-	tl2796_spi_write_byte(0x72, command);
+		tl2796_c110_spi_write_byte(0x72, command);
+	} else {
+		if(address != DATA_ONLY)
+			tl2796_c100_spi_write_byte(0x70, address);
+
+		tl2796_c100_spi_write_byte(0x72, command);
+	}
 }
 
 static void tl2796_panel_send_sequence(const unsigned short *wbuf)
@@ -170,19 +221,19 @@ static void tl2796_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-void tl2796_panel_power_on(void)
+void tl2796_c100_panel_power_on(void)
 {
 	/* set gpio data for MLCD_RST to HIGH */
-	__raw_writel(__raw_readl(0xE0300C24) | 0x80, 0xE0300C24);
+	writel(readl(0xE0300C24) | 0x80, 0xE0300C24);
 	/* set gpio data for MLCD_ON to HIGH */
-	__raw_writel(__raw_readl(0xE0300224) | 0x8, 0xE0300224);
+	writel(readl(0xE0300224) | 0x8, 0xE0300224);
 	udelay(25000);
 
 	/* set gpio data for MLCD_RST to LOW */
-	__raw_writel(__raw_readl(0xE0300C24) & 0x7f, 0xE0300C24);
+	writel(readl(0xE0300C24) & 0x7f, 0xE0300C24);
 	udelay(20);
 	/* set gpio data for MLCD_RST to HIGH */
-	__raw_writel(__raw_readl(0xE0300C24) | 0x80, 0xE0300C24);
+	writel(readl(0xE0300C24) | 0x80, 0xE0300C24);
 
 	udelay(20000);
 
@@ -190,13 +241,43 @@ void tl2796_panel_power_on(void)
 	tl2796_panel_send_sequence(SEQ_STANDBY_OFF);
 }
 
-static inline void tl2796_panel_hw_reset(void)
+void tl2796_c110_panel_power_on(void)
+{
+	/* set gpio data for MLCD_RST to HIGH */
+	writel(readl(0xE0200C24) | 0x80, 0xE0200C24);
+	/* set gpio data for MLCD_ON to HIGH */
+	writel(readl(0xE0200264) | 0x8, 0xE0200264);
+	udelay(25000);
+
+	/* set gpio data for MLCD_RST to LOW */
+	writel(readl(0xE0200C24) & 0x7f, 0xE0200C24);
+	udelay(20);
+	/* set gpio data for MLCD_RST to HIGH */
+	writel(readl(0xE0200C24) | 0x80, 0xE0200C24);
+
+	udelay(20000);
+
+	tl2796_panel_send_sequence(SEQ_SETTING);
+	tl2796_panel_send_sequence(SEQ_STANDBY_OFF);
+}
+
+static inline void tl2796_c100_panel_hw_reset(void)
 {
 	/* set gpio pin for MLCD_RST to LOW */
-	__raw_writel(__raw_readl(0xE0300C24) & 0x7f, 0xE0300C24);
+	writel(readl(0xE0300C24) & 0x7f, 0xE0300C24);
 	udelay(1);	/* Shorter than 5 usec */
 	/* set gpio pin for MLCD_RST to HIGH */
-	__raw_writel(__raw_readl(0xE0300C24) | 0x80, 0xE0300C24);
+	writel(readl(0xE0300C24) | 0x80, 0xE0300C24);
+	udelay(10000);
+}
+
+static inline void tl2796_c110_panel_hw_reset(void)
+{
+	/* set gpio pin for MLCD_RST to LOW */
+	writel(readl(0xE0200C24) & 0x7f, 0xE0200C24);
+	udelay(1);	/* Shorter than 5 usec */
+	/* set gpio pin for MLCD_RST to HIGH */
+	writel(readl(0xE0200C24) | 0x80, 0xE0200C24);
 	udelay(10000);
 }
 
@@ -210,12 +291,22 @@ static void tl2796_panel_disable(void)
 	tl2796_panel_send_sequence(SEQ_DISPLAY_OFF);
 }
 
-void tl2796_panel_init(void)
+void tl2796_c100_panel_init(void)
 {
 	/* set gpio pin for DISPLAY_CS to HIGH */
-	__raw_writel(__raw_readl(0xE0300304) | 0x20, 0xE0300304);
+	writel(readl(0xE0300304) | 0x20, 0xE0300304);
 	/* set gpio pin for DISPLAY_CLK to HIGH */
-	__raw_writel(__raw_readl(0xE0300304) | 0x40, 0xE0300304);	
+	writel(readl(0xE0300304) | 0x40, 0xE0300304);	
 	/* set gpio pin for DISPLAY_SI to HIGH */
-	__raw_writel(__raw_readl(0xE0300304) | 0x80, 0xE0300304);
+	writel(readl(0xE0300304) | 0x80, 0xE0300304);
+}
+
+void tl2796_c110_panel_init(void)
+{
+	/* set gpio pin for DISPLAY_CS to HIGH */
+	writel(readl(0xE02002E4) | 0x02, 0xE02002E4);
+	/* set gpio pin for DISPLAY_CLK to HIGH */
+	writel(readl(0xE0200344) | 0x02, 0xE0200344);	
+	/* set gpio pin for DISPLAY_SI to HIGH */
+	writel(readl(0xE0200344) | 0x08, 0xE0200344);
 }

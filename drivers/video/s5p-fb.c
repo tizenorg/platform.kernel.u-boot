@@ -1,5 +1,5 @@
 /*
- * S5PC100 LCD Controller driver.
+ * S5PC100 and S5PC110 LCD Controller driver.
  *
  * Author: InKi Dae <inki.dae@samsung.com>
  *
@@ -25,9 +25,10 @@
 #include <stdarg.h>
 #include <linux/types.h>
 #include <asm/io.h>
+#include <asm/arch/cpu.h>
 #include <lcd.h>
 
-#include "s5pcfb.h"
+#include "s5p-fb.h"
 #include "opening_wvga_32.h"
 
 #define PANEL_WIDTH		480
@@ -101,7 +102,7 @@ vidinfo_t panel_info = {
 		.vl_bpix	= S5P_LCD_BPP,
 		.vl_lbw		= 0,
 		.vl_splt	= 0,
-		.vl_clor	= 0,
+		.vl_clor	= 1,
 		.vl_tft		= 1,
 
 		.vl_hpw		= 4,
@@ -112,11 +113,6 @@ vidinfo_t panel_info = {
 		.vl_bfw		= 8,
 		.vl_efw		= 8,
 };
-
-static void s5pc_lcd_clock_enable(void)
-{
-	s5pc_fimd_lcd_clock_enable();
-}
 
 static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 {
@@ -138,7 +134,10 @@ static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 
 static void s5pc_gpio_setup(void)
 {
-	s5pc_fimd_gpio_setup();
+	if (cpu_is_s5pc100())
+		s5pc_c100_gpio_setup();
+	else
+		s5pc_c110_gpio_setup();
 }
 
 static void s5pc_lcd_init(vidinfo_t *vid)
@@ -188,15 +187,19 @@ static void draw_samsung_logo(void* lcdbase)
 
 static void lcd_panel_on(void)
 {
-	tl2796_panel_init();
-	tl2796_panel_power_on();
+	if (cpu_is_s5pc100()) {
+		tl2796_c100_panel_init();
+		tl2796_c100_panel_power_on();
+	} else {
+		tl2796_c110_panel_init();
+		tl2796_c110_panel_power_on();
+	}
+
 	tl2796_panel_enable();
 }
 
 void lcd_ctrl_init(void *lcdbase)
 {
-	s5pc_lcd_clock_enable();
-
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
 #if defined(CONFIG_S5PC1XXFB_TEST)

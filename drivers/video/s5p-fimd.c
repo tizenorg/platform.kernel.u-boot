@@ -1,0 +1,328 @@
+/*
+ * S5PC100 and S5PC110 LCD Controller Specific driver.
+ *
+ * Author: InKi Dae <inki.dae@samsung.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
+#include <config.h>
+#include <common.h>
+#include <stdarg.h>
+#include <linux/types.h>
+#include <asm/io.h>
+#include <lcd.h>
+
+#include <asm/arch/cpu.h>
+#include <asm/arch/regs-fb.h>
+#include <asm/arch/hardware.h>
+#include "s5p-fb.h"
+
+#define MPLL 1
+
+/* LCD Panel definitions */
+#define PANEL_WIDTH		480
+#define PANEL_HEIGHT		800
+#define S5P_LCD_BPP		32	
+
+#define S5PCFB_VBPE		1
+
+#define S5PCFB_VFPE		1
+
+#define S5PCFB_HRES		480
+#define S5PCFB_VRES		800
+
+#define S5PCFB_HRES_VIRTUAL	480
+#define S5PCFB_VRES_VIRTUAL	800
+
+#define S5PCFB_HRES_OSD		480
+#define S5PCFB_VRES_OSD		800
+
+#define S5P_VFRAME_FREQ		60
+
+static unsigned int ctrl_base;
+static unsigned long *lcd_base_addr;
+
+extern unsigned long get_pll_clk(int pllreg);
+
+void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_size)
+{
+	lcd_base_addr = (unsigned long *)screen_base;
+
+	udebug("lcd_base_addr(framebuffer memory) = %x\n", lcd_base_addr);
+
+	return;
+}
+
+void s5pc_c100_gpio_setup(void)
+{
+	/* set GPF0[0:7] for RGB Interface and Data lines */
+	writel(0x22222222, 0xE03000E0);
+
+	/* set Data lines */
+	writel(0x22222222, 0xE0300100);
+	writel(0x22222222, 0xE0300120);
+	writel(0x2222, 0xE0300140);
+
+	/* set gpio configuration pin for MLCD_RST */
+	writel(0x10000000, 0xE0300C20);
+
+	/* set gpio configuration pin for MLCD_ON */
+	writel(0x1000, 0xE0300220);
+	writel(readl(0xE0300224) & 0xf7, 0xE0300224);
+
+	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK and DISPLSY_SI */
+	writel(0x11100000, 0xE0300300);
+}
+
+void s5pc_c110_gpio_setup(void)
+{
+	/* set GPF0[0:7] for RGB Interface and Data lines */
+	writel(0x22222222, 0xE0200120);
+	/* pull-up/down disable */
+	writel(0x0, 0xE0200128);
+	/* drive strength to max */
+	writel(0xffffffff, 0xE020012C);
+
+	/* set Data lines */
+	writel(0x22222222, 0xE0200140);
+	writel(0x22222222, 0xE0200160);
+	writel(0x2222, 0xE0200180);
+
+	/* drive strength to max */
+	writel(0xffffffff, 0xE020014C);
+	writel(0xffffffff, 0xE020016C);
+	writel(0x000000ff, 0xE020018C);
+
+	/* pull-up/down disable */
+	writel(0x0, 0xE0200148);
+	writel(0x0, 0xE0200168);
+	writel(0x0, 0xE0200188);
+
+	/* display output path selection */
+	writel(0x2, 0xE0107008);
+
+	/* set gpio configuration pin for MLCD_RST */
+	writel(0x10000000, 0xE0200C20);
+
+	/* set gpio configuration pin for MLCD_ON */
+	writel(0x1000, 0xE0200260);
+	writel(readl(0xE0200264) & 0xf7, 0xE0200264);
+
+	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK, DISPLSY_SI and LCD_ID */
+	writel(0x10, 0xE02002E0);
+	writel(0x1110, 0xE0200340);
+
+	return;
+}
+
+static void s5pc_fimd_set_par(unsigned int win_id)
+{
+	unsigned int cfg = 0;
+
+	/* set window control */
+	cfg = readl(ctrl_base + S5P_WINCON(win_id));
+
+	cfg &= ~(S5P_WINCON_BITSWP_ENABLE | S5P_WINCON_BYTESWP_ENABLE | \
+		S5P_WINCON_HAWSWP_ENABLE | S5P_WINCON_WSWP_ENABLE | \
+		S5P_WINCON_BURSTLEN_MASK | S5P_WINCON_BPPMODE_MASK | \
+		S5P_WINCON_INRGB_MASK | S5P_WINCON_DATAPATH_MASK);
+
+	/* DATAPATH is DMA */
+	cfg |= S5P_WINCON_DATAPATH_DMA;
+
+	/* bpp is 32 */
+	cfg |= S5P_WINCON_WSWP_ENABLE;
+
+	/* dma burst is 16 */
+	cfg |= S5P_WINCON_BURSTLEN_16WORD;
+
+	/* pixel format is unpacked RGB888 */
+	cfg |= S5P_WINCON_BPPMODE_24BPP_888;
+
+	writel(cfg, ctrl_base + S5P_WINCON(win_id));
+	udebug("wincon%d = %x\n", win_id, cfg);
+
+	/* set window position to x=0, y=0*/
+	cfg = S5P_VIDOSD_LEFT_X(0) | S5P_VIDOSD_TOP_Y(0);
+	writel(cfg, ctrl_base + S5P_VIDOSD_A(win_id));
+	udebug("window postion left,top = %x\n", cfg);
+
+	cfg = S5P_VIDOSD_RIGHT_X(PANEL_WIDTH - 1) |
+		S5P_VIDOSD_BOTTOM_Y(PANEL_HEIGHT - 1);
+	writel(cfg, ctrl_base + S5P_VIDOSD_B(win_id));
+	udebug("window postion right,bottom= %x\n", cfg);
+
+	/* set window size for window0*/
+	cfg = S5P_VIDOSD_SIZE(PANEL_WIDTH * PANEL_HEIGHT);
+	writel(cfg, ctrl_base + S5P_VIDOSD_C(win_id));
+	udebug("vidosd_c%d= %x\n", win_id, cfg);
+
+	return;
+}
+
+static void s5pc_fimd_set_buffer_address(unsigned int win_id)
+{
+	unsigned long start_addr, end_addr;
+
+	start_addr = (unsigned long)lcd_base_addr;
+	end_addr = start_addr + ((PANEL_WIDTH * (S5P_LCD_BPP / 8))
+		* PANEL_HEIGHT);
+
+	writel(start_addr, ctrl_base + S5P_VIDADDR_START0(win_id));
+	writel(end_addr, ctrl_base + S5P_VIDADDR_END0(win_id));
+
+	udebug("start addr = %x, end addr = %x\n", start_addr, end_addr);
+
+	return;
+}
+
+static void s5pc_fimd_set_clock(vidinfo_t *vid)
+{
+	unsigned int cfg = 0, div = 0, mpll_ratio = 0;
+	unsigned long pixel_clock, src_clock, max_clock;
+
+	max_clock = 66 * 1000000;
+
+	pixel_clock = S5P_VFRAME_FREQ * (vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width) *
+		(vid->vl_vpw + vid->vl_bfw + vid->vl_efw + vid->vl_height);
+
+	src_clock = get_pll_clk(MPLL);
+
+	cfg = readl(ctrl_base + S5P_VIDCON0);
+	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
+		S5P_VIDCON0_VCLKEN_MASK | S5P_VIDCON0_CLKDIR_MASK);
+	cfg |= (S5P_VIDCON0_CLKSEL_HCLK | S5P_VIDCON0_CLKVALUP_ALWAYS | \
+		S5P_VIDCON0_VCLKEN_NORMAL | S5P_VIDCON0_CLKDIR_DIVIDED);
+
+	if (pixel_clock > max_clock)
+		pixel_clock = max_clock;
+
+	/* get mpll ratio */
+	if (cpu_is_s5pc110())
+		mpll_ratio = (readl(0xE0100300) & 0xf0000) >> 16;
+	else
+		mpll_ratio = (readl(0xE0100304) & 0xf0) >> 4;
+
+	/* 
+	 * It can get sorce clock speed as (mpll / mpll_ratio) 
+	 * because lcd controller uses hclk_dsys.
+	 * mpll is a parent of hclk_dsys.
+	 */
+	div = (unsigned int)((src_clock / (mpll_ratio + 1)) / pixel_clock);
+	cfg |= S5P_VIDCON0_CLKVAL_F(div - 1);
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+
+	udebug("mpll_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
+		mpll_ratio, src_clock, pixel_clock, div);
+
+	return;
+}
+
+void s5pc_fimd_lcd_init(vidinfo_t *vid)
+{
+	unsigned int cfg = 0, rgb_mode, win_id = 0;
+
+	/* select register base according to cpu type */
+	if (cpu_is_s5pc110())
+		ctrl_base = 0xF8000000;
+	else
+		ctrl_base = 0xEE000000;
+
+	/* set output to RGB */
+	rgb_mode = MODE_RGB_P;
+	cfg = readl(ctrl_base + S5P_VIDCON0);	
+	cfg &= ~S5P_VIDCON0_VIDOUT_MASK;
+
+	/* clock source is HCLK */
+	cfg |= 0 << 2;
+
+	cfg |= S5P_VIDCON0_VIDOUT_RGB;
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+
+	/* set display mode */
+	cfg = readl(ctrl_base + S5P_VIDCON0);
+	cfg &= ~S5P_VIDCON0_PNRMODE_MASK;
+	cfg |= (rgb_mode << S5P_VIDCON0_PNRMODE_SHIFT);
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+
+	/* set polarity */
+	cfg = 0;
+	cfg |= S5P_VIDCON1_IVDEN_INVERT | S5P_VIDCON1_IVCLK_RISING_EDGE;
+	writel(cfg, ctrl_base + S5P_VIDCON1);
+
+
+	/* set timing */
+	cfg = 0;
+	//cfg |= S5P_VIDTCON0_VBPDE(S5PCFB_VBPE - 1);
+	cfg |= S5P_VIDTCON0_VBPD(vid->vl_bfw - 1);
+	cfg |= S5P_VIDTCON0_VFPD(vid->vl_efw - 1);
+	cfg |= S5P_VIDTCON0_VSPW(vid->vl_vpw - 1);
+	writel(cfg, ctrl_base + S5P_VIDTCON0);
+	udebug("vidtcon0 = %x\n", cfg);
+
+	cfg = 0;
+	//cfg |= S5P_VIDTCON1_VFPDE(S5PCFB_VFPE - 1);
+	cfg |= S5P_VIDTCON1_HBPD(vid->vl_blw - 1);
+	cfg |= S5P_VIDTCON1_HFPD(vid->vl_elw - 1);
+	cfg |= S5P_VIDTCON1_HSPW(vid->vl_hpw - 1);
+
+	writel(cfg, ctrl_base + S5P_VIDTCON1);
+	udebug("vidtcon1 = %x\n", cfg);
+
+	/* set lcd size */
+	cfg = 0;
+	cfg |= S5P_VIDTCON2_HOZVAL(PANEL_WIDTH - 1);
+	cfg |= S5P_VIDTCON2_LINEVAL(PANEL_HEIGHT - 1);
+	
+	writel(cfg, ctrl_base + S5P_VIDTCON2);
+	udebug("vidtcon2 = %x\n", cfg);
+
+	/* set par */
+	s5pc_fimd_set_par(win_id);
+
+	/* set memory address */
+	s5pc_fimd_set_buffer_address(win_id);
+
+	/* set buffer size */
+	cfg = S5P_VIDADDR_PAGEWIDTH(PANEL_WIDTH * S5P_LCD_BPP / 8);
+	writel(cfg, ctrl_base + S5P_VIDADDR_SIZE(win_id));
+	udebug("vidaddr_pagewidth = %d\n", cfg);
+
+	/* set clock */
+	s5pc_fimd_set_clock(vid);
+
+	/* display on */
+	cfg = readl(ctrl_base + S5P_VIDCON0);
+	cfg |= (S5P_VIDCON0_ENVID_ENABLE | S5P_VIDCON0_ENVID_F_ENABLE);
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+	udebug("vidcon0 = %x\n", cfg);
+
+	/* enable window */
+	cfg = readl(ctrl_base + S5P_WINCON(win_id));
+	cfg |= S5P_WINCON_ENWIN_ENABLE;
+	writel(cfg, ctrl_base + S5P_WINCON(win_id));
+	udebug("wincon%d=%x\n", win_id, cfg);
+
+	udebug("lcd controller init completed.\n");
+
+	return;
+}
+
+ulong s5pc_fimd_calc_fbsize(void)
+{
+	return (PANEL_WIDTH * PANEL_HEIGHT * (S5P_LCD_BPP / 8));
+}
