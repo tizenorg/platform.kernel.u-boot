@@ -6,7 +6,27 @@
 #include <fcntl.h>
 #include <err.h>
 
-#define IPL_14K	(0x3800 - 0x4)
+#ifndef SZ_8K
+#define SZ_8K		0x2000
+#endif
+#ifndef SZ_14K
+#define SZ_14K		0x3800
+#endif
+
+/*
+ * For 2KiB page OneNAND
+ * +------+------+------+------+
+ * | 2KiB | 2KiB | 2KiB | 2KiB |
+ * +------+------+------+------+
+ */
+#define CHECKSUM_8K	(SZ_8K - 0x4)
+/*
+ * For 4KiB page OneNAND
+ * +----------------+----------------+----------------+----------------+
+ * | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved |
+ * +----------------+----------------+----------------+----------------+
+ */
+#define CHECKSUM_16K	(SZ_14K - 0x4)
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +35,8 @@ int main(int argc, char *argv[])
 	char buf;
 	int fd;
 	unsigned int sum = 0;
+	struct stat stat;
+	off_t size;
 
 	fd = open(argv[1], O_RDWR);
 
@@ -23,12 +45,23 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	for (i = 0; i < IPL_14K; i++) {
+	ret = fstat(fd, &stat);
+	if (ret < 0) {
+		perror("fstat");
+		return 1;
+	}
+
+	if (stat.st_size > SZ_8K)
+		size = CHECKSUM_16K;
+	else
+		size = CHECKSUM_8K;
+
+	for (i = 0; i < size; i++) {
 		ret = read(fd, &buf, 1);
 
 		if (ret < 0) {
-			printf("write err: %d\n", ret);
-			break;
+			perror("read");
+			return 1;
 		}
 
 		sum += (buf & 0xFF);
