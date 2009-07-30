@@ -30,12 +30,12 @@
 #define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
 
-#define S5PCFB_C100_CS_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xdf, 0xE0300304)
-#define S5PCFB_C100_CS_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x20, 0xE0300304)
-#define S5PCFB_C100_CLK_LOW	__raw_writel(__raw_readl(0xE0300304) & 0xbf, 0xE0300304)
-#define S5PCFB_C100_CLK_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x40, 0xE0300304)	
-#define S5PCFB_C100_SDA_LOW	__raw_writel(__raw_readl(0xE0300304) & 0x7f, 0xE0300304)	
-#define S5PCFB_C100_SDA_HIGH	__raw_writel(__raw_readl(0xE0300304) | 0x80, 0xE0300304)
+#define S5PCFB_C100_CS_LOW	writel(readl(0xE0300304) & 0xdf, 0xE0300304)
+#define S5PCFB_C100_CS_HIGH	writel(readl(0xE0300304) | 0x20, 0xE0300304)
+#define S5PCFB_C100_CLK_LOW	writel(readl(0xE0300304) & 0xbf, 0xE0300304)
+#define S5PCFB_C100_CLK_HIGH	writel(readl(0xE0300304) | 0x40, 0xE0300304)	
+#define S5PCFB_C100_SDA_LOW	writel(readl(0xE0300304) & 0x7f, 0xE0300304)	
+#define S5PCFB_C100_SDA_HIGH	writel(readl(0xE0300304) | 0x80, 0xE0300304)
 
 #define S5PCFB_C110_CS_LOW	writel(readl(0xE02002E4) & 0xfd, 0xE02002E4)
 #define S5PCFB_C110_CS_HIGH	writel(readl(0xE02002E4) | 0x02, 0xE02002E4)
