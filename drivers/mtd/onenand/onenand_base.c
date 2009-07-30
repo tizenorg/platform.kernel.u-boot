@@ -2180,7 +2180,7 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	 */
 	switch (mtd->oobsize) {
 	case 128:
-		this->ecclayout = &onenand_oob_64;
+		this->ecclayout = &onenand_oob_128;
 		mtd->subpage_sft = 0;
 		break;
 
