@@ -139,11 +139,14 @@ void i2c_init(int speed, int slaveadd)
 		switch (default_channel) {
 		case 2:
 			gpio_shift = 16;
+			break;
 		case 1:
 			gpio_shift = 8;
+			break;
 		case 0:
 			gpio_shift = 0;
-		deafult:
+			break;
+		default:
 			break;
 		}
 

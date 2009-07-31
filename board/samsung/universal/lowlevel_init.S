@@ -73,9 +73,7 @@ lowlevel_init:
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 #ifdef CONFIG_ONENAND_IPL
-#if 0
 	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
-#endif
 #else
 	bic	r1, r1, #(1 << 1)
 #endif

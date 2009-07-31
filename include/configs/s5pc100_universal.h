@@ -35,7 +35,7 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5PC1XX		1	/* which is in a S5PC1XX Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
-#define CONFIG_S5PC110		1	/* which is in a S5PC100 */
+#define CONFIG_S5PC110		1	/* which is in a S5PC110 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
@@ -90,7 +90,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_L2_OFF
 
 /* It should define before config_cmd_default.h */
 #define CONFIG_SYS_NO_FLASH		1
@@ -161,8 +160,8 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0x60000 0x300000;" \
-	" onenand write 0x21008000 0x60000 0x300000\0" \
+	"updatek=onenand erase 0x80000 0x300000;" \
+	" onenand write 0x21008000 0x80000 0x300000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
 	"bootk=onenand read 0x20007FC0 0x80000 0x300000;" \
