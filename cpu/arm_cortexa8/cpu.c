@@ -35,9 +35,6 @@
 #include <command.h>
 #include <asm/system.h>
 #include <asm/cache.h>
-#ifndef CONFIG_L2_OFF
-#include <asm/arch/sys_proto.h>
-#endif
 
 static void cache_flush(void);
 
@@ -60,19 +57,19 @@ int cleanup_before_linux(void)
 	/* invalidate I-cache */
 	cache_flush();
 
-#ifndef CONFIG_L2_OFF
-	/* turn off L2 cache */
-	l2_cache_disable();
-	/* invalidate L2 cache also */
-	v7_flush_dcache_all(get_device_type());
-#endif
+	if (get_device_type() != 0x10) {
+		/* turn off L2 cache */
+		l2_cache_disable();
+		/* invalidate L2 cache also */
+		v7_flush_dcache_all(get_device_type());
+	}
+
 	i = 0;
 	/* mem barrier to sync up things */
 	asm("mcr p15, 0, %0, c7, c10, 4": :"r"(i));
 
-#ifndef CONFIG_L2_OFF
-	l2_cache_enable();
-#endif
+	if (get_device_type() != 0x10)
+		l2_cache_enable();
 
 	return 0;
 }

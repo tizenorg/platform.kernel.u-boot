@@ -39,6 +39,14 @@ int arch_cpu_init(void)
 }
 #endif
 
+u32 get_device_type(void)
+{
+	if (cpu_is_s5pc110())
+		return 0x11;
+	else
+		return 0x10;
+}
+
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {

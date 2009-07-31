@@ -90,7 +90,6 @@
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BAUDRATE		115200
-#define CONFIG_L2_OFF
 
 /* It should define before config_cmd_default.h */
 #define CONFIG_SYS_NO_FLASH		1
