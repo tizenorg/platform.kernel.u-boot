@@ -28,20 +28,16 @@ void l2_cache_enable(void)
 {
 	unsigned long i;
 
-	if (cpu_is_s5pc110()) {
-		__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
-		__asm__ __volatile__("orr %0, %0, #0x2":"=r"(i));
-		__asm__ __volatile__("mcr p15, 0, %0, c1, c0, 1":"=r"(i));
-	}
+	__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
+	__asm__ __volatile__("orr %0, %0, #0x2":"=r"(i));
+	__asm__ __volatile__("mcr p15, 0, %0, c1, c0, 1":"=r"(i));
 }
 
 void l2_cache_disable(void)
 {
 	unsigned long i;
 
-	if (cpu_is_s5pc110()) {
-		__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
-		__asm__ __volatile__("bic %0, %0, #0x2":"=r"(i));
-		__asm__ __volatile__("mcr p15, 0, %0, c1, c0, 1":"=r"(i));
-	}
+	__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 1":"=r"(i));
+	__asm__ __volatile__("bic %0, %0, #0x2":"=r"(i));
+	__asm__ __volatile__("mcr p15, 0, %0, c1, c0, 1":"=r"(i));
 }
