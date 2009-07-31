@@ -100,12 +100,14 @@ void s5pc_c110_gpio_setup(void)
 	/* set Data lines */
 	writel(0x22222222, 0xE0200140);
 	writel(0x22222222, 0xE0200160);
-	writel(0x2222, 0xE0200180);
+	writel(readl(0xE0200180) & 0xFF0000, 0xE0200180);
+	writel(readl(0xE0200180) | 0x002222, 0xE0200180);
 
 	/* drive strength to max */
 	writel(0xffffffff, 0xE020014C);
 	writel(0xffffffff, 0xE020016C);
-	writel(0x000000ff, 0xE020018C);
+	writel(readl(0xE020018C) & 0xFF00, 0xE020018C);
+	writel(readl(0xE020018C) | 0x00FF, 0xE020018C);
 
 	/* pull-up/down disable */
 	writel(0x0, 0xE0200148);
@@ -116,15 +118,19 @@ void s5pc_c110_gpio_setup(void)
 	writel(0x2, 0xE0107008);
 
 	/* set gpio configuration pin for MLCD_RST */
-	writel(0x10000000, 0xE0200C20);
+	writel(readl(0xE0200C20) & 0x0fffffff, 0xE0200C20);
+	writel(readl(0xE0200C20) | 0x10000000, 0xE0200C20);
 
 	/* set gpio configuration pin for MLCD_ON */
-	writel(0x1000, 0xE0200260);
+	writel(readl(0xE0200260) & 0xFFFF0FFF, 0xE0200260);
+	writel(readl(0xE0200260) | 0x00001000, 0xE0200260);
 	writel(readl(0xE0200264) & 0xf7, 0xE0200264);
 
 	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK, DISPLSY_SI and LCD_ID */
-	writel(0x10, 0xE02002E0);
-	writel(0x1110, 0xE0200340);
+	writel(readl(0xE02002E0) & 0xFFFFFF0F, 0xE02002E0);
+	writel(readl(0xE02002E0) | 0x00000010, 0xE02002E0);
+	writel(readl(0xE0200340) & 0xFFFF000F, 0xE0200340);
+	writel(readl(0xE0200340) | 0x00001110, 0xE0200340);
 
 	return;
 }
