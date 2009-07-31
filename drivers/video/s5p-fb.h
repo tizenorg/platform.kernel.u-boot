@@ -20,9 +20,9 @@
 #define DEBUG
 #undef DEBUG
 #ifdef DEBUG
-#define udebug printf
+#define udebug(args...)		printf(args)
 #else
-#define udebug
+#define udebug(args...)		do { } while (0)
 #endif
 
 typedef struct {
