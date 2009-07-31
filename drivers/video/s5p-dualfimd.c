@@ -107,7 +107,7 @@ void s5pc_c110_gpio_setup(void)
 
 	/* set gpio configuration pin for MLCD_ON */
 	writel(readl(0xE0200260) & 0xFFFF0FFF, 0xE0200260);
-	writel(readl(0xE0200260) | 0xFFFF1000, 0xE0200260);
+	writel(readl(0xE0200260) | 0x00001000, 0xE0200260);
 	writel(readl(0xE0200264) & 0xf7, 0xE0200264);
 
 	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK, DISPLSY_SI and LCD_ID */

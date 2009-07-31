@@ -148,19 +148,21 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	s5pc_fimd_lcd_init(vid);
 }
 
-static void lcd_test(void)
+static void dual_lcd_test(void)
 {
+	int x1 = 100, y1 = 0, x2 = 100, y2 = 0;
+
 	/* red */
-	read_image32((char *)lcd_base, 0, 0, 960, 200,
+	read_image32((char *)lcd_base, 0+x1, 0+y1, 960-x2, 200-y2,
 			makepixel8888(0, 255, 0, 0));
 	/* green */
-	read_image32((char *)lcd_base, 0, 200, 960, 400,
+	read_image32((char *)lcd_base, 0+x1, 200+y1, 960-x2, 400-y2,
 			makepixel8888(0, 0, 255, 0));
 	/* blue */
-	read_image32((char *)lcd_base, 0, 400, 960, 600,
+	read_image32((char *)lcd_base, 0+x1, 400+y1, 960-x2, 600-y2,
 			makepixel8888(0, 0, 0, 255));
 	/* write */
-	read_image32((char *)lcd_base, 0, 600, 960, 800,
+	read_image32((char *)lcd_base, 0+x1, 600+y1, 960-x2, 800-y2,
 			makepixel8888(0, 255, 255, 255));
 }
 
@@ -208,7 +210,7 @@ void lcd_ctrl_init(void *lcdbase)
 		memset(lcdbase, 0, panel_info.vl_col *
 			panel_info.vl_row * S5P_LCD_BPP >> 3);
 
-		lcd_test();
+		dual_lcd_test();
 	} else {
 		memset(lcdbase, 0, panel_info.vl_col *
 			panel_info.vl_row * S5P_LCD_BPP >> 3);
