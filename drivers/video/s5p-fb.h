@@ -18,6 +18,7 @@
 #define OFF	0
 
 #define DEBUG
+#undef DEBUG
 #ifdef DEBUG
 #define udebug printf
 #else
