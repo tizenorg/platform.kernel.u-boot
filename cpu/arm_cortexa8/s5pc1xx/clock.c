@@ -239,7 +239,7 @@ unsigned long get_hclk_sys(int clk)
 	/* HCLK_MSYS_RATIO: [10:8]
 	 * HCLK_DSYS_RATIO: [19:16]
 	 * HCLK_PSYS_RATIO: [27:24] */
-	offset = 8 + clk * 8;
+	offset = 8 + (clk << 0x3);
 
 	hclk_sys_ratio = (div >> offset) & 0xf;
 
@@ -261,7 +261,7 @@ unsigned long get_pclk_sys(int clk)
 	/* PCLK_MSYS_RATIO: [14:12]
 	 * PCLK_DSYS_RATIO: [22:20]
 	 * PCLK_PSYS_RATIO: [30:28] */
-	offset = 12 + clk * 8;
+	offset = 12 + (clk << 0x3);
 
 	pclk_sys_ratio = (div >> offset) & 0x7;
 
