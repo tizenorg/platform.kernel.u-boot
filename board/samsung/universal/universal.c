@@ -42,10 +42,11 @@ int board_init(void)
 
 int dram_init(void)
 {
+	/* In mem setup, we swap the bank. So below size is correct */
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
-	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
-	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+	gd->bd->bi_dram[0].size = PHYS_SDRAM_2_SIZE;
+	gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
+	gd->bd->bi_dram[1].size = PHYS_SDRAM_1_SIZE;
 
 	return 0;
 }
@@ -111,6 +112,11 @@ static void check_hw_revision(void)
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
+		/* In S5PC110, we can't swap the DMC0/1 */
+		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
+		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
 		setenv("meminfo", "mem=80M,128M@0x40000000");
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {

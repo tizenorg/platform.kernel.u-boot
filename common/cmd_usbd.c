@@ -646,7 +646,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(usbdown, 3, 0, do_usbd_down,
-	"usbdown - initialize USB device and ready to receive"
+	"initialize USB device and ready to receive"
 		" for Windows server (specific)\n",
 	"[download address]\n"
 );
