@@ -121,14 +121,19 @@ static void check_hw_revision(void)
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
 		setenv("bootk", "onenand read 0x20007FC0 0x60000 0x300000; bootm 0x20007FC0");
+		setenv("updatek", "onenand erase 0x60000 0x300000; onenand write 0x21008000 0x60000 0x300000");
 	}
 }
 
 static void check_auto_burn(void)
 {
-	if (readl(0x22000000) == 0xa5a55a5a) {
+	if (readl(0x22000000) == 0x426f6f74) {	/* ASICC: Boot */
 		printf("Auto burning bootloader\n");
-		setenv("bootcmd", "run updateb");
+		setenv("bootcmd", "run updateb; reset");
+	}
+	if (readl(0x22000000) == 0x4b65726e) {	/* ASICC: Kern */
+		printf("Auto burning kernel\n");
+		setenv("bootcmd", "run updatek; reset");
 	}
 }
 

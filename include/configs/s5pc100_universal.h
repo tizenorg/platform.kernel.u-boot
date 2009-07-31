@@ -160,8 +160,8 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0x60000 0x300000;" \
-	" onenand write 0x21008000 0x60000 0x300000\0" \
+	"updatek=onenand erase 0x80000 0x300000;" \
+	" onenand write 0x21008000 0x80000 0x300000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
 	"bootk=onenand read 0x20007FC0 0x80000 0x300000;" \
