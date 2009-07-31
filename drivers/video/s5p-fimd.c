@@ -33,28 +33,11 @@
 
 #define MPLL 1
 
-/* LCD Panel definitions */
-#define PANEL_WIDTH		480
-#define PANEL_HEIGHT		800
-#define S5P_LCD_BPP		32	
-
-#define S5PCFB_VBPE		1
-
-#define S5PCFB_VFPE		1
-
-#define S5PCFB_HRES		480
-#define S5PCFB_VRES		800
-
-#define S5PCFB_HRES_VIRTUAL	480
-#define S5PCFB_VRES_VIRTUAL	800
-
-#define S5PCFB_HRES_OSD		480
-#define S5PCFB_VRES_OSD		800
-
 #define S5P_VFRAME_FREQ		60
 
 static unsigned int ctrl_base;
 static unsigned long *lcd_base_addr;
+static vidinfo_t *pvid = NULL;
 
 extern unsigned long get_pll_clk(int pllreg);
 
@@ -167,13 +150,13 @@ static void s5pc_fimd_set_par(unsigned int win_id)
 	writel(cfg, ctrl_base + S5P_VIDOSD_A(win_id));
 	udebug("window postion left,top = %x\n", cfg);
 
-	cfg = S5P_VIDOSD_RIGHT_X(PANEL_WIDTH - 1) |
-		S5P_VIDOSD_BOTTOM_Y(PANEL_HEIGHT - 1);
+	cfg = S5P_VIDOSD_RIGHT_X(pvid->vl_col - 1) |
+		S5P_VIDOSD_BOTTOM_Y(pvid->vl_row - 1);
 	writel(cfg, ctrl_base + S5P_VIDOSD_B(win_id));
 	udebug("window postion right,bottom= %x\n", cfg);
 
 	/* set window size for window0*/
-	cfg = S5P_VIDOSD_SIZE(PANEL_WIDTH * PANEL_HEIGHT);
+	cfg = S5P_VIDOSD_SIZE(pvid->vl_col * pvid->vl_row);
 	writel(cfg, ctrl_base + S5P_VIDOSD_C(win_id));
 	udebug("vidosd_c%d= %x\n", win_id, cfg);
 
@@ -185,8 +168,8 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 	unsigned long start_addr, end_addr;
 
 	start_addr = (unsigned long)lcd_base_addr;
-	end_addr = start_addr + ((PANEL_WIDTH * (S5P_LCD_BPP / 8))
-		* PANEL_HEIGHT);
+	end_addr = start_addr + ((pvid->vl_col * (pvid->vl_bpix / 8))
+		* pvid->vl_row);
 
 	writel(start_addr, ctrl_base + S5P_VIDADDR_START0(win_id));
 	writel(end_addr, ctrl_base + S5P_VIDADDR_END0(win_id));
@@ -196,15 +179,16 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 	return;
 }
 
-static void s5pc_fimd_set_clock(vidinfo_t *vid)
+static void s5pc_fimd_set_clock(void)
 {
 	unsigned int cfg = 0, div = 0, mpll_ratio = 0;
 	unsigned long pixel_clock, src_clock, max_clock;
 
 	max_clock = 66 * 1000000;
 
-	pixel_clock = S5P_VFRAME_FREQ * (vid->vl_hpw + vid->vl_blw + vid->vl_elw + vid->vl_width) *
-		(vid->vl_vpw + vid->vl_bfw + vid->vl_efw + vid->vl_height);
+	pixel_clock = S5P_VFRAME_FREQ * (pvid->vl_hpw + pvid->vl_blw +
+		pvid->vl_elw + pvid->vl_width) * (pvid->vl_vpw +
+		    pvid->vl_bfw + pvid->vl_efw + pvid->vl_height);
 
 	src_clock = get_pll_clk(MPLL);
 
@@ -242,6 +226,9 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
 	unsigned int cfg = 0, rgb_mode, win_id = 0;
 
+	/* store panel info to global variable */
+	pvid = vid;
+
 	/* select register base according to cpu type */
 	if (cpu_is_s5pc110())
 		ctrl_base = 0xF8000000;
@@ -270,29 +257,26 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	cfg |= S5P_VIDCON1_IVDEN_INVERT | S5P_VIDCON1_IVCLK_RISING_EDGE;
 	writel(cfg, ctrl_base + S5P_VIDCON1);
 
-
 	/* set timing */
 	cfg = 0;
-	//cfg |= S5P_VIDTCON0_VBPDE(S5PCFB_VBPE - 1);
-	cfg |= S5P_VIDTCON0_VBPD(vid->vl_bfw - 1);
-	cfg |= S5P_VIDTCON0_VFPD(vid->vl_efw - 1);
-	cfg |= S5P_VIDTCON0_VSPW(vid->vl_vpw - 1);
+	cfg |= S5P_VIDTCON0_VBPD(pvid->vl_bfw - 1);
+	cfg |= S5P_VIDTCON0_VFPD(pvid->vl_efw - 1);
+	cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vpw - 1);
 	writel(cfg, ctrl_base + S5P_VIDTCON0);
 	udebug("vidtcon0 = %x\n", cfg);
 
 	cfg = 0;
-	//cfg |= S5P_VIDTCON1_VFPDE(S5PCFB_VFPE - 1);
-	cfg |= S5P_VIDTCON1_HBPD(vid->vl_blw - 1);
-	cfg |= S5P_VIDTCON1_HFPD(vid->vl_elw - 1);
-	cfg |= S5P_VIDTCON1_HSPW(vid->vl_hpw - 1);
+	cfg |= S5P_VIDTCON1_HBPD(pvid->vl_blw - 1);
+	cfg |= S5P_VIDTCON1_HFPD(pvid->vl_elw - 1);
+	cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hpw - 1);
 
 	writel(cfg, ctrl_base + S5P_VIDTCON1);
 	udebug("vidtcon1 = %x\n", cfg);
 
 	/* set lcd size */
 	cfg = 0;
-	cfg |= S5P_VIDTCON2_HOZVAL(PANEL_WIDTH - 1);
-	cfg |= S5P_VIDTCON2_LINEVAL(PANEL_HEIGHT - 1);
+	cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
+	cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
 	
 	writel(cfg, ctrl_base + S5P_VIDTCON2);
 	udebug("vidtcon2 = %x\n", cfg);
@@ -304,12 +288,12 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	s5pc_fimd_set_buffer_address(win_id);
 
 	/* set buffer size */
-	cfg = S5P_VIDADDR_PAGEWIDTH(PANEL_WIDTH * S5P_LCD_BPP / 8);
+	cfg = S5P_VIDADDR_PAGEWIDTH(pvid->vl_col * pvid->vl_bpix / 8);
 	writel(cfg, ctrl_base + S5P_VIDADDR_SIZE(win_id));
 	udebug("vidaddr_pagewidth = %d\n", cfg);
 
 	/* set clock */
-	s5pc_fimd_set_clock(vid);
+	s5pc_fimd_set_clock();
 
 	/* display on */
 	cfg = readl(ctrl_base + S5P_VIDCON0);
@@ -330,5 +314,5 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 ulong s5pc_fimd_calc_fbsize(void)
 {
-	return (PANEL_WIDTH * PANEL_HEIGHT * (S5P_LCD_BPP / 8));
+	return (pvid->vl_col * pvid->vl_row * (pvid->vl_bpix / 8));
 }
