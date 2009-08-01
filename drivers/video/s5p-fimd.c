@@ -73,38 +73,39 @@ void s5pc_c100_gpio_setup(void)
 
 void s5pc_c110_gpio_setup(void)
 {
-	/* set GPF0[0:7] for RGB Interface and Data lines */
+	/* set GPF0[0:7] for RGB Interface and Data lines (32bit) */
 	writel(0x22222222, 0xE0200120);
 	/* pull-up/down disable */
 	writel(0x0, 0xE0200128);
-	/* drive strength to max */
-	writel(0xffffffff, 0xE020012C);
+	/* drive strength to max (24bit) */
+	writel(0xffffff, 0xE020012C);
 
-	/* set Data lines */
+	/* set Data lines (32bit) */
 	writel(0x22222222, 0xE0200140);
 	writel(0x22222222, 0xE0200160);
 	writel(readl(0xE0200180) & 0xFF0000, 0xE0200180);
 	writel(readl(0xE0200180) | 0x002222, 0xE0200180);
 
-	/* drive strength to max */
-	writel(0xffffffff, 0xE020014C);
-	writel(0xffffffff, 0xE020016C);
-	writel(readl(0xE020018C) & 0xFF00, 0xE020018C);
-	writel(readl(0xE020018C) | 0x00FF, 0xE020018C);
+	/* drive strength to max (24bit) */
+	writel(0xffffff, 0xE020014C);
+	writel(0xffffff, 0xE020016C);
+	/* [11:0](drive stength level), [15:12](none), [21:16](Slew Rate) */
+	writel(readl(0xE020018C) & 0x3FFF00, 0xE020018C);
+	writel(readl(0xE020018C) | 0x0000FF, 0xE020018C);
 
 	/* pull-up/down disable */
 	writel(0x0, 0xE0200148);
 	writel(0x0, 0xE0200168);
 	writel(0x0, 0xE0200188);
 
-	/* display output path selection */
+	/* display output path selection (only [1:0] valid) */
 	writel(0x2, 0xE0107008);
 
 	/* set gpio configuration pin for MLCD_RST */
 	writel(readl(0xE0200C20) & 0x0fffffff, 0xE0200C20);
 	writel(readl(0xE0200C20) | 0x10000000, 0xE0200C20);
 
-	/* set gpio configuration pin for MLCD_ON */
+	/* set gpio configuration pin for MLCD_ON and then to LOW */
 	writel(readl(0xE0200260) & 0xFFFF0FFF, 0xE0200260);
 	writel(readl(0xE0200260) | 0x00001000, 0xE0200260);
 	writel(readl(0xE0200264) & 0xf7, 0xE0200264);
@@ -208,7 +209,7 @@ static void s5pc_fimd_set_clock(void)
 		mpll_ratio = (readl(0xE0100304) & 0xf0) >> 4;
 
 	/* 
-	 * It can get sorce clock speed as (mpll / mpll_ratio) 
+	 * It can get source clock speed as (mpll / mpll_ratio) 
 	 * because lcd controller uses hclk_dsys.
 	 * mpll is a parent of hclk_dsys.
 	 */
@@ -220,6 +221,23 @@ static void s5pc_fimd_set_clock(void)
 		mpll_ratio, src_clock, pixel_clock, div);
 
 	return;
+}
+
+static s5pc_fimd_lcd_on(unsigned int win_id)
+{
+	int cfg = 0;
+
+	/* display on */
+	cfg = readl(ctrl_base + S5P_VIDCON0);
+	cfg |= (S5P_VIDCON0_ENVID_ENABLE | S5P_VIDCON0_ENVID_F_ENABLE);
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+	udebug("vidcon0 = %x\n", cfg);
+
+	/* enable window */
+	cfg = readl(ctrl_base + S5P_WINCON(win_id));
+	cfg |= S5P_WINCON_ENWIN_ENABLE;
+	writel(cfg, ctrl_base + S5P_WINCON(win_id));
+	udebug("wincon%d=%x\n", win_id, cfg);
 }
 
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
@@ -296,16 +314,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	s5pc_fimd_set_clock();
 
 	/* display on */
-	cfg = readl(ctrl_base + S5P_VIDCON0);
-	cfg |= (S5P_VIDCON0_ENVID_ENABLE | S5P_VIDCON0_ENVID_F_ENABLE);
-	writel(cfg, ctrl_base + S5P_VIDCON0);
-	udebug("vidcon0 = %x\n", cfg);
-
-	/* enable window */
-	cfg = readl(ctrl_base + S5P_WINCON(win_id));
-	cfg |= S5P_WINCON_ENWIN_ENABLE;
-	writel(cfg, ctrl_base + S5P_WINCON(win_id));
-	udebug("wincon%d=%x\n", win_id, cfg);
+	s5pc_fimd_lcd_on(win_id);
 
 	udebug("lcd controller init completed.\n");
 
