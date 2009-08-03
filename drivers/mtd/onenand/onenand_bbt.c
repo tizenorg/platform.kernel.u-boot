@@ -68,13 +68,14 @@ static int read_page_oob(struct mtd_info *mtd, loff_t from, u_char *buf)
 
 	/* Set as normal block */
 	res = 0x00;
-	bbm->bbt[block >> 3] |= 0x00 << (block & 0x6);
+	bbm->bbt[block >> 3] &= ~(0x3 << (block & 0x6));
+	bbm->bbt[block >> 3] |= res << (block & 0x6);
 
 	for (j = 0; j < 2; j++) {
 		ret = onenand_bbt_read_oob(mtd, from + j * mtd->writesize + bd->offs, &ops);
 		if (ret || check_short_pattern(&buf[j * scanlen], scanlen, mtd->writesize, bd)) {
-			bbm->bbt[block >> 3] |= 0x03 << (block & 0x6);
 			res = 0x03;
+			bbm->bbt[block >> 3] |= res << (block & 0x6);
 			printk(KERN_WARNING "Bad eraseblock %d at 0x%08x\n",
 					block >> 1, (unsigned int) from);
 			mtd->ecc_stats.badblocks++;
@@ -82,7 +83,7 @@ static int read_page_oob(struct mtd_info *mtd, loff_t from, u_char *buf)
 		}
 	}
 
-	return ret;
+	return res;
 }
 
 /**
