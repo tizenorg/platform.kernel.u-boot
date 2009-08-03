@@ -508,6 +508,10 @@ static void s3c_onenand_unlock_all(struct mtd_info *mtd)
 	loff_t ofs = 0;
 	size_t len = this->chipsize;
 
+	/* FIXME workaround */
+	this->subpagesize = mtd->writesize;
+	mtd->subpage_sft = 0;
+
 	if (this->options & ONENAND_HAS_UNLOCK_ALL) {
 		/* Write unlock command */
 		this->command(mtd, ONENAND_CMD_UNLOCK_ALL, 0, 0);
