@@ -150,20 +150,29 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 
 static void dual_lcd_test(void)
 {
-	int x1 = 100, y1 = 0, x2 = 100, y2 = 0;
-
+	int x1 = 100, y1 = 50, x2 = 100, y2 = 50, i;
 	/* red */
-	read_image32((char *)lcd_base, 0+x1, 0+y1, 960-x2, 200-y2,
+	read_image32((char *)lcd_base, 0+x1, 0+y1, 960-x2, 200,
 			makepixel8888(0, 255, 0, 0));
 	/* green */
-	read_image32((char *)lcd_base, 0+x1, 200+y1, 960-x2, 400-y2,
+	read_image32((char *)lcd_base, 0+x1, 200, 960-x2, 400,
 			makepixel8888(0, 0, 255, 0));
 	/* blue */
-	read_image32((char *)lcd_base, 0+x1, 400+y1, 960-x2, 600-y2,
+	read_image32((char *)lcd_base, 0+x1, 400, 960-x2, 600,
 			makepixel8888(0, 0, 0, 255));
 	/* write */
-	read_image32((char *)lcd_base, 0+x1, 600+y1, 960-x2, 800-y2,
+	read_image32((char *)lcd_base, 0+x1, 600, 960-x2, 800-y2,
 			makepixel8888(0, 255, 255, 255));
+}
+
+static void repeat_test(void)
+{
+	int i;
+
+	for (i = 100; i < 200; i++) {
+		read_image32((char *)lcd_base, 0, 0, 960, 800,
+				makepixel8888(0, (0x1234 * i) & 255, (0x5421 * i) & 255, (0x6789 * i) & 255));
+	}
 }
 
 void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
@@ -200,23 +209,9 @@ static void lcd_panel_on(void)
 
 void lcd_ctrl_init(void *lcdbase)
 {
-	char *option;
-
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
-	option = getenv("lcd");
-
-	if (strcmp(option, "test") == 0) {
-		memset(lcdbase, 0, panel_info.vl_col *
-			panel_info.vl_row * S5P_LCD_BPP >> 3);
-
-		dual_lcd_test();
-	} else {
-		memset(lcdbase, 0, panel_info.vl_col *
-			panel_info.vl_row * S5P_LCD_BPP >> 3);
-
-		draw_samsung_logo(lcdbase);
-	}
+	memset(lcd_base, 0, panel_info.vl_col *	panel_info.vl_row * S5P_LCD_BPP >> 3);
 
 	s5pc_gpio_setup();
 
@@ -230,7 +225,19 @@ void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)
 
 void lcd_enable(void)
 {
+	char *option;
+
 	lcd_panel_on();
+
+	option = getenv("lcd");
+	if (strcmp(option, "test") == 0)
+		dual_lcd_test();
+	else if (strcmp(option, "on") == 0)
+		draw_samsung_logo(lcd_base);
+	else if (strcmp(option, "repeat") == 0)
+		repeat_test();
+	else
+		draw_samsung_logo(lcd_base);
 }
 
 ulong calc_fbsize(void)

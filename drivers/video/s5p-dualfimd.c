@@ -29,7 +29,20 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
 #include <asm/arch/hardware.h>
+#include <asm/arch/gpio.h>
 #include "s5p-fb.h"
+
+/* DUALRGB INTERFACE SETTING REGISTER */
+#define DISR		0xF800027C
+
+/* DISPLAY CONTROL REGISTER */
+#define DCR		0xE0107008
+
+/* CLOCK DIVIDER 0 */
+#define CLK_DIV0	0xE0100300
+
+/* LCD CONTROLLER REGISTER BASE */
+#define LCRB		0xF8000000
 
 #define MPLL 1
 
@@ -54,68 +67,93 @@ void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_s
 void s5pc_c110_gpio_setup(void)
 {
 	/* set GPF0[0:7] for RGB Interface and Data lines (32bit) */
-	writel(0x22222222, 0xE0200120);
+	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET));
 	/* pull-up/down disable */
-	writel(0x0, 0xE0200128);
+	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
 	/* drive strength to max (24bit) */
-	writel(0xffffff, 0xE020012C);
+	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
 
 	/* set Data lines (32bit) */
-	writel(0x22222222, 0xE0200140);
-	writel(0x22222222, 0xE0200160);
-	writel(readl(0xE0200180) & 0xFF0000, 0xE0200180);
-	writel(readl(0xE0200180) | 0x002222, 0xE0200180);
+	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET));
+	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) & 0xFF0000,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) | 0x002222,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
 
 	if (dual_lcd) {
 		/* SUB_DISPLAY_PCLK (GPF3[4]) */
-		writel(readl(0xE0200180) & 0xfff0ffff, 0xE0200180);
-		writel(readl(0xE0200180) | 0x00020000, 0xE0200180);
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) & 0xfff0ffff,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) | 0x00020000,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
 		/* drive stength to max */
-		writel(readl(0xE020018C) & 0xFCFF, 0xE020018C);
-		writel(readl(0xE020018C) | 0x0300, 0xE020018C);
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+
+				S5PC1XX_GPIO_DRV_OFFSET)) & 0xFCFF,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+
+			    S5PC1XX_GPIO_DRV_OFFSET));
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+
+				S5PC1XX_GPIO_DRV_OFFSET)) | 0x0300,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+
+			    S5PC1XX_GPIO_DRV_OFFSET));
 		/* set gpio configuration pin for SUBLCD_RST(MP0_2[1]) and SUBLCD_ON(MP0_2[0] */
-		writel(readl(0xE0200300) & 0xffffff00, 0xE0200300); 
-		writel(readl(0xE0200300) | 0x00000011, 0xE0200300); 
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)) & 0xffffff00,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)); 
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)) | 0x00000011,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)); 
 		/* set gpio confituration pin for SUB_DISPLAY_CS(MP0_1[2]) */
-		writel(readl(0xE02002E0) & 0xfffff0ff, 0xE02002E0);
-		writel(readl(0xE02002E0) | 0x00000100, 0xE02002E0);
-		
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) & 0xfffff0ff,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
+		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) | 0x00000100,
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
+
 		/* 
 		 * DUALRGB INTERFACE SETTING REGISTER
 		 * Line Split  mode, using VCLK, Display bypass Dual mode
 		 */
-		writel(0x0C801e01, 0xF800027C);
+		writel(0x0C801e01, DISR);
 	}
 
 	/* drive strength to max (24bit) */
-	writel(0xffffff, 0xE020014C);
-	writel(0xffffff, 0xE020016C);
+	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
+	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
 	/* [11:0](drive stength level), [15:12](none), [21:16](Slew Rate) */
-	writel(readl(0xE020018C) & 0x3FFF00, 0xE020018C);
-	writel(readl(0xE020018C) | 0x0000FF, 0xE020018C);
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET)) & 0x3FFF00,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET)) | 0x0000FF,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
 
 	/* pull-up/down disable */
-	writel(0x0, 0xE0200148);
-	writel(0x0, 0xE0200168);
-	writel(0x0, 0xE0200188);
+	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
+	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
+	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
 
 	/* display output path selection (only [1:0] valid) */
-	writel(0x2, 0xE0107008);
+	writel(0x2, DCR);
 
 	/* set gpio configuration pin for MLCD_RST */
-	writel(readl(0xE0200C20) & 0x0fffffff, 0xE0200C20);
-	writel(readl(0xE0200C20) | 0x10000000, 0xE0200C20);
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) & 0x0fffffff,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) | 0x10000000,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
 
 	/* set gpio configuration pin for MLCD_ON and then to LOW */
-	writel(readl(0xE0200260) & 0xFFFF0FFF, 0xE0200260);
-	writel(readl(0xE0200260) | 0x00001000, 0xE0200260);
-	writel(readl(0xE0200264) & 0xf7, 0xE0200264);
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET)) & 0xFFFF0FFF,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET)) | 0x00001000,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+4)) & 0xf7,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+S5PC1XX_GPIO_DAT_OFFSET));
 
 	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK, DISPLSY_SI and LCD_ID */
-	writel(readl(0xE02002E0) & 0xFFFFFF0F, 0xE02002E0);
-	writel(readl(0xE02002E0) | 0x00000010, 0xE02002E0);
-	writel(readl(0xE0200340) & 0xFFFF000F, 0xE0200340);
-	writel(readl(0xE0200340) | 0x00001110, 0xE0200340);
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) & 0xFFFFFF0F,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) | 0x00000010,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET)) & 0xFFFF000F,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET)) | 0x00001110,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET));
 
 	return;
 }
@@ -138,11 +176,17 @@ static void s5pc_fimd_set_par(unsigned int win_id)
 	/* bpp is 32 */
 	cfg |= S5P_WINCON_WSWP_ENABLE;
 
+	/* bpp is 16 */
+	//cfg |= S5P_WINCON_HAWSWP_ENABLE;
+
 	/* dma burst is 16 */
 	cfg |= S5P_WINCON_BURSTLEN_16WORD;
 
 	/* pixel format is unpacked RGB888 */
 	cfg |= S5P_WINCON_BPPMODE_24BPP_888;
+
+	/* pixel format is RGB565 */
+	//cfg |= S5P_WINCON_BPPMODE_16BPP_565;
 
 	writel(cfg, ctrl_base + S5P_WINCON(win_id));
 	udebug("wincon%d = %x\n", win_id, cfg);
@@ -186,6 +230,10 @@ static void s5pc_fimd_set_clock(void)
 	unsigned int cfg = 0, div = 0, mpll_ratio = 0;
 	unsigned long pixel_clock, src_clock, max_clock;
 
+	/* Set clock source */
+	//writel(0x00011110, 0xE0100304);
+	//writel(0x00600000, 0xE0100204);
+
 	max_clock = 66 * 1000000;
 
 	pixel_clock = S5P_VFRAME_FREQ * (pvid->vl_hpw + pvid->vl_blw +
@@ -204,7 +252,7 @@ static void s5pc_fimd_set_clock(void)
 		pixel_clock = max_clock;
 
 	/* get mpll ratio */
-	mpll_ratio = (readl(0xE0100300) & 0xf0000) >> 16;
+	mpll_ratio = (readl(CLK_DIV0) & 0xf0000) >> 16;
 
 	/* 
 	 * It can get source clock speed as (mpll / mpll_ratio) 
@@ -246,7 +294,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	pvid = vid;
 
 	/* select register base according to cpu type */
-	ctrl_base = 0xF8000000;
+	ctrl_base = LCRB;
 
 	/* set output to BGR for 3.1inch TL2796 LCD Panel */
 	rgb_mode = MODE_BGR_P;
@@ -259,6 +307,9 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* clock source is HCLK */
 	cfg |= 0 << 2;
+
+	/* clock source is SCLK_FIMD */
+	//cfg |= 1 << 2;
 
 	cfg |= S5P_VIDCON0_VIDOUT_RGB;
 	writel(cfg, ctrl_base + S5P_VIDCON0);
