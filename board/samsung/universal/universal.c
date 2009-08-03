@@ -120,6 +120,7 @@ static void check_hw_revision(void)
 		setenv("meminfo", "mem=80M,128M@0x40000000");
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
+		setenv("mtdids", "onenand0=samsung-onenand");
 		setenv("bootk", "onenand read 0x20007FC0 0x60000 0x300000; bootm 0x20007FC0");
 		setenv("updatek", "onenand erase 0x60000 0x300000; onenand write 0x21008000 0x60000 0x300000");
 	}
