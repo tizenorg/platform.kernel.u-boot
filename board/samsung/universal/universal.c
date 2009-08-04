@@ -136,6 +136,8 @@ static void check_auto_burn(void)
 		printf("Auto burning kernel\n");
 		setenv("bootcmd", "run updatek; reset");
 	}
+	/* Clear the magic value */
+	writel(0xa5a55a5a, 0x22000000);
 }
 
 int misc_init_r(void)
