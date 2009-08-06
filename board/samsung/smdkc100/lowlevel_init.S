@@ -51,31 +51,22 @@ lowlevel_init:
 
 	ldr	r8, =S5PC100_GPIO_BASE(0)
 
-#if 0
-	/* IO retension release */
-	ldr	r0, =S5P_OTHERS                         @0xE0108200
-	ldr	r1, [r0]
-	ldr	r2, =(1 << 31)                          @IO_RET_REL
-	orr	r1, r1, r2
-	str	r1, [r0]
-#endif
-
 	/* Disable Watchdog */
-	ldr	r0, =S5P_WATCHDOG_BASE(0x0)		@0xEA200000
+	ldr	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
 	orr	r0, r0, #0x0
 	str	r5, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
 	/* setting SRAM */
-	ldr	r0, =S5P_SROMC_BASE(0x0)
+	ldr	r0, =S5PC100_SROMC_BASE
 	ldr	r1, =0x9
 	str	r1, [r0]
 #endif
 
 	/* S5PC100 has 3 groups of interrupt sources */
-	ldr	r0, =S5P_VIC0_BASE(0x0)			@0xE4000000
-	ldr	r1, =S5P_VIC1_BASE(0x0)			@0xE4000000
-	ldr	r2, =S5P_VIC2_BASE(0x0)			@0xE4000000
+	ldr	r0, =S5PC100_VIC0_BASE			@0xE4000000
+	ldr	r1, =S5PC100_VIC1_BASE			@0xE4000000
+	ldr	r2, =S5PC100_VIC2_BASE			@0xE4000000
 
 	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
@@ -109,7 +100,7 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
-	ldr	r0, =S5P_RST_STAT
+	ldr	r0, =S5PC100_RST_STAT
 	ldr	r1, [r0]
 	bic	r1, r1, #0xfffffff7
 	cmp	r1, #0x8
@@ -124,12 +115,12 @@ lowlevel_init:
 wakeup_reset:
 
 	/* Clear wakeup status register */
-	ldr	r0, =S5P_WAKEUP_STAT
+	ldr	r0, =S5PC100_WAKEUP_STAT
 	ldr	r1, [r0]
 	str	r1, [r0]
 
 	/* Load return address and jump to kernel */
-	ldr	r0, =S5P_INFORM0
+	ldr	r0, =S5PC100_INFORM0
 
 	/* r1 = physical address of s5pc100_cpu_resume function */
 	ldr	r1, [r0]
@@ -145,7 +136,7 @@ wakeup_reset:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r8, =S5P_PA_CLK			@ 0xE0100000
+	ldr	r8, =S5PC1XX_CLOCK_BASE			@ 0xE0100000
 
 	/* Set Clock divider */
 	ldr	r1, =0x00011110
@@ -157,33 +148,33 @@ system_clock_init:
 
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
-	str	r1, [r8, #0x000]		@ S5P_APLL_LOCK
-	str	r1, [r8, #0x004]		@ S5P_MPLL_LOCK
-	str	r1, [r8, #0x008]		@ S5P_EPLL_LOCK
-	str	r1, [r8, #0x00C]		@ S5P_HPLL_LOCK
+	str	r1, [r8, #0x000]		@ APLL_LOCK
+	str	r1, [r8, #0x004]		@ MPLL_LOCK
+	str	r1, [r8, #0x008]		@ EPLL_LOCK
+	str	r1, [r8, #0x00C]		@ HPLL_LOCK
 
-	/* S5P_APLL_CON */
+	/* APLL_CON */
 	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
 	str	r1, [r8, #0x100]
-	/* S5P_MPLL_CON */
+	/* MPLL_CON */
 	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
 	str	r1, [r8, #0x104]
-	/* S5P_EPLL_CON */
+	/* EPLL_CON */
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
 	str	r1, [r8, #0x108]
-	/* S5P_HPLL_CON */
+	/* HPLL_CON */
 	ldr	r1, =0x80600603
 	str	r1, [r8, #0x10C]
 
 	/* Set Source Clock */
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
-	str	r1, [r8, #0x200]		@ S5P_CLK_SRC0
+	str	r1, [r8, #0x200]		@ CLK_SRC0
 
 	ldr	r1, =0x1000001			@ Uart Clock & CLK48M Muxing
-	str	r1, [r8, #0x204]		@ S5P_CLK_SRC1
+	str	r1, [r8, #0x204]		@ CLK_SRC1
 
 	ldr	r1, =0x9000			@ ARMCLK/4
-	str	r1, [r8, #0x400]		@ S5P_CLK_OUT
+	str	r1, [r8, #0x400]		@ CLK_OUT
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
