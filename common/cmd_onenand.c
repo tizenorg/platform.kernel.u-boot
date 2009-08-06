@@ -132,6 +132,9 @@ static int onenand_block_write(loff_t to, size_t len,
 	struct onenand_chip *this = mtd->priv;
 	int blocks = len >> this->erase_shift;
 	int blocksize = (1 << this->erase_shift);
+	struct mtd_oob_ops ops = {
+		.retlen		= 0,
+	};
 	loff_t ofs;
 	size_t _retlen = 0;
 	int ret;
@@ -166,6 +169,16 @@ static int onenand_block_write(loff_t to, size_t len,
 		*retlen += _retlen;
 next:
 		ofs += blocksize;
+	}
+
+	if (len < blocksize) {
+		ops.datbuf = buf;
+		ops.len = len;
+		ops.retlen = 0;
+		ret = mtd->write_oob(mtd, ofs, &ops);
+		if (ret)
+			printk("Write failed 0x%x, %d\n", (u32)ofs, ret);
+		*retlen += ops.retlen;
 	}
 
 	return 0;
