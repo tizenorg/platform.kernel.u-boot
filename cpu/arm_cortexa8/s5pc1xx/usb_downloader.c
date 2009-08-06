@@ -132,6 +132,6 @@ void recv_setup(char *addr, int len)
 	s5p_usb_clear_dnfile_info();
 
 	otg.dn_addr = (u32)addr;
-	otg.dn_ptr = (u32)addr;
+	otg.dn_ptr = (u8 *) addr;
 	otg.dn_filesize = len;
 }
