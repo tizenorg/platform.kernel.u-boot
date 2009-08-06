@@ -134,9 +134,9 @@ static int onenand_block_write(loff_t to, size_t len,
 	int blocksize = (1 << this->erase_shift);
 	struct mtd_oob_ops ops = {
 		.retlen		= 0,
+		.oobbuf		= NULL,
 	};
 	loff_t ofs;
-	size_t _retlen = 0;
 	int ret;
 
 	if (to == next_ofs) {
@@ -157,7 +157,10 @@ static int onenand_block_write(loff_t to, size_t len,
 			goto next;
 		}
 
-		ret = mtd->write(mtd, ofs, blocksize, &_retlen, buf);
+		ops.datbuf = (u_char *) buf;
+		ops.len = blocksize;
+		ops.retlen = 0;
+		ret = mtd->write_oob(mtd, ofs, &ops);
 		if (ret) {
 			printk("Write failed 0x%x, %d", (u32)ofs, ret);
 			skip_ofs += blocksize;
@@ -166,13 +169,13 @@ static int onenand_block_write(loff_t to, size_t len,
 
 		buf += blocksize;
 		blocks--;
-		*retlen += _retlen;
+		*retlen += ops.retlen;
 next:
 		ofs += blocksize;
 	}
 
 	if (len < blocksize) {
-		ops.datbuf = buf;
+		ops.datbuf = (u_char *) buf;
 		ops.len = len;
 		ops.retlen = 0;
 		ret = mtd->write_oob(mtd, ofs, &ops);
