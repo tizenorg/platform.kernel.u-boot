@@ -119,6 +119,12 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+#define CONFIG_NETMASK	255.255.255.0
+#define CONFIG_IPADDR	192.168.129.3
+#define CONFIG_SERVERIP	192.168.129.1
+#define CONFIG_GATEWAY	192.168.129.1
+#define CONFIG_ETHADDR	00:0E:99:34:10:00
+
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
 
@@ -176,7 +182,7 @@
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
-	 " ${netmask}:nowplus:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x23000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
