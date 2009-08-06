@@ -104,6 +104,9 @@ struct onenand_chip {
 	int state;
 	unsigned char		*page_buf;
 	unsigned char		*oob_buf;
+#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
+	unsigned char		*verify_buf;
+#endif
 
 	struct nand_oobinfo *autooob;
 	int			subpagesize;

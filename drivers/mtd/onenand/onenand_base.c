@@ -234,10 +234,7 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 			   size_t len)
 {
 	struct onenand_chip *this = mtd->priv;
-	int value, readcmd = 0;
-	int block, page;
-	/* Now we use page size operation */
-	int sectors = 4, count = 4;
+	int value, block, page;
 
 	/* Address translation */
 	switch (cmd) {
@@ -292,6 +289,8 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 	}
 
 	if (page != -1) {
+		/* Now we use page size operation */
+		int sectors = 0, count = 0;
 		int dataram;
 
 		switch (cmd) {
@@ -302,7 +301,6 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 				dataram = ONENAND_SET_BUFFERRAM0(this);
 			else
 				dataram = ONENAND_SET_NEXT_BUFFERRAM(this);
-			readcmd = 1;
 			break;
 
 		default:
@@ -329,6 +327,16 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 }
 
 /**
+ * onenand_read_ecc - return ecc status
+ * @param this          onenand chip structure
+ */
+static int onenand_read_ecc(struct onenand_chip *this)
+{
+	/* TODO Handle 4bit ecc */
+	return this->read_word(this->base + ONENAND_REG_ECC_STATUS);
+}
+
+/**
  * onenand_wait - [DEFAULT] wait until the command is done
  * @param mtd		MTD device structure
  * @param state		state to select the max. timeout value
@@ -352,6 +360,18 @@ static int onenand_wait(struct mtd_info *mtd, int state)
 
 	ctrl = this->read_word(this->base + ONENAND_REG_CTRL_STATUS);
 
+	if (interrupt & ONENAND_INT_READ) {
+		ecc = onenand_read_ecc(this);
+		if (ecc) {
+			if (ecc & ONENAND_ECC_2BIT_ALL) {
+				printk("onenand_wait: ECC error = 0x%04x\n", ecc);
+				return -EBADMSG;
+			} else if (ecc & ONENAND_ECC_1BIT_ALL) {
+				printk("onenand_wait: ECC warning = 0x%04x\n", ecc);
+			}
+		}
+	}
+
 	if (ctrl & ONENAND_CTRL_ERROR) {
 		printk("onenand_wait: controller error = 0x%04x\n", ctrl);
 		if (ctrl & ONENAND_CTRL_LOCK)
@@ -359,15 +379,6 @@ static int onenand_wait(struct mtd_info *mtd, int state)
 				ctrl);
 
 		return -EIO;
-	}
-
-	if (interrupt & ONENAND_INT_READ) {
-		ecc = this->read_word(this->base + ONENAND_REG_ECC_STATUS);
-		if (ecc & ONENAND_ECC_2BIT_ALL) {
-			MTDDEBUG (MTD_DEBUG_LEVEL0,
-				  "onenand_wait: ECC error = 0x%04x\n", ecc);
-			return -EBADMSG;
-		}
 	}
 
 	return 0;
@@ -1068,7 +1079,6 @@ int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
 	return ret;
 }
 
-
 #ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
 /**
  * onenand_verify_oob - [GENERIC] verify the oob contents after a write
@@ -1106,7 +1116,6 @@ static int onenand_verify_oob(struct mtd_info *mtd, const u_char *buf, loff_t to
 static int onenand_verify(struct mtd_info *mtd, const u_char *buf, loff_t addr, size_t len)
 {
 	struct onenand_chip *this = mtd->priv;
-	void __iomem *dataram;
 	int ret = 0;
 	int thislen, column;
 
@@ -1126,10 +1135,9 @@ static int onenand_verify(struct mtd_info *mtd, const u_char *buf, loff_t addr, 
 
 		onenand_update_bufferram(mtd, addr, 1);
 
-		dataram = this->base + ONENAND_DATARAM;
-		dataram += onenand_bufferram_offset(mtd, ONENAND_DATARAM);
+		this->read_bufferram(mtd, 0, ONENAND_DATARAM, this->verify_buf, 0, mtd->writesize);
 
-		if (memcmp(buf, dataram + column, thislen))
+		if (memcmp(buf, this->verify_buf, thislen))
 			return -EBADMSG;
 
 		len -= thislen;
@@ -1436,6 +1444,7 @@ static int onenand_write(struct mtd_info *mtd, loff_t to, size_t len,
 		.ooblen = 0,
 		.datbuf = (u_char *) buf,
 		.oobbuf = NULL,
+		.mode	= MTD_OOB_AUTO,
 	};
 	int ret;
 
@@ -2171,6 +2180,13 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 			printk(KERN_ERR "onenand_scan(): Can't allocate page_buf\n");
 			return -ENOMEM;
 		}
+#ifdef CONFIG_MTD_ONENAND_VERIFY_WRITE
+		this->verify_buf = kzalloc(mtd->writesize, GFP_KERNEL);
+		if (!this->verify_buf) {
+			kfree(this->page_buf);
+			return -ENOMEM;
+		}
+#endif
 		this->options |= ONENAND_PAGEBUF_ALLOC;
 	}
 	if (!this->oob_buf) {
