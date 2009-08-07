@@ -131,8 +131,8 @@ lowlevel_init:
 	/* for UART */
 	bl	uart_asm_init
 
-	/* for DMA */
-	bl	dma_asm_init
+	/* for TZPC */
+	bl	tzpc_asm_init
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
@@ -384,9 +384,9 @@ uart_asm_init:
 	mov	pc, lr
 
 /*
- * dma_asm_init: Initialize DMA
+ * tzpc_asm_init: Initialize TZPC
  */
-dma_asm_init:
+tzpc_asm_init:
 	cmp	r7, r8
 	ldreq	r0, =0xE3800000			@ TZPC0
 	ldrne	r0, =0xF1500000			@ TZPC0
@@ -408,6 +408,11 @@ dma_asm_init:
 	ldrne	r0, =0xE0600000			@ TZPC2
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
+
+	cmp	r7, r8
+	ldrne	r0, =0xE1C00000			@ TZPC3 S5PC110 only
+	strne	r1, [r0, #0x804]
+	strne	r1, [r0, #0x810]
 
 	mov	pc, lr
 

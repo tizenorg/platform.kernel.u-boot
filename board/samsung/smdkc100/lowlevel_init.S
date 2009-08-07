@@ -90,7 +90,8 @@ lowlevel_init:
 	/* for UART */
 	bl uart_asm_init
 
-	bl dma_asm_init
+	/* for TZPC */
+	bl tzpc_asm_init
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
@@ -197,9 +198,9 @@ uart_asm_init:
 	mov	pc, lr
 
 /*
- * dma_asm_init: Initialize DMA
+ * tzpc_asm_init: Initialize TZPC
  */
-dma_asm_init:
+tzpc_asm_init:
 	ldr	r0, =0xE3800000
 	mov	r1, #0x0
 	str	r1, [r0]
