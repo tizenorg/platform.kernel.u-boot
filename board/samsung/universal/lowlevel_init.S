@@ -395,7 +395,6 @@ tzpc_asm_init:
 	mov	r1, #0xff
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
-	strne	r1, [r0, #0x81C]
 
 	cmp	r7, r8
 	ldreq	r0, =0xE2800000			@ TZPC1
@@ -409,13 +408,11 @@ tzpc_asm_init:
 	ldrne	r0, =0xE0600000			@ TZPC2
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
-	strne	r1, [r0, #0x81C]
 
 	cmp	r7, r8
 	ldrne	r0, =0xE1C00000			@ TZPC3 S5PC110 only
 	strne	r1, [r0, #0x804]
 	strne	r1, [r0, #0x810]
-	strne	r1, [r0, #0x81C]
 
 	mov	pc, lr
 
