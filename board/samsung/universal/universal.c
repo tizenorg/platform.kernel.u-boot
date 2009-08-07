@@ -141,12 +141,43 @@ static void check_auto_burn(void)
 	writel(0xa5a55a5a, magic_base);
 }
 
+static void enable_touch_ldo(void)
+{
+	unsigned int pin, value;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
+
+	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
+	value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~(0xf << 24);			/* 24 = 6 * 4 */
+	value |= (1 << 24);
+	writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* output enable */
+	value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	value |= (1 << 6);			/* 6 = 6 * 1 */
+	writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+
+#if 0
+	value = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
+	value &= ~(3 << 12);			/* 12 = 6 * 2 */
+	value |= (0 << 12);			/* Pull-up/down disable */
+	writel(value, pin + S5PC1XX_GPIO_PULL_OFFSET);
+#endif
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
 
 	/* Check auto burning */
 	check_auto_burn();
+
+	/* To power up I2C2 */
+	enable_touch_ldo();
 
 	return 0;
 }
