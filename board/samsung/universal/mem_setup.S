@@ -125,7 +125,7 @@ swap_memory:
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	biceq	r1, r1, #0x08000000
-	streq	r1, [r0, #MEMCONFIG1_OFFSET]
+	str	r1, [r0, #MEMCONFIG1_OFFSET]
 
 	cmp	r7, r8
 	ldr	r1, =0x20000000
