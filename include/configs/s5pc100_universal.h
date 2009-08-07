@@ -42,7 +42,7 @@
 
 #define CONFIG_ARCH_CPU_INIT
 
-#define CONFIG_SYS_SDRAM_BASE	0x20000000
+#define CONFIG_SYS_SDRAM_BASE	0x30000000
 
 /* input clock of PLL: Universal has 12MHz/24MHz input clock at S5PC100/C110 */
 #define CONFIG_SYS_CLK_FREQ_C100	12000000
@@ -146,7 +146,7 @@
 #if 1
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 #else
-#define CONFIG_BOOTCOMMAND	"bootm 0x21008000"
+#define CONFIG_BOOTCOMMAND	"bootm 0x31008000"
 #endif
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
@@ -161,17 +161,17 @@
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
-			" onenand write 0x22008000 0x0 0x40000\0"
+			" onenand write 0x32008000 0x0 0x40000\0"
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=onenand erase 0x80000 0x300000;" \
-	" onenand write 0x21008000 0x80000 0x300000\0" \
+	" onenand write 0x31008000 0x80000 0x300000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
-	" onenand write 0x22000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x20007FC0 0x80000 0x300000;" \
-	" bootm 0x20007FC0\0" \
+	" onenand write 0x32000000 0x1260000 0x8C0000\0" \
+	"bootk=onenand read 0x30007FC0 0x80000 0x300000;" \
+	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 " ubi.mtd=${ubiblock} ${opts} " CONFIG_COMMON_BOOT "; run bootk\0" \
@@ -184,7 +184,7 @@
 	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
-	 " initrd=0x23000000,8M ramdisk=8192\0" \
+	 " initrd=0x33000000,8M ramdisk=8192\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=208M\0" \
@@ -247,7 +247,7 @@
 #define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
 #define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #0 */
-#define S5PC100_PHYS_SDRAM_2	0x28000000		/* mDDR DMC0 Bank #1 */
+#define S5PC100_PHYS_SDRAM_2	0x38000000		/* mDDR DMC0 Bank #1 */
 #define S5PC110_PHYS_SDRAM_2	0x40000000		/* mDDR DMC1 Bank #0 */
 #define PHYS_SDRAM_2_SIZE	0x08000000		/* 128 MB in Bank #1 */
 
@@ -287,7 +287,7 @@
 #define CONFIG_SAMSUNG_USB
 #define CONFIG_OTG_CLK_OSCC
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_RAMDISK_ADDR	0x23000000
+#define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
 #if 0		/* For LCD test */

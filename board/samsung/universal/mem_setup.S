@@ -85,14 +85,14 @@ swap_memory:
 	cmp	r7, r8
 	/*
 	 * DMC0: CS0 : S5PC100/S5PC110
-	 * 0x20 -> 0x20000000
-	 * 0xf8 -> 0x27FFFFFF
+	 * 0x30 -> 0x30000000
+	 * 0xf8 -> 0x37FFFFFF
 	 * [15:12] 0: Linear
 	 * [11:8 ] 2: 9 bits
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x20f80222
+	ldr	r1, =0x30f80222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	orreq	r1, r1, #0x08000000
@@ -113,15 +113,15 @@ swap_memory:
 
 	/*
 	 * DMC0: CS1: S5PC100
-	 * 0x28 -> 0x28000000
-	 * 0xf8 -> 0x2fFFFFFF
+	 * 0x38 -> 0x38000000
+	 * 0xf8 -> 0x3fFFFFFF
 	 * [15:12] 0: Linear
 	 * [11:8 ] 2: 9 bits
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	cmp	r7, r8
-	ldr	r1, =0x28f80222
+	ldr	r1, =0x38f80222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
 	biceq	r1, r1, #0x08000000
@@ -238,7 +238,7 @@ swap_memory:
 	beq	1f
 
 	mov	r4, #0x1
-	ldr	r1, =0x27ffff00
+	ldr	r1, =0x37ffff00
 	str	r4, [r1]
 	str	r4, [r1, #0x4]				@ dummy write
 	ldr	r2, [r1]
