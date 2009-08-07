@@ -1,24 +1,16 @@
 #
-# (C) Copyright 2002
-# Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
-# David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
+# Copyright (C) 2008 # Samsung Elecgtronics
+# Kyungmin Park <kyungmin.park@samsung.com>
 #
-# (C) Copyright 2008
-# Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
-#
-# SAMSUNG SMDK6400 board with mDirac3 (ARM1176) cpu
-#
-# see http://www.samsung.com/ for more information on SAMSUNG
 
-# On SMDK6400 we use the 64 MB SDRAM bank at
+# On S5PC100 we use the 128 MiB OneDRAM bank at
 #
-# 0x50000000 to 0x58000000
+# 0x30000000 to 0x35000000 (80MiB)
+# 0x38000000 to 0x40000000 (128MiB)
 #
-# Linux-Kernel is expected to be at 0x50008000, entry 0x50008000
+# On S5PC110 we use the 128 MiB OneDRAM bank at
 #
-# we load ourselves to 0x57e00000 without MMU
-# with MMU, load address is changed to 0xc7e00000
+# 0x30000000 to 0x35000000 (80MiB)
+# 0x40000000 to 0x48000000 (128MiB)
 #
-# download area is 0x5000c000
-
-TEXT_BASE = 0x24800000
+TEXT_BASE = 0x34800000
