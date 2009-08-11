@@ -98,18 +98,31 @@ static void check_hw_revision(void)
 	/* GPJ0[4:2] */
 	board_rev >>= 2;
 	board_rev &= 0x7;
-	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
-	if (board_rev == 1) {
-		if (cpu_is_s5pc110())
+	switch (board_rev) {
+	case 1:
+		if (cpu_is_s5pc110()) {
 			gd->bd->bi_arch_number = 3100;	/* Universal */
-		else
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
+			pin += S5PC1XX_GPIO_DAT_OFFSET;
+			/* Universal: 0x0F, TickerTape: 0x3C */
+			if (readl(pin) == 0x3C) {
+				/* C110 TickerTape */
+				gd->bd->bi_arch_number = 3101;	/* TickerTape */
+				board_rev = 3;
+			}
+		} else
 			gd->bd->bi_arch_number = 3000;	/* Universal */
-	}
-	if (board_rev == 3) {
+		break;
+	case 3:
+		/* C100 TickerTape */
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
 		/* Workaround: OneDRAM is broken*/
 		setenv("meminfo", "mem=128M");
+		break;
+	default:
+		break;
 	}
+	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
