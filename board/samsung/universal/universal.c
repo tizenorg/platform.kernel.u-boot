@@ -27,6 +27,7 @@
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/keypad.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -169,6 +170,61 @@ static void enable_touch_ldo(void)
 #endif
 }
 
+static void check_keypad(void)
+{
+	unsigned int reg, value;
+	unsigned int auto_download = 0;
+
+	if (cpu_is_s5pc100()) {
+		/* Set GPH2[2:0] to KP_COL[2:0] */
+		reg = S5PC100_GPIO_BASE(S5PC100_GPIO_H2_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
+		value = readl(reg);
+		value &= ~(0xFFF);
+		value |= (0x333);
+		writel(value, reg);
+
+		/* Set GPH3[2:0] to KP_ROW[2:0] */
+		reg = S5PC100_GPIO_BASE(S5PC100_GPIO_H3_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
+		value = readl(reg);
+		value &= ~(0xFFF);
+		value |= (0x333);
+		writel(value, reg);
+
+		reg = S5PC100_KEYPAD_BASE;
+	} else {
+		/* Set GPH2[3:0] to KP_COL[3:0] */
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
+		value = readl(reg);
+		value &= ~(0xFFFF);
+		value |= (0x3333);
+		writel(value, reg);
+
+		/* Set GPH3[3:0] to KP_ROW[3:0] */
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+		reg += S5PC1XX_GPIO_CON_OFFSET;
+		value = readl(reg);
+		value &= ~(0xFFFF);
+		value |= (0x3333);
+		writel(value, reg);
+
+		reg = S5PC110_KEYPAD_BASE;
+	}
+
+	value = 0x00;
+	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+
+	if ((value & 0x1) == 0)
+		auto_download = 1;
+
+	if (auto_download)
+		setenv("bootcmd", "usbdown");
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
@@ -178,6 +234,9 @@ int misc_init_r(void)
 
 	/* To power up I2C2 */
 	enable_touch_ldo();
+
+	/* To usbdown automatically */
+	check_keypad();
 
 	return 0;
 }
