@@ -104,8 +104,8 @@ static void check_hw_revision(void)
 			gd->bd->bi_arch_number = 3100;	/* Universal */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			/* Universal: 0x0F, TickerTape: 0x3C */
-			if (readl(pin) == 0x3C) {
+			/* Universal: 0x0F, TickerTape: 0xXC */
+			if ((readl(pin) & 0x3) == 0) {
 				/* C110 TickerTape */
 				gd->bd->bi_arch_number = 3101;	/* TickerTape */
 				board_rev = 3;
