@@ -42,10 +42,10 @@
 		S5PC1XX_GPIO_DAT_OFFSET))
 #define S5PCFB_C100_CLK_HIGH	writel(readl(S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
 		S5PC1XX_GPIO_DAT_OFFSET)) | 0x40, S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))	
+		S5PC1XX_GPIO_DAT_OFFSET))
 #define S5PCFB_C100_SDA_LOW	writel(readl(S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
 		S5PC1XX_GPIO_DAT_OFFSET)) & 0x7f, S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))	
+		S5PC1XX_GPIO_DAT_OFFSET))
 #define S5PCFB_C100_SDA_HIGH	writel(readl(S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
 		S5PC1XX_GPIO_DAT_OFFSET)) | 0x80, S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET+\
 		S5PC1XX_GPIO_DAT_OFFSET))
@@ -147,7 +147,7 @@ const unsigned short SEQ_SETTING[] = {
 
 static void tl2796_c100_spi_write_byte(unsigned char address, unsigned char command)
 {
-    	int     j;
+	int     j;
 	unsigned char DELAY=1;
 	unsigned short data;
 
@@ -166,11 +166,11 @@ static void tl2796_c100_spi_write_byte(unsigned char address, unsigned char comm
 		S5PCFB_C100_CLK_LOW;
 
 		/* data high or low */
-		if ((data >> j) & 0x0001) 
+		if ((data >> j) & 0x0001)
 			S5PCFB_C100_SDA_HIGH;
 		else
 			S5PCFB_C100_SDA_LOW;
-		
+
 		udelay(DELAY);
 
 		S5PCFB_C100_CLK_HIGH;
@@ -183,7 +183,7 @@ static void tl2796_c100_spi_write_byte(unsigned char address, unsigned char comm
 
 static void tl2796_c110_spi_write_byte(unsigned char address, unsigned char command)
 {
-    	int     j;
+	int     j;
 	unsigned char DELAY=1;
 	unsigned short data;
 
@@ -202,11 +202,11 @@ static void tl2796_c110_spi_write_byte(unsigned char address, unsigned char comm
 		S5PCFB_C110_CLK_LOW;
 
 		/* data high or low */
-		if ((data >> j) & 0x0001) 
+		if ((data >> j) & 0x0001)
 			S5PCFB_C110_SDA_HIGH;
 		else
 			S5PCFB_C110_SDA_LOW;
-		
+
 		udelay(DELAY);
 
 		S5PCFB_C110_CLK_HIGH;
@@ -380,10 +380,10 @@ void tl2796_c110_panel_init(void)
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
 			S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));	
+		    S5PC1XX_GPIO_DAT_OFFSET));
 	/* set gpio pin for DISPLAY_SI to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
 			S5PC1XX_GPIO_DAT_OFFSET)) | 0x08,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));	
+		    S5PC1XX_GPIO_DAT_OFFSET));
 }

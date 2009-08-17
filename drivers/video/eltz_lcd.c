@@ -37,7 +37,7 @@
 #define GPL3_CFG	0xE0300380
 #define GPL4_CFG	0xE03003A0
 
-/* GPIO for LCD_ON  */ 
+/* GPIO for LCD_ON  */
 #define GPH0_CFG	0xE0300C00
 
 #define GPK0_DATA	0xE03002A4
@@ -89,7 +89,7 @@ static void sublcd_write_register_16(unsigned char address, unsigned short data)
 	SUBLCD_BASE_B = address;
 
 	SUBLCD_RS_HIGH;
-    	SUBLCD_BASE_W = data;
+	SUBLCD_BASE_W = data;
 }
 
 static void sublcd_write_GRAM(void)
@@ -125,17 +125,17 @@ static void sublcd_power_on(void)
 	SUBLCD_RESETB_HIGH;
 
 	udelay(5000);
-    
+
 	/* change to I80 18bit mode */
 	SUBLCD_RS_LOW;
 	SUBLCD_BASE_B = 0x23;
 
 	/* set data bus width to 16bit for SROMC*/
 	__raw_writel(__raw_readl(SMC_BW) | 0x00000003, SMC_BW);
-    
+
 	/* change to I80 16bit mode */
 	sublcd_write_register_16(0x03, 0x0030);
-    
+
 	/* Power Setting Sequence */
 	sublcd_write_register_16(0x11, 0x000f);
 	sublcd_write_register_16(0x12, 0x0008);
@@ -229,7 +229,7 @@ static void draw_test(void)
 
 	read_image16(SUBLCD_BASE, 0, 0, 240, 320,
 		makepixel565((i * 12345678) & 255, (i * 50) & 255, (i * 87654321) & 255));
-	
+
 	if (++i > 255) i = 0;
 }
 

@@ -98,9 +98,9 @@ void s5pc_c110_gpio_setup(void)
 			    S5PC1XX_GPIO_DRV_OFFSET));
 		/* set gpio configuration pin for SUBLCD_RST(MP0_2[1]) and SUBLCD_ON(MP0_2[0] */
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)) & 0xffffff00,
-			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)); 
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET));
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)) | 0x00000011,
-			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET)); 
+			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET));
 		/* set gpio confituration pin for SUB_DISPLAY_CS(MP0_1[2]) */
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) & 0xfffff0ff,
 			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
@@ -302,7 +302,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	/* 3.5inch TL2796 LCD Panel */
 	//rgb_mode = MODE_RGB_P;
 
-	cfg = readl(ctrl_base + S5P_VIDCON0);	
+	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~S5P_VIDCON0_VIDOUT_MASK;
 
 	/* clock source is HCLK */
@@ -345,7 +345,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	cfg = 0;
 	cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
 	cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
-	
+
 	writel(cfg, ctrl_base + S5P_VIDTCON2);
 	udebug("vidtcon2 = %x\n", cfg);
 

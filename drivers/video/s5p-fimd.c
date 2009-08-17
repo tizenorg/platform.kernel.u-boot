@@ -280,7 +280,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* set output to RGB */
 	rgb_mode = MODE_RGB_P;
-	cfg = readl(ctrl_base + S5P_VIDCON0);	
+	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~S5P_VIDCON0_VIDOUT_MASK;
 
 	/* clock source is HCLK */
@@ -320,7 +320,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	cfg = 0;
 	cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
 	cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
-	
+
 	writel(cfg, ctrl_base + S5P_VIDTCON2);
 	udebug("vidtcon2 = %x\n", cfg);
 

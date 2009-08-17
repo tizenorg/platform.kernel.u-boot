@@ -157,7 +157,7 @@ extern int dual_lcd;
 
 static void tl2796_spi_write_byte(unsigned char address, unsigned char command)
 {
-    	int     j;
+	int     j;
 	unsigned char DELAY=1;
 	unsigned short data;
 
@@ -170,7 +170,7 @@ static void tl2796_spi_write_byte(unsigned char address, unsigned char command)
 	S5PCFB_CLK_HIGH;
 	udelay(DELAY);
 
-	if (dual_lcd) 
+	if (dual_lcd)
 		S5PCFB_SUB_CS_LOW;
 	S5PCFB_CS_LOW;
 	udelay(DELAY);
@@ -180,11 +180,11 @@ static void tl2796_spi_write_byte(unsigned char address, unsigned char command)
 		S5PCFB_CLK_LOW;
 
 		/* data high or low */
-		if ((data >> j) & 0x0001) 
+		if ((data >> j) & 0x0001)
 			S5PCFB_SDA_HIGH;
 		else
 			S5PCFB_SDA_LOW;
-		
+
 		udelay(DELAY);
 
 		S5PCFB_CLK_HIGH;
@@ -250,7 +250,7 @@ void tl2796_c110_panel_power_on(void)
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
 				S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
 			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
-			    S5PC1XX_GPIO_DAT_OFFSET)); 
+			    S5PC1XX_GPIO_DAT_OFFSET));
 		/* set gpio data for SUBLCD_ON to HIGH */
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
 				S5PC1XX_GPIO_DAT_OFFSET)) | 0x01,
@@ -262,13 +262,13 @@ void tl2796_c110_panel_power_on(void)
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
 				S5PC1XX_GPIO_DAT_OFFSET)) & 0xfd,
 			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
-			    S5PC1XX_GPIO_DAT_OFFSET)); 
+			    S5PC1XX_GPIO_DAT_OFFSET));
 		udelay(20);
 		/* set gpio data for SUBLCD_RST to HIGH */
 		writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
 				S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
 			S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET+
-			    S5PC1XX_GPIO_DAT_OFFSET)); 
+			    S5PC1XX_GPIO_DAT_OFFSET));
 	}
 	udelay(20000);
 
@@ -313,12 +313,12 @@ void tl2796_c110_panel_init(void)
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
 			S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));	
+		    S5PC1XX_GPIO_DAT_OFFSET));
 	/* set gpio pin for DISPLAY_SI to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
 			S5PC1XX_GPIO_DAT_OFFSET)) | 0x08,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));	
+		    S5PC1XX_GPIO_DAT_OFFSET));
 
 	if (dual_lcd)
 		/* set gpio pin for SUB_DISPLAY_CS to HIGH */

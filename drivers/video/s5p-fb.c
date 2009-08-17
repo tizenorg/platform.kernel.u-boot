@@ -33,7 +33,7 @@
 
 #define PANEL_WIDTH		480
 #define PANEL_HEIGHT		800
-#define S5P_LCD_BPP		32	
+#define S5P_LCD_BPP		32
 
 extern void tl2796_panel_power_on(void);
 extern void tl2796_panel_enable(void);
@@ -118,7 +118,7 @@ static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 {
 	unsigned long palette_size, palette_mem_size;
 	unsigned int fb_size;
-	
+
 	fb_size = vid->vl_row * vid->vl_col * (vid->vl_bpix / 8);
 
 	lcd_base = lcdbase;
