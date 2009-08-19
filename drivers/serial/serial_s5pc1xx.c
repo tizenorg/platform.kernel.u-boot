@@ -177,3 +177,74 @@ void serial_puts(const char *s)
 	while (*s)
 		serial_putc(*s++);
 }
+
+int restartpowersequence = 0;
+int atmsecs;
+
+void uart_serial_setbrg(unsigned int baudrate, int port)
+{
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(port);
+	u32 pclk = get_pclk();
+	int i;
+
+	i = (pclk / baudrate) % 16;
+
+	uart->UBRDIV = pclk / baudrate / 16 - 1;
+	uart->UDIVSLOT = udivslot[i];
+}
+
+int uart_serial_pollc(int retry, int port)
+{
+	int i;
+	s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(port);
+
+	for (i = 0;i < retry;i++) {
+		if ( uart->UTRSTAT & 0x1 )
+			return uart->URXH & 0xff;
+		udelay(1000); /* 1ms */
+	}
+
+	return -1;
+}
+
+#ifdef CONFIG_HWFLOW
+static int hwflow;             /* turned off by default */
+int hwflow_onoff(int on)
+{
+       switch (on) {
+       case 1:
+               hwflow = 1;     /* turn on */
+               break;
+       case -1:
+               hwflow = 0;     /* turn off */
+               break;
+       }
+       return hwflow;
+}
+#endif
+
+void uart_serial_putc(const char c, int port)
+{
+       s5pc1xx_uart_t *const uart = s5pc1xx_get_base_uart(port);
+
+#ifdef CONFIG_MODEM_SUPPORT
+       if (be_quiet)
+               return;
+#endif
+
+	/* wait for room in the tx FIFO */
+	while (!(uart->UTRSTAT & 0x2))
+		;
+
+	uart->UTXH = c;
+
+	/* If \n, also do \r */
+	if (c == '\n')
+		serial_putc('\r');
+}
+
+void uart_serial_puts(const char *s, int port)
+{
+	while (*s)
+		uart_serial_putc(*s++, port);
+}
