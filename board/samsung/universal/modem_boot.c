@@ -30,6 +30,13 @@
 #define CP_HAS_SEM			0x0
 #define AP_HAS_SEM			0x1
 
+#define RETRY				3
+
+#define IND				0x30
+#define VERS				0xf0
+#define CRC_OK				0x01
+#define CRC_ERR				0xff
+
 extern int uart_serial_setbrg(unsigned int baudrate, int port);
 extern int uart_serial_pollc(int retry, int port);
 extern void uart_serial_putc(const char c, int port);
@@ -39,11 +46,12 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 	unsigned int con,dat,pud,exit=0;
 	unsigned int pin;
+	unsigned int nInfoSize;
+	char * pDataPSI;
 	char *s;
 	int nTCnt, nATCnt, nCnt;
-	char * pDataPSI;
 	int nCoreVer, nCode, nSizePSI, nCRC;
-	int ack, ind;	
+	int ack;	
 	int i, tmp;
 	int port = 3;
 
@@ -148,22 +156,23 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		/* Power is stable, 40msec after CP_RESET release - experimental */
 		udelay(40*1000);	/* 40ms */
 
-		exit++;
-		printf("exit = %x\n",exit);
-		if(exit >= 0x10)
+		if(++exit > RETRY)
 			break;
+
+		printf("*******************************\n");
+		printf("Reset and try to send PSI : #%d\n",exit);
 
 		/* Drain Rx Serial */
 		tmp = 0;
 		while (tmp != -1)
 			tmp = uart_serial_pollc(5, port);
 
-		for(nCnt = 0;nCnt < 20;nCnt++){
+		/* Sending "AT" in ASCII */
+		for (nCnt = 0;nCnt < 20;nCnt++){
 			uart_serial_puts("AT", port);
 			nCoreVer = uart_serial_pollc(5, port);
 
-			//if(nCoreVer >= 0xD1 && nCoreVer <= 0xD4)
-			if(nCoreVer != -1)
+			if(nCoreVer == VERS)
 				break;
 
 			/* Send "AT" at 50ms internals till the bootcore version
@@ -173,54 +182,56 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		}
 
 		//if fail to receive Modem core version restart all process		
-		if(nCnt == 20) continue;
+		if(nCnt == 20)
+			continue;
 
-		nCode = uart_serial_pollc(5, port);	//link establish code
-		printf("Got Version code!! nCoreVer=%x nCode=%x\n,",nCoreVer,nCode);
+		nInfoSize = uart_serial_pollc(5, port);
+		printf("Got Bootcore version and related info!!!\n - nCoreVer = 0x%x \n - nInfoSize = 0x%x\n", nCoreVer, nInfoSize);
 		
 		/* Drain Rx Serial */
 		tmp = 0;
 		while (tmp != -1)
 			tmp = uart_serial_pollc(5, port);
 
-		nSizePSI = sizeof(g_tblBin);
-
-		/* INDICATION BYTE (0x30) */
-		uart_serial_putc(0x30, port);
+		/* INDICATION BYTE */
+		uart_serial_putc(IND, port);
 
 		/* 16 bit length in little endian format */
+		nSizePSI = sizeof(g_tblBin);
 		uart_serial_putc(nSizePSI & 0xff, port);
 		uart_serial_putc(nSizePSI >> 8, port);
+
+		printf("Sending PSI data!!!\n - Len = %d\n,",nSizePSI);
 		
-		nCRC = 0;
-		pDataPSI = g_tblBin;
 		/* Data bytes of PSI */
-		for(nCnt = 0; nCnt < nSizePSI ; nCnt++)
-			{
+		pDataPSI = g_tblBin;
+		for (nCnt = 0; nCnt < nSizePSI ; nCnt++) {
 			uart_serial_putc(*pDataPSI, port);
 			nCRC ^= *pDataPSI++;
-			}
+		}
 
 		/* CRC of PSI */
 		uart_serial_putc(nCRC, port);
 
 		udelay(10*1000);	/* 10mec */
+
+		/* Getting ACK */
 		ack = uart_serial_pollc(5, port);
 
-		if( ack == 0x01) {
-			printf("VALID CRC nCRC=%x\n\n",nCRC);
+		if (ack == CRC_OK) {
+			printf("PSI sending was sucessful\n");
 		}
 		else {
-			printf("CRC NOT VALID!!\n");
+			printf("PSI sending was NOT sucessful\n - ack(0x%x)\n - nCRC(0x%x)\n", ack, nCRC);
 			continue;
 		}
 		
 		//check Modem reaction
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		do{
-			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+		do {
+			dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
 			dat &= (0x1 << 3);
-		}while (dat);
+		} while (dat);
 
 		if(rOneDRAM_MAILBOX_AB != IPC_CP_READY_FOR_LOADING){
 			printf("OneDRAM is NOT initialized for Modem\n");
