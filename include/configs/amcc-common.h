@@ -137,10 +137,11 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
- * the maximum mapped by the Linux kernel during initialization.
+ * have to be in the first 16 MB of memory, since this is
+ * the maximum mapped by the 40x Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(8 << 20) /* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTMAPSZ		(16 << 20) /* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTM_LEN		(16 << 20) /* Increase max gunzip size */
 
 /*
  * Internal Definitions
@@ -214,9 +215,9 @@
 		" console=" xstr(CONFIG_USE_TTY) ",${baudrate}\0"	\
 	CONFIG_ADDMISC							\
 	"initrd_high=30000000\0"					\
-	"kernel_addr_r=400000\0"					\
-	"fdt_addr_r=800000\0"						\
-	"ramdisk_addr_r=C00000\0"					\
+	"kernel_addr_r=1000000\0"					\
+	"fdt_addr_r=1800000\0"						\
+	"ramdisk_addr_r=1900000\0"					\
 	"hostname=" xstr(CONFIG_HOSTNAME) "\0"				\
 	"bootfile=" xstr(CONFIG_HOSTNAME) "/uImage\0"			\
 	"ramdisk_file=" xstr(CONFIG_HOSTNAME) "/uRamdisk\0"		\

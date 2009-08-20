@@ -1,4 +1,6 @@
 /*----------------------------------------------------------------------------+
+|   This source code is dual-licensed.  You may use it under the terms of the
+|   GNU General Public License version 2, or under the license below.
 |
 |	This source code has been made available to you by IBM on an AS-IS
 |	basis.	Anyone receiving this source is licensed under IBM
@@ -1155,6 +1157,11 @@
 #define SDR0_PFC1_SIS_MASK	0x00020000	/* SCP or IIC1 Selection */
 #define SDR0_PFC1_SIS_SCP_SEL	0x00000000	/* SCP Selected */
 #define SDR0_PFC1_SIS_IIC1_SEL	0x00020000	/* IIC1 Selected */
+
+#define SDR0_ECID0		0x0080
+#define SDR0_ECID1		0x0081
+#define SDR0_ECID2		0x0082
+#define SDR0_ECID3		0x0083
 
 /* Ethernet PLL Configuration Register (SDR0_ETH_PLL) */
 #define SDR0_ETH_PLL		0x4102

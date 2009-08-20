@@ -1,6 +1,6 @@
 #
-# (C) Copyright 2002
-# Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
+# (C) Copyright 2000-2003
+# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -20,17 +20,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307 USA
 #
-PLATFORM_RELFLAGS += -fno-strict-aliasing -fno-common -ffixed-r8 \
-		     -msoft-float
 
-# Make ARMv5 to allow more compilers to work, even though its v7a.
-PLATFORM_CPPFLAGS += -march=armv5
-# =========================================================================
-#
-# Supply options according to compiler version
-#
-# =========================================================================
-PLATFORM_CPPFLAGS +=$(call cc-option)
-PLATFORM_CPPFLAGS +=$(call cc-option,-mno-thumb-interwork,)
-PLATFORM_RELFLAGS +=$(call cc-option,-mshort-load-bytes,\
-		    $(call cc-option,-malignment-traps,))
+include $(TOPDIR)/config.mk
+
+LIB	= $(obj)lib$(BOARD).a
+
+COBJS	= $(BOARD).o
+
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
+
+$(LIB):	$(obj).depend $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

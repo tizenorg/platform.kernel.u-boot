@@ -44,6 +44,19 @@ static const char *led_names[] = {
 	""
 };
 
+static int msp430_xfer(const void *dout, void *din)
+{
+	int err;
+
+	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, dout, din,
+		       SPI_XFER_BEGIN | SPI_XFER_END);
+
+	/* The MSP chip needs time to ready itself for the next command */
+	udelay(1000);
+
+	return err;
+}
+
 static void mtc_calculate_checksum(tx_msp_cmd *packet)
 {
 	int i;
@@ -59,7 +72,7 @@ static int do_mtc_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
-	int err = 0;
+	int err;
 	int i;
 
 	if (argc < 2) {
@@ -102,8 +115,7 @@ static int do_mtc_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		pcmd.cmd_val2 = 0;
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
 
 	return err;
 }
@@ -112,7 +124,7 @@ static int do_mtc_key(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
-	int err = 0;
+	int err;
 
 	memset(&pcmd, 0, sizeof(pcmd));
 	memset(&prx, 0, sizeof(prx));
@@ -120,8 +132,7 @@ static int do_mtc_key(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	pcmd.cmd = CMD_GET_VIM;
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
 
 	if (!err) {
 		/* function returns '0' if key is pressed */
@@ -135,7 +146,7 @@ static int do_mtc_digout(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
-	int err = 0;
+	int err;
 	uchar channel_mask = 0;
 
 	if (argc < 3) {
@@ -155,8 +166,7 @@ static int do_mtc_digout(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	pcmd.user_out = channel_mask;
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
 
 	return err;
 }
@@ -165,7 +175,7 @@ static int do_mtc_digin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
-	int err = 0;
+	int err;
 	uchar channel_num = 0;
 
 	if (argc < 2) {
@@ -185,8 +195,7 @@ static int do_mtc_digin(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	pcmd.cmd = CMD_GET_VIM;
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
 
 	if (!err) {
 		/* function returns '0' when digin is on */
@@ -213,8 +222,8 @@ static int do_mtc_appreg(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	pcmd.cmd_val2 = 0;	/* =0 means read appreg */
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
+
 	if (!err) {
 		sprintf(buf, "%d", prx.ack2);
 		setenv("appreg", buf);
@@ -227,7 +236,7 @@ static int do_mtc_version(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	tx_msp_cmd pcmd;
 	rx_msp_cmd prx;
-	int err = 0;
+	int err;
 
 	memset(&pcmd, 0, sizeof(pcmd));
 	memset(&prx, 0, sizeof(prx));
@@ -235,12 +244,38 @@ static int do_mtc_version(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	pcmd.cmd = CMD_FW_VERSION;
 
 	mtc_calculate_checksum(&pcmd);
-	err = spi_xfer(NULL, MTC_TRANSFER_SIZE, &pcmd, &prx,
-		       SPI_XFER_BEGIN | SPI_XFER_END);
+	err = msp430_xfer(&pcmd, &prx);
 
 	if (!err) {
 		printf("FW V%d.%d.%d / HW %d\n",
 		       prx.ack0, prx.ack1, prx.ack3, prx.ack2);
+	}
+
+	return err;
+}
+
+static int do_mtc_state(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	tx_msp_cmd pcmd;
+	rx_msp_cmd prx;
+	int err;
+
+	memset(&pcmd, 0, sizeof(pcmd));
+	memset(&prx, 0, sizeof(prx));
+
+	pcmd.cmd = CMD_WD_WDSTATE;
+	pcmd.cmd_val2 = 1;
+
+	mtc_calculate_checksum(&pcmd);
+	err = msp430_xfer(&pcmd, &prx);
+
+	if (!err) {
+		printf("State     %02Xh\n", prx.state);
+		printf("Input     %02Xh\n", prx.input);
+		printf("UserWD    %02Xh\n", prx.ack2);
+		printf("Sys WD    %02Xh\n", prx.ack3);
+		printf("WD Timout %02Xh\n", prx.ack0);
+		printf("eSysState %02Xh\n", prx.ack1);
 	}
 
 	return err;
@@ -256,17 +291,19 @@ cmd_tbl_t cmd_mtc_sub[] = {
 	" - state: off red green orange\n"
 	" - blink: blink interval in 100ms steps (1 - 10; 0 = static)\n"),
 	U_BOOT_CMD_MKENT(key, 0, 1, do_mtc_key,
-	"returns state of user key\n", ""),
+	"returns state of user key", ""),
 	U_BOOT_CMD_MKENT(version, 0, 1, do_mtc_version,
-	"returns firmware version of supervisor uC\n", ""),
+	"returns firmware version of supervisor uC", ""),
 	U_BOOT_CMD_MKENT(appreg, 0, 1, do_mtc_appreg,
-	"reads appreg value and stores in environment variable 'appreg'\n", ""),
+	"reads appreg value and stores in environment variable 'appreg'", ""),
 	U_BOOT_CMD_MKENT(digin, 1, 1, do_mtc_digin,
 	"returns state of digital input",
 	"<channel_num> - get state of digital input (1 or 2)\n"),
 	U_BOOT_CMD_MKENT(digout, 2, 1, do_mtc_digout,
 	"sets digital outputs",
 	"<on|off> <on|off>- set state of digital output 1 and 2\n"),
+	U_BOOT_CMD_MKENT(state, 0, 1, do_mtc_state,
+	"displays state", ""),
 	U_BOOT_CMD_MKENT(help, 4, 1, do_mtc_help, "get help",
 	"[command] - get help for command\n"),
 };
@@ -333,7 +370,7 @@ int cmd_mtc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(mtc, 5, 1, cmd_mtc,
-	"mtc     - special commands for digsyMTC\n",
+	"special commands for digsyMTC",
 	"[subcommand] [args...]\n"
 	"Subcommands list:\n"
 	"led [ledname] [state] [blink] - set state of leds\n"
@@ -346,5 +383,6 @@ U_BOOT_CMD(mtc, 5, 1, cmd_mtc,
 	" 'appreg'\n"
 	"digin [channel] - returns state of digital input (1 or 2)\n"
 	"digout <on|off> <on|off> - sets state of two digital outputs\n"
+	"state - displays state\n"
 	"help [subcommand] - get help for subcommand\n"
 );
