@@ -52,14 +52,6 @@ int dram_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_DISPLAY_BOARDINFO
-int checkboard(void)
-{
-	printf("Board:\tUniversal\n");
-	return 0;
-}
-#endif
-
 void raise(void)
 {
 }
@@ -70,6 +62,12 @@ u32 get_board_rev(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
+enum {
+	MACH_UNIVERSAL,
+	MACH_TICKERTAPE,
+	MACH_AQUILA,
+};
+
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
@@ -96,31 +94,40 @@ static void check_hw_revision(void)
 	board_rev &= 0x7;
 	switch (board_rev) {
 	case 1:
+		board = MACH_UNIVERSAL;
 		if (cpu_is_s5pc110()) {
-			gd->bd->bi_arch_number = 3100;	/* Universal */
+			/* Note Check 'Aquila' board first */
+
+			/* C110 Aquila */
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+			pin += S5PC1XX_GPIO_DAT_OFFSET;
+			/* Universal: 0x10, Aquila: 0x00, TickerTape: 0x00 */
+			if ((readl(pin) & 0xf0) == 0)
+				board = MACH_AQUILA;
+
+			/* C110 TickerTape */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			/* Universal: 0x0F, TickerTape: 0xXC */
-			if ((readl(pin) & 0x3) == 0) {
-				/* C110 TickerTape */
-				gd->bd->bi_arch_number = 3101;	/* TickerTape */
-			}
-		} else
-			gd->bd->bi_arch_number = 3000;	/* Universal */
+			/* Universal: 0x0F, Aquila: 0x0F, TickerTape: 0xXC */
+			if ((readl(pin) & 0x3) == 0)
+				board = MACH_TICKERTAPE;
+		}
 		break;
 	case 3:
 		/* C100 TickerTape */
-		gd->bd->bi_arch_number = 3001;	/* Tickertape */
-		/* Workaround: OneDRAM is broken at s5pc100 */
-		setenv("meminfo", "mem=128M");
+		board = MACH_TICKERTAPE;
+		/* Workaround: OneDRAM is broken at s5pc100 tickertape */
+		if (cpu_is_s5pc100() && board == MACH_TICKERTAPE)
+			setenv("meminfo", "mem=128M");
 		break;
 	default:
 		break;
 	}
+	/* Set machine id */
 	if (cpu_is_s5pc110())
-		board = gd->bd->bi_arch_number - 3100;
+		gd->bd->bi_arch_number = 0x3100 + board;
 	else
-		board = gd->bd->bi_arch_number - 3000;
+		gd->bd->bi_arch_number = 0x3000 + board;
 	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board]);
 
 	/* Architecture Common settings */
