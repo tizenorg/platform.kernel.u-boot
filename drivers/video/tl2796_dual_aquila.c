@@ -1,5 +1,5 @@
 /*
- * LCD panel driver for Board based on S5PC100 and S5PC110. 
+ * TL2796 Dual LCD panel driver for DD Aquila board. 
  *
  * Author: InKi Dae  <inki.dae@samsung.com>
  *
