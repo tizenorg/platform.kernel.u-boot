@@ -30,6 +30,7 @@
 
 #include "s5p-fb.h"
 #include "opening_wvga_32.h"
+#include "logo_rgb24_wvga_portrait.h"
 
 #define PANEL_WIDTH		480
 #define PANEL_HEIGHT		800
@@ -209,7 +210,9 @@ void lcd_ctrl_init(void *lcdbase)
 	if (strcmp(option, "test") == 0) {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 		lcd_test();
-	} else {
+	} else if (strcmp(option, "image") == 0)
+		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+	else {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 		draw_samsung_logo(lcdbase);
 	}
@@ -238,4 +241,5 @@ void s5pc1xxfb_test(void *lcdbase)
 {
 	lcd_ctrl_init(lcdbase);
 	lcd_enable();
+		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 }
