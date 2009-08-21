@@ -156,7 +156,7 @@
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 " ubi.mtd=${ubiblock} ${opts} " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"ubifsboot=set bootargs root=ubi0!initrd.ubifs rootfstype=ubifs" \
+	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs" \
 	 " ubi.mtd=${ubiblock} ${opts} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
