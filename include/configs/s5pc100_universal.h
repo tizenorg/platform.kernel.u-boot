@@ -129,13 +129,13 @@
 #define CONFIG_MTD_PARTITIONS
 
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
-#define MTDIDS_DEFAULT 		"onenand0=onenand"
+#define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",128k@0x40000(params)"\
 				",3m@0x60000(kernel)"\
 				",18m@0x360000(modem)"\
 				",-(UBI)"
-#define MTDPARTS_DEFAULT_4KB	"mtdparts=onenand:256k(bootloader)"\
+#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",256k@0x40000(params)"\
 				",3m@0x80000(kernel)"\
 				",18m@0x380000(modem)"\
@@ -280,7 +280,7 @@
 #define CONFIG_HARD_I2C		1
 #define CONFIG_SYS_I2C_SPEED	50000
 #define CONFIG_SYS_I2C_SLAVE	0xFE
-#define CONFIG_SYS_I2C_0	1	
+#define CONFIG_SYS_I2C_0	1
 
 /* USB Downloader */
 #define CONFIG_CMD_USBDOWN
