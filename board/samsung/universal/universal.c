@@ -71,18 +71,14 @@ u32 get_board_rev(void)
 
 #ifdef CONFIG_MISC_INIT_R
 static const char *board_name[] = {
-	"Unknown",
 	"Universal",
-	"Unknown",
 	"TickerTape",
-	"Unknown",
 	"Aquila",
-	"Unknown",
-	"Unknown",
 };
 
 static void check_hw_revision(void)
 {
+	unsigned int board;
 	unsigned long pin;
 
 	if (cpu_is_s5pc110())
@@ -108,7 +104,6 @@ static void check_hw_revision(void)
 			if ((readl(pin) & 0x3) == 0) {
 				/* C110 TickerTape */
 				gd->bd->bi_arch_number = 3101;	/* TickerTape */
-				board_rev = 3;
 			}
 		} else
 			gd->bd->bi_arch_number = 3000;	/* Universal */
@@ -116,13 +111,17 @@ static void check_hw_revision(void)
 	case 3:
 		/* C100 TickerTape */
 		gd->bd->bi_arch_number = 3001;	/* Tickertape */
-		/* Workaround: OneDRAM is broken*/
+		/* Workaround: OneDRAM is broken at s5pc100 */
 		setenv("meminfo", "mem=128M");
 		break;
 	default:
 		break;
 	}
-	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board_rev]);
+	if (cpu_is_s5pc110())
+		board = gd->bd->bi_arch_number - 3100;
+	else
+		board = gd->bd->bi_arch_number - 3000;
+	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board]);
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
