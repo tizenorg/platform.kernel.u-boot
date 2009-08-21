@@ -125,9 +125,9 @@ static void check_hw_revision(void)
 	}
 	/* Set machine id */
 	if (cpu_is_s5pc110())
-		gd->bd->bi_arch_number = 0x3100 + board;
+		gd->bd->bi_arch_number = 3100 + board;
 	else
-		gd->bd->bi_arch_number = 0x3000 + board;
+		gd->bd->bi_arch_number = 3000 + board;
 	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board]);
 
 	/* Architecture Common settings */
