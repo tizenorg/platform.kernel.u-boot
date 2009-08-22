@@ -96,7 +96,13 @@ static void check_hw_revision(void)
 	case 1:
 		board = MACH_UNIVERSAL;
 		if (cpu_is_s5pc110()) {
-			/* Note Check 'Aquila' board first */
+			/*
+			 * Note Check 'Aquila' board first
+			 *
+			 * 		Universal Aquila TickerTape
+			 * 0xE0200264	0x10      0x00   0x00
+			 * 0xE02000C4	0x0F	  0x0F   0xXC
+			 */
 
 			/* C110 Aquila */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
