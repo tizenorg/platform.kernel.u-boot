@@ -86,7 +86,7 @@ ifdef	ARCH
 sinclude $(TOPDIR)/lib_$(ARCH)/config.mk	# include architecture dependend rules
 endif
 ifdef	CPU
-sinclude $(TOPDIR)/cpu/$(CPU)/config.mk	# include  CPU	specific rules
+sinclude $(TOPDIR)/cpu/$(CPU)/config.mk		# include  CPU	specific rules
 endif
 ifdef	SOC
 sinclude $(TOPDIR)/cpu/$(CPU)/$(SOC)/config.mk	# include  SoC	specific rules
@@ -166,7 +166,7 @@ endif
 
 AFLAGS := $(AFLAGS_DEBUG) -D__ASSEMBLY__ $(CPPFLAGS)
 
-LDFLAGS += -Bstatic -T $(LDSCRIPT) $(PLATFORM_LDFLAGS)
+LDFLAGS += -Bstatic -T $(obj)u-boot.lds $(PLATFORM_LDFLAGS)
 ifneq ($(TEXT_BASE),)
 LDFLAGS += -Ttext $(TEXT_BASE)
 endif

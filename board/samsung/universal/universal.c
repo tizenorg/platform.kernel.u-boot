@@ -52,10 +52,6 @@ int dram_init(void)
 	return 0;
 }
 
-void raise(void)
-{
-}
-
 u32 get_board_rev(void)
 {
 	return board_rev;
