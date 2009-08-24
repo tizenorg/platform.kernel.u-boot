@@ -15,8 +15,8 @@
 #define OneDRAMREG_BASEADDR		(OneDRAM_B_BANK_BASEADDR + 0xFFF800)
 
 #define rOneDRAM_SEMAPHORE		*(volatile int*)(OneDRAMREG_BASEADDR)
-#define rOneDRAM_MAILBOX_AB		*(volatile int*)(OneDRAMREG_BASEADDR + 0x08)
-#define rOneDRAM_MAILBOX_BA		*(volatile int*)(OneDRAMREG_BASEADDR + 0x10)
+#define rOneDRAM_MAILBOX_AB		*(volatile int*)(OneDRAMREG_BASEADDR + 0x20)
+#define rOneDRAM_MAILBOX_BA		*(volatile int*)(OneDRAMREG_BASEADDR + 0x40)
 
 //primitive IPC on OneDRAM
 #define IPC_CP_READY_FOR_LOADING	0x21
@@ -159,8 +159,8 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		if(++exit > RETRY)
 			break;
 
-		printf("*******************************\n");
-		printf("Reset and try to send PSI : #%d\n",exit);
+		printf("********************************\n");
+		printf(" Reset and try to send PSI : #%d\n",exit);
 
 		/* Drain Rx Serial */
 		tmp = 0;
@@ -201,10 +201,11 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		uart_serial_putc(nSizePSI & 0xff, port);
 		uart_serial_putc(nSizePSI >> 8, port);
 
-		printf("Sending PSI data!!!\n - Len = %d\n,",nSizePSI);
+		printf("Sending PSI data!!!\n - Len = %d\n",nSizePSI);
 		
 		/* Data bytes of PSI */
 		pDataPSI = g_tblBin;
+		nCRC = 0;
 		for (nCnt = 0; nCnt < nSizePSI ; nCnt++) {
 			uart_serial_putc(*pDataPSI, port);
 			nCRC ^= *pDataPSI++;
