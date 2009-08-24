@@ -72,7 +72,7 @@ static const char *board_name[] = {
 
 static void check_hw_revision(void)
 {
-	unsigned int board;
+	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
 	unsigned long pin;
 
 	if (cpu_is_s5pc110())
@@ -90,7 +90,6 @@ static void check_hw_revision(void)
 	board_rev &= 0x7;
 	switch (board_rev) {
 	case 1:
-		board = MACH_UNIVERSAL;
 		if (cpu_is_s5pc110()) {
 			/*
 			 * Note Check 'Aquila' board first
