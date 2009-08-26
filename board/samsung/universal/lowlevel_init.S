@@ -166,20 +166,6 @@ lowlevel_init:
 
 #ifdef CONFIG_ONENAND_IPL
 wakeup_reset:
-
-	/* Turn on 7color [GPJ4(2)] at universal */
-	cmp	r7, r8
-	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
-	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
-	bic	r1, r1, #(0xf << 8)			@ 2 * 4-bit
-	orr	r1, r1, #(0x1 << 8)
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
-
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-	orr	r1, r1, #(1 << 2)			@ 2 * 1-bit
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
 	ldrne	r0, =S5PC110_WAKEUP_STAT
@@ -350,7 +336,7 @@ uart_asm_init:
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
 	orr	r1, r1, #(0x1 << 20)		@ Output
-	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 	bic	r1, r1, #(0x3 << 10)		@ 10 = 5 * 2-bit
@@ -371,7 +357,7 @@ uart_asm_init:
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
-	str   	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
 
 	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
 	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
@@ -416,5 +402,4 @@ tzpc_asm_init:
 	strne	r1, [r0, #0x810]
 
 	mov	pc, lr
-
 #endif
