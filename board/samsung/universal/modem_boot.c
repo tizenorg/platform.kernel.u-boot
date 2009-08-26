@@ -19,10 +19,10 @@
 #define rOneDRAM_MAILBOX_BA		*(volatile int*)(OneDRAMREG_BASEADDR + 0x40)
 
 //primitive IPC on OneDRAM
-#define IPC_CP_READY_FOR_LOADING	0x21
-#define IPC_CP_IMG_LOADED		0x22
+#define IPC_CP_READY_FOR_LOADING	0x12341234
+#define IPC_CP_IMG_LOADED		0x45674567
 #define IPC_CP_READY			0x23
-#define IPC_BOOT_DONE			0x24
+#define IPC_BOOT_DONE			0x89EF89EF
 
 #define CP_BOOT_MODE_NORMAL		0x0a
 #define CP_BOOT_MODE_PTEST		0x0b
@@ -241,6 +241,12 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		}
 
 		printf("Modem is ready for loading\n");
+		
+		/* Do not support full-booting sequence,
+		 * Full support will be done by Kernel
+		 */
+		return 0;
+
 		printf("OneDRAM is mailbox(expecting 0x21), rOneDRAM_MAILBOX_AB=%x\n",
 			rOneDRAM_MAILBOX_AB);
 		while(rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
