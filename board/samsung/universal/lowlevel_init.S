@@ -82,10 +82,11 @@ lowlevel_init:
 	/* IO retension release */
 	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
 	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
-	ldreq	r1, [r0]
+	ldr	r1, [r0]
 	ldreq	r2, =(1 << 31)				@IO_RET_REL
-	orreq	r1, r1, r2
-	streq	r1, [r0]
+	ldrne	r2, =((1 << 31) | (1 << 28))		@ GPIO, UART_IO
+	orr	r1, r1, r2
+	str	r1, [r0]
 
 	/* Disable Watchdog */
 	cmp	r7, r8
