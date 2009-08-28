@@ -62,12 +62,14 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
+	MACH_SCREENSPLIT,
 };
 
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
+	"ScreenSplit",
 };
 
 static void check_hw_revision(void)
@@ -94,24 +96,30 @@ static void check_hw_revision(void)
 			/*
 			 * Note Check 'Aquila' board first
 			 *
-			 * 		Universal Aquila TickerTape
-			 * 0xE0200264	0x10      0x00   0x00
-			 * 0xE02000C4	0x0F	  0x0F   0xXC
+			 * 		Universal Aquila TickerTape ScreenSplit
+			 * 0xE0200264	0x10      0x00   0x00       0x00
+			 * 0xE02002a4	0xc0      0x80   0x??       0xc0
+			 * 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
+			 * 0xE0200324	0xFF	  0x9F   0xFD       0xBX
 			 */
 
 			/* C110 Aquila */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			/* Universal: 0x10, Aquila: 0x00, TickerTape: 0x00 */
 			if ((readl(pin) & 0xf0) == 0)
 				board = MACH_AQUILA;
 
 			/* C110 TickerTape */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			/* Universal: 0x0F, Aquila: 0x0F, TickerTape: 0xXC */
-			if ((readl(pin) & 0x3) == 0)
+			if ((readl(pin) & 0x03) == 0)
 				board = MACH_TICKERTAPE;
+
+			/* C110 ScreenSplit */
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
+			pin += S5PC1XX_GPIO_DAT_OFFSET;
+			if ((readl(pin) & 0xf0) == 0xB0)
+				board = MACH_SCREENSPLIT;
 		}
 		break;
 	case 3:
