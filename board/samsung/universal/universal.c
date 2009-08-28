@@ -100,7 +100,7 @@ static void check_hw_revision(void)
 			 * 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
 			 * 0xE0200264	0x10      0x00   0x00       0x00
 			 * 0xE02002a4	0xc0      0x80   0x??       0xc0
-			 * 0xE0200324	0xFF	  0x9F   0xFD       0x9f
+			 * 0xE0200324	0xFF	  0x9F   0xFD       0x[9b][fd]
 			 */
 
 			/* C110 Aquila */
@@ -109,11 +109,13 @@ static void check_hw_revision(void)
 			if ((readl(pin) & 0xf0) == 0) {
 				board = MACH_AQUILA;
 
+#if 0
 				/* C110 ScreenSplit */
 				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J3_OFFSET);
 				pin += S5PC1XX_GPIO_DAT_OFFSET;
 				if ((readl(pin) & 0xf0) == 0xc0)
 					board = MACH_SCREENSPLIT;
+#endif
 			}
 
 			/* C110 TickerTape */
