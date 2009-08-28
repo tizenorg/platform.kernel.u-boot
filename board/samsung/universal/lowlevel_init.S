@@ -84,7 +84,7 @@ lowlevel_init:
 	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
 	ldr	r1, [r0]
 	ldreq	r2, =(1 << 31)				@IO_RET_REL
-	ldrne	r2, =((1 << 31) | (1 << 28))		@ GPIO, UART_IO
+	ldrne	r2, =((1 << 31) | (1 << 29) | (1 << 28))	@ GPIO, UART_IO
 	orr	r1, r1, r2
 	str	r1, [r0]
 
@@ -260,8 +260,10 @@ system_clock_init:
 	b	200f
 110:
 	/* Set Clock divider */
-	ldr	r1, =0x14131330		@ 1:1:4:4, 1:4:5
+	ldr	r1, =0x14131330			@ 1:1:4:4, 1:4:5
 	str	r1, [r0, #0x300]
+	ldr	r1, =0x11110111			@ UART[3210]: MMC[3210]
+	str	r1, [r0, #0x310]
 
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
@@ -271,16 +273,16 @@ system_clock_init:
 	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
 
 	/* S5PC110_APLL_CON */
-	ldr	r1, =0x80C80601		@ 800MHz
+	ldr	r1, =0x80C80601			@ 800MHz
 	str	r1, [r0, #0x100]
 	/* S5PC110_MPLL_CON */
-	ldr	r1, =0x829B0C01		@ 667MHz
+	ldr	r1, =0x829B0C01			@ 667MHz
 	str	r1, [r0, #0x108]
 	/* S5PC110_EPLL_CON */
-	ldr	r1, =0x80600602		@  96MHz
+	ldr	r1, =0x80600602			@  96MHz
 	str	r1, [r0, #0x110]
 	/* S5PC110_VPLL_CON */
-	ldr	r1, =0x806C0603		@  54MHz
+	ldr	r1, =0x806C0603			@  54MHz
 	str	r1, [r0, #0x120]
 
 	/* Set Source Clock */
@@ -382,24 +384,25 @@ tzpc_asm_init:
 	mov	r1, #0xff
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
+	str	r1, [r0, #0x81C]
 
-	cmp	r7, r8
 	ldreq	r0, =0xE2800000			@ TZPC1
 	ldrne	r0, =0xFAD00000			@ TZPC1
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
 	str	r1, [r0, #0x81C]
 
-	cmp	r7, r8
 	ldreq	r0, =0xE2900000			@ TZPC2
 	ldrne	r0, =0xE0600000			@ TZPC2
 	str	r1, [r0, #0x804]
 	str	r1, [r0, #0x810]
+	str	r1, [r0, #0x81C]
+	str	r1, [r0, #0x828]
 
-	cmp	r7, r8
 	ldrne	r0, =0xE1C00000			@ TZPC3 S5PC110 only
 	strne	r1, [r0, #0x804]
 	strne	r1, [r0, #0x810]
+	strne	r1, [r0, #0x81C]
 
 	mov	pc, lr
 #endif
