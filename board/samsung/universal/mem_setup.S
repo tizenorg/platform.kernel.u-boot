@@ -120,7 +120,6 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	cmp	r7, r8
 	ldr	r1, =0x38f80222
 	/* if r4 is 1, swap the bank */
 	cmp	r4, #0x1
@@ -140,7 +139,7 @@ swap_memory:
 	 * S5PC110:
 	 * DMC0: CS0: 166MHz
 	 * DMC1: CS0: 200MHz
-	 * 
+	 *
 	 * 7.8us * 200MHz %LE %LONG1560(0x618)
 	 * 7.8us * 166MHz %LE %LONG1294(0x50E)
 	 * 7.8us * 133MHz %LE %LONG1038(0x40E),
@@ -230,17 +229,12 @@ swap_memory:
 	strne	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
 	/* Skip when S5PC110 */
-	cmp	r7, r8
 	bne	1f
 
-	/* Try to test memory area */
-	cmp	r4, #0x1
-	beq	1f
-
+	/* OneDRAM write test */
 	mov	r4, #0x1
 	ldr	r1, =0x37ffff00
 	str	r4, [r1]
-	str	r4, [r1, #0x4]				@ dummy write
 	ldr	r2, [r1]
 	cmp	r2, r4
 	bne	swap_memory
