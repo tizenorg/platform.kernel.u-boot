@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2005-2008 Samsung Electronis
+ * (C) Copyright 2005-2008 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -37,24 +37,8 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
-static int (*onenand_read_page)(ulong block, ulong page,
+int (*onenand_read_page)(ulong block, ulong page,
 				u_char *buf, int pagesize);
-
-static int s5pc100_onenand_read_page(ulong block, ulong page,
-				u_char * buf, int pagesize)
-{
-	unsigned int *p = (unsigned int *) buf;
-	int mem_addr, i;
-
-	mem_addr = MEM_ADDR(block, page, 0);
-
-	pagesize >>= 2;
-
-	for (i = 0; i < pagesize; i++)
-		*p++ = readl(CMD_MAP_01(mem_addr));
-
-	return 0;
-}
 
 /* read a page with ECC */
 static int generic_onenand_read_page(ulong block, ulong page,
@@ -113,6 +97,24 @@ static int generic_onenand_read_page(ulong block, ulong page,
 #endif
 #define ONENAND_PAGES_PER_BLOCK		64
 
+static int onenand_generic_init(int *page_is_4KiB, int *page)
+{
+	int dev_id, density;
+
+	if (onenand_readw(ONENAND_REG_TECHNOLOGY))
+		*page_is_4KiB = 1;
+	dev_id = onenand_readw(ONENAND_REG_DEVICE_ID);
+	density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
+	if (density >= ONENAND_DEVICE_DENSITY_4Gb &&
+	    !(dev_id & ONENAND_DEVICE_IS_DDP))
+		*page_is_4KiB = 1;
+
+	return ONENAND_USE_DEFAULT;
+}
+
+int onenand_board_init(int *page_is_4KiB, int *page)
+	__attribute__((weak, alias("onenand_generic_init")));
+
 /**
  * onenand_read_block - Read CONFIG_SYS_MONITOR_LEN from begining
  *                      of OneNAND, skipping bad blocks
@@ -120,41 +122,29 @@ static int generic_onenand_read_page(ulong block, ulong page,
  */
 int onenand_read_block(unsigned char *buf)
 {
-	int block;
+	int block, nblocks;
 	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
-	int pagesize = 0, erase_shift = 0;
-	int erasesize = 0, nblocks = 0;
-	int page_is_4KiB = 0, dev_id, density;
+	int pagesize, erasesize, erase_shift;
+	int page_is_4KiB = 0, ret;
 
-	if ((readl(0xE0000000) & 0x00FFF000) == 0x00110000) {
-		onenand_read_page = generic_onenand_read_page;
-		if (onenand_readw(ONENAND_REG_TECHNOLOGY))
-			page_is_4KiB = 1;
-		dev_id = onenand_readw(ONENAND_REG_DEVICE_ID);
-		density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
-		if (density >= ONENAND_DEVICE_DENSITY_4Gb &&
-		    !(dev_id & ONENAND_DEVICE_IS_DDP))
-			page_is_4KiB = 1;
-	} else {
-		onenand_read_page = s5pc100_onenand_read_page;
-		if (onenand_ahb_readw(ONENAND_REG_TECHNOLOGY))
-			page_is_4KiB = 1;
-		page = 8;
-	}
+	pagesize = 2048; /* OneNAND has 2KiB pagesize */
+	erase_shift = 17;
+	onenand_read_page = generic_onenand_read_page;
+
+	ret = onenand_board_init(&page_is_4KiB, &page);
+	if (ret == ONENAND_USE_GENERIC)
+		onenand_generic_init(&page_is_4KiB, &page);
 
 	if (page_is_4KiB) {
 		pagesize = 4096; /* OneNAND has 4KiB pagesize */
 		erase_shift = 18;
-	} else {
-		pagesize = 2048;
-		erase_shift = 17;
 	}
 
-	erasesize = ONENAND_PAGES_PER_BLOCK * pagesize;
+	erasesize = (1 << erase_shift);
 	nblocks = (CONFIG_SYS_MONITOR_LEN + erasesize - 1) >> erase_shift;
 
 	/* NOTE: you must read page from page 1 of block 0 */
-	/* read the block page by page*/
+	/* read the block page by page */
 	for (block = 0; block < nblocks; block++) {
 		for (; page < ONENAND_PAGES_PER_BLOCK; page++) {
 			if (onenand_read_page(block, page, buf + offset,

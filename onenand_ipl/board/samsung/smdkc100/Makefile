@@ -24,7 +24,7 @@ OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o mem_setup.o
 SOBJS	+= start.o
-COBJS	+= onenand_read.o
+COBJS	+= onenand_read.o samsung_read.o
 COBJS	+= onenand_boot.o
 
 SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
@@ -79,6 +79,10 @@ $(obj)onenand_boot.c:	$(obj)onenand_ipl.h
 $(obj)onenand_read.c:	$(obj)onenand_ipl.h
 	@rm -f $@
 	ln -s $(SRCTREE)/onenand_ipl/onenand_read.c $@
+
+$(obj)samsung_read.c:	$(obj)onenand_ipl.h
+	@rm -f $@
+	ln -s $(SRCTREE)/onenand_ipl/samsung_read.c $@
 
 #########################################################################
 
