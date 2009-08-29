@@ -1,13 +1,7 @@
 /*
- * (C) Copyright 2002
- * Sysgo Real-Time Solutions, GmbH <www.elinos.com>
- * Marius Groeger <mgroeger@sysgo.de>
- *
- * (C) Copyright 2002
- * David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
- *
- * (C) Copyright 2008
- * Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+ *  Copyright (C) 2008-2009 Samsung Electronics
+ *  Minkyu Kang <mk7.kang@samsung.com>
+ *  Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -29,18 +23,10 @@
  */
 
 #include <common.h>
-
-static inline void delay(unsigned long loops)
-{
-	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
-			  "bne 1b"
-			  : "=r" (loops) : "0" (loops));
-}
+DECLARE_GLOBAL_DATA_PTR;
 
 int board_init(void)
 {
-	DECLARE_GLOBAL_DATA_PTR;
-
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
@@ -49,8 +35,6 @@ int board_init(void)
 
 int dram_init(void)
 {
-	DECLARE_GLOBAL_DATA_PTR;
-
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 
@@ -64,7 +48,3 @@ int checkboard(void)
 	return 0;
 }
 #endif
-
-void raise(void)
-{
-}
