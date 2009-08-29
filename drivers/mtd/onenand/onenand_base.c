@@ -23,12 +23,17 @@
 #include <asm/errno.h>
 #include <malloc.h>
 
+extern void *memcpy32(void *dst, const void *src, int len);
+
 /* It should access 16-bit instead of 8-bit */
 static inline void *memcpy_16(void *dst, const void *src, unsigned int len)
 {
 	void *ret = dst;
 	short *d = dst;
 	const short *s = src;
+
+	if (len > 32 && (len & (32 - 1)) == 0)
+		return memcpy32(dst, src, len);
 
 	len >>= 1;
 	while (len-- > 0)

@@ -25,11 +25,11 @@ TEXT_BASE16K = 0xD0038000
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_ONENAND_IPL -g -UTEXT_BASE -DTEXT_BASE=$(TEXT_BASE)
-CFLAGS	+= -DCONFIG_ONENAND_IPL -g
+CFLAGS	+= -DCONFIG_ONENAND_IPL -g -D__HAVE_ARCH_MEMCPY32
 OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o mem_setup.o
-SOBJS	+= start.o
+SOBJS	+= start.o _memcpy32.o
 COBJS	+= onenand_read.o samsung_read.o
 COBJS	+= onenand_boot.o
 
@@ -76,6 +76,10 @@ $(obj)mem_setup.S:
 
 $(obj)lowlevel_init.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/lowlevel_init.S $@
+
+# from lib_arm
+$(obj)_memcpy32.S:
+	ln -sf $(SRCTREE)/lib_arm/_memcpy32.S $@
 
 # from onenand_ipl directory
 $(obj)onenand_ipl.h:
