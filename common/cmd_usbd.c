@@ -362,7 +362,6 @@ static int process_data(struct usbd_ops *usbd)
 	case COMMAND_PARTITION_SYNC:
 		part_id = arg;
 
-		printf("COMMAND_PARTITION_SYNC - Part%d\n", part_id);
 #ifdef CONFIG_CMD_UBI
 		if (ubi_mode) {
 			if (part_id == RAMDISK_PART_ID ||
@@ -377,16 +376,17 @@ static int process_data(struct usbd_ops *usbd)
 				get_part_info();
 			}
 		}
+#endif
 
 		if (part_id == FILESYSTEM3_PART_ID)
 			part_id = get_part_id("UBI", FILESYSTEM_PART_ID);
 		else if (part_id == MODEM_PART_ID)
 			part_id = get_part_id("modem", MODEM_PART_ID);
-#endif
 #ifdef CONFIG_MIRAGE
 		if (part_id)
 			part_id--;
 #endif
+		printf("COMMAND_PARTITION_SYNC - Part%d\n", part_id);
 
 		blocks = parts[part_id]->size / 1024 / 128;
 		printf("COMMAND_PARTITION_SYNC - Part%d, %d blocks\n",
@@ -444,7 +444,7 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_PART_8:
 		printf("COMMAND_WRITE_MODEM\n");
-		part_id = get_part_id("modem", MODEM_PART_ID);
+		part_id = MODEM_PART_ID;
 		break;
 
 	case COMMAND_WRITE_UBI_INFO:
@@ -539,7 +539,6 @@ static int process_data(struct usbd_ops *usbd)
 		nand_cmd(0, offset, length, NULL);
 #endif
 	case KERNEL_PART_ID:
-	case MODEM_PART_ID:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
 
@@ -556,6 +555,18 @@ static int process_data(struct usbd_ops *usbd)
 	case FILESYSTEM3_PART_ID:	/* ubifs */
 		ret = write_file_system(ramaddr, len, offset, length,
 				part_id, ubi_update);
+		break;
+	
+	case MODEM_PART_ID:
+		part_id = get_part_id("modem", MODEM_PART_ID);
+
+		sprintf(offset, "%x", parts[part_id]->offset);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		nand_cmd(0, offset, length, NULL);
+		/* Write */
+		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
 
 	default:

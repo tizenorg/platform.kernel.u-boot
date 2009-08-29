@@ -40,12 +40,12 @@ extern int s5p_receive_done;
 extern int s5p_usb_connected;
 extern otg_dev_t otg;
 
-int __usb_board_init(void)
+static int __usb_board_init(void)
 {
 	return 0;
 }
-int usb_board_init(void)
-	__attribute__((weak, alias("__usb_board_init")));
+
+int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 
 /* This function is interfaced between
  * USB Device Controller and USB Downloader
