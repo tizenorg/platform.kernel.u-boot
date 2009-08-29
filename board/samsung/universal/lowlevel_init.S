@@ -88,15 +88,13 @@ lowlevel_init:
 	orr	r1, r1, r2
 	str	r1, [r0]
 
+#ifndef CONFIG_ONENAND_IPL
 	/* Disable Watchdog */
-	cmp	r7, r8
 	ldreq	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
 	ldrne	r0, =S5PC110_WATCHDOG_BASE		@0xE2700000
 	str	r5, [r0]
 
-#ifndef CONFIG_ONENAND_IPL
 	/* setting SRAM */
-	cmp	r7, r8
 	ldreq	r0, =S5PC100_SROMC_BASE
 	ldrne	r0, =S5PC110_SROMC_BASE
 	ldr	r1, =0x9
@@ -104,7 +102,6 @@ lowlevel_init:
 #endif
 
 	/* S5PC100 has 3 groups of interrupt sources */
-	cmp	r7, r8
 	ldreq	r0, =S5PC100_VIC0_BASE			@0xE4000000
 	ldrne	r0, =S5PC110_VIC0_BASE			@0xF2000000
 	add	r1, r0, #0x00100000
@@ -144,7 +141,6 @@ lowlevel_init:
 
 	bl	internal_ram_init
 
-	cmp	r7, r8
 	/* Wakeup support. Don't know if it's going to be used, untested. */
 	ldreq	r0, =S5PC100_RST_STAT
 	ldrne	r0, =S5PC110_RST_STAT
@@ -166,6 +162,7 @@ lowlevel_init:
 
 #ifdef CONFIG_ONENAND_IPL
 wakeup_reset:
+	cmp	r7, r8
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
 	ldrne	r0, =S5PC110_WAKEUP_STAT
@@ -308,7 +305,6 @@ system_clock_init:
 
 #ifdef CONFIG_ONENAND_IPL
 internal_ram_init:
-	cmp	r7, r8
 	ldreq	r0, =0xE3800000
 	ldrne	r0, =0xF1500000
 	ldr	r1, =0x0
