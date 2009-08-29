@@ -105,6 +105,7 @@ static int onenand_generic_init(int *page_is_4KiB, int *page)
 		*page_is_4KiB = 1;
 	dev_id = onenand_readw(ONENAND_REG_DEVICE_ID);
 	density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
+	density &= ONENAND_DEVICE_DENSITY_MASK;
 	if (density >= ONENAND_DEVICE_DENSITY_4Gb &&
 	    !(dev_id & ONENAND_DEVICE_IS_DDP))
 		*page_is_4KiB = 1;
