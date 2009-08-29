@@ -65,3 +65,4 @@ cscope.*
 /onenand_ipl/board/*/onenand*
 /onenand_ipl/board/*/*/*.S
 /onenand_ipl/board/*/*/onenand*
+/onenand_ipl/board/*/*/samsung_read*
