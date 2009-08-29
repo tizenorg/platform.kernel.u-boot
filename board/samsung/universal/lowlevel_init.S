@@ -131,6 +131,8 @@ lowlevel_init:
 
 	/* for TZPC */
 	bl	tzpc_asm_init
+
+	bl	internal_ram_init
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
@@ -138,8 +140,6 @@ lowlevel_init:
 	bl	system_clock_init
 
 	bl	mem_ctrl_asm_init
-
-	bl	internal_ram_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
 	ldreq	r0, =S5PC100_RST_STAT
@@ -303,7 +303,7 @@ system_clock_init:
 
 	mov	pc, lr
 
-#ifdef CONFIG_ONENAND_IPL
+#ifndef CONFIG_ONENAND_IPL
 internal_ram_init:
 	ldreq	r0, =0xE3800000
 	ldrne	r0, =0xF1500000
