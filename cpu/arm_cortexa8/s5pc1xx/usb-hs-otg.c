@@ -291,41 +291,43 @@ enum DESCRIPTOR_SIZE {
 #define CONFIG_DESC_TOTAL_SIZE	\
 	(CONFIG_DESC_SIZE+INTERFACE_DESC_SIZE+ENDPOINT_DESC_SIZE*2)
 
-static int s5pc1xx_phy_read_reg(int offset)
+static unsigned int phy_base;
+static unsigned int otg_base;
+
+static inline int s5p_usb_init_base()
 {
-	if (cpu_is_s5pc110())
-		return readl(S5PC110_PHY_BASE + offset);
-	else
-		return readl(S5PC100_PHY_BASE + offset);
+	if (cpu_is_s5pc110()) {
+		phy_base = S5PC110_PHY_BASE;
+		otg_base = S5PC110_OTG_BASE;
+	} else {
+		phy_base = S5PC100_PHY_BASE;
+		otg_base = S5PC100_OTG_BASE;
+	}
 }
 
-static void s5pc1xx_phy_write_reg(int value, int offset)
+
+static inline int s5pc1xx_phy_read_reg(int offset)
 {
-	if (cpu_is_s5pc110())
-		writel(value, S5PC110_PHY_BASE + offset);
-	else
-		writel(value, S5PC100_PHY_BASE + offset);
+	return readl(phy_base + offset);
 }
 
-static int s5pc1xx_otg_read_reg(int offset)
+static inline void s5pc1xx_phy_write_reg(int value, int offset)
 {
-	if (cpu_is_s5pc110())
-		return readl(S5PC110_OTG_BASE + offset);
-	else
-		return readl(S5PC100_OTG_BASE + offset);
+	writel(value, phy_base + offset);
 }
 
-static void s5pc1xx_otg_write_reg(int value, int offset)
+static inline int s5pc1xx_otg_read_reg(int offset)
 {
-	if (cpu_is_s5pc110())
-		writel(value, S5PC110_OTG_BASE + offset);
-	else
-		writel(value, S5PC100_OTG_BASE + offset);
+	return readl(otg_base + offset);
+}
+
+static inline void s5pc1xx_otg_write_reg(int value, int offset)
+{
+	writel(value, otg_base + offset);
 }
 
 void s5p_usb_init_phy(void)
 {
-
 	if (cpu_is_s5pc110()) {
 		s5pc1xx_phy_write_reg(0xA0, OTG_PHYPWR);
 		s5pc1xx_phy_write_reg(0x3, OTG_PHYCTRL);
@@ -445,6 +447,8 @@ int s5p_usbctl_init(void)
 	u8 ucMode;
 	u32 reg;
 
+	s5p_usb_init_base();
+
 	if (cpu_is_s5pc110()) {
 		reg = readl(S5PC110_USB_PHY_CON);
 		reg |= (1 << 0); /* USB PHY0 enable */
@@ -509,6 +513,7 @@ void s5p_usb_set_outep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 	}
 }
 
+/* works on both aligned and unaligned buffers */
 void s5p_usb_write_ep0_fifo(u8 *buf, int num)
 {
 	int i;
@@ -524,34 +529,25 @@ void s5p_usb_write_ep0_fifo(u8 *buf, int num)
 	}
 }
 
-void s5p_usb_write_in_fifo(u8 *buf, int num)
+/* optimized fifo access routines, warning: only aligned buffers are supported */
+static inline void s5p_usb_write_in_fifo(u8 *buf, int num)
 {
+	u32 fifo = otg_base + OTG_IN_FIFO;
+	u32 *p = (u32 *)buf;
 	int i;
-	u32 data = 0;
 
-	for (i = 0; i < num; i += 4) {
-		data = ((*(buf + 3)) << 24) |
-			((*(buf + 2)) << 16) |
-			((*(buf + 1)) << 8) |
-			*buf;
-		s5pc1xx_otg_write_reg(data, OTG_IN_FIFO);
-		buf += 4;
-	}
+	for (i = 0; i < num; i += 4)
+		writel(*p++, fifo);
 }
 
-void s5p_usb_read_out_fifo(u8 *buf, int num)
+static inline void s5p_usb_read_out_fifo(u8 *buf, int num)
 {
+	u32 fifo = otg_base + OTG_OUT_FIFO;
+	u32 *p = (u32 *)buf;
 	int i;
-	u32 data;
 
-	for (i = 0; i < num; i += 4) {
-		data = s5pc1xx_otg_read_reg(OTG_OUT_FIFO);
-
-		buf[i] = (u8) data;
-		buf[i + 1] = (u8) (data >> 8);
-		buf[i + 2] = (u8) (data >> 16);
-		buf[i + 3] = (u8) (data >> 24);
-	}
+	for (i = 0; i < num; i += 4)
+		*p++ = readl(fifo);
 }
 
 void s5p_usb_get_desc(void)
