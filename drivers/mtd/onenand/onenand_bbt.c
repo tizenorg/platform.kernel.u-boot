@@ -59,7 +59,7 @@ static int read_page_oob(struct mtd_info *mtd, loff_t from, u_char *buf)
 	scanlen = 0;
 
 	ops.mode = MTD_OOB_PLACE;
-	ops.ooblen = 16;
+	ops.ooblen = 32;
 	ops.oobbuf = buf;
 	ops.len = ops.ooboffs = ops.retlen = ops.oobretlen = 0;
 
