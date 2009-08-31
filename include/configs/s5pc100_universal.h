@@ -185,6 +185,7 @@
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x33000000,8M ramdisk=8192\0" \
+	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=208M\0" \
