@@ -139,6 +139,12 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		udelay(200*1000);	/* 200ms */
 
+		/* CP_RESET -> high */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+		dat |= (0x1 << 7);
+		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
+
 		/* PHONE_ON -> high */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
@@ -147,14 +153,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		udelay(27*1000);	/* > 26.6ms */
 
-		/* CP_RESET -> high */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-		dat |= (0x1 << 7);
-		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
-
-		/* Power is stable, 40msec after CP_RESET release - experimental */
-		udelay(40*1000);	/* 40ms */
+		udelay(40*1000);	/* Power stabilization */
 
 		if(++exit > RETRY)
 			break;
