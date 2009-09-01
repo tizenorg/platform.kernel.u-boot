@@ -556,7 +556,7 @@ static int process_data(struct usbd_ops *usbd)
 		ret = write_file_system(ramaddr, len, offset, length,
 				part_id, ubi_update);
 		break;
-	
+
 	case MODEM_PART_ID:
 		part_id = get_part_id("modem", MODEM_PART_ID);
 
