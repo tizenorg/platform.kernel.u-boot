@@ -294,7 +294,7 @@ enum DESCRIPTOR_SIZE {
 static unsigned int phy_base;
 static unsigned int otg_base;
 
-static inline int s5p_usb_init_base()
+static inline void s5p_usb_init_base(void)
 {
 	if (cpu_is_s5pc110()) {
 		phy_base = S5PC110_PHY_BASE;
@@ -304,7 +304,6 @@ static inline int s5p_usb_init_base()
 		otg_base = S5PC100_OTG_BASE;
 	}
 }
-
 
 static inline int s5pc1xx_phy_read_reg(int offset)
 {

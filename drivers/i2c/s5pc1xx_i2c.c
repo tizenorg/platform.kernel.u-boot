@@ -102,7 +102,7 @@ void i2c_init(int speed, int slaveadd)
 	u32 div;
 	int i;
 	int status, value, reg;
-	int gpio_shift;
+	int gpio_shift = 0;
 
 	/* wait for some time to give previous transfer a chance to finish */
 	i = I2C_TIMEOUT * 1000;
