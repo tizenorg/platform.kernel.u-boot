@@ -200,6 +200,37 @@ static void enable_touch_ldo(void)
 #endif
 }
 
+static void redirect_uart_to_cp(void)
+{
+	unsigned int reg, value;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	/* USB_SEL: XM0ADDR_0 to high */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
+	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~(0xf << 0);			/* 0 = 0 * 4 bit */
+	value |= (1 << 0);			/* output mode */
+	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* output enable */
+	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
+	value |= (1 << 0);			/* 0 = 0 * 1 bit */
+	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+
+	/* UART_SEL: XM0ADDR_15 to low */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
+	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
+	value &= ~(1 << 7);			/* 7 = 7 * 1 bit */
+	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+#define KBR3		(1 << 3)
+#define KBR2		(1 << 2)
+#define KBR1		(1 << 1)
+#define KBR0		(1 << 0)
+
 static void check_keypad(void)
 {
 	unsigned int reg, value;
@@ -226,19 +257,22 @@ static void check_keypad(void)
 	} else {
 		/* Set GPH2[3:0] to KP_COL[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
-		reg += S5PC1XX_GPIO_CON_OFFSET;
-		value = readl(reg);
+		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
 		value &= ~(0xFFFF);
 		value |= (0x3333);
-		writel(value, reg);
+		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-		reg += S5PC1XX_GPIO_CON_OFFSET;
-		value = readl(reg);
+		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
 		value &= ~(0xFFFF);
 		value |= (0x3333);
-		writel(value, reg);
+		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
+		value &= ~(0xFF);
+		/* Pull-up enabled */
+		value |= (0x2 << 6 | 0x2 << 4 | 0x2 << 2 | 0x2 << 0);
+		writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
 
 		reg = S5PC110_KEYPAD_BASE;
 	}
@@ -248,8 +282,13 @@ static void check_keypad(void)
 
 	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 
-	if ((value & 0x1) == 0)
+	/* OK or Send Button */
+	if ((value & KBR0) == 0)
 		auto_download = 1;
+
+	/* CAM_DOUBLE2 or Volume UP button */
+	if ((value & KBR2) == 0)
+		redirect_uart_to_cp();
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
