@@ -154,14 +154,8 @@ lowlevel_init:
 	mov	r2, #(1 << 16)
 200:
 	cmp	r1, r2
-	beq	wakeup_reset
-#endif
-1:
-	mov	lr, r9
-	mov	pc, lr
-
-#ifdef CONFIG_ONENAND_IPL
-wakeup_reset:
+	bne	1f
+wakeup:
 	cmp	r7, r8
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
@@ -173,14 +167,17 @@ wakeup_reset:
 	ldreq	r0, =S5PC100_INFORM0
 	ldrne	r0, =S5PC110_INFORM0
 
-	/* r1 = physical address of s5pc100_cpu_resume function */
+	/* r1 = physical address of s5pc1xx_cpu_resume function */
 	ldr	r1, [r0]
 
-	/* Jump to kernel (sleep-s5pc100.S) */
+	/* Jump to kernel (sleep-s5pc1xx.S) */
 	mov	pc, r1
 	nop
 	nop
 #endif
+1:
+	mov	lr, r9
+	mov	pc, lr
 
 /*
  * system_clock_init: Initialize core clock and bus clock.
