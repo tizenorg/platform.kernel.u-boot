@@ -40,7 +40,7 @@ check_users
 build_uboot $*
 
 if [ "$USER" = "kmpark" ]; then
-	cp -f u-boot.bin /tftpboot
+	cp -f u-boot.bin u-boot-onenand.bin /tftpboot
 	ls -al u-boot.bin u-boot-onenand.bin
 	ls -al onenand_ipl
 	pushd ../images
