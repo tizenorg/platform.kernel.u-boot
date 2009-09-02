@@ -92,38 +92,44 @@ static void check_hw_revision(void)
 	board_rev &= 0x7;
 	switch (board_rev) {
 	case 1:
-		if (cpu_is_s5pc110()) {
-			/*
-			 * Note Check 'Aquila' board first
-			 *
-			 * 		Universal Aquila TickerTape ScreenSplit
-			 * 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
-			 * 0xE0200264	0x10      0x00   0x00       0x00
-			 * 0xE02002a4	0xc0      0x80   0x??       0xc0
-			 * 0xE0200324	0xFF	  0x9F   0xFD       0x[9b][fd]
-			 */
+		if (cpu_is_s5pc100())
+			break;
 
-			/* C110 Aquila */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+		/*
+		 * Note Check 'Aquila' board first
+		 *
+		 * 			Universal Aquila TickerTape ScreenSplit
+		 *   D1: 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
+		 *   J1: 0xE0200264	0x10      0x00   0x00       0x00
+		 *    I: 0xE0200224	          0x02              0x00 0x08
+		 * MP03: 0xE0200324	          0x9x              0xbx 0x9x
+		 * MP05: 0xE0200364	          0x80              0x88
+		 */
+
+		/* C110 Aquila */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+		pin += S5PC1XX_GPIO_DAT_OFFSET;
+		if ((readl(pin) & 0xf0) == 0) {
+			board = MACH_AQUILA;
+
+			/* C110 ScreenSplit */
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0xf0) == 0) {
-				board = MACH_AQUILA;
-
-#if 0
-				/* C110 ScreenSplit */
-				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J3_OFFSET);
+			if ((readl(pin) & (1 << 5)))
+				board = MACH_SCREENSPLIT;
+			else {
+				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_I_OFFSET);
 				pin += S5PC1XX_GPIO_DAT_OFFSET;
-				if ((readl(pin) & 0xf0) == 0xc0)
+				if ((readl(pin) & (1 << 3)))
 					board = MACH_SCREENSPLIT;
-#endif
 			}
-
-			/* C110 TickerTape */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
-			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0x03) == 0)
-				board = MACH_TICKERTAPE;
 		}
+
+		/* C110 TickerTape */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
+		pin += S5PC1XX_GPIO_DAT_OFFSET;
+		if ((readl(pin) & 0x03) == 0)
+			board = MACH_TICKERTAPE;
 		break;
 	case 3:
 		/* C100 TickerTape */
