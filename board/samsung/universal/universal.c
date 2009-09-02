@@ -52,6 +52,8 @@ int dram_init(void)
 	return 0;
 }
 
+#define SCREEN_SPLIT_FEATURE	0x100
+
 u32 get_board_rev(void)
 {
 	return board_rev;
@@ -62,7 +64,6 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
-	MACH_SCREENSPLIT,
 };
 
 static const char *board_name[] = {
@@ -112,16 +113,16 @@ static void check_hw_revision(void)
 		if ((readl(pin) & 0xf0) == 0) {
 			board = MACH_AQUILA;
 
-			/* C110 ScreenSplit */
+			/* C110 Aquila ScreenSplit */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
 			if ((readl(pin) & (1 << 5)))
-				board = MACH_SCREENSPLIT;
+				board_rev |= SCREEN_SPLIT_FEATURE;
 			else {
 				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_I_OFFSET);
 				pin += S5PC1XX_GPIO_DAT_OFFSET;
 				if ((readl(pin) & (1 << 3)))
-					board = MACH_SCREENSPLIT;
+					board_rev |= SCREEN_SPLIT_FEATURE;
 			}
 		}
 
@@ -146,7 +147,8 @@ static void check_hw_revision(void)
 		gd->bd->bi_arch_number = 3100 + board;
 	else
 		gd->bd->bi_arch_number = 3000 + board;
-	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board]);
+	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
+		board_rev & SCREEN_SPLIT_FEATURE ? " - ScreenSplit" : "" );
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
