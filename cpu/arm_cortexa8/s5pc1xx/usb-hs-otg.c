@@ -1488,63 +1488,63 @@ void s5p_usb_set_endpoint(void)
 void s5p_usb_set_descriptors(void)
 {
 #if defined (CONFIG_SAMSUNG_USB)
-	otg.desc.dev.bLength 		= DEVICE_DESC_SIZE;
-	otg.desc.dev.bDescriptorType 	= DEVICE_DESCRIPTOR;
+	otg.desc.dev.bLength		= DEVICE_DESC_SIZE;
+	otg.desc.dev.bDescriptorType	= DEVICE_DESCRIPTOR;
 	otg.desc.dev.bDeviceClass	= 0xFF;
-	otg.desc.dev.bDeviceSubClass 	= 0x0;
-	otg.desc.dev.bDeviceProtocol 	= 0x0;
-	otg.desc.dev.bMaxPacketSize0 	= otg.ctrl_max_pktsize;
-	otg.desc.dev.idVendorL 		= 0xE8;
-	otg.desc.dev.idVendorH 		= 0x04;
-	otg.desc.dev.idProductL 	= 0x04;
-	otg.desc.dev.idProductH 	= 0x12;
-	otg.desc.dev.iManufacturer 	= 0x0;
-	otg.desc.dev.iProduct 		= 0x2;
-	otg.desc.dev.iSerialNumber 	= 0x0;
+	otg.desc.dev.bDeviceSubClass	= 0x0;
+	otg.desc.dev.bDeviceProtocol	= 0x0;
+	otg.desc.dev.bMaxPacketSize0	= otg.ctrl_max_pktsize;
+	otg.desc.dev.idVendorL		= 0xE8;
+	otg.desc.dev.idVendorH		= 0x04;
+	otg.desc.dev.idProductL		= 0x04;
+	otg.desc.dev.idProductH		= 0x12;
+	otg.desc.dev.iManufacturer	= 0x0;
+	otg.desc.dev.iProduct		= 0x2;
+	otg.desc.dev.iSerialNumber	= 0x0;
 	otg.desc.dev.bNumConfigurations = 0x1;
 	if (otg.speed == USB_FULL) {
-		otg.desc.dev.bcdUSBL 	= 0x10;
-		otg.desc.dev.bcdUSBH 	= 0x01;
+		otg.desc.dev.bcdUSBL	= 0x10;
+		otg.desc.dev.bcdUSBH	= 0x01;
 	} else {
-		otg.desc.dev.bcdUSBL 	= 0x00;
-		otg.desc.dev.bcdUSBH 	= 0x02;
+		otg.desc.dev.bcdUSBL	= 0x00;
+		otg.desc.dev.bcdUSBH	= 0x02;
 	}
 
-	otg.desc.config.bLength 	= CONFIG_DESC_SIZE;
+	otg.desc.config.bLength		= CONFIG_DESC_SIZE;
 	otg.desc.config.bDescriptorType = CONFIGURATION_DESCRIPTOR;
-	otg.desc.config.wTotalLengthL 	= CONFIG_DESC_TOTAL_SIZE;
-	otg.desc.config.wTotalLengthH 	= 0;
-	otg.desc.config.bNumInterfaces 	= 1;
+	otg.desc.config.wTotalLengthL	= CONFIG_DESC_TOTAL_SIZE;
+	otg.desc.config.wTotalLengthH	= 0;
+	otg.desc.config.bNumInterfaces	= 1;
 	otg.desc.config.bConfigurationValue = 1;
-	otg.desc.config.iConfiguration 	= 0;
-	otg.desc.config.bmAttributes 	= CONF_ATTR_DEFAULT | CONF_ATTR_SELFPOWERED;
-	otg.desc.config.maxPower 	= 50;
+	otg.desc.config.iConfiguration	= 0;
+	otg.desc.config.bmAttributes	= CONF_ATTR_DEFAULT | CONF_ATTR_SELFPOWERED;
+	otg.desc.config.maxPower	= 50;
 #else
-	otg.desc.dev.bLength 		= DEVICE_DESC_SIZE;
-	otg.desc.dev.bDescriptorType 	= DEVICE_DESCRIPTOR;
-	otg.desc.dev.bDeviceClass 	= 0xFF;
-	otg.desc.dev.bDeviceSubClass 	= 0x0;
-	otg.desc.dev.bDeviceProtocol 	= 0x0;
-	otg.desc.dev.bMaxPacketSize0 	= otg.ctrl_max_pktsize;
-	otg.desc.dev.idVendorL 		= 0xE8;
-	otg.desc.dev.idVendorH 		= 0x04;
-	otg.desc.dev.idProductL 	= 0x34;
-	otg.desc.dev.idProductH 	= 0x12;
-	otg.desc.dev.bcdDeviceL 	= 0x00;
-	otg.desc.dev.bcdDeviceH 	= 0x01;
-	otg.desc.dev.iManufacturer 	= 0x1;
-	otg.desc.dev.iProduct 		= 0x2;
-	otg.desc.dev.iSerialNumber 	= 0x0;
+	otg.desc.dev.bLength		= DEVICE_DESC_SIZE;
+	otg.desc.dev.bDescriptorType	= DEVICE_DESCRIPTOR;
+	otg.desc.dev.bDeviceClass	= 0xFF;
+	otg.desc.dev.bDeviceSubClass	= 0x0;
+	otg.desc.dev.bDeviceProtocol	= 0x0;
+	otg.desc.dev.bMaxPacketSize0	= otg.ctrl_max_pktsize;
+	otg.desc.dev.idVendorL		= 0xE8;
+	otg.desc.dev.idVendorH		= 0x04;
+	otg.desc.dev.idProductL		= 0x34;
+	otg.desc.dev.idProductH		= 0x12;
+	otg.desc.dev.bcdDeviceL		= 0x00;
+	otg.desc.dev.bcdDeviceH		= 0x01;
+	otg.desc.dev.iManufacturer	= 0x1;
+	otg.desc.dev.iProduct		= 0x2;
+	otg.desc.dev.iSerialNumber	= 0x0;
 	otg.desc.dev.bNumConfigurations	= 0x1;
 	if (otg.speed == USB_FULL) {
-		otg.desc.dev.bcdUSBL 	= 0x10;
-		otg.desc.dev.bcdUSBH 	= 0x01;
+		otg.desc.dev.bcdUSBL	= 0x10;
+		otg.desc.dev.bcdUSBH	= 0x01;
 	} else {
-		otg.desc.dev.bcdUSBL 	= 0x00;
-		otg.desc.dev.bcdUSBH 	= 0x02;
+		otg.desc.dev.bcdUSBL	= 0x00;
+		otg.desc.dev.bcdUSBH	= 0x02;
 	}
 
-	otg.desc.config.bLength 	= CONFIG_DESC_SIZE;
+	otg.desc.config.bLength		= CONFIG_DESC_SIZE;
 	otg.desc.config.bDescriptorType	= CONFIGURATION_DESCRIPTOR;
 	otg.desc.config.wTotalLengthL	= CONFIG_DESC_TOTAL_SIZE;
 	otg.desc.config.wTotalLengthH	= 0;
@@ -1552,11 +1552,11 @@ void s5p_usb_set_descriptors(void)
 	otg.desc.config.bConfigurationValue = 1;
 	otg.desc.config.iConfiguration	= 0;
 	otg.desc.config.bmAttributes	= CONF_ATTR_DEFAULT | CONF_ATTR_SELFPOWERED;
-	otg.desc.config.maxPower 	= 25;
+	otg.desc.config.maxPower	= 25;
 #endif
-	otg.desc.intf.bLength 		= INTERFACE_DESC_SIZE;
-	otg.desc.intf.bDescriptorType 	= INTERFACE_DESCRIPTOR;
-	otg.desc.intf.bInterfaceNumber 	= 0x0;
+	otg.desc.intf.bLength		= INTERFACE_DESC_SIZE;
+	otg.desc.intf.bDescriptorType	= INTERFACE_DESCRIPTOR;
+	otg.desc.intf.bInterfaceNumber	= 0x0;
 	otg.desc.intf.bAlternateSetting	= 0x0;
 	otg.desc.intf.bNumEndpoints	= 2;
 	otg.desc.intf.bInterfaceClass	= 0xff;
@@ -1565,20 +1565,20 @@ void s5p_usb_set_descriptors(void)
 	otg.desc.intf.iInterface	= 0x0;
 
 	otg.desc.ep1.bLength		= ENDPOINT_DESC_SIZE;
-	otg.desc.ep1.bDescriptorType 	= ENDPOINT_DESCRIPTOR;
-	otg.desc.ep1.bEndpointAddress 	= BULK_IN_EP | EP_ADDR_IN;
-	otg.desc.ep1.bmAttributes 	= EP_ATTR_BULK;
-	otg.desc.ep1.wMaxPacketSizeL 	= (u8)otg.bulkin_max_pktsize;
-	otg.desc.ep1.wMaxPacketSizeH 	= (u8)(otg.bulkin_max_pktsize >> 8);
-	otg.desc.ep1.bInterval 		= 0x0;
+	otg.desc.ep1.bDescriptorType	= ENDPOINT_DESCRIPTOR;
+	otg.desc.ep1.bEndpointAddress	= BULK_IN_EP | EP_ADDR_IN;
+	otg.desc.ep1.bmAttributes	= EP_ATTR_BULK;
+	otg.desc.ep1.wMaxPacketSizeL	= (u8)otg.bulkin_max_pktsize;
+	otg.desc.ep1.wMaxPacketSizeH	= (u8)(otg.bulkin_max_pktsize >> 8);
+	otg.desc.ep1.bInterval		= 0x0;
 
-	otg.desc.ep2.bLength 		= ENDPOINT_DESC_SIZE;
-	otg.desc.ep2.bDescriptorType 	= ENDPOINT_DESCRIPTOR;
-	otg.desc.ep2.bEndpointAddress 	= BULK_OUT_EP | EP_ADDR_OUT;
-	otg.desc.ep2.bmAttributes 	= EP_ATTR_BULK;
-	otg.desc.ep2.wMaxPacketSizeL 	= (u8)otg.bulkout_max_pktsize;
-	otg.desc.ep2.wMaxPacketSizeH 	= (u8)(otg.bulkout_max_pktsize >> 8);
-	otg.desc.ep2.bInterval 		= 0x0;
+	otg.desc.ep2.bLength		= ENDPOINT_DESC_SIZE;
+	otg.desc.ep2.bDescriptorType	= ENDPOINT_DESCRIPTOR;
+	otg.desc.ep2.bEndpointAddress	= BULK_OUT_EP | EP_ADDR_OUT;
+	otg.desc.ep2.bmAttributes	= EP_ATTR_BULK;
+	otg.desc.ep2.wMaxPacketSizeL	= (u8)otg.bulkout_max_pktsize;
+	otg.desc.ep2.wMaxPacketSizeH	= (u8)(otg.bulkout_max_pktsize >> 8);
+	otg.desc.ep2.bInterval		= 0x0;
 }
 
 void s5p_usb_check_speed(USB_SPEED *speed)
