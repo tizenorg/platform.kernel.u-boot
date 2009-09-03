@@ -47,7 +47,7 @@
 #define I2C_START_STOP	0x20		/* START / STOP */
 #define I2C_TXRX_ENA	0x10		/* I2C Tx/Rx enable */
 
-#define I2C_TIMEOUT 	1		/* 1 second */
+#define I2C_TIMEOUT	1		/* 1 second */
 
 static unsigned int default_channel;
 
@@ -82,21 +82,21 @@ static int WaitForXfer(void)
 
 static int IsACK(void)
 {
-	s5pc1xx_i2c_t *const i2c = s5pc1xx_get_base_i2c();
+	s5pc1xx_i2c_t *i2c = s5pc1xx_get_base_i2c();
 
 	return !(i2c->IICSTAT & I2CSTAT_NACK);
 }
 
 static void ReadWriteByte(void)
 {
-	s5pc1xx_i2c_t *const i2c = s5pc1xx_get_base_i2c();
+	s5pc1xx_i2c_t *i2c = s5pc1xx_get_base_i2c();
 
 	i2c->IICCON &= ~I2CCON_IRPND;
 }
 
 void i2c_init(int speed, int slaveadd)
 {
-	s5pc1xx_i2c_t *const i2c = s5pc1xx_get_base_i2c();
+	s5pc1xx_i2c_t *i2c = s5pc1xx_get_base_i2c();
 	u32 freq;
 	u32 pres = 16;
 	u32 div;
@@ -180,7 +180,7 @@ int i2c_transfer(unsigned char cmd_type, unsigned char chip,
 		unsigned char addr[], unsigned char addr_len,
 		unsigned char data[], unsigned short data_len)
 {
-	s5pc1xx_i2c_t *const i2c = s5pc1xx_get_base_i2c();
+	s5pc1xx_i2c_t *i2c = s5pc1xx_get_base_i2c();
 	int i;
 	int status;
 	int result;

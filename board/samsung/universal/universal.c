@@ -52,6 +52,8 @@ int dram_init(void)
 	return 0;
 }
 
+#define SCREEN_SPLIT_FEATURE	0x100
+
 u32 get_board_rev(void)
 {
 	return board_rev;
@@ -62,7 +64,6 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
-	MACH_SCREENSPLIT,
 };
 
 static const char *board_name[] = {
@@ -92,38 +93,44 @@ static void check_hw_revision(void)
 	board_rev &= 0x7;
 	switch (board_rev) {
 	case 1:
-		if (cpu_is_s5pc110()) {
-			/*
-			 * Note Check 'Aquila' board first
-			 *
-			 * 		Universal Aquila TickerTape ScreenSplit
-			 * 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
-			 * 0xE0200264	0x10      0x00   0x00       0x00
-			 * 0xE02002a4	0xc0      0x80   0x??       0xc0
-			 * 0xE0200324	0xFF	  0x9F   0xFD       0x[9b][fd]
-			 */
+		if (cpu_is_s5pc100())
+			break;
 
-			/* C110 Aquila */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+		/*
+		 * Note Check 'Aquila' board first
+		 *
+		 * 			Universal Aquila TickerTape ScreenSplit
+		 *   D1: 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
+		 *   J1: 0xE0200264	0x10      0x00   0x00       0x00
+		 *    I: 0xE0200224	          0x02              0x00 0x08
+		 * MP03: 0xE0200324	          0x9x              0xbx 0x9x
+		 * MP05: 0xE0200364	          0x80              0x88
+		 */
+
+		/* C110 Aquila */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+		pin += S5PC1XX_GPIO_DAT_OFFSET;
+		if ((readl(pin) & 0xf0) == 0) {
+			board = MACH_AQUILA;
+
+			/* C110 Aquila ScreenSplit */
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0xf0) == 0) {
-				board = MACH_AQUILA;
-
-#if 0
-				/* C110 ScreenSplit */
-				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J3_OFFSET);
+			if ((readl(pin) & (1 << 5)))
+				board_rev |= SCREEN_SPLIT_FEATURE;
+			else {
+				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_I_OFFSET);
 				pin += S5PC1XX_GPIO_DAT_OFFSET;
-				if ((readl(pin) & 0xf0) == 0xc0)
-					board = MACH_SCREENSPLIT;
-#endif
+				if ((readl(pin) & (1 << 3)))
+					board_rev |= SCREEN_SPLIT_FEATURE;
 			}
-
-			/* C110 TickerTape */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
-			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0x03) == 0)
-				board = MACH_TICKERTAPE;
 		}
+
+		/* C110 TickerTape */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
+		pin += S5PC1XX_GPIO_DAT_OFFSET;
+		if ((readl(pin) & 0x03) == 0)
+			board = MACH_TICKERTAPE;
 		break;
 	case 3:
 		/* C100 TickerTape */
@@ -140,7 +147,8 @@ static void check_hw_revision(void)
 		gd->bd->bi_arch_number = 3100 + board;
 	else
 		gd->bd->bi_arch_number = 3000 + board;
-	printf("HW Revision:\t%x (%s)\n", board_rev, board_name[board]);
+	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
+		board_rev & SCREEN_SPLIT_FEATURE ? " - ScreenSplit" : "" );
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
@@ -198,32 +206,6 @@ static void enable_touch_ldo(void)
 	value |= (0 << 12);			/* Pull-up/down disable */
 	writel(value, pin + S5PC1XX_GPIO_PULL_OFFSET);
 #endif
-}
-
-static void redirect_uart_to_cp(void)
-{
-	unsigned int reg, value;
-
-	if (cpu_is_s5pc100())
-		return;
-
-	/* USB_SEL: XM0ADDR_0 to high */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
-	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~(0xf << 0);			/* 0 = 0 * 4 bit */
-	value |= (1 << 0);			/* output mode */
-	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-
-	/* output enable */
-	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-	value |= (1 << 0);			/* 0 = 0 * 1 bit */
-	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
-
-	/* UART_SEL: XM0ADDR_15 to low */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
-	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-	value &= ~(1 << 7);			/* 7 = 7 * 1 bit */
-	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
 }
 
 #define KBR3		(1 << 3)
@@ -285,10 +267,6 @@ static void check_keypad(void)
 	/* OK or Send Button */
 	if ((value & KBR0) == 0)
 		auto_download = 1;
-
-	/* CAM_DOUBLE2 or Volume UP button */
-	if ((value & KBR2) == 0)
-		redirect_uart_to_cp();
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");

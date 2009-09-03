@@ -1062,7 +1062,7 @@ int onenand_bbt_read_oob(struct mtd_info *mtd, loff_t from,
 		if (ret)
 			break;
 
-		this->read_bufferram(mtd, from, ONENAND_SPARERAM, buf, column, thislen);
+		this->read_bufferram(mtd, 0, ONENAND_SPARERAM, buf, column, thislen);
 		read += thislen;
 		if (read == len)
 			break;
