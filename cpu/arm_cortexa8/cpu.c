@@ -57,19 +57,20 @@ int cleanup_before_linux(void)
 	/* invalidate I-cache */
 	cache_flush();
 
-	if (get_device_type() != 0x10) {
+	printf("cpu is %x\n", get_device_type());
+
+	if (get_device_type() != 0xC100) {
 		/* turn off L2 cache */
 		l2_cache_disable();
 		/* invalidate L2 cache also */
 		v7_flush_dcache_all(get_device_type());
-	}
 
-	i = 0;
-	/* mem barrier to sync up things */
-	asm("mcr p15, 0, %0, c7, c10, 4": :"r"(i));
+		i = 0;
+		/* mem barrier to sync up things */
+		asm("mcr p15, 0, %0, c7, c10, 4": :"r"(i));
 
-	if (get_device_type() != 0x10)
 		l2_cache_enable();
+	}
 
 	return 0;
 }
