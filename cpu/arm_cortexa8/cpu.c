@@ -57,8 +57,6 @@ int cleanup_before_linux(void)
 	/* invalidate I-cache */
 	cache_flush();
 
-	printf("cpu is %x\n", get_device_type());
-
 	if (get_device_type() != 0xC100) {
 		/* turn off L2 cache */
 		l2_cache_disable();
