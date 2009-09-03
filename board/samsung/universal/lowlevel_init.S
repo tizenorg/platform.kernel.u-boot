@@ -148,10 +148,10 @@ lowlevel_init:
 	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
 	 * HF[2]	: High Frequency Enable (Over 66MHz)
 	 */
-	ldrne	r1, =0xF00C
+	ldrne	r1, =0xE00C
 
-	ldrne	r2, =0xB001E442
-	strneh	r1, [r2]
+	ldrne	r0, =0xB001E442
+	strneh	r1, [r0]
 
 	ldrne	r0, =0xB0600000
 	strne	r1, [r0, #0x100]			@ ONENAND_IF_CTRL
