@@ -142,6 +142,8 @@ unsigned long get_arm_clk(void)
 
 	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 	if (cpu_is_s5pc110()) {
+		/* ARM_RATIO: don't use */
+		arm_ratio = 0;
 		/* APLL_RATIO: [2:0] */
 		apll_ratio = div & 0x7;
 	} else {
@@ -152,11 +154,7 @@ unsigned long get_arm_clk(void)
 	}
 
 	dout_apll = get_pll_clk(APLL) / (apll_ratio + 1);
-
-	if (cpu_is_s5pc110())
-		armclk = dout_apll;
-	else
-		armclk = dout_apll / (arm_ratio + 1);
+	armclk = dout_apll / (arm_ratio + 1);
 
 	return armclk;
 }
@@ -227,7 +225,6 @@ unsigned long get_hclk_sys(int clk)
 {
 	unsigned long hclk;
 	unsigned int div;
-	unsigned int mask;
 	unsigned int offset;
 	unsigned int hclk_sys_ratio;
 
