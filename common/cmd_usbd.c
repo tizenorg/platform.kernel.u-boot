@@ -545,6 +545,7 @@ static int process_data(struct usbd_ops *usbd)
 		/* Erase */
 		nand_cmd(0, offset, length, NULL);
 		/* Write */
+		sprintf(length, "%x", len);
 		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
 
@@ -566,6 +567,7 @@ static int process_data(struct usbd_ops *usbd)
 		/* Erase */
 		nand_cmd(0, offset, length, NULL);
 		/* Write */
+		sprintf(length, "%x", len);
 		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
 
