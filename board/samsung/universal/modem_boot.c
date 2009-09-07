@@ -48,7 +48,33 @@ extern int uart_serial_pollc(int retry, int port);
 extern void uart_serial_putc(const char c, int port);
 extern void uart_serial_puts(const char *s, int port);
 
-int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+enum {
+	MACH_UNIVERSAL,
+	MACH_TICKERTAPE,
+	MACH_AQUILA,
+};
+
+DECLARE_GLOBAL_DATA_PTR;
+
+static int get_machine_id(void)
+{
+	if (cpu_is_s5pc100())
+		return -1;
+
+	return gd->bd->bi_arch_number - 3100;
+}
+
+static int machine_is_aquila(void)
+{
+	return get_machine_id() == MACH_AQUILA;
+}
+
+static int machine_is_tickertape(void)
+{
+	return get_machine_id() == MACH_TICKERTAPE;
+}
+
+static aquila_infineon_modem_on(void)
 {
 	unsigned int con, dat, pud, exit = 0;
 	unsigned int pin;
@@ -60,6 +86,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	int i, tmp;
 	int port = 3;
 
+	/* Infineon modem */
 	// 1. Modem gpio init
 	// Phone_on
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
@@ -335,8 +362,90 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		break;
 	}
+}
+
+static void gpio_direction_output(int base, int offset, int value)
+{
+	int tmp;
+
+	tmp = readl(base + S5PC1XX_GPIO_CON_OFFSET);
+	tmp &= ~(GPIO_CON_MASK << (offset << 2));
+	tmp |= (1 << (offset << 2));
+	writel(tmp, base + S5PC1XX_GPIO_CON_OFFSET);
+
+	tmp = readl(base + S5PC1XX_GPIO_DAT_OFFSET);
+	tmp &= ~(GPIO_DAT_MASK << (offset << 0));
+	tmp |= (value << (offset << 0));
+	writel(tmp, base + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+static void gpio_set_value(int base, int offset, int value)
+{
+	int tmp;
+
+	tmp = readl(base + S5PC1XX_GPIO_DAT_OFFSET);
+	tmp &= ~(GPIO_DAT_MASK << (offset << 0));
+	tmp |= (value << (offset << 0));
+	writel(tmp, base + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+static void mdelay(int msec)
+{
+	int i;
+	for (i = 0; i < msec; i++) {
+		udelay(1000);
+	}
+}
+
+static void tickertape_modem_on(void)
+{
+	int gpio_phone_on_base, gpio_phone_on;
+	int gpio_cp_rst_base, gpio_cp_rst;
+
+	printf("Tickertape phone on\n");
+
+	gpio_phone_on_base = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
+	gpio_phone_on = 0;
+	gpio_cp_rst_base = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+	gpio_cp_rst = 7;
+
+	gpio_direction_output(gpio_phone_on_base, gpio_phone_on, 0);
+	gpio_direction_output(gpio_cp_rst_base, gpio_cp_rst, 0);
+
+	gpio_set_value(gpio_cp_rst_base, gpio_cp_rst, 0);
+	gpio_set_value(gpio_phone_on_base, gpio_phone_on, 1);
+	mdelay(100);
+	gpio_set_value(gpio_cp_rst_base, gpio_cp_rst, 1);
+	mdelay(900);
+	gpio_set_value(gpio_phone_on_base, gpio_phone_on, 0);
+}
+
+int do_modem(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	char *cmd;
+
+	cmd = argv[1];
+
+	switch (argc) {
+	case 0:
+	case 1:
+		goto usage;
+
+	case 2:
+		if (strncmp(cmd, "on", 2) == 0) {
+			if (machine_is_aquila())
+				aquila_infineon_modem_on();
+			if (machine_is_tickertape())
+				tickertape_modem_on();
+			return 0;
+		}
+		break;
+	}
 
 	return 0;
+usage:
+	cmd_usage(cmdtp);
+	return 1;
 }
 
 void LoadCPImage(void)
@@ -347,8 +456,8 @@ void LoadCPImage(void)
 //	LoadValidEEP();
 }
 
-U_BOOT_CMD(modem, 6, 1, do_modem,
-	"Infineon Modem init\n",
+U_BOOT_CMD(modem,	CONFIG_SYS_MAXARGS,	1,	do_modem,
+	"Modem init\n",
 	"info [l[ayout]]"
 		" - Display volume and ubi layout information\n"
 );
