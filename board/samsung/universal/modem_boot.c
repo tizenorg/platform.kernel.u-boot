@@ -1,7 +1,9 @@
-#include <asm/arch/gpio.h>
-#include <asm/io.h>
+
+#include <common.h>
 #include <command.h>
 #include <serial.h>
+#include <asm/arch/gpio.h>
+#include <asm/io.h>
 #include "psi_ram.h"
 
 #define OneDRAM_B_BANK_BASEADDR		0x35000000
@@ -37,6 +39,10 @@
 #define CRC_OK				0x01
 #define CRC_ERR				0xff
 
+#define GPIO_CON_MASK			0xF
+#define GPIO_DAT_MASK			0x1
+#define GPIO_PUL_MASK			0x3
+
 extern int uart_serial_setbrg(unsigned int baudrate, int port);
 extern int uart_serial_pollc(int retry, int port);
 extern void uart_serial_putc(const char c, int port);
@@ -44,18 +50,17 @@ extern void uart_serial_puts(const char *s, int port);
 
 int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-	unsigned int con,dat,pud,exit=0;
+	unsigned int con, dat, pud, exit = 0;
 	unsigned int pin;
 	unsigned int nInfoSize;
-	char * pDataPSI;
-	char *s;
-	int nTCnt, nATCnt, nCnt;
-	int nCoreVer, nCode, nSizePSI, nCRC;
-	int ack;	
+	unsigned char *pDataPSI;
+	int nCnt;
+	int nCoreVer, nSizePSI, nCRC;
+	int ack;
 	int i, tmp;
 	int port = 3;
 
-// 1. Modem gpio init
+	// 1. Modem gpio init
 	// Phone_on
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 
@@ -95,7 +100,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	pud |= (0x0 << 6); /* Pull-up/down disabled */
 	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
 
-// 2. Uart3 init
+	// 2. Uart3 init
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_A1_OFFSET);
 
 	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -116,15 +121,13 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	writel(0x0,0xE2900C08);
 	writel(0x0,0xE2900C0C);
 	/* 8N1 */
-	writel(0x3,0xE2900C00); 
+	writel(0x3,0xE2900C00);
 	/* No interrupts, no DMA, pure polling */
-	writel(0x245,0xE2900C04); 
+	writel(0x245,0xE2900C04);
 	uart_serial_setbrg(115200, port);
 
-// 3. Modem reset
-	while(1)	{
-		char ch;
-
+	// 3. Modem reset
+	while (1) {
 		/* PHONE_ON -> low */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
@@ -155,7 +158,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		udelay(40*1000);	/* Power stabilization */
 
-		if(++exit > RETRY)
+		if (++exit > RETRY)
 			break;
 
 		printf("********************************\n");
@@ -171,7 +174,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			uart_serial_puts("AT", port);
 			nCoreVer = uart_serial_pollc(5, port);
 
-			if(nCoreVer == VERS)
+			if (nCoreVer == VERS)
 				break;
 
 			/* Send "AT" at 50ms internals till the bootcore version
@@ -181,12 +184,12 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		}
 
 		//if fail to receive Modem core version restart all process		
-		if(nCnt == 20)
+		if (nCnt == 20)
 			continue;
 
 		nInfoSize = uart_serial_pollc(5, port);
 		printf("Got Bootcore version and related info!!!\n - nCoreVer = 0x%x \n - nInfoSize = 0x%x\n", nCoreVer, nInfoSize);
-		
+
 		/* Drain Rx Serial */
 		tmp = 0;
 		while (tmp != -1)
@@ -201,7 +204,7 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		uart_serial_putc(nSizePSI >> 8, port);
 
 		printf("Sending PSI data!!!\n - Len = %d\n",nSizePSI);
-		
+
 		/* Data bytes of PSI */
 		pDataPSI = g_tblBin;
 		nCRC = 0;
@@ -218,14 +221,13 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		/* Getting ACK */
 		ack = uart_serial_pollc(5, port);
 
-		if (ack == CRC_OK) {
+		if (ack == CRC_OK)
 			printf("PSI sending was sucessful\n");
-		}
 		else {
 			printf("PSI sending was NOT sucessful\n - ack(0x%x)\n - nCRC(0x%x)\n", ack, nCRC);
 			continue;
 		}
-		
+
 		//check Modem reaction
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 		do {
@@ -233,14 +235,14 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			dat &= (0x1 << 3);
 		} while (dat);
 
-		if(rOneDRAM_MAILBOX_AB != IPC_CP_READY_FOR_LOADING){
+		if (rOneDRAM_MAILBOX_AB != IPC_CP_READY_FOR_LOADING) {
 			printf("OneDRAM is NOT initialized for Modem\n");
 			printf("Modem downloading is failed!!!\n");
 			return 1;
 		}
 
 		printf("Modem is ready for loading\n");
-		
+
 		/* Do not support full-booting sequence,
 		 * Full support will be done by Kernel
 		 */
@@ -248,22 +250,22 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		printf("OneDRAM is mailbox(expecting 0x21), rOneDRAM_MAILBOX_AB=%x\n",
 			rOneDRAM_MAILBOX_AB);
-		while(rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
+		while (rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
 			printf("OneDRAM semaphore is NOT available");
 			udelay(100*1000);
 		}
-			
+
 		//load cp image
 		printf("Now, load CP image and static EEP at B-bank of OneDRAM\n");
 		printf("By pausing and load .fls[0x51000000] and .eep[0x51870000]\n");
 		printf("images to memory through EJTAG\n");
 
-		for(i=0;i<60;i++) {
+		for (i = 0; i < 60; i++) {
 			udelay(100*1000);
 			printf("*");
 		}
 		printf("\n");
-			
+
 //		break;
 //		LoadCPImage();
 //
@@ -274,12 +276,12 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 		//check Modem reaction
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		do{
+		do {
 			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
 			dat &= (0x1 << 3);
-		}while (dat);
+		} while (dat);
 
-		if(rOneDRAM_MAILBOX_AB != IPC_CP_READY){
+		if (rOneDRAM_MAILBOX_AB != IPC_CP_READY) {
 			printf("Modem is NOT ready to boot\n");
 			printf("Modem booting is failed!!!\n");
 			return 1;
@@ -288,11 +290,11 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		printf("Modem is done copying CP images\n");
 		printf("OneDRAM is mailbox message(expecting 0x23), rOneDRAM_MAILBOX_AB=%x\n",
 			rOneDRAM_MAILBOX_AB);
-		while(rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
+		while (rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
 			printf("OneDRAM semaphore is NOT available");
 			udelay(100*1000);
 		}
-			
+
 		rOneDRAM_SEMAPHORE = CP_HAS_SEM;
 
 		rOneDRAM_MAILBOX_BA = IPC_BOOT_DONE;
@@ -317,10 +319,10 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 				printf("*");
 		}
 		printf("\n");
-		printf("Waiting for 5 secs for modem to respond\n");	
+		printf("Waiting for 5 secs for modem to respond\n");
 
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		for(i=0;i<50000;i++){
+		for (i = 0; i < 50000; i++){
 			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
 			dat &= (0x1 << 3);
 			if(dat == 0)
@@ -328,13 +330,16 @@ int do_modem(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			udelay(100);
 		}
 
-		if( tmp == 1)
+		if (tmp == 1)
 			printf("No response from Modem!!!\n");
 
 		break;
 	}
+
+	return 0;
 }
-void LoadCPImage()
+
+void LoadCPImage(void)
 {
 	// load CP image
 //	LoadPartition(PARTITION_ID_MODEM_OS , (UINT8 *)MODEM_OS_BASEADDR, 0);
@@ -347,4 +352,3 @@ U_BOOT_CMD(modem, 6, 1, do_modem,
 	"info [l[ayout]]"
 		" - Display volume and ubi layout information\n"
 );
-
