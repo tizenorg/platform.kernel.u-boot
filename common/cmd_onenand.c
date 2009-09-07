@@ -73,53 +73,43 @@ static int onenand_block_read(loff_t from, size_t len,
 			      size_t *retlen, u_char *buf, int oob)
 {
 	struct onenand_chip *this = mtd->priv;
-	int blocks = (int) len >> this->erase_shift;
 	int blocksize = (1 << this->erase_shift);
 	loff_t ofs = from;
 	struct mtd_oob_ops ops = {
 		.retlen		= 0,
 	};
+	size_t thislen;
 	int ret;
 
-	if (oob)
-		ops.ooblen = blocksize;
-	else
-		ops.len = blocksize;
+	while (len > 0) {
+		thislen = min_t(size_t, len, blocksize);
 
-	while (blocks) {
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
-			ofs += blocksize;
+			ofs += thislen;
 			continue;
 		}
 
-		if (oob)
+		if (oob) {
 			ops.oobbuf = buf;
-		else
+			ops.ooblen = thislen;
+		} else {
 			ops.datbuf = buf;
+			ops.len = thislen;
+		}
 
 		ops.retlen = 0;
 		ret = mtd->read_oob(mtd, ofs, &ops);
 		if (ret) {
 			printk("Read failed 0x%x, %d\n", (u32)ofs, ret);
-			ofs += blocksize;
+			ofs += thislen;
 			continue;
 		}
-		ofs += blocksize;
-		buf += blocksize;
-		blocks--;
-		*retlen += ops.retlen;
-	}
-
-	if (len < blocksize) {
-		ops.datbuf = buf;
-		ops.len = len;
-		ops.retlen = 0;
-		ret = mtd->read_oob(mtd, ofs, &ops);
-		if (ret)
-			printk("Read failed 0x%x, %d\n", (u32)ofs, ret);
+		ofs += thislen;
+		buf += thislen;
+		len -= thislen;
 		*retlen += ops.retlen;
 	}
 
@@ -130,13 +120,13 @@ static int onenand_block_write(loff_t to, size_t len,
 			       size_t *retlen, const u_char * buf)
 {
 	struct onenand_chip *this = mtd->priv;
-	int blocks = len >> this->erase_shift;
 	int blocksize = (1 << this->erase_shift);
 	struct mtd_oob_ops ops = {
 		.retlen		= 0,
 		.oobbuf		= NULL,
 	};
 	loff_t ofs;
+	size_t thislen;
 	int ret;
 
 	if (to == next_ofs) {
@@ -148,40 +138,33 @@ static int onenand_block_write(loff_t to, size_t len,
 	}
 	ofs = to;
 
-	while (blocks) {
+	while (len > 0) {
+		thislen = min_t(size_t, len, blocksize);
+
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
-			skip_ofs += blocksize;
+			skip_ofs += thislen;
 			goto next;
 		}
 
+
 		ops.datbuf = (u_char *) buf;
-		ops.len = blocksize;
+		ops.len = thislen;
 		ops.retlen = 0;
 		ret = mtd->write_oob(mtd, ofs, &ops);
 		if (ret) {
 			printk("Write failed 0x%x, %d", (u32)ofs, ret);
-			skip_ofs += blocksize;
+			skip_ofs += thislen;
 			goto next;
 		}
 
-		buf += blocksize;
-		blocks--;
+		buf += thislen;
+		len -= thislen;
 		*retlen += ops.retlen;
 next:
-		ofs += blocksize;
-	}
-
-	if (len < blocksize) {
-		ops.datbuf = (u_char *) buf;
-		ops.len = len;
-		ops.retlen = 0;
-		ret = mtd->write_oob(mtd, ofs, &ops);
-		if (ret)
-			printk("Write failed 0x%x, %d\n", (u32)ofs, ret);
-		*retlen += ops.retlen;
+		ofs += thislen;
 	}
 
 	return 0;
