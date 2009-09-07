@@ -1502,7 +1502,38 @@ void malloc_bin_reloc (void)
 		*p++ += gd->reloc_off;
 	}
 }
-
+
+ulong mem_malloc_start = 0;
+ulong mem_malloc_end = 0;
+ulong mem_malloc_brk = 0;
+
+void *sbrk(ptrdiff_t increment)
+{
+	ulong old = mem_malloc_brk;
+	ulong new = old + increment;
+
+	if ((new < mem_malloc_start) || (new > mem_malloc_end))
+		return NULL;
+
+	mem_malloc_brk = new;
+
+	return (void *)old;
+}
+
+#ifndef CONFIG_X86
+/*
+ * x86 boards use a slightly different init sequence thus they implement
+ * their own version of mem_malloc_init()
+ */
+void mem_malloc_init(ulong start, ulong size)
+{
+	mem_malloc_start = start;
+	mem_malloc_end = start + size;
+	mem_malloc_brk = start;
+
+	memset((void *)mem_malloc_start, 0, size);
+}
+#endif
 
 /* field-extraction macros */
 

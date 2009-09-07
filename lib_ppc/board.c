@@ -136,45 +136,10 @@ ulong monitor_flash_len;
 #include <bedbug/type.h>
 #endif
 
-/*
- * Begin and End of memory area for malloc(), and current "brk"
- */
-static	ulong	mem_malloc_start = 0;
-static	ulong	mem_malloc_end	 = 0;
-static	ulong	mem_malloc_brk	 = 0;
-
 /************************************************************************
  * Utilities								*
  ************************************************************************
  */
-
-/*
- * The Malloc area is immediately below the monitor copy in DRAM
- */
-static void mem_malloc_init (void)
-{
-#if !defined(CONFIG_RELOC_FIXUP_WORKS)
-	mem_malloc_end = CONFIG_SYS_MONITOR_BASE + gd->reloc_off;
-#endif
-	mem_malloc_start = mem_malloc_end - TOTAL_MALLOC_LEN;
-	mem_malloc_brk = mem_malloc_start;
-
-	memset ((void *) mem_malloc_start,
-		0,
-		mem_malloc_end - mem_malloc_start);
-}
-
-void *sbrk (ptrdiff_t increment)
-{
-	ulong old = mem_malloc_brk;
-	ulong new = old + increment;
-
-	if ((new < mem_malloc_start) || (new > mem_malloc_end)) {
-		return (NULL);
-	}
-	mem_malloc_brk = new;
-	return ((void *) old);
-}
 
 /*
  * All attempts to come up with a "common" initialization sequence
@@ -669,6 +634,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #ifndef CONFIG_ENV_IS_NOWHERE
 	extern char * env_name_spec;
 #endif
+	ulong malloc_start;
 
 #ifndef CONFIG_SYS_NO_FLASH
 	ulong flash_size;
@@ -679,11 +645,14 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
+	/* The Malloc area is immediately below the monitor copy in DRAM */
 #if defined(CONFIG_RELOC_FIXUP_WORKS)
 	gd->reloc_off = 0;
-	mem_malloc_end = dest_addr;
+	malloc_start = dest_addr - TOTAL_MALLOC_LEN;
 #else
 	gd->reloc_off = dest_addr - CONFIG_SYS_MONITOR_BASE;
+	malloc_start = CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
+			TOTAL_MALLOC_LEN;
 #endif
 
 #ifdef CONFIG_SERIAL_MULTI
@@ -778,8 +747,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	asm ("sync ; isync");
 
-	/* initialize malloc() area */
-	mem_malloc_init ();
+	mem_malloc_init (malloc_start, TOTAL_MALLOC_LEN);
 	malloc_bin_reloc ();
 
 #if !defined(CONFIG_SYS_NO_FLASH)

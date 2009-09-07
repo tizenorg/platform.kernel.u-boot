@@ -60,13 +60,6 @@ const char version_string[] =
 static char *failed = "*** failed ***\n";
 
 /*
- * Begin and End of memory area for malloc(), and current "brk"
- */
-static ulong mem_malloc_start;
-static ulong mem_malloc_end;
-static ulong mem_malloc_brk;
-
-/*
  * mips_io_port_base is the begin of the address space to which x86 style
  * I/O ports are mapped.
  */
@@ -80,34 +73,6 @@ int __board_early_init_f(void)
 	return 0;
 }
 int board_early_init_f(void) __attribute__((weak, alias("__board_early_init_f")));
-
-/*
- * The Malloc area is immediately below the monitor copy in DRAM
- */
-static void mem_malloc_init (void)
-{
-	ulong dest_addr = CONFIG_SYS_MONITOR_BASE + gd->reloc_off;
-
-	mem_malloc_end = dest_addr;
-	mem_malloc_start = dest_addr - TOTAL_MALLOC_LEN;
-	mem_malloc_brk = mem_malloc_start;
-
-	memset ((void *) mem_malloc_start,
-		0,
-		mem_malloc_end - mem_malloc_start);
-}
-
-void *sbrk (ptrdiff_t increment)
-{
-	ulong old = mem_malloc_brk;
-	ulong new = old + increment;
-
-	if ((new < mem_malloc_start) || (new > mem_malloc_end)) {
-		return (NULL);
-	}
-	mem_malloc_brk = new;
-	return ((void *) old);
-}
 
 
 static int init_func_ram (void)
@@ -370,8 +335,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	bd = gd->bd;
 
-	/* initialize malloc() area */
-	mem_malloc_init();
+	/* The Malloc area is immediately below the monitor copy in DRAM */
+	mem_malloc_init(CONFIG_SYS_MONITOR_BASE + gd->reloc_off -
+			TOTAL_MALLOC_LEN, TOTAL_MALLOC_LEN);
 	malloc_bin_reloc();
 
 #ifndef CONFIG_SYS_NO_FLASH
