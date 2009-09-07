@@ -129,8 +129,10 @@ static void check_hw_revision(void)
 		/* C110 TickerTape */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 		pin += S5PC1XX_GPIO_DAT_OFFSET;
-		if ((readl(pin) & 0x03) == 0)
+		if ((readl(pin) & 0x03) == 0) {
 			board = MACH_TICKERTAPE;
+			board_rev &= ~SCREEN_SPLIT_FEATURE;
+		}
 		break;
 	case 3:
 		/* C100 TickerTape */
