@@ -217,7 +217,7 @@ static int onenand_block_test(u32 start, u32 size)
 	loff_t ofs;
 	int blocksize = 1 << this->erase_shift;
 	int start_block, end_block;
-	ssize_t retlen;
+	size_t retlen;
 	u_char *buf;
 	u_char *verify_buf;
 	int ret;

@@ -74,7 +74,7 @@ static int machine_is_tickertape(void)
 	return get_machine_id() == MACH_TICKERTAPE;
 }
 
-static aquila_infineon_modem_on(void)
+static int aquila_infineon_modem_on(void)
 {
 	unsigned int con, dat, pud, exit = 0;
 	unsigned int pin;
@@ -362,6 +362,8 @@ static aquila_infineon_modem_on(void)
 
 		break;
 	}
+
+	return 0;
 }
 
 static void gpio_direction_output(int base, int offset, int value)
