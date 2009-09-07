@@ -36,7 +36,7 @@ static inline int str2long(char *p, ulong *num)
 	return (*p != '\0' && *endptr == '\0') ? 1 : 0;
 }
 
-static int arg_off_size(int argc, char *argv[], ulong *off, size_t *size)
+static int arg_off_size(int argc, char *argv[], ulong *off, ssize_t *size)
 {
 	if (argc >= 1) {
 		if (!(str2long(argv[0], off))) {
@@ -69,8 +69,8 @@ static int arg_off_size(int argc, char *argv[], ulong *off, size_t *size)
 	return 0;
 }
 
-static int onenand_block_read(loff_t from, size_t len,
-			      size_t *retlen, u_char *buf, int oob)
+static int onenand_block_read(loff_t from, ssize_t len,
+			      ssize_t *retlen, u_char *buf, int oob)
 {
 	struct onenand_chip *this = mtd->priv;
 	int blocksize = (1 << this->erase_shift);
@@ -78,11 +78,12 @@ static int onenand_block_read(loff_t from, size_t len,
 	struct mtd_oob_ops ops = {
 		.retlen		= 0,
 	};
-	size_t thislen;
+	ssize_t thislen;
 	int ret;
 
 	while (len > 0) {
-		thislen = min_t(size_t, len, blocksize);
+		thislen = min_t(ssize_t, len, blocksize);
+		thislen = ALIGN(thislen, mtd->writesize);
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
@@ -116,8 +117,8 @@ static int onenand_block_read(loff_t from, size_t len,
 	return 0;
 }
 
-static int onenand_block_write(loff_t to, size_t len,
-			       size_t *retlen, const u_char * buf)
+static int onenand_block_write(loff_t to, ssize_t len,
+			       ssize_t *retlen, const u_char * buf)
 {
 	struct onenand_chip *this = mtd->priv;
 	int blocksize = (1 << this->erase_shift);
@@ -126,7 +127,7 @@ static int onenand_block_write(loff_t to, size_t len,
 		.oobbuf		= NULL,
 	};
 	loff_t ofs;
-	size_t thislen;
+	ssize_t thislen;
 	int ret;
 
 	if (to == next_ofs) {
@@ -139,7 +140,8 @@ static int onenand_block_write(loff_t to, size_t len,
 	ofs = to;
 
 	while (len > 0) {
-		thislen = min_t(size_t, len, blocksize);
+		thislen = min_t(ssize_t, len, blocksize);
+		thislen = ALIGN(thislen, mtd->writesize);
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
@@ -215,7 +217,7 @@ static int onenand_block_test(u32 start, u32 size)
 	loff_t ofs;
 	int blocksize = 1 << this->erase_shift;
 	int start_block, end_block;
-	size_t retlen;
+	ssize_t retlen;
 	u_char *buf;
 	u_char *verify_buf;
 	int ret;
@@ -350,7 +352,7 @@ int do_onenand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	struct onenand_chip *this;
 	int blocksize;
 	ulong addr, ofs;
-	size_t len, retlen = 0;
+	ssize_t len, retlen = 0;
 	int ret = 0;
 	char *cmd, *s;
 
