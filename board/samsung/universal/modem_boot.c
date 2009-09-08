@@ -43,10 +43,20 @@
 #define GPIO_DAT_MASK			0x1
 #define GPIO_PUL_MASK			0x3
 
-extern int uart_serial_setbrg(unsigned int baudrate, int port);
-extern int uart_serial_pollc(int retry, int port);
-extern void uart_serial_putc(const char c, int port);
-extern void uart_serial_puts(const char *s, int port);
+extern struct serial_device s5pc1xx_serial3_device;
+
+int uart_serial_pollc(struct serial_device *uart, int retry)
+{
+	int i = 0;
+
+	for (i = 0; i < retry; i++) {
+		if (uart->tstc())
+			return uart->getc();
+		udelay(1000);
+	}
+
+	return -1;
+}
 
 enum {
 	MACH_UNIVERSAL,
@@ -151,7 +161,7 @@ static int aquila_infineon_modem_on(void)
 	writel(0x3,0xE2900C00);
 	/* No interrupts, no DMA, pure polling */
 	writel(0x245,0xE2900C04);
-	uart_serial_setbrg(115200, port);
+	s5pc1xx_serial3_device.setbrg();
 
 	// 3. Modem reset
 	while (1) {
@@ -194,12 +204,12 @@ static int aquila_infineon_modem_on(void)
 		/* Drain Rx Serial */
 		tmp = 0;
 		while (tmp != -1)
-			tmp = uart_serial_pollc(5, port);
+			tmp = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 		/* Sending "AT" in ASCII */
 		for (nCnt = 0;nCnt < 20;nCnt++){
-			uart_serial_puts("AT", port);
-			nCoreVer = uart_serial_pollc(5, port);
+			s5pc1xx_serial3_device.puts("AT");
+			nCoreVer = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 			if (nCoreVer == VERS)
 				break;
@@ -214,21 +224,21 @@ static int aquila_infineon_modem_on(void)
 		if (nCnt == 20)
 			continue;
 
-		nInfoSize = uart_serial_pollc(5, port);
+		nInfoSize = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 		printf("Got Bootcore version and related info!!!\n - nCoreVer = 0x%x \n - nInfoSize = 0x%x\n", nCoreVer, nInfoSize);
 
 		/* Drain Rx Serial */
 		tmp = 0;
 		while (tmp != -1)
-			tmp = uart_serial_pollc(5, port);
+			tmp = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 		/* INDICATION BYTE */
-		uart_serial_putc(IND, port);
+		s5pc1xx_serial3_device.putc(IND);
 
 		/* 16 bit length in little endian format */
 		nSizePSI = sizeof(g_tblBin);
-		uart_serial_putc(nSizePSI & 0xff, port);
-		uart_serial_putc(nSizePSI >> 8, port);
+		s5pc1xx_serial3_device.putc(nSizePSI & 0xff);
+		s5pc1xx_serial3_device.putc(nSizePSI >> 8);
 
 		printf("Sending PSI data!!!\n - Len = %d\n",nSizePSI);
 
@@ -236,17 +246,17 @@ static int aquila_infineon_modem_on(void)
 		pDataPSI = g_tblBin;
 		nCRC = 0;
 		for (nCnt = 0; nCnt < nSizePSI ; nCnt++) {
-			uart_serial_putc(*pDataPSI, port);
+			s5pc1xx_serial3_device.putc(*pDataPSI);
 			nCRC ^= *pDataPSI++;
 		}
 
 		/* CRC of PSI */
-		uart_serial_putc(nCRC, port);
+		s5pc1xx_serial3_device.putc(nCRC);
 
 		udelay(10*1000);	/* 10mec */
 
 		/* Getting ACK */
-		ack = uart_serial_pollc(5, port);
+		ack = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 		if (ack == CRC_OK)
 			printf("PSI sending was sucessful\n");
