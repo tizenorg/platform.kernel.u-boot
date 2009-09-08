@@ -44,10 +44,8 @@ static unsigned long long timestamp;	/* Monotonic incrementing timer */
 static unsigned long lastdec;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
-static inline unsigned long s5pc1xx_get_base_timer(void)
+static inline s5pc1xx_timers_t *s5pc1xx_get_base_timer(void)
 {
-	s5pc1xx_timers_t *timer;
-
 	if (cpu_is_s5pc110())
 		return (s5pc1xx_timers_t *)S5PC110_TIMER_BASE;
 	else
@@ -56,7 +54,7 @@ static inline unsigned long s5pc1xx_get_base_timer(void)
 
 int timer_init(void)
 {
-	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
 	u32 val;
 
 	/*
@@ -156,7 +154,7 @@ void udelay(unsigned long usec)
 
 void reset_timer_masked(void)
 {
-	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
 
 	/* reset time */
 	lastdec = readl(&timer->TCNTO4);
@@ -165,7 +163,7 @@ void reset_timer_masked(void)
 
 unsigned long get_timer_masked(void)
 {
-	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
 	unsigned long now = readl(&timer->TCNTO4);
 
 	if (lastdec >= now)

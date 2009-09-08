@@ -247,7 +247,7 @@ unsigned long get_hclk_sys(int clk)
 	 * HCLK_MSYS_RATIO: [10:8]
 	 * HCLK_DSYS_RATIO: [19:16]
 	 * HCLK_PSYS_RATIO: [27:24]
-	 * */
+	 */
 	offset = 8 + (clk << 0x3);
 
 	hclk_sys_ratio = (div >> offset) & 0xf;
