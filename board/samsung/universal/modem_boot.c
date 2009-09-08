@@ -1,3 +1,6 @@
+/*
+ * need copyright
+ */
 
 #include <common.h>
 #include <command.h>
@@ -16,11 +19,11 @@
 
 #define OneDRAMREG_BASEADDR		(OneDRAM_B_BANK_BASEADDR + 0xFFF800)
 
-#define rOneDRAM_SEMAPHORE		*(volatile int*)(OneDRAMREG_BASEADDR)
-#define rOneDRAM_MAILBOX_AB		*(volatile int*)(OneDRAMREG_BASEADDR + 0x20)
-#define rOneDRAM_MAILBOX_BA		*(volatile int*)(OneDRAMREG_BASEADDR + 0x40)
+#define rOneDRAM_SEMAPHORE	(*(volatile int*)(OneDRAMREG_BASEADDR))
+#define rOneDRAM_MAILBOX_AB	(*(volatile int*)(OneDRAMREG_BASEADDR + 0x20))
+#define rOneDRAM_MAILBOX_BA	(*(volatile int*)(OneDRAMREG_BASEADDR + 0x40))
 
-//primitive IPC on OneDRAM
+/* primitive IPC on OneDRAM */
 #define IPC_CP_READY_FOR_LOADING	0x12341234
 #define IPC_CP_IMG_LOADED		0x45674567
 #define IPC_CP_READY			0x23
@@ -97,8 +100,8 @@ static int aquila_infineon_modem_on(void)
 	int port = 3;
 
 	/* Infineon modem */
-	// 1. Modem gpio init
-	// Phone_on
+	/* 1. Modem gpio init */
+	/* Phone_on */
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 
 	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -111,7 +114,7 @@ static int aquila_infineon_modem_on(void)
 	pud |= (0x0 << 0); /* Pull-up/down disabled */
 	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
 
-	// CP_Reset
+	/* CP_Reset */
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
 
 	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -124,7 +127,7 @@ static int aquila_infineon_modem_on(void)
 	pud |= (0x0 << 14); /* Pull-up/down disabled */
 	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
 
-	// nINT_ONEDRAN_AP
+	/* nINT_ONEDRAN_AP */
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 
 	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -137,7 +140,7 @@ static int aquila_infineon_modem_on(void)
 	pud |= (0x0 << 6); /* Pull-up/down disabled */
 	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
 
-	// 2. Uart3 init
+	/* 2. Uart3 init */
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_A1_OFFSET);
 
 	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -155,15 +158,15 @@ static int aquila_infineon_modem_on(void)
 	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
-	writel(0x0,0xE2900C08);
-	writel(0x0,0xE2900C0C);
+	writel(0x0, 0xE2900C08);
+	writel(0x0, 0xE2900C0C);
 	/* 8N1 */
-	writel(0x3,0xE2900C00);
+	writel(0x3, 0xE2900C00);
 	/* No interrupts, no DMA, pure polling */
-	writel(0x245,0xE2900C04);
+	writel(0x245, 0xE2900C04);
 	s5pc1xx_serial3_device.setbrg();
 
-	// 3. Modem reset
+	/* 3. Modem reset */
 	while (1) {
 		/* PHONE_ON -> low */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
@@ -199,7 +202,7 @@ static int aquila_infineon_modem_on(void)
 			break;
 
 		printf("********************************\n");
-		printf(" Reset and try to send PSI : #%d\n",exit);
+		printf(" Reset and try to send PSI : #%d\n", exit);
 
 		/* Drain Rx Serial */
 		tmp = 0;
@@ -207,25 +210,29 @@ static int aquila_infineon_modem_on(void)
 			tmp = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 		/* Sending "AT" in ASCII */
-		for (nCnt = 0;nCnt < 20;nCnt++){
+		for (nCnt = 0; nCnt < 20; nCnt++) {
 			s5pc1xx_serial3_device.puts("AT");
-			nCoreVer = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
+			nCoreVer =
+				uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
 			if (nCoreVer == VERS)
 				break;
 
-			/* Send "AT" at 50ms internals till the bootcore version
-			 * is received
+			/*
+			 * Send "AT" at 50ms internals till the bootcore
+			 * version is received
 			 */
 			udelay(50*1000);	/* 50mec */
 		}
 
-		//if fail to receive Modem core version restart all process		
+		/* if fail to receive Modem core version restart all process */
 		if (nCnt == 20)
 			continue;
 
 		nInfoSize = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
-		printf("Got Bootcore version and related info!!!\n - nCoreVer = 0x%x \n - nInfoSize = 0x%x\n", nCoreVer, nInfoSize);
+		printf("Got Bootcore version and related info!!!\n"
+			" - nCoreVer = 0x%x \n - nInfoSize = 0x%x\n",
+			nCoreVer, nInfoSize);
 
 		/* Drain Rx Serial */
 		tmp = 0;
@@ -240,7 +247,7 @@ static int aquila_infineon_modem_on(void)
 		s5pc1xx_serial3_device.putc(nSizePSI & 0xff);
 		s5pc1xx_serial3_device.putc(nSizePSI >> 8);
 
-		printf("Sending PSI data!!!\n - Len = %d\n",nSizePSI);
+		printf("Sending PSI data!!!\n - Len = %d\n", nSizePSI);
 
 		/* Data bytes of PSI */
 		pDataPSI = g_tblBin;
@@ -258,14 +265,15 @@ static int aquila_infineon_modem_on(void)
 		/* Getting ACK */
 		ack = uart_serial_pollc(&s5pc1xx_serial3_device, 5);
 
-		if (ack == CRC_OK)
+		if (ack == CRC_OK) {
 			printf("PSI sending was sucessful\n");
-		else {
-			printf("PSI sending was NOT sucessful\n - ack(0x%x)\n - nCRC(0x%x)\n", ack, nCRC);
+		} else {
+			printf("PSI sending was NOT sucessful\n"
+				" - ack(0x%x)\n - nCRC(0x%x)\n", ack, nCRC);
 			continue;
 		}
 
-		//check Modem reaction
+		/* check Modem reaction */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 		do {
 			dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
@@ -280,38 +288,42 @@ static int aquila_infineon_modem_on(void)
 
 		printf("Modem is ready for loading\n");
 
-		/* Do not support full-booting sequence,
+		/*
+		 * Do not support full-booting sequence,
 		 * Full support will be done by Kernel
 		 */
 		return 0;
 
-		printf("OneDRAM is mailbox(expecting 0x21), rOneDRAM_MAILBOX_AB=%x\n",
+		printf("OneDRAM is mailbox(expecting 0x21), "
+			"rOneDRAM_MAILBOX_AB=%x\n",
 			rOneDRAM_MAILBOX_AB);
 		while (rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
 			printf("OneDRAM semaphore is NOT available");
 			udelay(100*1000);
 		}
 
-		//load cp image
+		/* load cp image */
 		printf("Now, load CP image and static EEP at B-bank of OneDRAM\n");
 		printf("By pausing and load .fls[0x51000000] and .eep[0x51870000]\n");
 		printf("images to memory through EJTAG\n");
 
 		for (i = 0; i < 60; i++) {
-			udelay(100*1000);
+			udelay(100 * 1000);
 			printf("*");
 		}
 		printf("\n");
 
-//		break;
-//		LoadCPImage();
-//
+/*
+		break;
+		LoadCPImage();
+*/
+
 		printf("Thank you for loading\n");
 
 		rOneDRAM_SEMAPHORE = CP_HAS_SEM;
 		rOneDRAM_MAILBOX_BA = IPC_CP_IMG_LOADED;
 
-		//check Modem reaction
+		/* check Modem reaction */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 		do {
 			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
@@ -325,7 +337,8 @@ static int aquila_infineon_modem_on(void)
 		}
 
 		printf("Modem is done copying CP images\n");
-		printf("OneDRAM is mailbox message(expecting 0x23), rOneDRAM_MAILBOX_AB=%x\n",
+		printf("OneDRAM is mailbox message(expecting 0x23), "
+			"rOneDRAM_MAILBOX_AB=%x\n",
 			rOneDRAM_MAILBOX_AB);
 		while (rOneDRAM_SEMAPHORE == CP_HAS_SEM) {
 			printf("OneDRAM semaphore is NOT available");
@@ -337,20 +350,20 @@ static int aquila_infineon_modem_on(void)
 		rOneDRAM_MAILBOX_BA = IPC_BOOT_DONE;
 		printf("Modem is now running\n");
 
-		for(i=0;i<50;i++) {
-			udelay(100*1000);
-			if(rOneDRAM_SEMAPHORE == AP_HAS_SEM)
+		for (i = 0; i < 50; i++) {
+			udelay(100 * 1000);
+			if (rOneDRAM_SEMAPHORE == AP_HAS_SEM)
 				printf("S");
 			else
 				printf("*");
 		}
 		printf("\n");
 
-		rOneDRAM_MAILBOX_BA = 0x05; //FIXME
+		rOneDRAM_MAILBOX_BA = 0x05; /* FIXME */
 
-		for(i=0;i<50;i++) {
+		for (i = 0; i < 50; i++) {
 			udelay(100*1000);
-			if(rOneDRAM_SEMAPHORE == AP_HAS_SEM)
+			if (rOneDRAM_SEMAPHORE == AP_HAS_SEM)
 				printf("S");
 			else
 				printf("*");
@@ -359,10 +372,10 @@ static int aquila_infineon_modem_on(void)
 		printf("Waiting for 5 secs for modem to respond\n");
 
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		for (i = 0; i < 50000; i++){
+		for (i = 0; i < 50000; i++) {
 			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
 			dat &= (0x1 << 3);
-			if(dat == 0)
+			if (dat == 0)
 				break;
 			udelay(100);
 		}
@@ -404,9 +417,8 @@ static void gpio_set_value(int base, int offset, int value)
 static void mdelay(int msec)
 {
 	int i;
-	for (i = 0; i < msec; i++) {
+	for (i = 0; i < msec; i++)
 		udelay(1000);
-	}
 }
 
 static void tickertape_modem_on(void)
@@ -462,10 +474,12 @@ usage:
 
 void LoadCPImage(void)
 {
-	// load CP image
-//	LoadPartition(PARTITION_ID_MODEM_OS , (UINT8 *)MODEM_OS_BASEADDR, 0);
-	// load CP EEP data
-//	LoadValidEEP();
+#if 0
+	/* load CP image */
+	LoadPartition(PARTITION_ID_MODEM_OS , (UINT8 *)MODEM_OS_BASEADDR, 0);
+	/* load CP EEP data */
+	LoadValidEEP();
+#endif
 }
 
 U_BOOT_CMD(modem,	CONFIG_SYS_MAXARGS,	1,	do_modem,
