@@ -1,8 +1,6 @@
 /*
- * (C) Copyright 2009
- * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
- * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
- * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ * Copyright (C) 2009 Samsung Electronics
+ * Minkyu Kang <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -47,25 +45,29 @@ u32 get_device_type(void)
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
-	printf("CPU:\tS5P%X@%luMHz\n", s5pc1xx_cpu_id, get_arm_clk() / 1000000);
+	char buf[32];
+
+	printf("CPU:\tS5P%X@%sMHz\n",
+			s5pc1xx_cpu_id, strmhz(buf, get_arm_clk()));
 	if (cpu_is_s5pc110()) {
-		printf("\tAPLL = %luMHz, MPLL = %luMHz, EPLL = %luMHz\n",
-			get_fclk() / 1000000,
-			get_mclk() / 1000000,
-			get_uclk() / 1000000);
-		printf("\tHclk: Msys %luMhz, Dsys %luMhz, Psys %luMhz\n",
-			get_hclk_sys(CLK_M) / 1000000,
-			get_hclk_sys(CLK_D) / 1000000,
-			get_hclk_sys(CLK_P) / 1000000);
-		printf("\tPclk: Msys %3luMhz, Dsys %3luMhz, Psys %3luMhz\n",
-			get_pclk_sys(CLK_M) / 1000000,
-			get_pclk_sys(CLK_D) / 1000000,
-			get_pclk_sys(CLK_P) / 1000000);
+		printf("\tAPLL = %s MHz, ", strmhz(buf, get_fclk()));
+		printf("MPLL = %s MHz, ", strmhz(buf, get_mclk()));
+		printf("EPLL = %s MHz\n", strmhz(buf, get_uclk()));
+
+		printf("\tHclk: Msys %s MHz, ",
+				strmhz(buf, get_hclk_sys(CLK_M)));
+		printf("Dsys %7s MHz, ", strmhz(buf, get_hclk_sys(CLK_D)));
+		printf("Psys %7s MHz\n", strmhz(buf, get_hclk_sys(CLK_P)));
+
+		printf("\tPclk: Msys %s MHz, ",
+				strmhz(buf, get_pclk_sys(CLK_M)));
+		printf("Dsys %7s MHz, ", strmhz(buf, get_pclk_sys(CLK_D)));
+		printf("Psys %7s MHz\n", strmhz(buf, get_pclk_sys(CLK_P)));
 	} else {
-		printf("\tFclk = %luMHz, HclkD0 = %luMHz, PclkD0 = %luMHz,"
-			" PclkD1 = %luMHz\n",
-			get_fclk() / 1000000, get_hclk() / 1000000,
-			get_pclkd0() / 1000000, get_pclkd1() / 1000000);
+		printf("\tFclk = %s MHz\n", strmhz(buf, get_fclk()));
+		printf("\tHclkD0 = %s MHz\n", strmhz(buf, get_hclk()));
+		printf("\tPclkD0 = %s MHz\n", strmhz(buf, get_pclkd0()));
+		printf("\tPclkD1 = %s MHz\n", strmhz(buf, get_pclkd1()));
 	}
 
 	return 0;
