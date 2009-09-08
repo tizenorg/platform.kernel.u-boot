@@ -1,8 +1,7 @@
 /*
- * (C) Copyright 2009
- * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
- * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
- * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ * Copyright (C) 2009 Samsung Electronics
+ * Minkyu Kang <mk7.kang@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -21,12 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
- */
-
-/*
- * This code should work for both the S3C2400 and the S3C2410
- * as they seem to have the same PLL and clock machinery inside.
- * The different address mapping is handled by the s3c24xx.h files below.
  */
 
 #include <common.h>
@@ -52,17 +45,12 @@ static int s5pc1xx_clock_read_reg(int offset)
 	return readl(S5PC1XX_CLOCK_BASE + offset);
 }
 
-/* ------------------------------------------------------------------------- */
 /*
- * NOTE: This describes the proper use of this file.
- *
- * CONFIG_SYS_CLK_FREQ should be defined as the input frequency of the PLL.
+ * CONFIG_SYS_CLK_FREQ_C1xx should be defined as the input frequency
  *
  * get_FCLK(), get_HCLK(), get_PCLK() and get_UCLK() return the clock of
- * the specified bus in HZ.
+ * the specified bus in HZ
  */
-/* ------------------------------------------------------------------------- */
-
 unsigned long get_pll_clk(int pllreg)
 {
 	unsigned long r, m, p, s, mask, fout;
@@ -88,33 +76,52 @@ unsigned long get_pll_clk(int pllreg)
 			r = s5pc1xx_clock_read_reg(S5PC100_EPLL_CON_OFFSET);
 		break;
 	case HPLL:
-		if (cpu_is_s5pc110())
-			hang();
+		if (cpu_is_s5pc110()) {
+			puts("s5pc110 don't use HPLL\n");
+			return 0;
+		}
 		r = s5pc1xx_clock_read_reg(S5PC100_HPLL_CON_OFFSET);
 		break;
 	case VPLL:
-		if (cpu_is_s5pc100())
-			hang();
+		if (cpu_is_s5pc100()) {
+			puts("s5pc100 don't use VPLL\n");
+			return 0;
+		}
 		r = s5pc1xx_clock_read_reg(S5PC110_VPLL_CON_OFFSET);
 		break;
 	default:
-		hang();
+		printf("Unsupported PLL (%d)\n", pllreg);
+		return 0;
 	}
 
 	if (cpu_is_s5pc110()) {
+		/*
+		 * APLL_CON: MIDV [25:16]
+		 * MPLL_CON: MIDV [25:16]
+		 * EPLL_CON: MIDV [24:16]
+		 * VPLL_CON: MIDV [24:16]
+		 */
 		if (pllreg == APLL || pllreg == MPLL)
 			mask = 0x3ff;
 		else
 			mask = 0x1ff;
 	} else {
+		/*
+		 * APLL_CON: MIDV [25:16]
+		 * MPLL_CON: MIDV [23:16]
+		 * EPLL_CON: MIDV [23:16]
+		 * HPLL_CON: MIDV [23:16]
+		 */
 		if (pllreg == APLL)
 			mask = 0x3ff;
 		else
 			mask = 0x0ff;
 	}
-
 	m = (r >> 16) & mask;
+
+	/* PDIV [13:8] */
 	p = (r >> 8) & 0x3f;
+	/* SDIV [2:0] */
 	s = r & 0x7;
 
 	if (cpu_is_s5pc110()) {
@@ -122,10 +129,13 @@ unsigned long get_pll_clk(int pllreg)
 		if (pllreg == APLL) {
 			if (s < 1)
 				s = 1;
+			/* FOUT = MDIV * FIN / (PDIV * 2^(SDIV - 1)) */
 			fout = m * (freq / (p * (1 << (s - 1))));
 		} else
+			/* FOUT = MDIV * FIN / (PDIV * 2^SDIV) */
 			fout = m * (freq / (p * (1 << s)));
 	} else {
+		/* FOUT = MDIV * FIN / (PDIV * 2^SDIV) */
 		freq = CONFIG_SYS_CLK_FREQ_C100;
 		fout = m * (freq / (p * (1 << s)));
 	}
@@ -233,9 +243,11 @@ unsigned long get_hclk_sys(int clk)
 
 	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 
-	/* HCLK_MSYS_RATIO: [10:8]
+	/*
+	 * HCLK_MSYS_RATIO: [10:8]
 	 * HCLK_DSYS_RATIO: [19:16]
-	 * HCLK_PSYS_RATIO: [27:24] */
+	 * HCLK_PSYS_RATIO: [27:24]
+	 * */
 	offset = 8 + (clk << 0x3);
 
 	hclk_sys_ratio = (div >> offset) & 0xf;
@@ -255,9 +267,11 @@ unsigned long get_pclk_sys(int clk)
 
 	div = s5pc1xx_clock_read_reg(S5P_CLK_DIV0_OFFSET);
 
-	/* PCLK_MSYS_RATIO: [14:12]
+	/*
+	 * PCLK_MSYS_RATIO: [14:12]
 	 * PCLK_DSYS_RATIO: [22:20]
-	 * PCLK_PSYS_RATIO: [30:28] */
+	 * PCLK_PSYS_RATIO: [30:28]
+	 */
 	offset = 12 + (clk << 0x3);
 
 	pclk_sys_ratio = (div >> offset) & 0x7;
