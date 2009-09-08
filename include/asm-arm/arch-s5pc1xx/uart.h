@@ -41,25 +41,13 @@ typedef struct s5pc1xx_uart {
 	volatile unsigned long	UERSTAT;
 	volatile unsigned long	UFSTAT;
 	volatile unsigned long	UMSTAT;
-#ifdef __BIG_ENDIAN
-	volatile unsigned char	res1[3];
-	volatile unsigned char	UTXH;
-	volatile unsigned char	res2[3];
-	volatile unsigned char	URXH;
-#else /* Little Endian */
 	volatile unsigned char	UTXH;
 	volatile unsigned char	res1[3];
 	volatile unsigned char	URXH;
 	volatile unsigned char	res2[3];
-#endif
 	volatile unsigned long	UBRDIV;
-#ifdef __BIG_ENDIAN
-	volatile unsigned char     res3[2];
-	volatile unsigned short    UDIVSLOT;
-#else
-	volatile unsigned short    UDIVSLOT;
-	volatile unsigned char     res3[2];
-#endif
+	volatile unsigned short	UDIVSLOT;
+	volatile unsigned char	res3[2];
 } s5pc1xx_uart_t;
 
 enum s5pc1xx_uarts_nr {
