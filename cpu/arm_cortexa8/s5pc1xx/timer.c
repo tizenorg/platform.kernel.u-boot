@@ -1,8 +1,8 @@
 /*
- * (C) Copyright 2009
- * Heungjun Kim, SAMSUNG Electronics, <riverful.kim@samsung.com>
- * Inki Dae, SAMSUNG Electronics, <inki.dae@samsung.com>
- * Minkyu Kang, SAMSUNG Electronics, <mk7.kang@samsung.com>
+ * Copyright (C) 2009 Samsung Electronics
+ * Heungjun Kim <riverful.kim@samsung.com>
+ * Inki Dae <inki.dae@samsung.com>
+ * Minkyu Kang <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -24,6 +24,7 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
 
@@ -43,26 +44,20 @@ static unsigned long long timestamp;	/* Monotonic incrementing timer */
 static unsigned long lastdec;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
-static inline unsigned long READ_TIMER(void)
+static inline unsigned long s5pc1xx_get_base_timer(void)
 {
-	s5pc1xx_timers_t *timers;
+	s5pc1xx_timers_t *timer;
 
 	if (cpu_is_s5pc110())
-		timers = (s5pc1xx_timers_t *) S5PC110_TIMER_BASE;
+		return (s5pc1xx_timers_t *)S5PC110_TIMER_BASE;
 	else
-		timers = (s5pc1xx_timers_t *) S5PC100_TIMER_BASE;
-
-	return timers->TCNTO4;
+		return (s5pc1xx_timers_t *)S5PC100_TIMER_BASE;
 }
 
 int timer_init(void)
 {
-	s5pc1xx_timers_t *timers;
-
-	if (cpu_is_s5pc110())
-		timers = (s5pc1xx_timers_t *) S5PC110_TIMER_BASE;
-	else
-		timers = (s5pc1xx_timers_t *) S5PC100_TIMER_BASE;
+	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+	u32 val;
 
 	/*
 	 * @ PWM Timer 4
@@ -72,8 +67,8 @@ int timer_init(void)
 
 	/* set prescaler : 16 */
 	/* set divider : 2 */
-	timers->TCFG0 = (PRESCALER_1 & 0xff) << 8;
-	timers->TCFG1 = (MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT;
+	writel((PRESCALER_1 & 0xff) << 8, &timer->TCFG0);
+	writel((MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT, &timer->TCFG1);
 
 	if (count_value == 0) {
 		/* reset initial value */
@@ -86,16 +81,17 @@ int timer_init(void)
 	}
 
 	/* set count value */
-	timers->TCNTB4 = count_value;
+	writel(count_value, &timer->TCNTB4);
 	lastdec = count_value;
 
+	val = (readl(&timer->TCON) & ~(0x07 << TCON_TIMER4_SHIFT)) |
+		S5PC1XX_TCON4_AUTO_RELOAD;
+
 	/* auto reload & manual update */
-	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
-		S5PC1XX_TCON4_AUTO_RELOAD | S5PC1XX_TCON4_UPDATE;
+	writel(val | S5PC1XX_TCON4_UPDATE, &timer->TCON);
 
 	/* start PWM timer 4 */
-	timers->TCON = (timers->TCON & ~(0x07 << TCON_TIMER4_SHIFT)) |
-		S5PC1XX_TCON4_AUTO_RELOAD | S5PC1XX_TCON4_START;
+	writel(val | S5PC1XX_TCON4_START, &timer->TCON);
 
 	timestamp = 0;
 
@@ -134,11 +130,11 @@ void udelay(unsigned long usec)
 		 * 3. finish normalize.
 		 */
 		tmo = usec / 1000;
-		tmo *= CONFIG_SYS_HZ;
+		tmo *= (CONFIG_SYS_HZ * count_value / 10);
 		tmo /= 1000;
 	} else {
 		/* else small number, don't kill it prior to HZ multiply */
-		tmo = usec * CONFIG_SYS_HZ;
+		tmo = usec * CONFIG_SYS_HZ * count_value / 10;
 		tmo /= (1000 * 1000);
 	}
 
@@ -160,15 +156,17 @@ void udelay(unsigned long usec)
 
 void reset_timer_masked(void)
 {
+	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+
 	/* reset time */
-	lastdec = READ_TIMER();
+	lastdec = readl(&timer->TCNTO4);
 	timestamp = 0;
 }
 
 unsigned long get_timer_masked(void)
 {
-	/* current tick value */
-	unsigned long now = READ_TIMER();
+	s5pc1xx_timers_t *timer  = s5pc1xx_get_base_timer();
+	unsigned long now = readl(&timer->TCNTO4);
 
 	if (lastdec >= now)
 		timestamp += lastdec - now;
@@ -195,6 +193,5 @@ unsigned long long get_ticks(void)
  */
 unsigned long get_tbclk(void)
 {
-	/* We overrun in 100s */
-	return CONFIG_SYS_HZ * 100;
+	return CONFIG_SYS_HZ;
 }
