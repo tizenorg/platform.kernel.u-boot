@@ -53,6 +53,7 @@ int dram_init(void)
 }
 
 #define SCREEN_SPLIT_FEATURE	0x100
+#define LIMO_UNIVERSAL_FEATURE	0x200
 
 u32 get_board_rev(void)
 {
@@ -70,8 +71,23 @@ static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
-	"ScreenSplit",
 };
+
+static char feature_buf[32];
+
+static char *display_features(int board_rev)
+{
+	int count = 0;
+	char *buf = feature_buf;
+
+	if (board_rev & SCREEN_SPLIT_FEATURE)
+		count += sprintf(buf + count, " - ScreenSplit");
+
+	if (board_rev & LIMO_UNIVERSAL_FEATURE)
+		count += sprintf(buf + count, " - Limo Universal");
+
+	return buf;
+}
 
 static void check_hw_revision(void)
 {
@@ -99,12 +115,18 @@ static void check_hw_revision(void)
 		/*
 		 * Note Check 'Aquila' board first
 		 *
-		 * 			Universal Aquila TickerTape ScreenSplit
-		 *   D1: 0xE02000C4	0x0F	  0x0F   0xXC       0x3F
-		 *   J1: 0xE0200264	0x10      0x00   0x00       0x00
-		 *    I: 0xE0200224	          0x02              0x00 0x08
-		 * MP03: 0xE0200324	          0x9x              0xbx 0x9x
-		 * MP05: 0xE0200364	          0x80              0x88
+		 * TT: TickerTape
+		 * SS: ScreenSplit
+		 * LUA: Limo Universal Aquila
+		 * OA: Old Aquila
+		 *
+		 * 			Universal LUA  OA   TT   SS
+		 *   J1: 0xE0200264	0x10      0x00 0x00 0x00 0x00
+		 *   H1: 0xE0200C24	          0x28 0x1C
+		 *   D1: 0xE02000C4	0x0F	  0x3F 0x0F 0xXC 0x3F
+		 *    I: 0xE0200224	               0x02 0x00 0x08
+		 * MP03: 0xE0200324	               0x9x      0xbx 0x9x
+		 * MP05: 0xE0200364	               0x80      0x88
 		 */
 
 		/* C110 Aquila */
@@ -113,6 +135,12 @@ static void check_hw_revision(void)
 		if ((readl(pin) & 0xf0) == 0) {
 			board = MACH_AQUILA;
 
+			/* Check features */
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
+			pin += S5PC1XX_GPIO_DAT_OFFSET;
+			if ((readl(pin) & 0xf0) == 0x20)
+				board_rev |= LIMO_UNIVERSAL_FEATURE;
+#if 0
 			/* C110 Aquila ScreenSplit */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
@@ -124,6 +152,7 @@ static void check_hw_revision(void)
 				if ((readl(pin) & (1 << 3)))
 					board_rev |= SCREEN_SPLIT_FEATURE;
 			}
+#endif
 		}
 
 		/* C110 TickerTape */
@@ -132,6 +161,7 @@ static void check_hw_revision(void)
 		if ((readl(pin) & 0x03) == 0) {
 			board = MACH_TICKERTAPE;
 			board_rev &= ~SCREEN_SPLIT_FEATURE;
+			board_rev &= ~LIMO_UNIVERSAL_FEATURE;
 		}
 		break;
 	case 3:
@@ -150,7 +180,7 @@ static void check_hw_revision(void)
 	else
 		gd->bd->bi_arch_number = 3000 + board;
 	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
-		board_rev & SCREEN_SPLIT_FEATURE ? " - ScreenSplit" : "" );
+		display_features(board_rev));
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
