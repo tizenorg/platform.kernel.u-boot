@@ -31,6 +31,9 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define C100_MACH_START			3000
+#define C110_MACH_START			3100
+
 static unsigned int board_rev;
 
 int board_init(void)
@@ -64,7 +67,9 @@ enum {
 };
 
 #define SCREEN_SPLIT_FEATURE	0x100
-#define LIMO_UNIVERSAL_FEATURE	0x200
+#define J1_B2_BOARD_FEATURE	0x200
+#define LIMO_UNIVERSAL_FEATURE	0x400
+#define FEATURE_MASK		0xF00
 
 static int machine_is_limo_universal(void)
 {
@@ -73,7 +78,7 @@ static int machine_is_limo_universal(void)
 	if (cpu_is_s5pc100())
 		return 0;
 
-	board = gd->bd->bi_arch_number - 3100;
+	board = gd->bd->bi_arch_number - C110_MACH_START;
 
 	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_FEATURE);
 }
@@ -94,11 +99,27 @@ static char *display_features(int board_rev)
 
 	if (board_rev & SCREEN_SPLIT_FEATURE)
 		count += sprintf(buf + count, " - ScreenSplit");
-
+	if (board_rev & J1_B2_BOARD_FEATURE)
+		count += sprintf(buf + count, " - J1 B2 board");
 	if (board_rev & LIMO_UNIVERSAL_FEATURE)
 		count += sprintf(buf + count, " - Limo Universal");
 
 	return buf;
+}
+
+static void check_board_revision(int board, int rev)
+{
+	switch (board) {
+	case MACH_AQUILA:
+		if (rev & LIMO_UNIVERSAL_FEATURE)
+			board_rev &= ~J1_B2_BOARD_FEATURE;
+		break;
+	case MACH_TICKERTAPE:
+		board_rev &= ~FEATURE_MASK;
+		break;
+	default:
+		break;
+	}
 }
 
 static void check_hw_revision(void)
@@ -146,6 +167,7 @@ static void check_hw_revision(void)
 		pin += S5PC1XX_GPIO_DAT_OFFSET;
 		if ((readl(pin) & 0xf0) == 0) {
 			board = MACH_AQUILA;
+			board_rev |= J1_B2_BOARD_FEATURE;
 
 			/* Check features */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
@@ -170,11 +192,8 @@ static void check_hw_revision(void)
 		/* C110 TickerTape */
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
 		pin += S5PC1XX_GPIO_DAT_OFFSET;
-		if ((readl(pin) & 0x03) == 0) {
+		if ((readl(pin) & 0x03) == 0)
 			board = MACH_TICKERTAPE;
-			board_rev &= ~SCREEN_SPLIT_FEATURE;
-			board_rev &= ~LIMO_UNIVERSAL_FEATURE;
-		}
 		break;
 	case 3:
 		/* C100 TickerTape */
@@ -188,9 +207,11 @@ static void check_hw_revision(void)
 	}
 	/* Set machine id */
 	if (cpu_is_s5pc110())
-		gd->bd->bi_arch_number = 3100 + board;
+		gd->bd->bi_arch_number = C110_MACH_START + board;
 	else
-		gd->bd->bi_arch_number = 3000 + board;
+		gd->bd->bi_arch_number = C100_MACH_START + board;
+
+	check_board_revision(board, board_rev);
 	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
 		display_features(board_rev));
 
@@ -280,7 +301,7 @@ static void enable_t_flash(void)
 
 static void check_keypad(void)
 {
-	unsigned int reg, value;
+	unsigned int reg, value, mask, mode;
 	unsigned int auto_download = 0;
 
 	if (cpu_is_s5pc100()) {
@@ -302,18 +323,26 @@ static void check_keypad(void)
 
 		reg = S5PC100_KEYPAD_BASE;
 	} else {
+		if (machine_is_limo_universal()) {
+			mask = 0x0FFF;
+			mode = 0x0333;
+		} else {
+			mask = 0xFFFF;
+			mode = 0x3333;
+		}
+
 		/* Set GPH2[3:0] to KP_COL[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~(0xFFFF);
-		value |= (0x3333);
+		value &= ~mask;
+		value |= mode;
 		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~(0xFFFF);
-		value |= (0x3333);
+		value &= ~mask;
+		value |= mode;
 		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
 		value &= ~(0xFF);
