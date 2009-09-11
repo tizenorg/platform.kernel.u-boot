@@ -52,33 +52,45 @@ int dram_init(void)
 	return 0;
 }
 
-#define SCREEN_SPLIT_FEATURE	0x100
-#define LIMO_UNIVERSAL_FEATURE	0x200
-
 u32 get_board_rev(void)
 {
 	return board_rev;
 }
 
-#ifdef CONFIG_MISC_INIT_R
 enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
 };
 
+#define SCREEN_SPLIT_FEATURE	0x100
+#define LIMO_UNIVERSAL_FEATURE	0x200
+
+static int machine_is_limo_universal(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - 3100;
+
+	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_FEATURE);
+}
+
+#ifdef CONFIG_MISC_INIT_R
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
 };
 
-static char feature_buf[32];
+static char feature_buffer[32];
 
 static char *display_features(int board_rev)
 {
 	int count = 0;
-	char *buf = feature_buf;
+	char *buf = feature_buffer;
 
 	if (board_rev & SCREEN_SPLIT_FEATURE)
 		count += sprintf(buf + count, " - ScreenSplit");
@@ -240,6 +252,27 @@ static void enable_touch_ldo(void)
 #endif
 }
 
+static void enable_t_flash(void)
+{
+	unsigned int pin, value;
+
+	if (!machine_is_limo_universal())
+		return;
+
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
+
+	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output mode */
+	value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~(0xf << 16);			/* 16 = 4 * 4 */
+	value |= (1 << 16);
+	writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* output enable */
+	value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	value |= (1 << 4);			/* 4 = 4 * 1 */
+	writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
 #define KBR3		(1 << 3)
 #define KBR2		(1 << 2)
 #define KBR1		(1 << 1)
@@ -313,6 +346,9 @@ int misc_init_r(void)
 
 	/* To power up I2C2 */
 	enable_touch_ldo();
+
+	/* Enable T-Flash at Limo Universal */
+	enable_t_flash();
 
 	/* To usbdown automatically */
 	check_keypad();
