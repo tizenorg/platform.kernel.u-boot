@@ -30,7 +30,9 @@
 
 #include "s5p-fb.h"
 #include "opening_wvga_32.h"
-#include "logo_rgb24_wvga_portrait.h"
+#include "font.h"
+//#include "logo_rgb24_wvga_portrait.h"
+//#include "opening_logo_rgb24_143_44.h"
 
 #define PANEL_WIDTH		480
 #define PANEL_HEIGHT		800
@@ -168,11 +170,8 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 	unsigned long *fb = (unsigned  long*)lcdbase;
 
 	for (j = y; j < (y + h); j++) {
-		for (i = x; i < (w + x); i++) {
-			*(fb + (j * PANEL_WIDTH) + i) =
-			    *(unsigned long *)(bmp + k);
-			k++;
-		}
+		for (i = x; i < (x + w); i++)
+			*(fb + (j * PANEL_WIDTH) + i) = *(bmp + k++);
 	}
 }
 
@@ -207,6 +206,7 @@ void lcd_ctrl_init(void *lcdbase)
 
 	option = getenv("lcd");
 
+	/*
 	if (strcmp(option, "test") == 0) {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 		lcd_test();
@@ -216,10 +216,24 @@ void lcd_ctrl_init(void *lcdbase)
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 		draw_samsung_logo(lcdbase);
 	}
+	*/
+
+	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+	draw_samsung_logo(lcdbase);
 
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
+
+	/* initialize font module for framebuffer. */
+	init_font();
+
+	set_font_xy(10, 10);
+	set_font_color(FONT_GREEN);
+	fb_printf("Framebuffer initialization is completed.\n");
+
+	set_font_color(FONT_WHITE);
+	fb_printf("Kernel/BSP");
 }
 
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)
@@ -241,5 +255,6 @@ void s5pc1xxfb_test(void *lcdbase)
 {
 	lcd_ctrl_init(lcdbase);
 	lcd_enable();
-		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+
+	//memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 }
