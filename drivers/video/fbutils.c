@@ -31,7 +31,8 @@
 
 #include "font.h"
 
-#define XORMODE 0x800000000
+#define XORMODE			0x800000000
+#define CARRIAGE_RETURN		10
 
 extern struct fbcon_font_desc font_vga_8x16;
 
@@ -168,11 +169,11 @@ static void pixel(int x, int y)
 	__setpixel (loc, xormode, colormap[color_index]);
 }
 
-static void put_char(int c, int n_c)
+static void put_char(int c)
 {
 	int i,j,bits;
 
-	if (c == 10) {
+	if (c == CARRIAGE_RETURN) {
 		g_y += font_vga_8x16.height;
 		g_x = g_default_x - font_vga_8x16.width;
 		return;
@@ -191,7 +192,7 @@ void fb_printf(char *s)
 	int i;
 
 	for (i = 0; *s; i++, g_x += font_vga_8x16.width, s++)
-		put_char (*s, *(s+1));
+		put_char (*s);
 }
 
 void init_font(void)
