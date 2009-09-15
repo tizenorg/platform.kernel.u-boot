@@ -203,6 +203,47 @@ void fb_printf(char *s)
 		put_char (*s);
 }
 
+static void draw_ve_wheel(int x, int y, unsigned char color)
+{
+	set_font_xy(x, y);
+	set_font_color(FONT_XOR);
+	fb_printf(" | ");
+	set_font_xy(x, y + 6);
+	fb_printf(" | ");
+
+	set_font_color(color);
+	set_font_xy(x, y + 2);
+	fb_printf("---");
+}
+
+static void draw_ho_wheel(int x, int y, unsigned char color)
+{
+	set_font_xy(x, y + 2);
+	set_font_color(FONT_XOR);
+	fb_printf("---");
+
+	set_font_color(color);
+	set_font_xy(x, y);
+	fb_printf(" | ");
+	set_font_xy(x, y + 6);
+	fb_printf(" | ");
+}
+
+void draw_wheel(int x, int y, unsigned char color)
+{
+	static int sw = 1;
+
+	if (sw)
+		draw_ve_wheel(x, y, color);
+	else
+		draw_ho_wheel(x, y, color);
+
+	if (sw)
+		sw = 0;
+	else
+		sw = 1;
+}
+
 void init_font(void)
 {
 	int addr = 0, y;

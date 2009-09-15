@@ -60,4 +60,7 @@ void get_font_xy(unsigned int *x, unsigned int *y);
 /* draw string with user-requested color */
 void fb_printf(char *s);
 
+/* draw wheel */
+void draw_wheel(int x, int y, unsigned char color);
+
 #endif /* _FONT_H */
