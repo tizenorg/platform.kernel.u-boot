@@ -180,6 +180,12 @@ static void put_char(int c)
 		return;
 	}
 
+	/* check x-axis limitation. */
+	if (g_x > panel_info.vl_width - font_vga_8x16.width) {
+		g_x = g_default_x;
+		g_y += font_vga_8x16.height;
+	}
+
 	for (i = 0; i < font_vga_8x16.height; i++) {
 		bits = font_vga_8x16.data [font_vga_8x16.height * c + i];
 		for (j = 0; j < font_vga_8x16.width; j++, bits <<= 1) {
