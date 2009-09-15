@@ -54,6 +54,8 @@ enum {
 
 /*
  * USB Downloader Operations
+ * All functions and valuable are mandatory
+ *
  * usb_init	: initialize the USB Controller and check the connection
  * usb_stop	: stop and release USB
  * send_data	: send the data (BULK ONLY!!)
@@ -66,11 +68,11 @@ enum {
  * ram_addr	: address of will be stored data on RAM
  */
 struct usbd_ops {
-	void (*usb_init) (void);
-	void (*usb_stop) (void);
-	void (*send_data) (char *, int);
-	int (*recv_data) (void);
-	void (*recv_setup) (char *, int);
+	void (*usb_init)(void);
+	void (*usb_stop)(void);
+	void (*send_data)(char *, int);
+	int (*recv_data)(void);
+	void (*recv_setup)(char *, int);
 	char *tx_data;
 	char *rx_data;
 	ulong tx_len;
@@ -81,4 +83,3 @@ struct usbd_ops {
 /* This function is interfaced between USB Device Controller and USB Downloader
  * Must Implementation this function at USB Controller!! */
 struct usbd_ops *usbd_set_interface(struct usbd_ops *);
-
