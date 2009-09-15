@@ -30,7 +30,7 @@
 #include <lcd.h>
 #include <asm/global_data.h>
 
-#include "fbutils.h"
+#include <fbutils.h>
 
 #define XORMODE			0x80000000
 #define CARRIAGE_RETURN		10

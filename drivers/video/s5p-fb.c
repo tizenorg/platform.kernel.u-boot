@@ -30,7 +30,7 @@
 
 #include "s5p-fb.h"
 #include "opening_wvga_32.h"
-#include "fbutils.h"
+#include <fbutils.h>
 //#include "logo_rgb24_wvga_portrait.h"
 //#include "opening_logo_rgb24_143_44.h"
 
