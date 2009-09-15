@@ -24,14 +24,15 @@
 #include <common.h>
 #include <version.h>
 #include <stdarg.h>
+#include <malloc.h>
 #include <linux/types.h>
 #include <asm/io.h>
 #include <lcd.h>
 #include <asm/global_data.h>
 
-#include "font.h"
+#include "fbutils.h"
 
-#define XORMODE			0x800000000
+#define XORMODE			0x80000000
 #define CARRIAGE_RETURN		10
 
 extern struct fbcon_font_desc font_vga_8x16;
@@ -46,15 +47,15 @@ static int bytes_per_pixel;
 static unsigned char **line_addr;
 
 static unsigned int g_default_x, g_default_y;
-static unsigned char color_index;
+static unsigned int color_index;
 
 static unsigned colormap [256];
 extern vidinfo_t panel_info;
 static gd_t *g_gd;
 
-static char red_length = 8, red_offset = 0;
+static char red_length = 8, red_offset = 16;
 static char green_length = 8, green_offset = 8;
-static char blue_length = 8, blue_offset = 16;
+static char blue_length = 8, blue_offset = 0;
 
 static unsigned int color_table_8[MAX_INDEX_TABLE] ={
 	0x000000,	/* BLACK */
@@ -65,7 +66,7 @@ static unsigned int color_table_8[MAX_INDEX_TABLE] ={
 	0xff00ff,	/* MAGENTA */
 	0x00ffff,	/* AQUA */
 	0xffffff,	/* WHITE */
-	0x800000000	/* XORMODE */
+	0x80000000	/* XORMODE */
 };
 
 static unsigned int g_x, g_y;
@@ -155,15 +156,15 @@ static inline void __setpixel (union multiptr loc, unsigned xormode, unsigned co
 
 static void pixel(int x, int y)
 {
-	unsigned xormode;
+	unsigned int xormode;
 	union multiptr loc;
 
 	if ((x < 0) || ((__u32)x >= panel_info.vl_width) ||
 	    (y < 0) || ((__u32)y >= panel_info.vl_height))
 		return;
 
-	xormode = color_index & XORMODE;
-	color_index &= ~XORMODE;
+	xormode = (unsigned int)(color_index & XORMODE);
+	color_index &= (unsigned int)~XORMODE;
 
 	loc.p8 = line_addr [y] + x * bytes_per_pixel;
 	__setpixel (loc, xormode, colormap[color_index]);
@@ -181,9 +182,10 @@ static void put_char(int c)
 
 	for (i = 0; i < font_vga_8x16.height; i++) {
 		bits = font_vga_8x16.data [font_vga_8x16.height * c + i];
-		for (j = 0; j < font_vga_8x16.width; j++, bits <<= 1)
-			if (bits & 0x80)
-				pixel (g_x + j, g_y + i);
+		for (j = 0; j < font_vga_8x16.width; j++, bits <<= 1) {
+				if (bits & 0x80)
+					pixel (g_x + j, g_y + i);
+		}
 	}
 }
 
@@ -205,11 +207,20 @@ void init_font(void)
 
 	g_gd = (gd_t *)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
 
-	line_addr = malloc(sizeof(__u32) * panel_info.vl_height);
+	line_addr = (unsigned char **)malloc(sizeof(__u32) * panel_info.vl_height);
 
 	for (y = 0; y < panel_info.vl_height; y++, addr += line_length) {
-		line_addr[y] = g_gd->fb_base + addr;
+		line_addr[y] = (unsigned char *)(g_gd->fb_base + addr);
 	}
 
 	make_color_table();
+}
+
+void exit_font(void)
+{
+	if (line_addr)
+		free(line_addr);
+
+	g_default_x = g_default_y = 0;
+	g_x = g_y = 0;
 }

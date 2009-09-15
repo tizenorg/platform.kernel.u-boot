@@ -30,7 +30,7 @@
 
 #include "s5p-fb.h"
 #include "opening_wvga_32.h"
-#include "font.h"
+#include "fbutils.h"
 //#include "logo_rgb24_wvga_portrait.h"
 //#include "opening_logo_rgb24_143_44.h"
 
@@ -233,7 +233,9 @@ void lcd_ctrl_init(void *lcdbase)
 	fb_printf("Framebuffer initialization is completed.\n");
 
 	set_font_color(FONT_WHITE);
-	fb_printf("Kernel/BSP");
+	fb_printf("Kernel/BSP.");
+
+	exit_font();
 }
 
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)

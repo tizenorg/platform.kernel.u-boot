@@ -4,7 +4,7 @@
 /*                                            */
 /**********************************************/
 
-#include "font.h"
+#include "fbutils.h"
 
 #define FONTDATAMAX 2048
 

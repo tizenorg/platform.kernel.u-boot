@@ -42,13 +42,11 @@ enum {
 /* max index color count */
 #define MAX_INDEX_TABLE		(8 + 1)
 
-#define XORMODE 0x800000000
-
-#define X_IVAL	8
-#define Y_IVAL	12
-
 /* initialize font module and then create color table. */
 void init_font(void);
+
+/* exit font module. */
+void exit_font(void);
 
 /* set font color */
 void set_font_color(unsigned char index);
