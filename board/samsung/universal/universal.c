@@ -155,7 +155,7 @@ static void check_hw_revision(void)
 		 *
 		 * 			Universal LUA  OA   TT   SS
 		 *   J1: 0xE0200264	0x10      0x00 0x00 0x00 0x00
-		 *   H1: 0xE0200C24	          0x28 0x1C
+		 *   H1: 0xE0200C24	          0xA8 0x1C
 		 *   D1: 0xE02000C4	0x0F	  0x3F 0x0F 0xXC 0x3F
 		 *    I: 0xE0200224	               0x02 0x00 0x08
 		 * MP03: 0xE0200324	               0x9x      0xbx 0x9x
@@ -172,7 +172,7 @@ static void check_hw_revision(void)
 			/* Check features */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0xf0) == 0x20)
+			if ((readl(pin) & 0xf0) & 0x20)
 				board_rev |= LIMO_UNIVERSAL_FEATURE;
 #if 0
 			/* C110 Aquila ScreenSplit */
