@@ -34,6 +34,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
+#define I2C_GPIO3	0
+#define I2C_PMIC	1
+#define I2C_GPIO5	2
+
 static unsigned int board_rev;
 
 int board_init(void)
@@ -366,12 +370,12 @@ static void check_keypad(void)
 		setenv("bootcmd", "usbdown");
 }
 
-void check_battery(void)
+static void check_battery(void)
 {
-	unsigned char val[10];
+	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	i2c_gpio_set_bus(0);
+	i2c_gpio_set_bus(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
 		printf("i2c_probe error: %x\n", addr);
@@ -396,6 +400,45 @@ void check_battery(void)
 	/* If battery level is low then entering charge mode */
 }
 
+static void check_mhl(void)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x39;	/* SIL9230 */
+	unsigned int pin, reg;
+
+	/* MHL Power enable */
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
+
+	/* HDMI_EN : GPJ2[2] output mode */
+	reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+	reg &= ~(0xf << 8);			/* 8 = 2 * 4 */
+	reg |= (1 << 8);
+	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* output enable */
+	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	reg |= (1 << 2);			/* 2 = 2 * 1 */
+	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
+
+	/* MHL_RST : MP0_4[7] output mode */
+	reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+	reg &= ~(0xf << 28);			/* 28 = 7 * 4 */
+	reg |= (1 << 28);
+	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* output enable */
+	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	reg |= (1 << 7);			/* 7 = 7 * 1 */
+	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+
+	i2c_gpio_set_bus(I2C_GPIO5);
+
+	/* TODO */
+	/* set usb path */
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
@@ -415,6 +458,9 @@ int misc_init_r(void)
 	if (machine_is_limo_universal()) {
 		/* check max17040 */
 		check_battery();
+
+		/* check usb path */
+		check_mhl();
 	}
 
 	return 0;
