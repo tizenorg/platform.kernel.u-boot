@@ -366,6 +366,36 @@ static void check_keypad(void)
 		setenv("bootcmd", "usbdown");
 }
 
+void check_battery(void)
+{
+	unsigned char val[10];
+	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	i2c_gpio_set_bus(0);
+
+	if (i2c_probe(addr)) {
+		printf("i2c_probe error: %x\n", addr);
+		return;
+	}
+
+	/* quick-start */
+	val[0] = 0x40;
+	val[1] = 0x00;
+	if (i2c_write(addr, 0x06, 1, val, 2)) {
+		printf("i2c_write error: %x\n", addr);
+		return;
+	}
+
+	if (i2c_read(addr, 0x04, 1, val, 1)) {
+		printf("i2c_read error: %x\n", addr);
+		return;
+	}
+	printf("battery:\t%d%%\n", val[0]);
+
+	/* TODO */
+	/* If battery level is low then entering charge mode */
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
@@ -382,6 +412,11 @@ int misc_init_r(void)
 	/* To usbdown automatically */
 	check_keypad();
 
+	if (machine_is_limo_universal()) {
+		/* check max17040 */
+		check_battery();
+	}
+
 	return 0;
 }
 #endif
@@ -397,6 +432,7 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_CMD_USBDOWN
+#ifdef CONFIG_HARD_I2C
 int usb_board_init(void)
 {
 	if (cpu_is_s5pc100()) {
@@ -418,4 +454,5 @@ int usb_board_init(void)
 	}
 	return 0;
 }
+#endif
 #endif
