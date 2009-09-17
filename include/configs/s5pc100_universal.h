@@ -113,6 +113,7 @@
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_I2C
 
 #define CONFIG_SYS_64BIT_VSPRINTF	1
 
@@ -278,11 +279,24 @@
 #define CONFIG_MISC_INIT_R
 
 /* I2C */
+#if 0
 #define CONFIG_DRIVER_S5PC1XX_I2C
 #define CONFIG_HARD_I2C		1
 #define CONFIG_SYS_I2C_SPEED	50000
 #define CONFIG_SYS_I2C_SLAVE	0xFE
 #define CONFIG_SYS_I2C_0	1
+#else
+#include <i2c-gpio.h>
+#define CONFIG_SOFT_I2C		1
+#define CONFIG_SYS_I2C_INIT_BOARD
+#define CONFIG_SYS_I2C_SPEED	50000
+#define I2C_SDA(x)		i2c_gpio_set(1, x)
+#define I2C_SCL(x)		i2c_gpio_set(0, x)
+#define I2C_READ		(!!i2c_gpio_get())
+#define I2C_ACTIVE		i2c_gpio_dir(1)
+#define I2C_TRISTATE		i2c_gpio_dir(0)
+#define I2C_DELAY		udelay(5)
+#endif
 
 /* USB Downloader */
 #define CONFIG_CMD_USBDOWN

@@ -26,6 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(BOARD).a
 
 COBJS-y	:= universal.o onenand.o modem_boot.o
+COBJS-$(CONFIG_SOFT_I2C) += i2c-gpio.o
 SOBJS	:= lowlevel_init.o
 
 SRCS    := $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
