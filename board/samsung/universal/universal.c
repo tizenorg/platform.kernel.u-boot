@@ -378,7 +378,7 @@ static void check_battery(void)
 	i2c_gpio_set_bus(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
-		printf("i2c_probe error: %x\n", addr);
+		printf("no device: %x\n", addr);
 		return;
 	}
 
@@ -442,7 +442,7 @@ static void check_mhl(void)
 	i2c_gpio_set_bus(I2C_GPIO5);
 
 	if (i2c_probe(addr)) {
-		printf("i2c_probe error: %x\n", addr);
+		printf("no device: %x\n", addr);
 		return;
 	}
 
@@ -457,7 +457,7 @@ static void check_mhl(void)
 	addr = 0x64;
 	/* set usb path */
 	if (i2c_probe(addr)) {
-		printf("i2c_probe error: %x\n", addr);
+		printf("no device: %x\n", addr);
 		return;
 	}
 
