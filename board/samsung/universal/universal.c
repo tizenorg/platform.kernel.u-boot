@@ -403,7 +403,7 @@ static void check_battery(void)
 static void check_mhl(void)
 {
 	unsigned char val[2];
-	unsigned char addr = 0x64;	/* SIL9230 */
+	unsigned char addr = 0x39;	/* SIL9230 */
 	unsigned int pin, reg;
 
 	/* MHL Power enable */
@@ -428,6 +428,12 @@ static void check_mhl(void)
 	reg |= (1 << 28);
 	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
 
+	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	reg &= ~(1 << 7);			/* 7 = 7 * 1 */
+	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+
+	udelay(1000);
+
 	/* output enable */
 	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
 	reg |= (1 << 7);			/* 7 = 7 * 1 */
@@ -435,13 +441,26 @@ static void check_mhl(void)
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
+	if (i2c_probe(addr)) {
+		printf("i2c_probe error: %x\n", addr);
+		return;
+	}
+
+	val[0] = 0x01;
+	val[1] = 0xa1;
+	val[2] = 0x40;
+	if (i2c_write(addr, 0xbc, 1, val, 3)) {
+		printf("i2c_write error: %x\n", addr);
+		return;
+	}
+
+	addr = 0x64;
 	/* set usb path */
 	if (i2c_probe(addr)) {
 		printf("i2c_probe error: %x\n", addr);
 		return;
 	}
 
-	/* quick-start */
 	val[0] = 0x01;
 	if (i2c_write(addr, 0x21, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
