@@ -1,7 +1,6 @@
 /*
- * (C) Copyright 2004 Atmark Techno, Inc.
- *
- * Yasushi SHOJI <yashi@atmark-techno.com>
+ * Copyright (C) 2009
+ * Albin Tonnerre, Free Electrons <albin.tonnerre@free-electrons.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -13,7 +12,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -22,11 +21,30 @@
  * MA 02111-1307 USA
  */
 
-/* This is a board specific file.  It's OK to include board specific
- * header files */
-#include <config.h>
+#include <common.h>
+#include <asm/arch/hardware.h>
+#include <asm/arch/at91_spi.h>
+#include <asm/arch/gpio.h>
+#include <spi.h>
 
-void do_reset(void)
+#define TNY_A9260_CS_PIN	AT91_PIN_PC11
+
+int spi_cs_is_valid(unsigned int bus, unsigned int cs)
 {
-	*((unsigned long *)(MICROBLAZE_SYSREG_BASE_ADDR)) = MICROBLAZE_SYSREG_RECONFIGURE;
+	return bus == 0 && cs == 1;
+}
+
+void spi_cs_activate(struct spi_slave *slave)
+{
+	at91_set_gpio_value(TNY_A9260_CS_PIN, 0);
+}
+
+void spi_cs_deactivate(struct spi_slave *slave)
+{
+	at91_set_gpio_value(TNY_A9260_CS_PIN, 1);
+}
+
+void spi_init_f(void)
+{
+	/* everything done in board_init */
 }

@@ -27,10 +27,14 @@
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <asm/processor.h>
+#ifdef CONFIG_FSL_ESDHC
+#include <fsl_esdhc.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 extern void ft_qe_setup(void *blob);
+extern void ft_fixup_num_cores(void *blob);
 
 #ifdef CONFIG_MP
 #include "mp.h"
@@ -324,6 +328,11 @@ void ft_cpu_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_MP
 	ft_fixup_cpu(blob, (u64)bd->bi_memstart + (u64)bd->bi_memsize);
 #endif
+	ft_fixup_num_cores(blob);
 
 	ft_fixup_cache(blob);
+
+#if defined(CONFIG_FSL_ESDHC)
+	fdt_fixup_esdhc(blob, bd);
+#endif
 }

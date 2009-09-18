@@ -141,10 +141,10 @@ Jon Diekema <jon.diekema@smiths-aerospace.com>
 
 Dirk Eibach <eibach@gdsys.de>
 
-	compactcenter	PPC460EX
 	devconcenter	PPC460EX
 	dlvision        PPC405EP
 	gdppc440etx	PPC440EP/GR
+	intip		PPC460EX
 	neo		PPC405EP
 
 Dave Ellis <DGE@sixnetio.com>
@@ -543,6 +543,7 @@ George G. Davis <gdavis@mvista.com>
 	gcplus		SA1100
 
 Wolfgang Denk <wd@denx.de>
+	imx27lite	i.MX27
 	qong		i.MX31
 
 Thomas Elste <info@elste.org>
@@ -590,6 +591,10 @@ Konstantin Kletschke <kletschke@synertronixx.de>
 Nishant Kamat <nskamat@ti.com>
 
 	omap1610h2	ARM926EJS
+
+Frederik Kriewitz <frederik@kriewitz.eu>
+
+	devkit8000	ARM CORTEX-A8 (OMAP3530 SoC)
 
 Sergey Kubushyn <ksi@koi8.net>
 
@@ -688,6 +693,12 @@ Michael Schwingen <michael@schwingen.org>
 Andrea Scian <andrea.scian@dave-tech.it>
 
 	B2		ARM7TDMI (S3C44B0X)
+
+Albin Tonnerre <albin.tonnerre@free-electrons.com>
+
+	sbc35_a9g20	ARM926EJS (AT91SAM9G20 SoC)
+	tny_a9260	ARM926EJS (AT91SAM9260 SoC)
+	tny_a9g20	ARM926EJS (AT91SAM9G20 SoC)
 
 Greg Ungerer <greg.ungerer@opengear.com>
 
@@ -794,10 +805,6 @@ Scott McNutt <smcnutt@psyent.com>
 # Maintainer Name, Email Address					#
 #	Board		CPU						#
 #########################################################################
-
-Yasushi Shoji <yashi@atmark-techno.com>
-
-	SUZAKU		MicroBlaze
 
 Michal Simek <monstr@monstr.eu>
 

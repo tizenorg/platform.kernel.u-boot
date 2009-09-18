@@ -79,6 +79,8 @@ struct cpu_type cpu_type_list [] = {
 #endif
 };
 
+struct cpu_type cpu_type_unknown = CPU_TYPE_ENTRY(Unknown, Unknown, 1);
+
 struct cpu_type *identify_cpu(u32 ver)
 {
 	int i;
@@ -86,8 +88,7 @@ struct cpu_type *identify_cpu(u32 ver)
 		if (cpu_type_list[i].soc_ver == ver)
 			return &cpu_type_list[i];
 	}
-
-	return NULL;
+	return &cpu_type_unknown;
 }
 
 int cpu_numcores() {
@@ -106,12 +107,6 @@ int probecpu (void)
 
 	gd->cpu = identify_cpu(ver);
 
-#ifndef CONFIG_MP
-	if (cpu_numcores() > 1) {
-		puts("Unicore software on multiprocessor system!!\n"
-		     "To enable mutlticore build define CONFIG_MP\n");
-	}
-#endif
 	return 0;
 }
 
