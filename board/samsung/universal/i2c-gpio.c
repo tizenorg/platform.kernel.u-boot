@@ -71,7 +71,7 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 	},
 };
 
-inline void i2c_gpio_set_bus(int bus)
+void i2c_gpio_set_bus(int bus)
 {
 	bus_index = bus;
 }

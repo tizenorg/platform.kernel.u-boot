@@ -176,7 +176,7 @@ static void check_hw_revision(void)
 			/* Check features */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & 0xf0) & 0x20)
+			if ((readl(pin) & (1 << 2)) == 0)
 				board_rev |= LIMO_UNIVERSAL_FEATURE;
 #if 0
 			/* C110 Aquila ScreenSplit */
@@ -403,7 +403,7 @@ static void check_battery(void)
 static void check_mhl(void)
 {
 	unsigned char val[2];
-	unsigned char addr = 0x39;	/* SIL9230 */
+	unsigned char addr = 0x64;	/* SIL9230 */
 	unsigned int pin, reg;
 
 	/* MHL Power enable */
@@ -435,8 +435,18 @@ static void check_mhl(void)
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
-	/* TODO */
 	/* set usb path */
+	if (i2c_probe(addr)) {
+		printf("i2c_probe error: %x\n", addr);
+		return;
+	}
+
+	/* quick-start */
+	val[0] = 0x01;
+	if (i2c_write(addr, 0x21, 1, val, 1)) {
+		printf("i2c_write error: %x\n", addr);
+		return;
+	}
 }
 
 int misc_init_r(void)

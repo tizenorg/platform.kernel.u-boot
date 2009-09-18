@@ -38,6 +38,7 @@ struct i2c_gpio_bus {
 void i2c_gpio_dir(int dir);
 void i2c_gpio_set(int line, int value);
 int i2c_gpio_get(void);
+void i2c_gpio_set_bus(int bus);
 
 #endif
 #endif
