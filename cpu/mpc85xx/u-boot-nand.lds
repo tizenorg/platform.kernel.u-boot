@@ -1,6 +1,5 @@
 /*
- * (C) Copyright 2008
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ * Copyright 2009 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -24,18 +23,14 @@
 OUTPUT_ARCH(powerpc)
 /* Do we need any of these for elf?
    __DYNAMIC = 0;    */
+PHDRS
+{
+  text PT_LOAD;
+  bss PT_LOAD;
+}
+
 SECTIONS
 {
-  .resetvec 0xFFFFFFFC :
-  {
-    *(.resetvec)
-  } = 0xffff
-
-  .bootpg 0xFFFFF000 :
-  {
-    cpu/ppc4xx/start.o	(.bootpg)
-  } = 0xffff
-
   /* Read-only sections, merged into text segment: */
   . = + SIZEOF_HEADERS;
   .interp : { *(.interp) }
@@ -62,24 +57,17 @@ SECTIONS
   .plt : { *(.plt) }
   .text      :
   {
-    /* WARNING - the following is hand-optimized to fit within	*/
-    /* the sector layout of our flash chips!	XXX FIXME XXX	*/
-
-    cpu/ppc4xx/start.o	(.text)
-    board/gdsys/compactcenter/init.o	(.text)
-
     *(.text)
     *(.fixup)
     *(.got1)
-  }
-  _etext = .;
-  PROVIDE (etext = .);
-  .rodata    :
-  {
-    *(.rodata)
-    *(.rodata1)
-    *(.rodata.str1.4)
-  }
+   } :text
+    _etext = .;
+    PROVIDE (etext = .);
+    .rodata    :
+   {
+    *(.eh_frame)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+  } :text
   .fini      : { *(.fini)    } =0
   .ctors     : { *(.ctors)   }
   .dtors     : { *(.dtors)   }
@@ -96,8 +84,8 @@ SECTIONS
     _FIXUP_TABLE_ = .;
     *(.fixup)
   }
-  __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >>2;
-  __fixup_entries = (. - _FIXUP_TABLE_)>>2;
+  __got2_entries = (_FIXUP_TABLE_ - _GOT2_TABLE_) >> 2;
+  __fixup_entries = (. - _FIXUP_TABLE_) >> 2;
 
   .data    :
   {
@@ -116,7 +104,6 @@ SECTIONS
   .u_boot_cmd : { *(.u_boot_cmd) }
   __u_boot_cmd_end = .;
 
-
   . = .;
   __start___ex_table = .;
   __ex_table : { *(__ex_table) }
@@ -129,16 +116,23 @@ SECTIONS
   . = ALIGN(256);
   __init_end = .;
 
+  .bootpg ADDR(.text) - 0x1000 :
+  {
+    cpu/mpc85xx/start.o	(.bootpg)
+  } :text = 0xffff
+
+  . = ADDR(.text) + 0x80000;
+
   __bss_start = .;
-  .bss (NOLOAD) :
+  .bss (NOLOAD)       :
   {
    *(.sbss) *(.scommon)
    *(.dynbss)
    *(.bss)
    *(COMMON)
-   . = ALIGN(4);
-  }
+  } :bss
 
+  . = ALIGN(4);
   _end = . ;
   PROVIDE (end = .);
 }

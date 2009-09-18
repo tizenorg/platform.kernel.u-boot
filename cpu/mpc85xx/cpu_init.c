@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Freescale Semiconductor.
+ * Copyright 2007-2009 Freescale Semiconductor, Inc.
  *
  * (C) Copyright 2003 Motorola Inc.
  * Modified by Xianghua Xiao, X.Xiao@motorola.com
@@ -129,41 +129,6 @@ void config_8560_ioports (volatile ccsr_cpm_t * cpm)
 }
 #endif
 
-/* We run cpu_init_early_f in AS = 1 */
-void cpu_init_early_f(void)
-{
-	/* Pointer is writable since we allocated a register for it */
-	gd = (gd_t *) (CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_GBL_DATA_OFFSET);
-
-	/* Clear initial global data */
-	memset ((void *) gd, 0, sizeof (gd_t));
-
-	set_tlb(0, CONFIG_SYS_CCSRBAR, CONFIG_SYS_CCSRBAR_PHYS,
-		MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-		1, 0, BOOKE_PAGESZ_4K, 0);
-
-	/* set up CCSR if we want it moved */
-#if (CONFIG_SYS_CCSRBAR_DEFAULT != CONFIG_SYS_CCSRBAR_PHYS)
-	{
-		u32 temp;
-		volatile u32 *ccsr_virt =
-			(volatile u32 *)(CONFIG_SYS_CCSRBAR + 0x1000);
-
-		set_tlb(0, (u32)ccsr_virt, CONFIG_SYS_CCSRBAR_DEFAULT,
-			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-			1, 1, BOOKE_PAGESZ_4K, 0);
-
-		temp = in_be32(ccsr_virt);
-		out_be32(ccsr_virt, CONFIG_SYS_CCSRBAR_PHYS >> 12);
-		temp = in_be32((volatile u32 *)CONFIG_SYS_CCSRBAR);
-	}
-#endif
-
-	init_laws();
-	invalidate_tlb(0);
-	init_tlbs();
-}
-
 /*
  * Breathe some life into the CPU...
  *
@@ -291,6 +256,25 @@ int cpu_init_r(void)
 
 	asm("msync;isync");
 	cache_ctl = l2cache->l2ctl;
+
+#if defined(CONFIG_SYS_RAMBOOT) && defined(CONFIG_SYS_INIT_L2_ADDR)
+	if (cache_ctl & MPC85xx_L2CTL_L2E) {
+		/* Clear L2 SRAM memory-mapped base address */
+		out_be32(&l2cache->l2srbar0, 0x0);
+		out_be32(&l2cache->l2srbar1, 0x0);
+
+		/* set MBECCDIS=0, SBECCDIS=0 */
+		clrbits_be32(&l2cache->l2errdis,
+				(MPC85xx_L2ERRDIS_MBECC |
+				 MPC85xx_L2ERRDIS_SBECC));
+
+		/* set L2E=0, L2SRAM=0 */
+		clrbits_be32(&l2cache->l2ctl,
+				(MPC85xx_L2CTL_L2E |
+				 MPC85xx_L2CTL_L2SRAM_ENTIRE));
+	}
+#endif
+
 	l2siz_field = (cache_ctl >> 28) & 0x3;
 
 	switch (l2siz_field) {
@@ -374,4 +358,22 @@ int cpu_init_r(void)
 	setup_mp();
 #endif
 	return 0;
+}
+
+extern void setup_ivors(void);
+
+void arch_preboot_os(void)
+{
+	u32 msr;
+
+	/*
+	 * We are changing interrupt offsets and are about to boot the OS so
+	 * we need to make sure we disable all async interrupts. EE is already
+	 * disabled by the time we get called.
+	 */
+	msr = mfmsr();
+	msr &= ~(MSR_ME|MSR_CE|MSR_DE);
+	mtmsr(msr);
+
+	setup_ivors();
 }

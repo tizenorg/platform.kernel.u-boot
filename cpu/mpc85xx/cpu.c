@@ -61,6 +61,10 @@ int checkcpu (void)
 	minor = SVR_MIN(svr);
 
 	if (cpu_numcores() > 1) {
+#ifndef CONFIG_MP
+		puts("Unicore software on multiprocessor system!!\n"
+		     "To enable mutlticore build define CONFIG_MP\n");
+#endif
 		volatile ccsr_pic_t *pic = (void *)(CONFIG_SYS_MPC85xx_PIC_ADDR);
 		printf("CPU%d:  ", pic->whoami);
 	} else {
@@ -69,13 +73,9 @@ int checkcpu (void)
 
 	cpu = gd->cpu;
 
-	if (cpu->name) {
-		puts(cpu->name);
-		if (IS_E_PROCESSOR(svr))
-			puts("E");
-	} else {
-		puts("Unknown");
-	}
+	puts(cpu->name);
+	if (IS_E_PROCESSOR(svr))
+		puts("E");
 
 	printf(", Version: %d.%d, (0x%08x)\n", major, minor, svr);
 
@@ -153,27 +153,15 @@ int checkcpu (void)
 
 int do_reset (cmd_tbl_t *cmdtp, bd_t *bd, int flag, int argc, char *argv[])
 {
-	uint pvr;
-	uint ver;
+/* Everything after the first generation of PQ3 parts has RSTCR */
+#if defined(CONFIG_MPC8540) || defined(CONFIG_MPC8541) || \
+    defined(CONFIG_MPC8555) || defined(CONFIG_MPC8560)
 	unsigned long val, msr;
 
-	pvr = get_pvr();
-	ver = PVR_VER(pvr);
-
-	if (ver & 1){
-	/* e500 v2 core has reset control register */
-		volatile unsigned int * rstcr;
-		rstcr = (volatile unsigned int *)(CONFIG_SYS_IMMR + 0xE00B0);
-		*rstcr = 0x2;		/* HRESET_REQ */
-		udelay(100);
-	}
-
 	/*
-	 * Fallthrough if the code above failed
 	 * Initiate hard reset in debug control register DBCR0
-	 * Make sure MSR[DE] = 1
+	 * Make sure MSR[DE] = 1.  This only resets the core.
 	 */
-
 	msr = mfmsr ();
 	msr |= MSR_DE;
 	mtmsr (msr);
@@ -181,6 +169,11 @@ int do_reset (cmd_tbl_t *cmdtp, bd_t *bd, int flag, int argc, char *argv[])
 	val = mfspr(DBCR0);
 	val |= 0x70000000;
 	mtspr(DBCR0,val);
+#else
+	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+	out_be32(&gur->rstcr, 0x2);	/* HRESET_REQ */
+	udelay(100);
+#endif
 
 	return 1;
 }

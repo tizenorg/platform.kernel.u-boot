@@ -1,7 +1,8 @@
 #
-# (C) Copyright 2004 Atmark Techno, Inc.
+# (C) Copyright 2000, 2001, 2002
+# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# Yasushi SHOJI <yashi@atmark-techno.com>
+# Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -22,8 +23,30 @@
 # MA 02111-1307 USA
 #
 
-TEXT_BASE = 0x80F00000
+include $(TOPDIR)/config.mk
 
-PLATFORM_CPPFLAGS += -mno-xl-soft-mul
-PLATFORM_CPPFLAGS += -mno-xl-soft-div
-PLATFORM_CPPFLAGS += -mxl-barrel-shift
+LIB	= $(obj)lib$(BOARD).a
+
+COBJS	:= $(BOARD).o
+SOBJS	:=
+
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
+
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+
+clean:
+	rm -f $(SOBJS) $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak $(obj).depend
+
+#########################################################################
+# This is for $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

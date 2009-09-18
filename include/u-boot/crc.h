@@ -1,7 +1,7 @@
 /*
- * (C) Copyright 2004 Atmark Techno, Inc.
- *
- * Yasushi SHOJI <yashi@atmark-techno.com>
+ * (C) Copyright 2009
+ * Marvell Semiconductor <www.marvell.com>
+ * Written-by: Prafulla Wadaskar <prafulla@marvell.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -13,34 +13,21 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
-#include <common.h>
+#ifndef _UBOOT_CRC_H
+#define _UBOOT_CRC_H
 
-flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS];
+/* lib_generic/crc32.c */
+uint32_t crc32 (uint32_t, const unsigned char *, uint);
+uint32_t crc32_wd (uint32_t, const unsigned char *, uint, uint);
+uint32_t crc32_no_comp (uint32_t, const unsigned char *, uint);
 
-unsigned long flash_init(void)
-{
-	return 0;
-}
-
-void flash_print_info(flash_info_t *info)
-{
-}
-
-int flash_erase(flash_info_t *info, int s_first, int s_last)
-{
-	return 0;
-}
-
-int write_buff(flash_info_t *info, uchar *src, ulong addr, ulong cnt)
-{
-	return 0;
-}
+#endif /* _UBOOT_CRC_H */
