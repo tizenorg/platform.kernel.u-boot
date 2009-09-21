@@ -73,6 +73,7 @@ enum {
 #define SCREEN_SPLIT_FEATURE	0x100
 #define J1_B2_BOARD_FEATURE	0x200
 #define LIMO_UNIVERSAL_FEATURE	0x400
+#define LIMO_REAL_BOARD		0x800
 #define FEATURE_MASK		0xF00
 
 static int machine_is_aquila(void)
@@ -99,6 +100,18 @@ static int machine_is_limo_universal(void)
 	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_FEATURE);
 }
 
+static int board_is_limo_real(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_AQUILA && (board_rev & LIMO_REAL_BOARD);
+}
+
 #ifdef CONFIG_MISC_INIT_R
 static const char *board_name[] = {
 	"Universal",
@@ -123,7 +136,10 @@ static char *display_features(int board_rev)
 		count += sprintf(buf + count, " - ScreenSplit");
 	if (board_rev & J1_B2_BOARD_FEATURE)
 		count += sprintf(buf + count, " - J1 B2 board");
-	if (board_rev & LIMO_UNIVERSAL_FEATURE)
+	/* Limo Real or Universal */
+	if (board_rev & LIMO_REAL_BOARD)
+		count += sprintf(buf + count, " - Limo Real");
+	else if (board_rev & LIMO_UNIVERSAL_FEATURE)
 		count += sprintf(buf + count, " - Limo Universal");
 
 	return buf;
@@ -133,8 +149,13 @@ static void check_board_revision(int board, int rev)
 {
 	switch (board) {
 	case MACH_AQUILA:
+		/* Limo Real or Universal */
 		if (rev & LIMO_UNIVERSAL_FEATURE)
 			board_rev &= ~J1_B2_BOARD_FEATURE;
+		if (rev & LIMO_REAL_BOARD) {
+			board_rev &= ~(J1_B2_BOARD_FEATURE |
+					LIMO_UNIVERSAL_FEATURE);
+		}
 		break;
 	case MACH_TICKERTAPE:
 		board_rev &= ~FEATURE_MASK;
@@ -168,6 +189,7 @@ static void check_hw_revision(void)
 		if (cpu_is_s5pc100())
 			break;
 		mem_type = MEM_4G2G1G;
+		board_rev |= LIMO_REAL_BOARD;
 	case 1:
 		if (cpu_is_s5pc100())
 			break;
@@ -274,6 +296,7 @@ static void check_hw_revision(void)
 static void check_auto_burn(void)
 {
 	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
+
 	if (readl(magic_base) == 0x426f6f74) {	/* ASICC: Boot */
 		printf("Auto burning bootloader\n");
 		setenv("bootcmd", "run updateb; reset");
@@ -282,20 +305,21 @@ static void check_auto_burn(void)
 		printf("Auto burning kernel\n");
 		setenv("bootcmd", "run updatek; reset");
 	}
+
 	/* Clear the magic value */
 	writel(0xa5a55a5a, magic_base);
 }
 
-static void enable_touch_ldo(void)
+static void enable_ldos(void)
 {
 	unsigned int pin, value;
 
 	if (cpu_is_s5pc100())
 		return;
 
+	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
 
-	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
 	value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
 	value &= ~(0xf << 24);			/* 24 = 6 * 4 */
 	value |= (1 << 24);
@@ -312,6 +336,21 @@ static void enable_touch_ldo(void)
 	value |= (0 << 12);			/* Pull-up/down disable */
 	writel(value, pin + S5PC1XX_GPIO_PULL_OFFSET);
 #endif
+
+	if (board_is_limo_real()) {
+		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output mode */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
+
+		value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+		value &= ~(0xf << 16);			/* 16 = 4 * 4 */
+		value |= (1 << 16);
+		writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+		/* output enable */
+		value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+		value |= (1 << 4);			/* 4 = 4 * 1 */
+		writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	}
 }
 
 static void enable_t_flash(void)
@@ -505,7 +544,7 @@ int misc_init_r(void)
 	check_auto_burn();
 
 	/* To power up I2C2 */
-	enable_touch_ldo();
+	enable_ldos();
 
 	/* Enable T-Flash at Limo Universal */
 	enable_t_flash();
