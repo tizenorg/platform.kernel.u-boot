@@ -479,7 +479,7 @@ static void check_battery(void)
 	i2c_gpio_set_bus(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
-		printf("no device: %x\n", addr);
+		printf("Can't found max17040 fuel gauge\n");
 		return;
 	}
 
@@ -544,7 +544,7 @@ static void check_mhl(void)
 
 	/* set usb path */
 	if (i2c_probe(addr)) {
-		printf("no device: %x\n", addr);
+		printf("Can't found MHL Chip\n");
 		return;
 	}
 
