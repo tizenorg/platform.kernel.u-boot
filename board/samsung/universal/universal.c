@@ -75,6 +75,18 @@ enum {
 #define LIMO_UNIVERSAL_FEATURE	0x400
 #define FEATURE_MASK		0xF00
 
+static int machine_is_aquila(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_AQUILA;
+}
+
 static int machine_is_limo_universal(void)
 {
 	int board;
@@ -92,6 +104,12 @@ static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
+};
+
+enum {
+	MEM_4G1G1G,
+	MEM_4G2G1G,
+	MEM_4G3G1G,
 };
 
 static char feature_buffer[32];
@@ -130,6 +148,7 @@ static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
 	unsigned long pin;
+	unsigned int mem_type = MEM_4G1G1G;
 
 	if (cpu_is_s5pc110())
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J0_OFFSET);
@@ -145,6 +164,10 @@ static void check_hw_revision(void)
 	board_rev >>= 2;
 	board_rev &= 0x7;
 	switch (board_rev) {
+	case 0:
+		if (cpu_is_s5pc100())
+			break;
+		mem_type = MEM_4G2G1G;
 	case 1:
 		if (cpu_is_s5pc100())
 			break;
@@ -226,7 +249,20 @@ static void check_hw_revision(void)
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
 		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
-		setenv("meminfo", "mem=80M mem=128M@0x40000000");
+		switch (mem_type) {
+		case MEM_4G2G1G:
+			setenv("meminfo", "mem=80M mem=256M@0x40000000");
+			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
+			break;
+		case MEM_4G3G1G:
+			setenv("meminfo", "mem=80M mem=384M@0x40000000");
+			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_256M;
+			break;
+		case MEM_4G1G1G:
+		default:
+			setenv("meminfo", "mem=80M mem=128M@0x40000000");
+			break;
+		}
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
 		setenv("meminfo", "mem=80M mem=128M@0x38000000");
@@ -475,7 +511,8 @@ int misc_init_r(void)
 	enable_t_flash();
 
 	/* To usbdown automatically */
-	check_keypad();
+	if (!machine_is_aquila())
+		check_keypad();
 
 	if (machine_is_limo_universal()) {
 		/* check max17040 */
