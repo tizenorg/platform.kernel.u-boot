@@ -76,8 +76,8 @@ mem_ctrl_asm_init:
 
 	/*
 	 * Note:
-	 * If Bank0 has OneDRAM we place it at 0x2800'0000
-	 * So finally Bank1 should address start at at 0x2000'0000
+	 * If Bank0 has OneDRAM we place it at 0x3800'0000 (s5pc100 only)
+	 * So finally Bank1 should address start at at 0x3000'0000
 	 */
 	mov	r4, #0x0
 
@@ -101,14 +101,20 @@ swap_memory:
 	/*
 	 * DMC1: CS0 : S5PC110
 	 * 0x40 -> 0x40000000
-	 * 0xf8 -> 0x47FFFFFF
+	 * 0xf8 -> 0x47FFFFFF (1Gib)
+	 * 0x40 -> 0x40000000
+	 * 0xf0 -> 0x4FFFFFFF (2Gib)
 	 * [15:12] 0: Linear
-	 * [11:8 ] 2: 9 bits
-	 * [ 7:4 ] 2: 14 bits
+	 * [11:8 ] 2: 9 bits  - Col (1Gib)
+	 * [11:8 ] 3: 10 bits - Col (2Gib)
+	 * [ 7:4 ] 2: 14 bits - Row
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	cmp	r7, r8
-	ldrne	r1, =0x40f80222
+#if 0
+	ldrne	r1, =0x40f00322				@ 2Gib
+#endif
+	ldrne	r1, =0x40f80222				@ 1Gib
 	strne	r1, [r6, #0x008]			@ MEMCONFIG0_OFFSET
 
 	/*
