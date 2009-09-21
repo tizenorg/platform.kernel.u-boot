@@ -581,7 +581,7 @@ int misc_init_r(void)
 	if (!machine_is_aquila())
 		check_keypad();
 
-	if (board_is_limo_universal() && board_is_limo_real()) {
+	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check max17040 */
 		check_battery();
 
