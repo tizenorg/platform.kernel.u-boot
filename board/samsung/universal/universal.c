@@ -88,7 +88,7 @@ static int machine_is_aquila(void)
 	return board == MACH_AQUILA;
 }
 
-static int machine_is_limo_universal(void)
+static int board_is_limo_universal(void)
 {
 	int board;
 
@@ -359,7 +359,7 @@ static void enable_t_flash(void)
 {
 	unsigned int pin, value;
 
-	if (!machine_is_limo_universal())
+	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
 	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
@@ -425,7 +425,10 @@ static void check_keypad(void)
 
 		reg = S5PC100_KEYPAD_BASE;
 	} else {
-		if (machine_is_limo_universal()) {
+		if (board_is_limo_real()) {
+			mask = 0x00FF;
+			mode = 0x0033;
+		} else if (board_is_limo_universal()) {
 			mask = 0x0FFF;
 			mode = 0x0333;
 		} else {
@@ -578,7 +581,7 @@ int misc_init_r(void)
 	if (!machine_is_aquila())
 		check_keypad();
 
-	if (machine_is_limo_universal()) {
+	if (board_is_limo_universal() && board_is_limo_real()) {
 		/* check max17040 */
 		check_battery();
 
