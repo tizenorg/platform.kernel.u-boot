@@ -442,20 +442,6 @@ static void check_mhl(void)
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
-	if (i2c_probe(addr)) {
-		printf("no device: %x\n", addr);
-		return;
-	}
-
-	val[0] = 0x01;
-	val[1] = 0xa1;
-	val[2] = 0x40;
-	if (i2c_write(addr, 0xbc, 1, val, 3)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
-
-	addr = 0x64;
 	/* set usb path */
 	if (i2c_probe(addr)) {
 		printf("no device: %x\n", addr);
@@ -463,7 +449,13 @@ static void check_mhl(void)
 	}
 
 	val[0] = 0x01;
-	if (i2c_write(addr, 0x21, 1, val, 1)) {
+	if (i2c_write(addr, 0x05, 1, val, 1)) {
+		printf("i2c_write error: %x\n", addr);
+		return;
+	}
+
+	val[0] = 0x35;
+	if (i2c_write(addr, 0x08, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
