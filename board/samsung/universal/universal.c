@@ -72,7 +72,7 @@ enum {
 
 #define SCREEN_SPLIT_FEATURE	0x100
 #define J1_B2_BOARD_FEATURE	0x200
-#define LIMO_UNIVERSAL_FEATURE	0x400
+#define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
 #define FEATURE_MASK		0xF00
 
@@ -97,7 +97,7 @@ static int machine_is_limo_universal(void)
 
 	board = gd->bd->bi_arch_number - C110_MACH_START;
 
-	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_FEATURE);
+	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_BOARD);
 }
 
 static int board_is_limo_real(void)
@@ -139,7 +139,7 @@ static char *display_features(int board_rev)
 	/* Limo Real or Universal */
 	if (board_rev & LIMO_REAL_BOARD)
 		count += sprintf(buf + count, " - Limo Real");
-	else if (board_rev & LIMO_UNIVERSAL_FEATURE)
+	else if (board_rev & LIMO_UNIVERSAL_BOARD)
 		count += sprintf(buf + count, " - Limo Universal");
 
 	return buf;
@@ -150,11 +150,11 @@ static void check_board_revision(int board, int rev)
 	switch (board) {
 	case MACH_AQUILA:
 		/* Limo Real or Universal */
-		if (rev & LIMO_UNIVERSAL_FEATURE)
+		if (rev & LIMO_UNIVERSAL_BOARD)
 			board_rev &= ~J1_B2_BOARD_FEATURE;
 		if (rev & LIMO_REAL_BOARD) {
 			board_rev &= ~(J1_B2_BOARD_FEATURE |
-					LIMO_UNIVERSAL_FEATURE);
+					LIMO_UNIVERSAL_BOARD);
 		}
 		break;
 	case MACH_TICKERTAPE:
@@ -165,11 +165,21 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
+static void set_board_meminfo(void)
+{
+	if (board_is_limo_real()) {
+		setenv("meminfo", "mem=80M mem=256M@0x40000000");
+		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
+		return;
+	}
+
+	setenv("meminfo", "mem=80M mem=128M@0x40000000");
+}
+
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
 	unsigned long pin;
-	unsigned int mem_type = MEM_4G1G1G;
 
 	if (cpu_is_s5pc110())
 		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J0_OFFSET);
@@ -188,8 +198,6 @@ static void check_hw_revision(void)
 	case 0:
 		if (cpu_is_s5pc100())
 			break;
-		mem_type = MEM_4G2G1G;
-		board_rev |= LIMO_REAL_BOARD;
 	case 1:
 		if (cpu_is_s5pc100())
 			break;
@@ -199,16 +207,18 @@ static void check_hw_revision(void)
 		 *
 		 * TT: TickerTape
 		 * SS: ScreenSplit
+		 * LRA: Limo Real Aquila
 		 * LUA: Limo Universal Aquila
 		 * OA: Old Aquila
 		 *
-		 * 			Universal LUA  OA   TT   SS
-		 *   J1: 0xE0200264	0x10      0x00 0x00 0x00 0x00
-		 *   H1: 0xE0200C24	          0xA8 0x1C
-		 *   D1: 0xE02000C4	0x0F	  0x3F 0x0F 0xXC 0x3F
-		 *    I: 0xE0200224	               0x02 0x00 0x08
-		 * MP03: 0xE0200324	               0x9x      0xbx 0x9x
-		 * MP05: 0xE0200364	               0x80      0x88
+		 * 			Universal LRA  LUA  OA   TT   SS
+		 *   J1: 0xE0200264	0x10      0x00 0x00 0x00 0x00 0x00
+		 *   H1: 0xE0200C24	          0x28 0xA8 0x1C
+		 *   H3: 0xE0200C64	          0x02 0x07 0x0F
+		 *   D1: 0xE02000C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
+		 *    I: 0xE0200224	                    0x02 0x00 0x08
+		 * MP03: 0xE0200324	                    0x9x      0xbx 0x9x
+		 * MP05: 0xE0200364	                    0x80      0x88
 		 */
 
 		/* C110 Aquila */
@@ -218,11 +228,16 @@ static void check_hw_revision(void)
 			board = MACH_AQUILA;
 			board_rev |= J1_B2_BOARD_FEATURE;
 
-			/* Check features */
+			/* Check board */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 			pin += S5PC1XX_GPIO_DAT_OFFSET;
 			if ((readl(pin) & (1 << 2)) == 0)
-				board_rev |= LIMO_UNIVERSAL_FEATURE;
+				board_rev |= LIMO_UNIVERSAL_BOARD;
+
+			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+			pin += S5PC1XX_GPIO_DAT_OFFSET;
+			if ((readl(pin) & (1 << 2)) == 0)
+				board_rev |= LIMO_REAL_BOARD;
 #if 0
 			/* C110 Aquila ScreenSplit */
 			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
@@ -271,20 +286,7 @@ static void check_hw_revision(void)
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
 		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
-		switch (mem_type) {
-		case MEM_4G2G1G:
-			setenv("meminfo", "mem=80M mem=256M@0x40000000");
-			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
-			break;
-		case MEM_4G3G1G:
-			setenv("meminfo", "mem=80M mem=384M@0x40000000");
-			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_256M;
-			break;
-		case MEM_4G1G1G:
-		default:
-			setenv("meminfo", "mem=80M mem=128M@0x40000000");
-			break;
-		}
+		set_board_meminfo();
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
 		setenv("meminfo", "mem=80M mem=128M@0x38000000");
