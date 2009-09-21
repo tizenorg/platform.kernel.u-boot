@@ -62,7 +62,7 @@ lowlevel_init:
 	beq	100f
 	ldr	r8, =S5PC110_GPIO_BASE(0)
 100:
-	/* Turn on KEY_LED_ON [GPJ4(1)] */
+	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	cmp	r7, r8
 	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
 	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
@@ -160,14 +160,10 @@ lowlevel_init:
 	ldreq	r0, =S5PC100_RST_STAT
 	ldrne	r0, =S5PC110_RST_STAT
 	ldr	r1, [r0]
-	bne	110f
-	bic	r1, r1, #0xfffffff7
-	mov	r2, #(1 << 3)
-	b	200f
-110:
-	bic	r1, r1, #0xfffeffff
-	mov	r2, #(1 << 16)
-200:
+	biceq	r1, r1, #0xfffffff7
+	moveq	r2, #(1 << 3)
+	bicne	r1, r1, #0xfffeffff
+	movne	r2, #(1 << 16)
 	cmp	r1, r2
 	bne	1f
 wakeup:
