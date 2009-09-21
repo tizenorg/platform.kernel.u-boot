@@ -97,7 +97,6 @@ static int aquila_infineon_modem_on(void)
 	int nCoreVer, nSizePSI, nCRC;
 	int ack;
 	int i, tmp;
-	int port = 3;
 
 	/* Infineon modem */
 	/* 1. Modem gpio init */
