@@ -79,10 +79,7 @@ mem_ctrl_asm_init:
 	 * If Bank0 has Mobile RAM we place it at 0x3800'0000 (s5pc100 only)
 	 * So finally Bank1 OneDRAM should address start at at 0x3000'0000
 	 */
-	mov	r4, #0x0
 
-swap_memory:
-	cmp	r7, r8
 	/*
 	 * DMC0: CS0 : S5PC100/S5PC110
 	 * 0x30 -> 0x30000000
@@ -92,11 +89,9 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x30f80222
-	/* if r4 is 1, swap the bank */
-	cmp	r4, #0x1
-	orreq	r1, r1, #0x08000000
-	str	r1, [r0, #0x008]			@ MEMCONFIG0_OFFSET
+	ldr	r3, =0x30f80222
+swap_memory:
+	str	r3, [r0, #0x008]			@ MEMCONFIG0_OFFSET
 
 	/*
 	 * DMC1: CS0 : S5PC110
@@ -110,12 +105,18 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits - Row
 	 * [ 3:0 ] 2: 4 banks
 	 */
+
+	/* Check Limo Real board */
+	ldrne	r1, =0xE0200C64
+	ldrne	r1, [r1]
+	movne	r2, #(1 << 2)
+	andne	r1, r1, r2
+	cmp	r1, r5
+	ldreq	r4, =0x40f00322				@ 2Gib
+	ldrne	r4, =0x40f80222				@ 1Gib
+
 	cmp	r7, r8
-#if 0
-	ldrne	r1, =0x40f00322				@ 2Gib
-#endif
-	ldrne	r1, =0x40f80222				@ 1Gib
-	strne	r1, [r6, #0x008]			@ MEMCONFIG0_OFFSET
+	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
 
 	/*
 	 * DMC0: CS1: S5PC100
@@ -126,13 +127,9 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x38f80222
-	/* if r4 is 1, swap the bank */
-	cmp	r4, #0x1
-	biceq	r1, r1, #0x08000000
-	str	r1, [r0, #MEMCONFIG1_OFFSET]
+	eoreq	r3, r3, #0x08000000
+	streq	r3, [r0, #MEMCONFIG1_OFFSET]
 
-	cmp	r7, r8
 	ldr	r1, =0x20000000
 	str	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 	strne	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
@@ -237,12 +234,12 @@ swap_memory:
 	/* Skip when S5PC110 */
 	bne	1f
 
-	/* OneDRAM write test */
-	mov	r4, #0x1
-	ldr	r1, =0x37ffff00
-	str	r4, [r1]
+	/* Check OneDRAM access area at s5pc100 */
+	ldreq	r3, =0x38f80222
+	ldreq	r1, =0x37ffff00
+	str	r3, [r1]
 	ldr	r2, [r1]
-	cmp	r2, r4
+	cmp	r2, r3
 	beq	swap_memory
 1:
 	mov	pc, lr
