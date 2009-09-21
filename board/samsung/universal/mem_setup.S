@@ -76,8 +76,8 @@ mem_ctrl_asm_init:
 
 	/*
 	 * Note:
-	 * If Bank0 has OneDRAM we place it at 0x3800'0000 (s5pc100 only)
-	 * So finally Bank1 should address start at at 0x3000'0000
+	 * If Bank0 has Mobile RAM we place it at 0x3800'0000 (s5pc100 only)
+	 * So finally Bank1 OneDRAM should address start at at 0x3000'0000
 	 */
 	mov	r4, #0x0
 
@@ -243,7 +243,7 @@ swap_memory:
 	str	r4, [r1]
 	ldr	r2, [r1]
 	cmp	r2, r4
-	bne	swap_memory
+	beq	swap_memory
 1:
 	mov	pc, lr
 

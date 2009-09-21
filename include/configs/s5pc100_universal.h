@@ -190,7 +190,7 @@
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
-	"meminfo=mem=208M\0" \
+	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"bootblock=5\0" \
 	"ubiblock=4\0" \

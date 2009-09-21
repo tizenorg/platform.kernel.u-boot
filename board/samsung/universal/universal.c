@@ -229,6 +229,7 @@ static void check_hw_revision(void)
 		setenv("meminfo", "mem=80M mem=128M@0x40000000");
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
+		setenv("meminfo", "mem=80M mem=128M@0x38000000");
 		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; bootm 0x30007FC0");
 		setenv("updatek", "onenand erase 0x60000 0x300000; onenand write 0x31008000 0x60000 0x300000");
 	}
