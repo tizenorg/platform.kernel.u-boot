@@ -376,6 +376,26 @@ static void enable_t_flash(void)
 	writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
 }
 
+static void adjust_pins(void)
+{
+	unsigned int pin, value;
+
+	if (board_is_limo_real()) {
+		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output mode */
+		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
+
+		value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+		value &= ~(0xf << 4);			/* 4 = 1 * 4 */
+		value |= (1 << 4);
+		writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+		/* output enable */
+		value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+		value |= (1 << 1);			/* 1 = 1 * 1 */
+		writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	}
+}
+
 #define KBR3		(1 << 3)
 #define KBR2		(1 << 2)
 #define KBR1		(1 << 1)
@@ -550,6 +570,9 @@ int misc_init_r(void)
 
 	/* Enable T-Flash at Limo Universal */
 	enable_t_flash();
+
+	/* Adjust the pins */
+	adjust_pins();
 
 	/* To usbdown automatically */
 	if (!machine_is_aquila())
