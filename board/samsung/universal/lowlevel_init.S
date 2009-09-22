@@ -64,6 +64,7 @@ lowlevel_init:
 100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	cmp	r7, r8
+#ifndef DEBUG_PM
 	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
 	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
@@ -78,6 +79,7 @@ lowlevel_init:
 	bic	r1, r1, #(1 << 1)
 #endif
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+#endif
 
 	/* IO retension release */
 	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
@@ -168,6 +170,19 @@ lowlevel_init:
 	bne	1f
 wakeup:
 	cmp	r7, r8
+#ifdef DEBUG_PM
+	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
+	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
+	orr	r1, r1, #(0x1 << 4)
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+#endif
+
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
 	ldrne	r0, =S5PC110_WAKEUP_STAT
