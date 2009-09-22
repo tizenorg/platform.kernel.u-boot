@@ -46,7 +46,7 @@ _TEXT_BASE:
 
 	.globl lowlevel_init
 lowlevel_init:
-	mov	r9, lr
+	mov	r11, lr
 
 	/* r5 has always zero */
 	mov	r5, #0
@@ -202,7 +202,7 @@ wakeup:
 	nop
 #endif
 1:
-	mov	lr, r9
+	mov	lr, r11
 	mov	pc, lr
 
 /*
