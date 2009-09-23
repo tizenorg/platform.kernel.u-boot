@@ -103,42 +103,45 @@ const unsigned short SEQ_SETTING[] = {
 	0x27, 0x01,
 	0x12, 0x08,
 	0x13, 0x08,
-	0x15, 0x0C,
+	0x15, 0x10,
 	0x16, 0x00, /* 24bit line and 16M color */
 
+	0xA1, 0x00,
+	DATA_ONLY, 0xC4,
 	0xEF, 0xD0, /* pentile key setting */
 	DATA_ONLY, 0xE8,
 
 	0x39, 0x44, /* gamma setting : 300cd */
-	0x40, 0x00,
-	0x41, 0x00,
-	0x42, 0x00,
-	0x43, 0x24,
-	0x44, 0x24,
-	0x45, 0x1E,
-	0x46, 0x3F,
 
-	0x50, 0x00,
+	0x40, 0x0A,
+	0x41, 0x00,
+	0x42, 0x12,
+	0x43, 0x18,
+	0x44, 0x18,
+	0x45, 0x14,
+	0x46, 0x52,
+
+	0x50, 0x0A,
 	0x51, 0x00,
 	0x52, 0x00,
-	0x53, 0x23,
-	0x54, 0x24,
-	0x55, 0x1E,
-	0x56, 0x3D,
+	0x53, 0x1A,
+	0x54, 0x1A,
+	0x55, 0x17,
+	0x56, 0x3A,
 
 	0x60, 0x00,
 	0x61, 0x00,
-	0x62, 0x00,
-	0x63, 0x22,
-	0x64, 0x22,
-	0x65, 0x1A,
-	0x66, 0x56,
+	0x62, 0x29,
+	0x63, 0x29,
+	0x64, 0x26,
+	0x65, 0x20,
+	0x66, 0x3D,
 
 	0x17, 0x22, /* power setting */
 	0x18, 0x33,
 	0x19, 0x03,
 	0x1A, 0x01,
-	0x22, 0xA3, /* VXX x 0.60 */
+	0x22, 0xA4, /* VXX x 0.60 */
 	0x23, 0x00,
 	0x26, 0xA0,
 
@@ -276,12 +279,12 @@ void tl2796_c100_panel_power_on(void)
 	tl2796_panel_send_sequence(SEQ_STANDBY_OFF);
 }
 
-void tl2796_c110_panel_power_on(void)
+void lcd_panel_power_on(void)
 {
 	/* set gpio data for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x80,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
+			S5PC1XX_GPIO_DAT_OFFSET)) | 0xdf,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
 		    S5PC1XX_GPIO_DAT_OFFSET));
 	/* set gpio data for MLCD_ON to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+
@@ -291,15 +294,15 @@ void tl2796_c110_panel_power_on(void)
 	udelay(25000);
 
 	/* set gpio data for MLCD_RST to LOW */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) & 0x7f,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
+			S5PC1XX_GPIO_DAT_OFFSET)) & 0xdf,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
 		    S5PC1XX_GPIO_DAT_OFFSET));
 	udelay(20);
 	/* set gpio data for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x80,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
+			S5PC1XX_GPIO_DAT_OFFSET)) | 0x20,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
 		    S5PC1XX_GPIO_DAT_OFFSET));
 
 	udelay(20000);
@@ -327,20 +330,20 @@ static inline void tl2796_c100_panel_hw_reset(void)
 static inline void tl2796_c110_panel_hw_reset(void)
 {
 	/* set gpio pin for MLCD_RST to LOW */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) & 0x7f,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
+			S5PC1XX_GPIO_DAT_OFFSET)) & 0xdf,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
 		    S5PC1XX_GPIO_DAT_OFFSET));
 	udelay(1);	/* Shorter than 5 usec */
 	/* set gpio pin for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x80,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
+			S5PC1XX_GPIO_DAT_OFFSET)) | 0x20,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
 		    S5PC1XX_GPIO_DAT_OFFSET));
 	udelay(10000);
 }
 
-void tl2796_panel_enable(void)
+void lcd_panel_enable(void)
 {
 	tl2796_panel_send_sequence(SEQ_DISPLAY_ON);
 }
@@ -369,7 +372,7 @@ void tl2796_c100_panel_init(void)
 		    S5PC1XX_GPIO_DAT_OFFSET));
 }
 
-void tl2796_c110_panel_init(void)
+void lcd_panel_init(void)
 {
 	/* set gpio pin for DISPLAY_CS to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+

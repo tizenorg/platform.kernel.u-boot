@@ -107,6 +107,15 @@ vidinfo_t panel_info = {
 		.vl_clor	= 1,
 		.vl_tft		= 1,
 
+		/* S6E63M0 LCD Panel */
+		.vl_hpw		= 2,
+		.vl_blw		= 16,
+		.vl_elw		= 16,
+
+		.vl_vpw		= 2,
+		.vl_bfw		= 3,
+		.vl_efw		= 28,
+		/* tl2796 panel.
 		.vl_hpw		= 4,
 		.vl_blw		= 8,
 		.vl_elw		= 8,
@@ -114,6 +123,7 @@ vidinfo_t panel_info = {
 		.vl_vpw		= 4,
 		.vl_bfw		= 8,
 		.vl_efw		= 8,
+		*/
 };
 
 static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
@@ -186,15 +196,10 @@ static void draw_samsung_logo(void* lcdbase)
 
 static void lcd_panel_on(void)
 {
-	if (cpu_is_s5pc100()) {
-		tl2796_c100_panel_init();
-		tl2796_c100_panel_power_on();
-	} else {
-		tl2796_c110_panel_init();
-		tl2796_c110_panel_power_on();
-	}
+	lcd_panel_init();
+	lcd_panel_power_on();
 
-	tl2796_panel_enable();
+	lcd_panel_enable();
 }
 
 void lcd_ctrl_init(void *lcdbase)

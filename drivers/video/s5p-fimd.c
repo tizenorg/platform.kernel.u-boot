@@ -119,10 +119,18 @@ void s5pc_c110_gpio_setup(void)
 	writel(0x2, DCR);
 
 	/* set gpio configuration pin for MLCD_RST */
+	/* for s5pc110 Universal board.
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) & 0x0fffffff,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) | 0x10000000,
 		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
+	*/
+
+	/* for s5pc110 Limo board. */
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)) & 0xff0fffff,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET));
+	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)) | 0x00100000,
+		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET));
 
 	/* set gpio configuration pin for MLCD_ON and then to LOW */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET)) & 0xFFFF0FFF,

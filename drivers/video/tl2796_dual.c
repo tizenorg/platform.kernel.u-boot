@@ -219,7 +219,7 @@ static void tl2796_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-void tl2796_c110_panel_power_on(void)
+void lcd_panel_power_on(void)
 {
 	/* set gpio data for MLCD_RST to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
@@ -292,7 +292,7 @@ static inline void tl2796_c110_panel_hw_reset(void)
 	udelay(10000);
 }
 
-void tl2796_panel_enable(void)
+void lcd_panel_enable(void)
 {
 	tl2796_panel_send_sequence(SEQ_DISPLAY_ON);
 }
@@ -302,7 +302,7 @@ static void tl2796_panel_disable(void)
 	tl2796_panel_send_sequence(SEQ_DISPLAY_OFF);
 }
 
-void tl2796_c110_panel_init(void)
+void lcd_panel_init(void)
 {
 	/* set gpio pin for DISPLAY_CS to HIGH */
 	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+

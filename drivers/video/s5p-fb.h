@@ -253,10 +253,9 @@ unsigned long s5pc_fimd_calc_fbsize(void);
 void s5pc_c100_gpio_setup(void);
 void s5pc_c110_gpio_setup(void);
 
-void tl2796_c100_panel_init(void);
-void tl2796_c100_panel_power_on(void);
-void tl2796_c110_panel_init(void);
-void tl2796_c110_panel_power_on(void);
+void lcd_panel_init(void);
+void lcd_panel_power_on(void);
+void lcd_panel_enable(void);
 
 #endif
 
