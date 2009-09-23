@@ -569,6 +569,19 @@ static void check_mhl(void)
 	}
 }
 
+void check_micro_usb(void)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x25;	/* fsa9480 */
+
+	i2c_gpio_set_bus(I2C_PMIC);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found fsa9480\n");
+		return;
+	}
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
@@ -588,6 +601,9 @@ int misc_init_r(void)
 	/* To usbdown automatically */
 	if (!machine_is_aquila())
 		check_keypad();
+
+	/* check fsa9480 */
+	check_micro_usb();
 
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check max17040 */
