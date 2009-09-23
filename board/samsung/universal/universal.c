@@ -298,18 +298,26 @@ static void check_hw_revision(void)
 static void check_auto_burn(void)
 {
 	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
+	unsigned int count = 0;
+	unsigned char buf[64];
 
 	if (readl(magic_base) == 0x426f6f74) {	/* ASICC: Boot */
 		printf("Auto burning bootloader\n");
-		setenv("bootcmd", "run updateb; reset");
+		count += sprintf(buf + count, "run updateb; ");
 	}
-	if (readl(magic_base) == 0x4b65726e) {	/* ASICC: Kern */
+	if (readl(magic_base + 0x04) == 0x4b65726e) {	/* ASICC: Kern */
 		printf("Auto burning kernel\n");
-		setenv("bootcmd", "run updatek; reset");
+		count += sprintf(buf + count, "run updatek; ");
+	}
+
+	if (count) {
+		count += sprintf(buf + count, "reset");
+		setenv("bootcmd", buf);
 	}
 
 	/* Clear the magic value */
 	writel(0xa5a55a5a, magic_base);
+	writel(0xa5a55a5a, magic_base + 0x4);
 }
 
 static void enable_ldos(void)
