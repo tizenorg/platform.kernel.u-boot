@@ -569,7 +569,7 @@ static void check_mhl(void)
 	}
 
 	val[0] = 0xd0;
-	if (i2c_write(addr, 0x0a, 1, val, 1)) {
+	if (i2c_write(addr, 0xa0, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
