@@ -111,7 +111,7 @@ swap_memory:
 	ldrne	r1, [r1]
 	movne	r2, #(1 << 2)
 	andne	r1, r1, r2
-	cmp	r1, r5
+	cmp	r1, #0
 	ldreq	r4, =0x40f00322				@ 2Gib
 	ldrne	r4, =0x40f80222				@ 1Gib
 
