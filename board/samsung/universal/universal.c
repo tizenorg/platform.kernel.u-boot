@@ -541,7 +541,8 @@ static void check_mhl(void)
 	reg &= ~(1 << 7);			/* 7 = 7 * 1 */
 	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
 
-	udelay(1000);
+	/* 10ms required after reset */
+	udelay(10000);
 
 	/* output enable */
 	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
