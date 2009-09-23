@@ -344,13 +344,13 @@ system_clock_init:
 	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
 
 	/* OneDRAM(DMC0) clock setting */
-	ldr	r1, =0x01000000
-	str	r1, [r0, #0x218]
-	ldr	r1, =0x30000000
-	str	r1, [r0, #0x318]
+	ldr	r1, =0x01000000			@ ONEDRAM_SEL[25:24] 1 SCLKMPLL
+	str	r1, [r0, #0x218]		@ S5PC110_CLK_SRC6
+	ldr	r1, =0x30000000			@ ONEDRAM_RATIO[31:28] 3 + 1
+	str	r1, [r0, #0x318]		@ S5PC110_CLK_DIV6
 
-	ldr	r1, =0x00909000
-	str	r1, [r0, #0x500]
+	ldr	r1, =0x00909000			@ DIV=10 MCLKSYS
+	str	r1, [r0, #0x500]		@ S5PC110_CLK_OUT
 
 200:
 	/* wait at least 200us to stablize all clock */
