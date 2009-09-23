@@ -299,7 +299,7 @@ static void check_auto_burn(void)
 {
 	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
 	unsigned int count = 0;
-	unsigned char buf[64];
+	char buf[64];
 
 	if (readl(magic_base) == 0x426f6f74) {	/* ASICC: Boot */
 		printf("Auto burning bootloader\n");
@@ -578,7 +578,6 @@ static void check_mhl(void)
 
 void check_micro_usb(void)
 {
-	unsigned char val[2];
 	unsigned char addr = 0x25;	/* fsa9480 */
 
 	i2c_gpio_set_bus(I2C_PMIC);
