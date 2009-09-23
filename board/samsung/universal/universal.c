@@ -567,6 +567,12 @@ static void check_mhl(void)
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
+
+	val[0] = 0xd0;
+	if (i2c_write(addr, 0x0a, 1, val, 1)) {
+		printf("i2c_write error: %x\n", addr);
+		return;
+	}
 }
 
 void check_micro_usb(void)
