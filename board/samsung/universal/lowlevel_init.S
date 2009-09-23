@@ -33,6 +33,9 @@
 #include <asm/arch/watchdog.h>
 #include <asm/arch/interrupt.h>
 
+#define DEBUG_PM_C110
+#undef DEBUG_PM_C110
+
 /*
  * Register usages:
  *
@@ -64,7 +67,7 @@ lowlevel_init:
 100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	cmp	r7, r8
-#ifndef DEBUG_PM
+#ifndef DEBUG_PM_C110
 	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
 	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
@@ -170,24 +173,54 @@ lowlevel_init:
 	bne	1f
 wakeup:
 	cmp	r7, r8
-#ifdef DEBUG_PM
-	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
-	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
-	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
-	orr	r1, r1, #(0x1 << 4)
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
-
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
-#endif
-
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
 	ldrne	r0, =S5PC110_WAKEUP_STAT
 	ldr	r1, [r0]
 	str	r1, [r0]
+
+#ifdef DEBUG_PM_C110
+	mov	r0, r8
+	ldr	r1, =0x22222222
+	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
+	ldr	r1, =0x00002222
+	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
+
+	/* UART_SEL MP0_5[7] at S5PC110 */
+	add	r0, r8, #S5PC110_GPIO_MP0_5_OFFSET
+	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
+	orr	r1, r1, #(0x1 << 28)		@ Output
+	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+
+	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
+	orr	r1, r1, #(0x2 << 14)		@ Pull-up enabled
+	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+
+	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
+	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+
+	ldr	r0, =0xE2900000			@ S5PC110_PA_UART
+	orr	r0, r0, #0x800
+	mov	r1, #0x3
+	str	r1, [r0, #0x000]		@ ULCON
+	ldr	r1, =0x245
+	str	r1, [r0, #0x004]		@ UCON
+	mov	r1, #0x23
+	str	r1, [r0, #0x028]		@ UBRDIV
+	mov	r1, #0x3
+	str	r1, [r0, #0x02C]		@ UDIVSLOT
+
+	mov	r2, #'W'
+	strb	r2, [r0, #0x020]		@ UTXH
+1001:
+	ldrb	r3, [r0, #0x010]		@ UTRSTAT
+	tst	r3, #(1 << 2)
+	beq	1001b
+	cmp	r7, r8
+#endif
 
 	/* Load return address and jump to kernel */
 	ldreq	r0, =S5PC100_INFORM0
@@ -216,6 +249,7 @@ system_clock_init:
 	cmp	r7, r8
 	bne	110f
 100:
+#ifndef DEBUG_PM_C110
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r0, #0x000]		@ S5PC100_APLL_LOCK
@@ -276,7 +310,7 @@ system_clock_init:
 	/* Set Source Clock */
 	ldr	r1, =0x00001111			@ A, M, E, HPLL Muxing
 	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
-
+#endif
 	b	200f
 110:
 	/* Set Clock divider */
@@ -352,6 +386,7 @@ uart_asm_init:
 	cmp	r7, r8
 	bne	110f
 
+#ifndef DEBUG_PM_C110
 	/* UART_SEL GPK0[5] at S5PC100 */
 	add	r0, r8, #S5PC100_GPIO_K0_OFFSET
 	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
@@ -367,6 +402,7 @@ uart_asm_init:
 	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 	orr	r1, r1, #(1 << 5)		@ 5 = 5 * 1-bit
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+#endif
 	b	200f
 110:
 	/*
