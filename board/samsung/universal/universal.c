@@ -557,15 +557,25 @@ static void check_mhl(void)
 		return;
 	}
 
+	/* added */
+	val[0] = 0x01;
+	i2c_write((0x72 >> 1), 0x05, 1, val, 1);
+
+	val[0] = 0x3f;
+	i2c_write((0x7A >> 1), 0x3d, 1, val, 1);
+
+	val[0] = 0x01;
+	i2c_write((0x92 >> 1), 0x11, 1, val, 1);
+
+	val[0] = 0x15;
+	i2c_write((0x92 >> 1), 0x12, 1, val, 1);
+
 	/*
 	 * System Control #1
 	 * set to Normal operation
 	 */
 	val[0] = 0x35;
-	if (i2c_write(addr, 0x08, 1, val, 1)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
+	i2c_write((0x72 >> 1), 0x08, 1, val, 1);
 
 	/*
 	 * MHL TX Control #1
@@ -574,10 +584,106 @@ static void check_mhl(void)
 	 * 11 = MHL termination OFF
 	 */
 	val[0] = 0xd0;
-	if (i2c_write(addr, 0xa0, 1, val, 1)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
+	i2c_write((0x72 >> 1), 0xa0, 1, val, 1);
+
+	/* added */
+	val[0] = 0x03;
+	i2c_write((0x92 >> 1), 0x17, 1, val, 1);
+
+	val[0] = 0x6A;
+	i2c_write((0x92 >> 1), 0x23, 1, val, 1);
+	val[0] = 0xAA;
+	i2c_write((0x92 >> 1), 0x24, 1, val, 1);
+	val[0] = 0xCA;
+	i2c_write((0x92 >> 1), 0x25, 1, val, 1);
+	val[0] = 0xEA;
+	i2c_write((0x92 >> 1), 0x26, 1, val, 1);
+
+	val[0] = 0xA0;
+	i2c_write((0x92 >> 1), 0x4C, 1, val, 1);
+	val[0] = 0x00;
+	i2c_write((0x92 >> 1), 0x4D, 1, val, 1);
+
+	val[0] = 0x14;
+	i2c_write((0x72 >> 1), 0x80, 1, val, 1);
+	val[0] = 0x44;
+	i2c_write((0x92 >> 1), 0x45, 1, val, 1);
+	val[0] = 0xFC;
+	i2c_write((0x72 >> 1), 0xA1, 1, val, 1);
+	val[0] = 0xFA;
+	i2c_write((0x72 >> 1), 0xA3, 1, val, 1);
+
+	val[0] = 0x17;
+	i2c_write((0x72 >> 1), 0x90, 1, val, 1);
+	val[0] = 0x66;
+	i2c_write((0x72 >> 1), 0x94, 1, val, 1);
+	val[0] = 0x1C;
+	i2c_write((0x72 >> 1), 0xA5, 1, val, 1);
+	val[0] = 0x21;
+	i2c_write((0x72 >> 1), 0x95, 1, val, 1);
+	val[0] = 0x22;
+	i2c_write((0x72 >> 1), 0x96, 1, val, 1);
+	val[0] = 0x86;
+	i2c_write((0x72 >> 1), 0x92, 1, val, 1);
+	val[0] = 0xf6;
+	i2c_write((0xC8 >> 1), 0x07, 1, val, 1);
+	val[0] = 0x02;
+	i2c_write((0xC8 >> 1), 0x40, 1, val, 1);
+
+	val[0] = 0x00;
+	i2c_write((0x72 >> 1), 0xC7, 1, val, 1);
+
+	/* 100ms delay */
+	udelay(100000);
+
+	val[0] = 0x00;
+	i2c_write((0x72 >> 1), 0x1A, 1, val, 1);
+	val[0] = 0x00;
+	i2c_write((0x72 >> 1), 0x1E, 1, val, 1);
+	val[0] = 0x81;
+	i2c_write((0x72 >> 1), 0xBC, 1, val, 1);
+
+	/* 100ms delay */
+	udelay(100000);
+
+	val[0] = 0x1C;
+	i2c_write((0x72 >> 1), 0x0D, 1, val, 1);
+	val[0] = 0x04;
+	i2c_write((0x72 >> 1), 0x05, 1, val, 1);   /* Auto reset on */
+	val[0] = 0xFF;
+	i2c_write((0x72 >> 1), 0x74, 1, val, 1);
+
+	i2c_read((0x72 >>1), 0x95, 1, val, 1);
+	val[0] &= ~(1 << 4);
+	i2c_write((0x72 >> 1), 0x95, 1, val, 1);
+
+	val[0] = 0x01;
+	i2c_write((0x72 >> 1), 0xBC, 1, val, 1);
+	val[0] = 0xA1;
+	i2c_write((0x72 >> 1), 0xBD, 1, val, 1);
+	val[0] = 0x40;
+	i2c_write((0x72 >> 1), 0xBE, 1, val, 1);
+	val[0] = 0x01;
+	i2c_write((0xC8 >> 1), 0x21, 1, val, 1);
+
+	val[0] = 0x01;
+	i2c_write((0x72 >> 1), 0xBC, 1, val, 1);
+	val[0] = 0xA1;
+	i2c_write((0x72 >> 1), 0xBD, 1, val, 1);
+	val[0] = 0x7C;
+	i2c_write((0x72 >> 1), 0xBE, 1, val, 1);
+
+	val[0] = 0x01;
+	i2c_write((0x72 >> 1), 0xBC, 1, val, 1);
+	val[0] = 0x79;
+	i2c_write((0x72 >> 1), 0xBD, 1, val, 1);
+
+	i2c_read((0x72 >>1), 0x95, 1, val, 1);
+	val[0] &= ~(1 << 4);
+	i2c_write((0x72 >> 1), 0x95, 1, val, 1);
+
+	val[0] = 0x81;
+	i2c_write((0xC8 >> 1), 0x21, 1, val, 1);
 }
 
 void check_micro_usb(void)
