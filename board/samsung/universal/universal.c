@@ -557,18 +557,14 @@ static void check_mhl(void)
 		return;
 	}
 
-	val[0] = 0x01;
-	if (i2c_write(addr, 0x05, 1, val, 1)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
-
+	/* core on */
 	val[0] = 0x35;
 	if (i2c_write(addr, 0x08, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
 
+	/* MHL termination is OFF */
 	val[0] = 0xd0;
 	if (i2c_write(addr, 0xa0, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
