@@ -557,14 +557,22 @@ static void check_mhl(void)
 		return;
 	}
 
-	/* core on */
+	/*
+	 * System Control #1
+	 * set to Normal operation
+	 */
 	val[0] = 0x35;
 	if (i2c_write(addr, 0x08, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
 
-	/* MHL termination is OFF */
+	/*
+	 * MHL TX Control #1
+	 * TERM_MODE [7:6]
+	 * 00 = MHL termination ON
+	 * 11 = MHL termination OFF
+	 */
 	val[0] = 0xd0;
 	if (i2c_write(addr, 0xa0, 1, val, 1)) {
 		printf("i2c_write error: %x\n", addr);
