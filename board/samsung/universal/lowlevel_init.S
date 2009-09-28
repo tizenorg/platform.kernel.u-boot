@@ -349,7 +349,13 @@ system_clock_init:
 	ldr	r1, =0x30000000			@ ONEDRAM_RATIO[31:28] 3 + 1
 	str	r1, [r0, #0x318]		@ S5PC110_CLK_DIV6
 
-	ldr	r1, =0x00909000			@ DIV=10 MCLKSYS
+	/*
+	 * XCLKOUT = (FOUTAPLL/4) / (DIVVAL + 1)
+	 *         = (800 MHz/ 4) / (9 + 1)
+	 *         = 20 MHz
+	 */
+	ldr	r1, =0x00900000			@ DIVVAL[23:20] = 9
+						@ CLKSEL[16:12] = 0 FOUTAPLL/4
 	str	r1, [r0, #0x500]		@ S5PC110_CLK_OUT
 
 200:
