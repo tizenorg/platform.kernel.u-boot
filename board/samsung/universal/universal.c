@@ -194,14 +194,15 @@ static void check_hw_revision(void)
 	/* GPJ0[4:2] */
 	board_rev >>= 2;
 	board_rev &= 0x7;
-	switch (board_rev) {
-	case 0:
-		if (cpu_is_s5pc100())
-			break;
-	case 1:
-		if (cpu_is_s5pc100())
-			break;
 
+	if (cpu_is_s5pc100()) {
+		if (board_rev == 3) {
+			/* C100 TickerTape */
+			board = MACH_TICKERTAPE;
+			/* Workaround: OneDRAM is broken at tickertape */
+			setenv("meminfo", "mem=128M");
+		}
+	} else {
 		/*
 		 * Note Check 'Aquila' board first
 		 *
@@ -258,17 +259,8 @@ static void check_hw_revision(void)
 		pin += S5PC1XX_GPIO_DAT_OFFSET;
 		if ((readl(pin) & 0x03) == 0)
 			board = MACH_TICKERTAPE;
-		break;
-	case 3:
-		/* C100 TickerTape */
-		board = MACH_TICKERTAPE;
-		/* Workaround: OneDRAM is broken at s5pc100 tickertape */
-		if (cpu_is_s5pc100() && board == MACH_TICKERTAPE)
-			setenv("meminfo", "mem=128M");
-		break;
-	default:
-		break;
 	}
+
 	/* Set machine id */
 	if (cpu_is_s5pc110())
 		gd->bd->bi_arch_number = C110_MACH_START + board;
@@ -411,7 +403,8 @@ static void adjust_pins(void)
 
 static void check_keypad(void)
 {
-	unsigned int reg, value, mask, mode;
+	unsigned int reg, value;
+	unsigned int col_mask, col_mode, row_mask, row_mode;
 	unsigned int auto_download = 0;
 
 	if (cpu_is_s5pc100()) {
@@ -433,29 +426,28 @@ static void check_keypad(void)
 
 		reg = S5PC100_KEYPAD_BASE;
 	} else {
-		if (board_is_limo_real()) {
-			mask = 0x00FF;
-			mode = 0x0033;
-		} else if (board_is_limo_universal()) {
-			mask = 0x0FFF;
-			mode = 0x0333;
+		if (board_is_limo_real() || board_is_limo_universal()) {
+			row_mask = 0x00FF;
+			row_mode = 0x0033;
+			col_mask = 0x0FFF;
+			col_mode = 0x0333;
 		} else {
-			mask = 0xFFFF;
-			mode = 0x3333;
+			row_mask = col_mask = 0xFFFF;
+			row_mode = col_mode = 0x3333;
 		}
 
 		/* Set GPH2[3:0] to KP_COL[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~mask;
-		value |= mode;
+		value &= ~col_mask;
+		value |= col_mode;
 		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~mask;
-		value |= mode;
+		value &= ~row_mask;
+		value |= row_mode;
 		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
 		value &= ~(0xFF);
@@ -715,8 +707,7 @@ int misc_init_r(void)
 	adjust_pins();
 
 	/* To usbdown automatically */
-	if (!machine_is_aquila())
-		check_keypad();
+	check_keypad();
 
 	/* check fsa9480 */
 	check_micro_usb();
