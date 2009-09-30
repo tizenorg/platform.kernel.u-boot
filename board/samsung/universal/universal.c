@@ -693,15 +693,42 @@ static void check_mhl(void)
 	i2c_write((0xC8 >> 1), 0x21, 1, val, 1);
 }
 
-void check_micro_usb(void)
+static void check_micro_usb(void)
 {
-	unsigned char addr = 0x25;	/* fsa9480 */
+	unsigned char addr;
+	unsigned char val[2];
+	int ta = 0;
 
 	i2c_gpio_set_bus(I2C_PMIC);
 
+	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
 		printf("Can't found fsa9480\n");
 		return;
+	}
+
+	/* Read Device Type 1 */
+	i2c_read(addr, 0x0a, 1, val, 1);
+
+#define FSA_DEDICATED_CHARGER	(1 << 6)
+#define FSA_UART		(1 << 3)
+#define FSA_USB			(1 << 2)
+
+	if (val[0] & FSA_DEDICATED_CHARGER)
+		ta = 1;
+
+	/* If USB, use default 475mA */
+	if (ta) {
+		addr = 0xCC >> 1;	/* max8998 */
+		if (i2c_probe(addr)) {
+			printf("Can't found max8998\n");
+			return;
+		}
+
+		i2c_read(addr, 0x0C, 1, val, 1);
+		val[0] &= ~(0x7 << 0);
+		val[0] |= 5;		/* 600mA */
+		i2c_write(addr, 0x0C, 1, val, 1);
 	}
 }
 
