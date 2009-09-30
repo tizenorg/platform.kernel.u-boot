@@ -943,7 +943,7 @@ int misc_init_r(void)
 		check_mhl();
 	}
 
-//	setup_power_down_mode_registers();
+	setup_power_down_mode_registers();
 
 	return 0;
 }
