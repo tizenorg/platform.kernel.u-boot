@@ -378,21 +378,36 @@ static void enable_t_flash(void)
 
 static void adjust_pins(void)
 {
-	unsigned int pin, value;
+	unsigned int reg, value;
 
 	if (board_is_limo_real()) {
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output mode */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
 
-		value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+		value = readl(reg+ S5PC1XX_GPIO_CON_OFFSET);
 		value &= ~(0xf << 4);			/* 4 = 1 * 4 */
 		value |= (1 << 4);
-		writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+		writel(value, reg+ S5PC1XX_GPIO_CON_OFFSET);
 
 		/* output enable */
-		value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+		value = readl(reg+ S5PC1XX_GPIO_DAT_OFFSET);
 		value |= (1 << 1);			/* 1 = 1 * 1 */
-		writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		writel(value, reg+ S5PC1XX_GPIO_DAT_OFFSET);
+
+#if 0
+		/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+
+		value = readl(reg+ S5PC1XX_GPIO_PDNCON_OFFSET);
+		value &= ~(0x3 << 8);			/* 8 = 4 * 2 */
+		value |= (3 << 8);			/* Input */
+		writel(value, reg+ S5PC1XX_GPIO_PDNCON_OFFSET);
+
+		value = readl(reg+ S5PC1XX_GPIO_PDNPULL_OFFSET);
+		value &= ~(0x3 << 8);			/* 8 = 4 * 2 */
+		value |= (2 << 8);			/* Pull up */
+		writel(value, reg+ S5PC1XX_GPIO_PDNPULL_OFFSET);
+#endif
 	}
 }
 
@@ -690,6 +705,187 @@ void check_micro_usb(void)
 	}
 }
 
+#define OUTPUT0(x)		(0x0 << ((x) << 1))
+#define OUTPUT1(x)		(0x1 << ((x) << 1))
+#define INPUT(x)		(0x2 << ((x) << 1))
+#define PREVIOUS(x)		(0x3 << ((x) << 1))
+
+#define PULL_DIS(x)		(0x0 << ((x) << 1))
+#define PULL_DOWN(x)		(0x1 << ((x) << 1))
+#define PULL_UP(x)		(0x2 << ((x) << 1))
+
+struct gpio_powermode {
+	unsigned int	conpdn;
+	unsigned int	pudpdn;
+};
+
+static struct gpio_powermode powerdown_modes[] = {
+	{	/* S5PC110_GPIO_A0_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_A1_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
+	}, {	/* S5PC110_GPIO_B_OFFSET */
+		OUTPUT0(0) | OUTPUT1(1) | OUTPUT0(2) | OUTPUT0(3) |
+		INPUT(4) | OUTPUT1(5) | INPUT(6) | INPUT(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DOWN(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_C0_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
+		PULL_DOWN(4),
+	}, {	/* S5PC110_GPIO_C1_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
+		PULL_DOWN(4),
+	}, {	/* S5PC110_GPIO_D0_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3),
+	}, {	/* S5PC110_GPIO_D1_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5),
+	}, {	/* S5PC110_GPIO_E0_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6) | INPUT(7),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
+		PULL_DOWN(4) | PULL_DOWN(5) | PULL_DOWN(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_E1_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
+		PULL_DOWN(4),
+	}, {	/* S5PC110_GPIO_F0_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_F1_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_F2_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_F3_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		INPUT(4) | INPUT(5),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DOWN(5),
+	}, {	/* S5PC110_GPIO_G0_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+	}, {	/* S5PC110_GPIO_G1_OFFSET */
+		INPUT(0) | INPUT(1) | OUTPUT1(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+	}, {	/* S5PC110_GPIO_G2_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+	}, {	/* S5PC110_GPIO_G3_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | INPUT(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+	}, {	/* S5PC110_GPIO_I_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+	}, {	/* S5PC110_GPIO_J0_OFFSET */
+		OUTPUT1(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6) | INPUT(7),
+		PULL_DIS(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_J1_OFFSET */
+		OUTPUT1(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_J2_OFFSET */
+		INPUT(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
+		INPUT(4) | OUTPUT1(5) | OUTPUT0(6) | INPUT(7),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DOWN(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_J3_OFFSET */
+		INPUT(0) | INPUT(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT1(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_J4_OFFSET */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4),
+		PULL_DIS(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DIS(3) |
+		PULL_DOWN(4),
+	},
+};
+
+static struct gpio_powermode powerdown_eint_modes[] = {
+	{	/* S5PC110_GPIO_H0_OFFSET */
+		PREVIOUS(0) | INPUT(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | INPUT(5) | INPUT(6) | INPUT(7),
+		PULL_DIS(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DOWN(5) | PULL_DIS(6) | PULL_DOWN(7),
+	}, {	/* S5PC110_GPIO_H1_OFFSET */
+		INPUT(0) | INPUT(1) | OUTPUT0(2) | PREVIOUS(3) |
+		PREVIOUS(4) | INPUT(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_H2_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
+		PREVIOUS(4) | PREVIOUS(5) | PREVIOUS(6) | PREVIOUS(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DOWN(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_H3_OFFSET */
+		PREVIOUS(0) | PREVIOUS(1) | INPUT(2) | INPUT(3) |
+		PREVIOUS(4) | INPUT(5) | PREVIOUS(6) | OUTPUT1(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DOWN(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	},
+};
+
+static void setup_power_down_mode_registers(void)
+{
+	struct gpio_powermode *p;
+	unsigned int reg, value;
+	int i;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	if (!(machine_is_aquila() && board_is_limo_real()))
+		return;
+
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_A0_OFFSET);
+	p = powerdown_modes;
+	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++) {
+		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
+		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
+		reg += 0x20;
+	}
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
+	p = powerdown_eint_modes;
+	for (i = 0; i < ARRAY_SIZE(powerdown_eint_modes); i++, p++) {
+		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
+		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
+		reg += 0x20;
+	}
+}
+
 int misc_init_r(void)
 {
 	check_hw_revision();
@@ -719,6 +915,8 @@ int misc_init_r(void)
 		/* check usb path */
 		check_mhl();
 	}
+
+//	setup_power_down_mode_registers();
 
 	return 0;
 }
