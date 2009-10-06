@@ -421,6 +421,7 @@ static void check_keypad(void)
 	unsigned int reg, value;
 	unsigned int col_mask, col_mode, row_mask, row_mode;
 	unsigned int auto_download = 0;
+	unsigned int row_value[4];
 
 	if (cpu_is_s5pc100()) {
 		/* Set GPH2[2:0] to KP_COL[2:0] */
@@ -458,8 +459,11 @@ static void check_keypad(void)
 		value |= col_mode;
 		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
+		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
+
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+
 		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
 		value &= ~row_mask;
 		value |= row_mode;
@@ -473,14 +477,27 @@ static void check_keypad(void)
 		reg = S5PC110_KEYPAD_BASE;
 	}
 
+	/* init col */
 	value = 0x00;
 	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
 	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 
-	/* OK or Send Button */
-	if ((value & KBR0) == 0)
-		auto_download = 1;
+	/* VOLUMEDOWN and CAM(Half shot) Button */
+	if ((value & KBR1) == 0) {
+		int i = 0;
+		while (i < 4) {
+			value = readl(reg + S5PC1XX_KEYIFCOL_OFFSET);
+			value |= 0xff;
+			value &= ~(1 << i);
+			writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+			row_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+
+			writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
+		}
+		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
+			auto_download = 1;
+	}
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
