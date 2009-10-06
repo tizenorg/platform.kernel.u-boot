@@ -878,30 +878,6 @@ static struct gpio_powermode powerdown_modes[] = {
 	},
 };
 
-static struct gpio_powermode powerdown_eint_modes[] = {
-	{	/* S5PC110_GPIO_H0_OFFSET */
-		PREVIOUS(0) | INPUT(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | INPUT(5) | INPUT(6) | INPUT(7),
-		PULL_DIS(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DOWN(5) | PULL_DIS(6) | PULL_DOWN(7),
-	}, {	/* S5PC110_GPIO_H1_OFFSET */
-		INPUT(0) | INPUT(1) | OUTPUT0(2) | PREVIOUS(3) |
-		PREVIOUS(4) | INPUT(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_H2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		PREVIOUS(4) | PREVIOUS(5) | PREVIOUS(6) | PREVIOUS(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DOWN(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_H3_OFFSET */
-		PREVIOUS(0) | PREVIOUS(1) | INPUT(2) | INPUT(3) |
-		PREVIOUS(4) | INPUT(5) | PREVIOUS(6) | OUTPUT1(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DOWN(2) | PULL_DOWN(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	},
-};
-
 static void setup_power_down_mode_registers(void)
 {
 	struct gpio_powermode *p;
@@ -914,17 +890,10 @@ static void setup_power_down_mode_registers(void)
 	if (!(machine_is_aquila() && board_is_limo_real()))
 		return;
 
+#if 0
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_A0_OFFSET);
 	p = powerdown_modes;
 	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++) {
-		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
-		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
-		reg += 0x20;
-	}
-#if 0
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
-	p = powerdown_eint_modes;
-	for (i = 0; i < ARRAY_SIZE(powerdown_eint_modes); i++, p++) {
 		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
 		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
 		reg += 0x20;
