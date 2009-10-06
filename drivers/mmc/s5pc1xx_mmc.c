@@ -22,8 +22,6 @@
 #include <asm/io.h>
 #include <asm/arch/mmc.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 #ifdef DEBUG_S3C_HSMMC
 #define dbg(x...)       printf(x)
 #else
@@ -33,7 +31,6 @@ DECLARE_GLOBAL_DATA_PTR;
 /* s5pc1xx support 4 mmc hosts */
 struct mmc mmc_dev[4];
 struct mmc_host mmc_host[4];
-int dev;
 
 static inline struct s5pc1xx_mmc *s5pc1xx_get_base_mmc(int dev_index)
 {
@@ -418,14 +415,14 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5pc1xx_mmc_initialize(void)
+static int s5pc1xx_mmc_initialize(int dev_index)
 {
 	struct mmc *mmc;
 
-	mmc = &mmc_dev[dev];
+	mmc = &mmc_dev[dev_index];
 
 	sprintf(mmc->name, "S5PC1XX SD/MMC");
-	mmc->priv = &mmc_host[dev];
+	mmc->priv = &mmc_host[dev_index];
 	mmc->send_cmd = mmc_send_cmd;
 	mmc->set_ios = mmc_set_ios;
 	mmc->init = mmc_core_init;
@@ -437,8 +434,8 @@ static int s5pc1xx_mmc_initialize(void)
 	mmc->f_min = 400000;
 	mmc->f_max = 52000000;
 
-	mmc_host[dev].clock = 0;
-	mmc_host[dev].reg = s5pc1xx_get_base_mmc(dev);
+	mmc_host[dev_index].clock = 0;
+	mmc_host[dev_index].reg = s5pc1xx_get_base_mmc(dev_index);
 	mmc_register(mmc);
 
 	return 0;
@@ -446,6 +443,5 @@ static int s5pc1xx_mmc_initialize(void)
 
 int s5pc1xx_mmc_init(int dev_index)
 {
-	dev = dev_index;
-	return s5pc1xx_mmc_initialize();
+	return s5pc1xx_mmc_initialize(dev_index);
 }
