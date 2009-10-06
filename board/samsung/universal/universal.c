@@ -26,8 +26,11 @@
 #include <lcd.h>
 #include <i2c.h>
 #include <asm/io.h>
+#include <asm/arch/clk.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/keypad.h>
+#include <asm/arch/mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -971,4 +974,61 @@ int usb_board_init(void)
 	return 0;
 }
 #endif
+#endif
+
+#ifdef CONFIG_GENERIC_MMC
+static int s5pc1xx_clock_read_reg(int offset)
+{
+	return readl(S5PC1XX_CLOCK_BASE + offset);
+}
+
+static int s5pc1xx_clock_write_reg(unsigned int val, int offset)
+{
+	return writel(val, S5PC1XX_CLOCK_BASE + offset);
+}
+
+int board_mmc_init(bd_t *bis)
+{
+	unsigned int pin, reg;
+	unsigned int clock;
+	int i;
+
+	/* MMC0 Clock source = SCLKMPLL */
+	reg = s5pc1xx_clock_read_reg(S5P_CLK_SRC4_OFFSET);
+	reg &= ~0xf;
+	reg |= 0x6;
+	s5pc1xx_clock_write_reg(reg, S5P_CLK_SRC4_OFFSET);
+
+	reg = s5pc1xx_clock_read_reg(S5P_CLK_DIV4_OFFSET);
+	reg &= ~0xf;
+
+	/* set div value near 50MHz */
+	clock = get_mclk() / 1000000;
+	for (i = 0; i < 0xf; i++) {
+		if ((clock / (i + 1)) <= 50) {
+			reg |= i << 0;
+			break;
+		}
+	}
+
+	s5pc1xx_clock_write_reg(reg, S5P_CLK_DIV4_OFFSET);
+
+	/*
+	 * MMC0 GPIO
+	 * GPG0[0]	SD_0_CLK
+	 * GPG0[1]	SD_0_CMD
+	 * GPG0[2]	SD_0_CDn
+	 * GPG0[3:6]	SD_0_DATA[0:3]
+	 */
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_G0_OFFSET);
+
+	/* GPG0[0:6] special function 2 */
+	writel(0x02222222, pin + S5PC1XX_GPIO_CON_OFFSET);
+
+	/* GPG0[0:6] pull up */
+	writel(0x00002aaa, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	writel(0x00003fff, pin + S5PC1XX_GPIO_DRV_OFFSET);
+
+	return s5pc1xx_mmc_init(0);
+}
 #endif

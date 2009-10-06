@@ -80,6 +80,12 @@
 #define CONFIG_SERIAL_MULTI	1
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
+/* MMC */
+#define CONFIG_GENERIC_MMC	1
+#define CONFIG_MMC		1
+#define CONFIG_S5PC1XX_MMC	1
+#define CONFIG_MMC_INDEX	0
+
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -114,6 +120,7 @@
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_I2C
+#define CONFIG_CMD_MMC
 
 #define CONFIG_SYS_64BIT_VSPRINTF	1
 
