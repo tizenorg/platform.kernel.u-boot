@@ -905,7 +905,7 @@ static struct gpio_powermode powerdown_eint_modes[] = {
 static void setup_power_down_mode_registers(void)
 {
 	struct gpio_powermode *p;
-	unsigned int reg, value;
+	unsigned int reg;
 	int i;
 
 	if (cpu_is_s5pc100())
@@ -921,6 +921,7 @@ static void setup_power_down_mode_registers(void)
 		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
 		reg += 0x20;
 	}
+#if 0
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
 	p = powerdown_eint_modes;
 	for (i = 0; i < ARRAY_SIZE(powerdown_eint_modes); i++, p++) {
@@ -928,6 +929,7 @@ static void setup_power_down_mode_registers(void)
 		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
 		reg += 0x20;
 	}
+#endif
 }
 
 int misc_init_r(void)
