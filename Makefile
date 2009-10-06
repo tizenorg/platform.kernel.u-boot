@@ -380,7 +380,6 @@ $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
-		cat $(obj)onenand_ipl/onenand-ipl-4k.bin $(obj)u-boot.bin > $(obj)u-boot-flexonenand.bin
 
 $(VERSION_FILE):
 		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
@@ -2404,20 +2403,7 @@ MVBLM7_config: unconfig
 sbc8349_config \
 sbc8349_PCI_33_config \
 sbc8349_PCI_66_config: unconfig
-	@mkdir -p $(obj)include
-	@if [ "$(findstring _PCI_,$@)" ] ; then \
-		$(XECHO) -n "... PCI HOST at " ; \
-		echo "#define CONFIG_PCI" >>$(obj)include/config.h ; \
-	fi ; \
-	if [ "$(findstring _33_,$@)" ] ; then \
-		$(XECHO) -n "33MHz... " ; \
-		echo "#define PCI_33M" >>$(obj)include/config.h ; \
-	fi ; \
-	if [ "$(findstring _66_,$@)" ] ; then \
-		$(XECHO) -n "66MHz... " ; \
-		echo "#define PCI_66M" >>$(obj)include/config.h ; \
-	fi ;
-	@$(MKCONFIG) -a sbc8349 ppc mpc83xx sbc8349
+	@$(MKCONFIG) -t $(@:_config=) sbc8349 ppc mpc83xx sbc8349
 
 SIMPC8313_LP_config \
 SIMPC8313_SP_config: unconfig
@@ -2447,11 +2433,12 @@ vme8349_config:		unconfig
 ATUM8548_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx atum8548
 
+MPC8536DS_NAND_config \
+MPC8536DS_SDCARD_config \
+MPC8536DS_SPIFLASH_config \
 MPC8536DS_36BIT_config \
 MPC8536DS_config:       unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_$(@:_config=) 1"	>$(obj)include/config.h
-	@$(MKCONFIG) -a MPC8536DS ppc mpc85xx mpc8536ds freescale
+	@$(MKCONFIG) -t $(@:_config=) MPC8536DS ppc mpc85xx mpc8536ds freescale
 
 MPC8540ADS_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx mpc8540ads freescale
@@ -2517,41 +2504,17 @@ MPC8569MDS_config:	unconfig
 
 MPC8572DS_36BIT_config \
 MPC8572DS_config:       unconfig
-	@mkdir -p $(obj)include
-	@if [ "$(findstring _36BIT_,$@)" ] ; then \
-		echo "#define CONFIG_PHYS_64BIT" >>$(obj)include/config.h ; \
-		$(XECHO) "... enabling 36-bit physical addressing." ; \
-	fi
-	@$(MKCONFIG) -a MPC8572DS ppc mpc85xx mpc8572ds freescale
+	@$(MKCONFIG) -t $(@:_config=) MPC8572DS ppc mpc85xx mpc8572ds freescale
 
 P2020DS_36BIT_config \
 P2020DS_config:		unconfig
-	@mkdir -p $(obj)include
-	@if [ "$(findstring _36BIT_,$@)" ] ; then \
-		echo "#define CONFIG_PHYS_64BIT" >>$(obj)include/config.h ; \
-		$(XECHO) "... enabling 36-bit physical addressing." ; \
-	fi
-	@$(MKCONFIG) -a P2020DS ppc mpc85xx p2020ds freescale
+	@$(MKCONFIG) -t $(@:_config=) P2020DS ppc mpc85xx p2020ds freescale
 
-P1011RDB_config:	unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_P1011" >>$(obj)include/config.h ;
-	@$(MKCONFIG) -a P1_P2_RDB  ppc mpc85xx p1_p2_rdb freescale
-
-P1020RDB_config:	unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_P1020" >>$(obj)include/config.h ;
-	@$(MKCONFIG) -a P1_P2_RDB  ppc mpc85xx p1_p2_rdb freescale
-
-P2010RDB_config:	unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_P2010" >>$(obj)include/config.h ;
-	@$(MKCONFIG) -a P1_P2_RDB  ppc mpc85xx p1_p2_rdb freescale
-
+P1011RDB_config	\
+P1020RDB_config	\
+P2010RDB_config \
 P2020RDB_config:	unconfig
-	@mkdir -p $(obj)include
-	@echo "#define CONFIG_P2020" >>$(obj)include/config.h ;
-	@$(MKCONFIG) -a P1_P2_RDB  ppc mpc85xx p1_p2_rdb freescale
+	@$(MKCONFIG) -t $(@:_config=) P1_P2_RDB ppc mpc85xx p1_p2_rdb freescale
 
 PM854_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx pm854
@@ -2562,29 +2525,19 @@ PM856_config:	unconfig
 sbc8540_config \
 sbc8540_33_config \
 sbc8540_66_config:	unconfig
-	@mkdir -p $(obj)include
-	@if [ "$(findstring _66_,$@)" ] ; then \
-		echo "#define CONFIG_PCI_66"	>>$(obj)include/config.h ; \
-		$(XECHO) "... 66 MHz PCI" ; \
-	else \
-		$(XECHO) "... 33 MHz PCI" ; \
-	fi
-	@$(MKCONFIG) -a SBC8540 ppc mpc85xx sbc8560
+	@$(MKCONFIG) -t $(@:_config=) SBC8540 ppc mpc85xx sbc8560
 
-sbc8548_config:		unconfig
-	@$(MKCONFIG) $(@:_config=) ppc mpc85xx sbc8548
+sbc8548_config \
+sbc8548_PCI_33_config \
+sbc8548_PCI_66_config \
+sbc8548_PCI_33_PCIE_config \
+sbc8548_PCI_66_PCIE_config: unconfig
+	@$(MKCONFIG) -t $(@:_config=) sbc8548 ppc mpc85xx sbc8548
 
 sbc8560_config \
 sbc8560_33_config \
 sbc8560_66_config:	unconfig
-	@mkdir -p $(obj)include
-	@if [ "$(findstring _66_,$@)" ] ; then \
-		echo "#define CONFIG_PCI_66"	>>$(obj)include/config.h ; \
-		$(XECHO) "... 66 MHz PCI" ; \
-	else \
-		$(XECHO) "... 33 MHz PCI" ; \
-	fi
-	@$(MKCONFIG) -a sbc8560 ppc mpc85xx sbc8560
+	@$(MKCONFIG) -t $(@:_config=) sbc8560 ppc mpc85xx sbc8560
 
 socrates_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx socrates
@@ -3272,8 +3225,6 @@ zylonite_config :
 #########################################################################
 
 apollon_config		: unconfig
-	@mkdir -p $(obj)include
-	@mkdir -p $(obj)onenand_ipl/board/apollon
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm1136 apollon NULL omap24xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
@@ -3755,7 +3706,8 @@ clean:
 	       $(obj)cpu/blackfin/bootrom-asm-offsets.[chs]
 	@rm -f $(obj)include/bmp_logo.h
 	@rm -f $(obj)nand_spl/{u-boot.lds,u-boot-spl,u-boot-spl.map,System.map}
-	@rm -f $(obj)onenand_ipl/onenand-{ipl,ipl.bin,ipl-2k.bin,ipl-4k.bin,ipl.map}
+	@rm -f $(obj)onenand_ipl/onenand-{ipl,ipl.bin,ipl.map}
+	@rm -f $(ONENAND_BIN)
 	@rm -f $(obj)onenand_ipl/u-boot.lds
 	@rm -f $(TIMESTAMP_FILE) $(VERSION_FILE)
 	@find $(OBJTREE) -type f \

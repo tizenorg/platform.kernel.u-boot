@@ -24,22 +24,25 @@
  * MA 02111-1307 USA
  */
 
-/* mpc8560ads board configuration file */
-/* please refer to doc/README.mpc85xx for more info */
-/* make sure you change the MAC address and other network params first,
- * search for CONFIG_ETHADDR,CONFIG_SERVERIP,etc in this file
+/*
+ * sbc8540 board configuration file.
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#if XXX
-#define DEBUG		      /* General debug */
-#define ET_DEBUG
+/*
+ * Top level Makefile configuration choices
+ */
+#ifdef CONFIG_MK_66
+#define CONFIG_PCI_66
 #endif
+
 #define TSEC_DEBUG
 
-/* High Level Configuration Options */
+/*
+ * High Level Configuration Options
+ */
 #define CONFIG_BOOKE		1	/* BOOKE			*/
 #define CONFIG_E500		1	/* BOOKE e500 family		*/
 #define CONFIG_MPC85xx		1	/* MPC8540/MPC8560		*/
@@ -77,6 +80,7 @@
 #undef	CONFIG_BTB			    /* toggle branch predition	*/
 
 #define CONFIG_BOARD_EARLY_INIT_F 1	    /* Call board_early_init_f	*/
+#define CONFIG_RESET_PHY_R	1	    /* Call reset_phy() */
 
 #undef	CONFIG_SYS_DRAM_TEST			    /* memory test, takes time	*/
 #define CONFIG_SYS_MEMTEST_START	0x00200000  /* memtest region */

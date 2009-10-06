@@ -1,11 +1,15 @@
 #!/bin/sh
 
+# Print statistics when we exit
+trap exit 1 2 3 15
+trap print_stats 0
+
 # Determine number of CPU cores if no default was set
 : ${BUILD_NCPUS:="`getconf _NPROCESSORS_ONLN`"}
 
 if [ "$BUILD_NCPUS" -gt 1 ]
 then
-	JOBS=-j`expr "$BUILD_NCPUS" + 1`
+	JOBS="-j $((BUILD_NCPUS + 1))"
 else
 	JOBS=""
 fi
@@ -30,6 +34,11 @@ fi
 [ -d ${LOG_DIR} ] || mkdir ${LOG_DIR} || exit 1
 
 LIST=""
+
+# Keep track of the number of builds and errors
+ERR_CNT=0
+ERR_LIST=""
+TOTAL_CNT=0
 
 #########################################################################
 ## MPC5xx Systems
@@ -378,6 +387,9 @@ LIST_83xx="		\
 LIST_85xx="		\
 	ATUM8548	\
 	MPC8536DS	\
+	MPC8536DS_NAND	\
+	MPC8536DS_SDCARD	\
+	MPC8536DS_SPIFLASH	\
 	MPC8540ADS	\
 	MPC8540EVAL	\
 	MPC8541CDS	\
@@ -399,6 +411,10 @@ LIST_85xx="		\
 	PM856		\
 	sbc8540		\
 	sbc8548		\
+	sbc8548_PCI_33	\
+	sbc8548_PCI_66	\
+	sbc8548_PCI_33_PCIE \
+	sbc8548_PCI_66_PCIE \
 	sbc8560		\
 	socrates	\
 	stxgp3		\
@@ -900,6 +916,14 @@ build_target() {
 
 	${MAKE} ${JOBS} all 2>&1 >${LOG_DIR}/$target.MAKELOG \
 				| tee ${LOG_DIR}/$target.ERR
+	if [ -s ${LOG_DIR}/$target.ERR ] ; then
+		ERR_CNT=$((ERR_CNT + 1))
+		ERR_LIST="${ERR_LIST} $target"
+	else
+		rm ${LOG_DIR}/$target.ERR
+	fi
+
+	TOTAL_CNT=$((TOTAL_CNT + 1))
 
 	${CROSS_COMPILE}size ${BUILD_DIR}/u-boot \
 				| tee -a ${LOG_DIR}/$target.MAKELOG
@@ -907,7 +931,17 @@ build_target() {
 
 #-----------------------------------------------------------------------
 
+print_stats() {
+	echo ""
+	echo "--------------------- SUMMARY ----------------------------"
+	echo "Boards compiled: ${TOTAL_CNT}"
+	if [ ${ERR_CNT} -gt 0 ] ; then
+		echo "Boards with warnings or errors: ${ERR_CNT} (${ERR_LIST} )"
+	fi
+	echo "----------------------------------------------------------"
+}
 
+#-----------------------------------------------------------------------
 for arg in $@
 do
 	case "$arg" in

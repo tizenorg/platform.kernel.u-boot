@@ -28,8 +28,7 @@
 
 #define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
 
-#define READ_INTERRUPT()                                                \
-				onenand_readw(ONENAND_REG_INTERRUPT)
+#define READ_INTERRUPT()	onenand_readw(ONENAND_REG_INTERRUPT)
 
 enum {
 	ONENAND_USE_DEFAULT,
