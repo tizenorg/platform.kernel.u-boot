@@ -3127,7 +3127,7 @@ omap3_zoom1_config :	unconfig
 omap3_zoom2_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom2 logicpd omap3
 
-s5pc100_universal_config:	unconfig
+s5pc1xx_universal_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
