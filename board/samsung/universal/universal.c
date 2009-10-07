@@ -31,6 +31,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/keypad.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -893,15 +894,15 @@ static void setup_power_down_mode_registers(void)
 	if (!(machine_is_aquila() && board_is_limo_real()))
 		return;
 
-#if 0
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_A0_OFFSET);
 	p = powerdown_modes;
 	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++) {
+#if 0
 		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
 		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
 		reg += 0x20;
-	}
 #endif
+	}
 }
 
 int misc_init_r(void)
@@ -949,6 +950,50 @@ int board_late_init(void)
 	return 0;
 }
 #endif
+
+
+/* Used for sleep test */
+void board_sleep_init(void)
+{
+	unsigned int value;
+	unsigned char addr;
+	unsigned char val[2];
+
+	/* Set wakeup mask register */
+        value = 0xFFFF;
+        value &= ~(1 << 4);     /* Keypad */
+        value &= ~(1 << 3);     /* RTC */
+        value &= ~(1 << 2);     /* RTC Alarm */
+        writel(value, S5PC110_WAKEUP_MASK);
+
+        /* Set external wakeup mask register */
+        value = 0xFFFFFFFF;
+        value &= ~(1 << 18);    /* T-Flash */
+        writel(value, S5PC110_EINT_WAKEUP_MASK);
+
+	i2c_gpio_set_bus(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return;
+	}
+
+	/* Set ONOFF1 */
+	i2c_read(addr, 0x11, 1, val, 1);
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0));
+	i2c_write(addr, 0x11, 1, val, 1);
+	/* Set ONOFF2 */
+	i2c_read(addr, 0x12, 1, val, 1);
+	val[0] &= ~((1 << 6) | (1 << 5) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0));
+	i2c_write(addr, 0x12, 1, val, 1);
+	/* Set ONOFF3 */
+	i2c_read(addr, 0x13, 1, val, 1);
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
+	val[0] = 0x0;
+	i2c_write(addr, 0x13, 1, val, 1);
+
+	printf("%s[%d]\n", __func__, __LINE__);
+}
 
 #ifdef CONFIG_CMD_USBDOWN
 #ifdef CONFIG_HARD_I2C
