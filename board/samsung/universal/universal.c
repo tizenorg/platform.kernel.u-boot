@@ -982,15 +982,21 @@ void board_sleep_init(void)
 	i2c_read(addr, 0x11, 1, val, 1);
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0));
 	i2c_write(addr, 0x11, 1, val, 1);
+	i2c_read(addr, 0x11, 1, val, 1);
+	printf("ONOFF1 0x%02x\n", val[0]);
 	/* Set ONOFF2 */
 	i2c_read(addr, 0x12, 1, val, 1);
-	val[0] &= ~((1 << 6) | (1 << 5) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0));
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0));
 	i2c_write(addr, 0x12, 1, val, 1);
+	i2c_read(addr, 0x12, 1, val, 1);
+	printf("ONOFF2 0x%02x\n", val[0]);
 	/* Set ONOFF3 */
 	i2c_read(addr, 0x13, 1, val, 1);
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
 	val[0] = 0x0;
 	i2c_write(addr, 0x13, 1, val, 1);
+	i2c_read(addr, 0x13, 1, val, 1);
+	printf("ONOFF3 0x%02x\n", val[0]);
 
 	printf("%s[%d]\n", __func__, __LINE__);
 }
@@ -1077,3 +1083,127 @@ int board_mmc_init(bd_t *bis)
 	return s5pc1xx_mmc_init(0);
 }
 #endif
+
+static int pmic_status(void)
+{
+	unsigned char addr, val[2];
+	int reg, i;
+
+	i2c_gpio_set_bus(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return -1;
+	}
+
+	reg = 0x11;
+	i2c_read(addr, reg, 1, val, 1);
+	for (i = 7; i >= 4; i--)
+		printf("BUCK%d %s\n", 7 - i + 1, val[0] & (1 << i) ? "on" : "off");
+	for (; i >= 0; i--)
+		printf("LDO%d %s\n", 5 - i, val[0] & (1 << i) ? "on" : "off");
+	reg = 0x12;
+	i2c_read(addr, reg, 1, val, 1);
+	for (i = 7; i >= 0; i--)
+		printf("LDO%d %s\n", 7 - i + 6, val[0] & (1 << i) ? "on" : "off");
+	reg = 0x13;
+	i2c_read(addr, reg, 1, val, 1);
+	for (i = 7; i >= 4; i--)
+		printf("LDO%d %s\n", 7 - i + 14, val[0] & (1 << i) ? "on" : "off");
+	return 0;
+}
+
+static int pmic_ldo_control(int buck, int ldo, int on)
+{
+	unsigned char addr, val[2];
+	unsigned int reg, shift;
+
+	if (ldo) {
+		if (ldo < 2)
+			return -1;
+		if (ldo <= 5) {
+			reg = 0x11;
+			shift = 5 - ldo;
+		} else if (ldo <= 13) {
+			reg = 0x12;
+			shift = 13 - ldo;
+		} else if (ldo <= 17) {
+			reg = 0x13;
+			shift = 17 - ldo + 4;
+		} else
+			return -1;
+	} else if (buck) {
+		if (buck > 4)
+			return -1;
+		reg = 0x11;
+		shift = 4 - buck + 4;
+	} else
+		return -1;
+
+	i2c_gpio_set_bus(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return -1;
+	}
+
+	i2c_read(addr, reg, 1, val, 1);
+	if (on)
+		val[0] |= (1 << shift);
+	else
+		val[0] &= ~(1 << shift);
+	i2c_write(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
+	printf("%s %d value 0x%x, %s\n", __func__, __LINE__,
+		buck ? "buck" : "ldo", buck ? : ldo,
+		val[0], val[0] & (1 << shift) ? "on" : "off");
+
+	return 0;
+}
+
+static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int buck = 0, ldo = 0, on = -1;
+
+	switch (argc) {
+	case 2:
+		if (strncmp(argv[1], "status", 6) == 0)
+			return pmic_status();
+		break;
+	case 4:
+		if (strncmp(argv[1], "ldo", 3) == 0) {
+			ldo = simple_strtoul(argv[2], NULL, 10);
+			if (strncmp(argv[3], "on", 2) == 0)
+				on = 1;
+			else if (strncmp(argv[3], "off", 3) == 0)
+				on = 0;
+			else
+				break;
+			return pmic_ldo_control(buck, ldo, on);
+		}
+		if (strncmp(argv[1], "buck", 4) == 0) {
+			buck = simple_strtoul(argv[2], NULL, 10);
+			if (strncmp(argv[3], "on", 2) == 0)
+				on = 1;
+			else if (strncmp(argv[3], "off", 3) == 0)
+				on = 0;
+			else
+				break;
+			return pmic_ldo_control(buck, ldo, on);
+		}
+
+	default:
+		break;
+	}
+
+	cmd_usage(cmdtp);
+	return 1;
+}
+
+U_BOOT_CMD(
+	pmic,		CONFIG_SYS_MAXARGS,	1, do_pmic,
+	"PMIC LDO & BUCK control",
+	"status - Display PMIC LDO & BUCK status\n"
+	"pmic ldo num on/off - Turn on/off the LDO\n"
+	"pmic buck num on/off - Turn on/off the BUCK\n"
+);
