@@ -42,6 +42,20 @@ DECLARE_GLOBAL_DATA_PTR;
 #define I2C_PMIC	1
 #define I2C_GPIO5	2
 
+#define CON_MASK(x)		(0xf << ((x) << 2))
+#define CON_INPUT(x)		(0x0 << ((x) << 2))
+#define CON_OUTPUT(x)		(0x1 << ((x) << 2))
+#define CON_SFR(x, v)		((v) << ((x) << 2))
+#define CON_IRQ(x)		(0xf << ((x) << 2))
+
+#define DAT_MASK(x)		(0x1 << (x))
+#define DAT_SET(x)		(0x1 << (x))
+
+#define PULL_MASK(x)		(0x3 << ((x) << 1))
+#define PULL_DIS(x)		(0x0 << ((x) << 1))
+#define PULL_DOWN(x)		(0x1 << ((x) << 1))
+#define PULL_UP(x)		(0x2 << ((x) << 1))
+
 static unsigned int board_rev;
 
 int board_init(void)
@@ -316,80 +330,106 @@ static void check_auto_burn(void)
 	writel(0xa5a55a5a, magic_base + 0x4);
 }
 
-static void enable_ldos(void)
+static void gpio_direction_output(int reg, int offset, int enable)
+{
+	unsigned int value;
+
+	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~CON_MASK(offset);
+	value |= CON_OUTPUT(offset);
+	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+
+	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
+	value &= ~DAT_MASK(offset);
+	if (enable)
+		value |= DAT_SET(offset);
+	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+static void gpio_set_value(int reg, int offset, int enable)
+{
+	unsigned int value;
+
+	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
+	value &= ~DAT_MASK(offset);
+	if (enable)
+		value |= DAT_SET(offset);
+	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+static void pmic_pin_init(void)
 {
 	unsigned int reg, value;
 
 	if (cpu_is_s5pc100())
 		return;
 
-	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
+	if (!board_is_limo_real())
+		return;
+
+	/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
+	gpio_direction_output(reg, 0, 1);
+
+	/* nPOWER: XEINT_22: GPH2[6] */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
 
 	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~(0xf << 24);			/* 24 = 6 * 4 */
-	value |= (1 << 24);
+	value &= ~CON_MASK(6);
+	value |= CON_IRQ(6);
 	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
-	/* output enable */
-	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-	value |= (1 << 6);			/* 6 = 6 * 1 */
-	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
-
-#if 0
 	value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
-	value &= ~(3 << 12);			/* 12 = 6 * 2 */
-	value |= (0 << 12);			/* Pull-up/down disable */
+	value &= ~PULL_MASK(6);
+	value |= PULL_UP(6);
 	writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
-#endif
+}
+
+void board_reset(void)
+{
+	unsigned int reg;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	if (!board_is_limo_real())
+		return;
+
+	printf("%s[%d]\n", __func__, __LINE__);
+
+	/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
+	gpio_set_value(reg, 0, 0);
+}
+
+static void enable_ldos(void)
+{
+	unsigned int reg;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
+	gpio_direction_output(reg, 6, 1);
 
 	if (board_is_limo_real()) {
 		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output mode */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
-
-		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~(0xf << 16);			/* 16 = 4 * 4 */
-		value |= (1 << 16);
-		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-
-		/* output enable */
-		value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-		value |= (1 << 4);			/* 4 = 4 * 1 */
-		writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
-
-		/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
-
-		value = readl(reg+ S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~(0xf << 0);			/* 0 = 0 * 4 */
-		value |= (1 << 0);			/* output */
-		writel(value, reg+ S5PC1XX_GPIO_CON_OFFSET);
-
-		value = readl(reg+ S5PC1XX_GPIO_DAT_OFFSET);
-		value |= (1 << 0);			/* 0 = 0 * 1 */
-		writel(value, reg+ S5PC1XX_GPIO_DAT_OFFSET);
+		gpio_direction_output(reg, 4, 1);
 	}
 }
 
 static void enable_t_flash(void)
 {
-	unsigned int pin, value;
+	unsigned int reg;
 
 	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
-
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output mode */
-	value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~(0xf << 16);			/* 16 = 4 * 4 */
-	value |= (1 << 16);
-	writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	/* output enable */
-	value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	value |= (1 << 4);			/* 4 = 4 * 1 */
-	writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
+	gpio_direction_output(reg, 4, 1);
 }
 
 static void adjust_pins(void)
@@ -399,17 +439,7 @@ static void adjust_pins(void)
 	if (board_is_limo_real()) {
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output mode */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
-
-		value = readl(reg+ S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~(0xf << 4);			/* 4 = 1 * 4 */
-		value |= (1 << 4);
-		writel(value, reg+ S5PC1XX_GPIO_CON_OFFSET);
-
-		/* output enable */
-		value = readl(reg+ S5PC1XX_GPIO_DAT_OFFSET);
-		value |= (1 << 1);			/* 1 = 1 * 1 */
-		writel(value, reg+ S5PC1XX_GPIO_DAT_OFFSET);
-
+		gpio_direction_output(reg, 2, 1);
 #if 0
 		/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
 		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
@@ -556,38 +586,20 @@ static void check_mhl(void)
 	unsigned int pin, reg;
 
 	/* MHL Power enable */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
-
 	/* HDMI_EN : GPJ2[2] output mode */
-	reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	reg &= ~(0xf << 8);			/* 8 = 2 * 4 */
-	reg |= (1 << 8);
-	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
+	gpio_direction_output(pin, 2, 1);
 
-	/* output enable */
-	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	reg |= (1 << 2);			/* 2 = 2 * 1 */
-	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
-
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
 
 	/* MHL_RST : MP0_4[7] output mode */
-	reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	reg &= ~(0xf << 28);			/* 28 = 7 * 4 */
-	reg |= (1 << 28);
-	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	reg &= ~(1 << 7);			/* 7 = 7 * 1 */
-	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
+	gpio_direction_output(pin, 7, 0);
 
 	/* 10ms required after reset */
 	udelay(10000);
 
 	/* output enable */
-	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	reg |= (1 << 7);			/* 7 = 7 * 1 */
-	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	gpio_set_value(pin, 7, 1);
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
@@ -770,10 +782,6 @@ static void check_micro_usb(void)
 #define INPUT(x)		(0x2 << ((x) << 1))
 #define PREVIOUS(x)		(0x3 << ((x) << 1))
 
-#define PULL_DIS(x)		(0x0 << ((x) << 1))
-#define PULL_DOWN(x)		(0x1 << ((x) << 1))
-#define PULL_UP(x)		(0x2 << ((x) << 1))
-
 struct gpio_powermode {
 	unsigned int	conpdn;
 	unsigned int	pudpdn;
@@ -920,6 +928,9 @@ static void setup_power_down_mode_registers(void)
 int misc_init_r(void)
 {
 	check_hw_revision();
+
+	/* Set proper PMIC pins */
+	pmic_pin_init();
 
 	/* Check auto burning */
 	check_auto_burn();
