@@ -416,9 +416,6 @@ static void pmic_pin_init(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	if (!board_is_limo_real())
-		return;
-
 	/* AP_PS_HOLD: XEINT_0: GPH0[0]
 	 * Note: Don't use GPIO PS_HOLD it doesn't work
 	 */
