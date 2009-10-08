@@ -42,6 +42,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define I2C_PMIC	1
 #define I2C_GPIO5	2
 
+/* GPIOs */
 #define CON_MASK(x)		(0xf << ((x) << 2))
 #define CON_INPUT(x)		(0x0 << ((x) << 2))
 #define CON_OUTPUT(x)		(0x1 << ((x) << 2))
@@ -55,6 +56,12 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PULL_DIS(x)		(0x0 << ((x) << 1))
 #define PULL_DOWN(x)		(0x1 << ((x) << 1))
 #define PULL_UP(x)		(0x2 << ((x) << 1))
+
+#define PDN_MASK(x)		(0x3 << ((x) << 1))
+#define OUTPUT0(x)		(0x0 << ((x) << 1))
+#define OUTPUT1(x)		(0x1 << ((x) << 1))
+#define INPUT(x)		(0x2 << ((x) << 1))
+#define PREVIOUS(x)		(0x3 << ((x) << 1))
 
 static unsigned int board_rev;
 
@@ -346,6 +353,26 @@ static void gpio_direction_output(int reg, int offset, int enable)
 	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
 }
 
+static void gpio_direction_input(int reg, int offset)
+{
+	unsigned int value;
+
+	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~CON_MASK(offset);
+	value |= CON_INPUT(offset);
+	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+}
+
+static void gpio_irq_mode(int reg, int offset)
+{
+	unsigned int value;
+
+	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
+	value &= ~CON_MASK(offset);
+	value |= CON_IRQ(offset);
+	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+}
+
 static void gpio_set_value(int reg, int offset, int enable)
 {
 	unsigned int value;
@@ -355,6 +382,31 @@ static void gpio_set_value(int reg, int offset, int enable)
 	if (enable)
 		value |= DAT_SET(offset);
 	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+}
+
+enum pull_mode {
+	PULL_NONE_MODE,
+	PULL_DOWN_MODE,
+	PULL_UP_MODE,
+};
+
+static void gpio_pull_cfg(int reg, int offset, enum pull_mode mode)
+{
+	unsigned int value;
+
+	value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
+	value &= ~PULL_MASK(offset);
+	switch (mode) {
+	case PULL_DOWN_MODE:
+		value |= PULL_DOWN(offset);
+		break;
+	case PULL_UP_MODE:
+		value |= PULL_UP(offset);
+		break;
+	default:
+		break;
+	}
+	writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
 }
 
 static void pmic_pin_init(void)
@@ -367,39 +419,20 @@ static void pmic_pin_init(void)
 	if (!board_is_limo_real())
 		return;
 
-	/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
-	gpio_direction_output(reg, 0, 1);
+	/* AP_PS_HOLD: XEINT_0: GPH0[0]
+	 * Note: Don't use GPIO PS_HOLD it doesn't work
+	 */
+	reg = S5PC110_PS_HOLD_CONTROL;
+	value = readl(reg);
+	value |= S5PC110_PS_HOLD_DIR_OUTPUT |
+		S5PC110_PS_HOLD_DATA_HIGH |
+		S5PC110_PS_HOLD_OUT_EN;
+	writel(value, reg);
 
-	/* nPOWER: XEINT_22: GPH2[6] */
+	/* nPOWER: XEINT_22: GPH2[6] interrupt mode */
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
-
-	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~CON_MASK(6);
-	value |= CON_IRQ(6);
-	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-
-	value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
-	value &= ~PULL_MASK(6);
-	value |= PULL_UP(6);
-	writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
-}
-
-void board_reset(void)
-{
-	unsigned int reg;
-
-	if (cpu_is_s5pc100())
-		return;
-
-	if (!board_is_limo_real())
-		return;
-
-	printf("%s[%d]\n", __func__, __LINE__);
-
-	/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
-	gpio_set_value(reg, 0, 0);
+	gpio_irq_mode(reg, 6);
+	gpio_pull_cfg(reg, 6, PULL_UP_MODE);
 }
 
 static void enable_ldos(void)
@@ -409,15 +442,9 @@ static void enable_ldos(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
+	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
 	gpio_direction_output(reg, 6, 1);
-
-	if (board_is_limo_real()) {
-		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output mode */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
-		gpio_direction_output(reg, 4, 1);
-	}
 }
 
 static void enable_t_flash(void)
@@ -427,34 +454,33 @@ static void enable_t_flash(void)
 	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
-	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output mode */
+	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
 	gpio_direction_output(reg, 4, 1);
 }
 
-static void adjust_pins(void)
+static void setup_limo_real_gpios(void)
 {
 	unsigned int reg, value;
 
-	if (board_is_limo_real()) {
-		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output mode */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
-		gpio_direction_output(reg, 2, 1);
-#if 0
-		/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+	if (!board_is_limo_real())
+		return;
 
-		value = readl(reg+ S5PC1XX_GPIO_PDNCON_OFFSET);
-		value &= ~(0x3 << 8);			/* 8 = 4 * 2 */
-		value |= (3 << 8);			/* Input */
-		writel(value, reg+ S5PC1XX_GPIO_PDNCON_OFFSET);
+	/*
+	 * Note: Please write GPIO alphabet order
+	 */
+	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
+	gpio_direction_output(reg, 4, 1);
 
-		value = readl(reg+ S5PC1XX_GPIO_PDNPULL_OFFSET);
-		value &= ~(0x3 << 8);			/* 8 = 4 * 2 */
-		value |= (2 << 8);			/* Pull up */
-		writel(value, reg+ S5PC1XX_GPIO_PDNPULL_OFFSET);
-#endif
-	}
+	/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
+	gpio_direction_output(reg, 2, 1);
+
+	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
+	gpio_irq_mode(reg, 4);
+	gpio_pull_cfg(reg, 4, PULL_UP_MODE);
 }
 
 #define KBR3		(1 << 3)
@@ -467,7 +493,7 @@ static void check_keypad(void)
 	unsigned int reg, value;
 	unsigned int col_mask, col_mode, row_mask, row_mode;
 	unsigned int auto_download = 0;
-	unsigned int row_value[4];
+	unsigned int row_value[4], i;
 
 	if (cpu_is_s5pc100()) {
 		/* Set GPH2[2:0] to KP_COL[2:0] */
@@ -517,7 +543,10 @@ static void check_keypad(void)
 		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
 		value &= ~(0xFF);
 		/* Pull-up enabled */
-		value |= (0x2 << 6 | 0x2 << 4 | 0x2 << 2 | 0x2 << 0);
+		for (i = 0; row_mask; row_mask >>= 4) {
+			if (row_mask & 0xF)
+				value |= PULL_UP(i++);
+		}
 		writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
 
 		reg = S5PC110_KEYPAD_BASE;
@@ -531,7 +560,7 @@ static void check_keypad(void)
 
 	/* VOLUMEDOWN and CAM(Half shot) Button */
 	if ((value & KBR1) == 0) {
-		int i = 0;
+		i = 0;
 		while (i < 4) {
 			value = readl(reg + S5PC1XX_KEYIFCOL_OFFSET);
 			value |= 0xff;
@@ -583,23 +612,23 @@ static void check_mhl(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x39;	/* SIL9230 */
-	unsigned int pin, reg;
+	unsigned int reg;
 
 	/* MHL Power enable */
 	/* HDMI_EN : GPJ2[2] output mode */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
-	gpio_direction_output(pin, 2, 1);
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
+	gpio_direction_output(reg, 2, 1);
 
 
 	/* MHL_RST : MP0_4[7] output mode */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
-	gpio_direction_output(pin, 7, 0);
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
+	gpio_direction_output(reg, 7, 0);
 
 	/* 10ms required after reset */
 	udelay(10000);
 
 	/* output enable */
-	gpio_set_value(pin, 7, 1);
+	gpio_set_value(reg, 7, 1);
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
@@ -777,11 +806,6 @@ static void check_micro_usb(void)
 	}
 }
 
-#define OUTPUT0(x)		(0x0 << ((x) << 1))
-#define OUTPUT1(x)		(0x1 << ((x) << 1))
-#define INPUT(x)		(0x2 << ((x) << 1))
-#define PREVIOUS(x)		(0x3 << ((x) << 1))
-
 struct gpio_powermode {
 	unsigned int	conpdn;
 	unsigned int	pudpdn;
@@ -941,8 +965,8 @@ int misc_init_r(void)
 	/* Enable T-Flash at Limo Universal */
 	enable_t_flash();
 
-	/* Adjust the pins */
-	adjust_pins();
+	/* Setup Limo Real board GPIOs */
+	setup_limo_real_gpios();
 
 	/* To usbdown automatically */
 	check_keypad();
