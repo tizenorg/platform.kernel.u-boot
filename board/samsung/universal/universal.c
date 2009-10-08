@@ -318,44 +318,56 @@ static void check_auto_burn(void)
 
 static void enable_ldos(void)
 {
-	unsigned int pin, value;
+	unsigned int reg, value;
 
 	if (cpu_is_s5pc100())
 		return;
 
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output mode */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
+	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
 
-	value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
 	value &= ~(0xf << 24);			/* 24 = 6 * 4 */
 	value |= (1 << 24);
-	writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
 	/* output enable */
-	value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
 	value |= (1 << 6);			/* 6 = 6 * 1 */
-	writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
 
 #if 0
-	value = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
+	value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
 	value &= ~(3 << 12);			/* 12 = 6 * 2 */
 	value |= (0 << 12);			/* Pull-up/down disable */
-	writel(value, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
 #endif
 
 	if (board_is_limo_real()) {
 		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output mode */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
 
-		value = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
+		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
 		value &= ~(0xf << 16);			/* 16 = 4 * 4 */
 		value |= (1 << 16);
-		writel(value, pin + S5PC1XX_GPIO_CON_OFFSET);
+		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
 
 		/* output enable */
-		value = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
+		value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
 		value |= (1 << 4);			/* 4 = 4 * 1 */
-		writel(value, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
+
+		/* AP_PS_HOLD: XEINT_0: GPH0[0] output mode */
+		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H0_OFFSET);
+
+		value = readl(reg+ S5PC1XX_GPIO_CON_OFFSET);
+		value &= ~(0xf << 0);			/* 0 = 0 * 4 */
+		value |= (1 << 0);			/* output */
+		writel(value, reg+ S5PC1XX_GPIO_CON_OFFSET);
+
+		value = readl(reg+ S5PC1XX_GPIO_DAT_OFFSET);
+		value |= (1 << 0);			/* 0 = 0 * 1 */
+		writel(value, reg+ S5PC1XX_GPIO_DAT_OFFSET);
 	}
 }
 
