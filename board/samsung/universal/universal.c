@@ -997,8 +997,6 @@ void board_sleep_init(void)
 	i2c_write(addr, 0x13, 1, val, 1);
 	i2c_read(addr, 0x13, 1, val, 1);
 	printf("ONOFF3 0x%02x\n", val[0]);
-
-	printf("%s[%d]\n", __func__, __LINE__);
 }
 
 #ifdef CONFIG_CMD_USBDOWN
@@ -1154,8 +1152,7 @@ static int pmic_ldo_control(int buck, int ldo, int on)
 		val[0] &= ~(1 << shift);
 	i2c_write(addr, reg, 1, val, 1);
 	i2c_read(addr, reg, 1, val, 1);
-	printf("%s %d value 0x%x, %s\n", __func__, __LINE__,
-		buck ? "buck" : "ldo", buck ? : ldo,
+	printf("%s %d value 0x%x, %s\n", buck ? "buck" : "ldo", buck ? : ldo,
 		val[0], val[0] & (1 << shift) ? "on" : "off");
 
 	return 0;
