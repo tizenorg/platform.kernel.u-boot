@@ -938,11 +938,9 @@ static void setup_power_down_mode_registers(void)
 	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_A0_OFFSET);
 	p = powerdown_modes;
 	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++) {
-#if 0
 		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
 		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
 		reg += 0x20;
-#endif
 	}
 }
 
