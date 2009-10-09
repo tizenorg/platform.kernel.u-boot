@@ -115,7 +115,7 @@ swap_memory:
 	 * 0x64 0x03 (0x1F)	0x07 (0x1F)	0x0f (0x0F)
 	 *
 	 * Check (0 << 2) at 0x64 at boot
-	 * Check (1 << 7) at 0x44 at suspend
+	 * Check (1 << 7) at 0x24 at suspend
 	 */
 	ldrne	r4, =0x40f00322				@ 2Gib
 
@@ -124,7 +124,7 @@ swap_memory:
 	mov	r1, r1, lsr #2
 	cmp	r1, #0
 	beq	2f
-	ldr	r1, [r2, #0x44]
+	ldr	r1, [r2, #0x24]
 	mov	r1, r1, lsr #7
 	cmp	r1, #1
 	ldrne	r4, =0x40f80222				@ 1Gib
