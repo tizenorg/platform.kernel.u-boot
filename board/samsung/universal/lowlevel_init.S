@@ -134,9 +134,6 @@ lowlevel_init:
 	/* for UART */
 	bl	uart_asm_init
 
-	/* for TZPC */
-	bl	tzpc_asm_init
-
 	bl	internal_ram_init
 #endif
 
@@ -444,39 +441,5 @@ uart_asm_init:
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
 200:
-	mov	pc, lr
-
-/*
- * tzpc_asm_init: Initialize TZPC
- */
-tzpc_asm_init:
-	cmp	r7, r8
-	ldreq	r0, =0xE3800000			@ TZPC0
-	ldrne	r0, =0xF1500000			@ TZPC0
-	mov	r1, #0x0
-	str	r1, [r0]
-	mov	r1, #0xff
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-
-	ldreq	r0, =0xE2800000			@ TZPC1
-	ldrne	r0, =0xFAD00000			@ TZPC1
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-
-	ldreq	r0, =0xE2900000			@ TZPC2
-	ldrne	r0, =0xE0600000			@ TZPC2
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-	str	r1, [r0, #0x828]
-
-	ldrne	r0, =0xE1C00000			@ TZPC3 S5PC110 only
-	strne	r1, [r0, #0x804]
-	strne	r1, [r0, #0x810]
-	strne	r1, [r0, #0x81C]
-
 	mov	pc, lr
 #endif
