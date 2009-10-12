@@ -1,15 +1,29 @@
 /*
  * S3C64XX/S5PC100 OneNAND driver at U-Boot
  *
- *  Copyright (C) 2008-2009 Samsung Electronics
- *  Kyungmin Park <kyungmin.park@samsung.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+ * Copyright (C) 2008-2009 Samsung Electronics
+ * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * Implementation:
  *	Emulate the pseudo BufferRAM
+ *
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -17,8 +31,7 @@
 #include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
-
-#include <samsung_onenand.h>
+#include <linux/mtd/samsung_onenand.h>
 
 #include <asm/io.h>
 #include <asm/errno.h>
@@ -26,7 +39,7 @@
 #ifdef ONENAND_DEBUG
 #define DPRINTK(format, args...)					\
 do {									\
-	printk("%s[%d]: " format "\n", __func__, __LINE__, ##args);	\
+	printf("%s[%d]: " format "\n", __func__, __LINE__, ##args);	\
 } while (0)
 #else
 #define DPRINTK(...)			do { } while (0)
@@ -50,56 +63,38 @@ do {									\
 #define ONENAND_PIPELINE_READ		0x4000
 
 #if defined(CONFIG_S3C64XX)
-#define AHB_ADDR			0x20000000
 #define MAP_00				(0x0 << 24)
 #define MAP_01				(0x1 << 24)
 #define MAP_10				(0x2 << 24)
 #define MAP_11				(0x3 << 24)
-
-/* TODO Please verify it at s3c6400. It has different offsets */
-#define MEM_ADDR(fba, fpa, fsa)		((fba) << 12 | (fpa) << 6 | (fsa) << 4)
-
 #elif defined(CONFIG_S5PC1XX)
-#define AHB_ADDR			0xB0000000
 #define MAP_00				(0x0 << 26)
 #define MAP_01				(0x1 << 26)
 #define MAP_10				(0x2 << 26)
 #define MAP_11				(0x3 << 26)
-
-#define MEM_ADDR(fba, fpa, fsa)		((fba) << 13 | (fpa) << 7 | (fsa) << 5)
 #endif
 
-/* The 'addr' is byte address. It makes a 16-bit word */
-#define CMD_MAP_00(addr)		(MAP_00 | ((addr) << 1))
-#define CMD_MAP_01(mem_addr) 		(MAP_01 | (mem_addr))
+/* read/write of XIP buffer */
+#define CMD_MAP_00(mem_addr)		(MAP_00 | ((mem_addr) << 1))
+/* read/write to the memory device */
+#define CMD_MAP_01(mem_addr)		(MAP_01 | (mem_addr))
+/* control special functions of the memory device */
 #define CMD_MAP_10(mem_addr)		(MAP_10 | (mem_addr))
-#define CMD_MAP_11(addr)		(MAP_11 | ((addr) << 2))
+/* direct interface(direct access) with the memory device */
+#define CMD_MAP_11(mem_addr)		(MAP_11 | ((mem_addr) << 2))
 
 struct s3c_onenand {
 	struct mtd_info	*mtd;
-
 	void __iomem	*base;
 	void __iomem	*ahb_addr;
-
 	int		bootram_command;
-
 	void __iomem	*page_buf;
 	void __iomem	*oob_buf;
-
 	unsigned int	(*mem_addr)(int fba, int fpa, int fsa);
+	struct samsung_onenand *reg;
 };
 
 static struct s3c_onenand *onenand;
-
-static int s3c_read_reg(int offset)
-{
-	return readl(onenand->base + offset);
-}
-
-static void s3c_write_reg(int value, int offset)
-{
-	writel(value, onenand->base + offset);
-}
 
 static int s3c_read_cmd(unsigned int cmd)
 {
@@ -111,32 +106,49 @@ static void s3c_write_cmd(int value, unsigned int cmd)
 	writel(value, onenand->ahb_addr + cmd);
 }
 
-static unsigned int s5pc100_mem_addr(int fba, int fpa, int fsa)
+/*
+ * MEM_ADDR
+ *
+ * fba: flash block address
+ * fpa: flash page address
+ * fsa: flash sector address
+ *
+ * return the buffer address on the memory device
+ * It will be combined with CMD_MAP_XX
+ */
+#if defined(CONFIG_S3C64XX)
+static unsigned int s3c_mem_addr(int fba, int fpa, int fsa)
+{
+	return (fba << 12) | (fpa << 6) | (fsa << 4);
+}
+#elif defined(CONFIG_S5PC1XX)
+static unsigned int s3c_mem_addr(int fba, int fpa, int fsa)
 {
 	return (fba << 13) | (fpa << 7) | (fsa << 5);
 }
+#endif
 
 static void s3c_onenand_reset(void)
 {
 	unsigned long timeout = 0x10000;
 	int stat;
 
-	s3c_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
-	while (1 && timeout--) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
+	writel(ONENAND_MEM_RESET_COLD, &onenand->reg->mem_reset);
+	while (timeout--) {
+		stat = readl(&onenand->reg->int_err_stat);
 		if (stat & RST_CMP)
 			break;
 	}
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	stat = readl(&onenand->reg->int_err_stat);
+	writel(stat, &onenand->reg->int_err_ack);
 
 	/* Clear interrupt */
-	s3c_write_reg(0x0, INT_ERR_ACK_OFFSET);
+	writel(0x0, &onenand->reg->int_err_ack);
 	/* Clear the ECC status */
-	s3c_write_reg(0x0, ECC_ERR_STAT_OFFSET);
+	writel(0x0, &onenand->reg->ecc_err_stat);
 }
 
-static unsigned short s3c_onenand_readw(void __iomem * addr)
+static unsigned short s3c_onenand_readw(void __iomem *addr)
 {
 	struct onenand_chip *this = onenand->mtd->priv;
 	int reg = addr - this->base;
@@ -146,17 +158,17 @@ static unsigned short s3c_onenand_readw(void __iomem * addr)
 	/* It's used for probing time */
 	switch (reg) {
 	case ONENAND_REG_MANUFACTURER_ID:
-		return s3c_read_reg(MANUFACT_ID_OFFSET);
+		return readl(&onenand->reg->manufact_id);
 	case ONENAND_REG_DEVICE_ID:
-		return s3c_read_reg(DEVICE_ID_OFFSET);
+		return readl(&onenand->reg->device_id);
 	case ONENAND_REG_VERSION_ID:
-		return s3c_read_reg(FLASH_VER_ID_OFFSET);
+		return readl(&onenand->reg->flash_ver_id);
 	case ONENAND_REG_DATA_BUFFER_SIZE:
-		return s3c_read_reg(DATA_BUF_SIZE_OFFSET);
+		return readl(&onenand->reg->data_buf_size);
 	case ONENAND_REG_TECHNOLOGY:
-		return s3c_read_reg(TECH_OFFSET);
+		return readl(&onenand->reg->tech);
 	case ONENAND_REG_SYS_CFG1:
-		return s3c_read_reg(MEM_CFG_OFFSET);
+		return readl(&onenand->reg->mem_cfg);
 
 	/* Used at unlock all status */
 	case ONENAND_REG_CTRL_STATUS:
@@ -172,11 +184,11 @@ static unsigned short s3c_onenand_readw(void __iomem * addr)
 	/* BootRAM access control */
 	if (reg < ONENAND_DATARAM && onenand->bootram_command) {
 		if (word_addr == 0)
-			return s3c_read_reg(MANUFACT_ID_OFFSET);
+			return readl(&onenand->reg->manufact_id);
 		if (word_addr == 1)
-			return s3c_read_reg(DEVICE_ID_OFFSET);
+			return readl(&onenand->reg->device_id);
 		if (word_addr == 2)
-			return s3c_read_reg(FLASH_VER_ID_OFFSET);
+			return readl(&onenand->reg->flash_ver_id);
 	}
 
 	value = s3c_read_cmd(CMD_MAP_11(word_addr)) & 0xffff;
@@ -185,7 +197,7 @@ static unsigned short s3c_onenand_readw(void __iomem * addr)
 	return value;
 }
 
-static void s3c_onenand_writew(unsigned short value, void __iomem * addr)
+static void s3c_onenand_writew(unsigned short value, void __iomem *addr)
 {
 	struct onenand_chip *this = onenand->mtd->priv;
 	int reg = addr - this->base;
@@ -194,7 +206,7 @@ static void s3c_onenand_writew(unsigned short value, void __iomem * addr)
 	/* It's used for probing time */
 	switch (reg) {
 	case ONENAND_REG_SYS_CFG1:
-		s3c_write_reg(value, MEM_CFG_OFFSET);
+		writel(value, &onenand->reg->mem_cfg);
 		return;
 
 	case ONENAND_REG_START_ADDRESS1:
@@ -216,7 +228,8 @@ static void s3c_onenand_writew(unsigned short value, void __iomem * addr)
 			return;
 		}
 		if (value == ONENAND_CMD_RESET) {
-			s3c_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
+			writel(ONENAND_MEM_RESET_COLD,
+					&onenand->reg->mem_reset);
 			onenand->bootram_command = 0;
 			return;
 		}
@@ -251,35 +264,37 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 		break;
 	}
 
-	while (1 && timeout--) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
+	while (timeout--) {
+		stat = readl(&onenand->reg->int_err_stat);
 		if (stat & flags)
 			break;
 	}
 
 	/* To get correct interrupt status in timeout case */
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	stat = readl(&onenand->reg->int_err_stat);
+	writel(stat, &onenand->reg->int_err_ack);
 
 	/*
-	 * 	
 	 * In the Spec. it checks the controller status first
 	 * However if you get the correct information in case of
 	 * power off recovery (POR) test, it should read ECC status first
 	 */
 	if (stat & LOAD_CMP) {
-		ecc = s3c_read_reg(ECC_ERR_STAT_OFFSET);
+		ecc = readl(&onenand->reg->ecc_err_stat);
 		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
-			printk(KERN_INFO "onenand_wait: ECC error = 0x%04x\n", ecc);
+			printk(KERN_INFO "%s: ECC error = 0x%04x\n",
+					__func__, ecc);
 			mtd->ecc_stats.failed++;
 			return -EBADMSG;
 		}
 	}
 
 	if (stat & (LOCKED_BLK | ERS_FAIL | PGM_FAIL | LD_FAIL_ECC_ERR)) {
-		printk(KERN_INFO "s3c_onenand_wait: controller error = 0x%04x\n", stat);
+		printk(KERN_INFO "%s: controller error = 0x%04x\n",
+				__func__, stat);
 		if (stat & LOCKED_BLK)
-			printk(KERN_INFO "s3c_onenand_wait: it's locked error = 0x%04x\n", stat);
+			printk(KERN_INFO "%s: it's locked error = 0x%04x\n",
+					__func__, stat);
 
 		return -EIO;
 	}
@@ -287,8 +302,8 @@ static int s3c_onenand_wait(struct mtd_info *mtd, int state)
 	return 0;
 }
 
-static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
-                           size_t len)
+static int s3c_onenand_command(struct mtd_info *mtd, int cmd,
+		loff_t addr, size_t len)
 {
 	struct onenand_chip *this = mtd->priv;
 	unsigned int *m, *s;
@@ -336,7 +351,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		return 0;
 
 	case ONENAND_CMD_READOOB:
-		s3c_write_reg(TSRF, TRANS_SPARE_OFFSET);
+		writel(TSRF, &onenand->reg->trans_spare);
 		/* Main */
 		for (i = 0; i < mcount; i++)
 			*m++ = s3c_read_cmd(CMD_MAP_01(mem_addr));
@@ -345,7 +360,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		for (i = 0; i < scount; i++)
 			*s++ = s3c_read_cmd(CMD_MAP_01(mem_addr));
 
-		s3c_write_reg(0, TRANS_SPARE_OFFSET);
+		writel(0, &onenand->reg->trans_spare);
 		return 0;
 
 	case ONENAND_CMD_PROG:
@@ -355,7 +370,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		return 0;
 
 	case ONENAND_CMD_PROGOOB:
-		s3c_write_reg(TSRF, TRANS_SPARE_OFFSET);
+		writel(TSRF, &onenand->reg->trans_spare);
 
 		/* Main - dummy write */
 		for (i = 0; i < mcount; i++)
@@ -365,7 +380,7 @@ static int s3c_onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 		for (i = 0; i < scount; i++)
 			s3c_write_cmd(*s++, CMD_MAP_01(mem_addr));
 
-		s3c_write_reg(0, TRANS_SPARE_OFFSET);
+		writel(0, &onenand->reg->trans_spare);
 		return 0;
 
 	case ONENAND_CMD_UNLOCK_ALL:
@@ -434,18 +449,19 @@ static int onenand_write_bufferram(struct mtd_info *mtd, loff_t addr, int area,
 
 static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 {
+	struct samsung_onenand *reg = (struct samsung_onenand *)onenand->base;
 	unsigned int flags = INT_ACT | LOAD_CMP;
 	unsigned int stat;
 	unsigned long timeout = 0x10000;
 
-	while (1 && timeout--) {
-		stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
+	while (timeout--) {
+		stat = readl(&reg->int_err_stat);
 		if (stat & flags)
 			break;
 	}
 	/* To get correct interrupt status in timeout case */
-	stat = s3c_read_reg(INT_ERR_STAT_OFFSET);
-	s3c_write_reg(stat, INT_ERR_ACK_OFFSET);
+	stat = readl(&onenand->reg->int_err_stat);
+	writel(stat, &onenand->reg->int_err_ack);
 
 	if (stat & LD_FAIL_ECC_ERR) {
 		s3c_onenand_reset();
@@ -453,7 +469,7 @@ static int s3c_onenand_bbt_wait(struct mtd_info *mtd, int state)
 	}
 
 	if (stat & LOAD_CMP) {
-		int ecc = s3c_read_reg(ECC_ERR_STAT_OFFSET);
+		int ecc = readl(&onenand->reg->ecc_err_stat);
 		if (ecc & ONENAND_ECC_4BIT_UNCORRECTABLE) {
 			s3c_onenand_reset();
 			return ONENAND_BBT_READ_ERROR;
@@ -474,14 +490,15 @@ static void s3c_onenand_check_lock_status(struct mtd_info *mtd)
 	for (block = 0; block < end; block++) {
 		tmp = s3c_read_cmd(CMD_MAP_01(onenand->mem_addr(block, 0, 0)));
 
-		if (s3c_read_reg(INT_ERR_STAT_OFFSET) & LOCKED_BLK) {
+		if (readl(&onenand->reg->int_err_stat) & LOCKED_BLK) {
 			printf("block %d is write-protected!\n", block);
-			s3c_write_reg(LOCKED_BLK, INT_ERR_ACK_OFFSET);
+			writel(LOCKED_BLK, &onenand->reg->int_err_ack);
 		}
 	}
 }
 
-static void s3c_onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int cmd)
+static void s3c_onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs,
+		size_t len, int cmd)
 {
 	struct onenand_chip *this = mtd->priv;
 	int start, end, start_mem_addr, end_mem_addr;
@@ -531,7 +548,6 @@ static void s3c_onenand_unlock_all(struct mtd_info *mtd)
 	}
 
 	s3c_onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
-
 	s3c_onenand_check_lock_status(mtd);
 }
 
@@ -560,12 +576,10 @@ static void s3c_set_width_regs(struct onenand_chip *this)
 		FBA_WIDTH0_REG, FPA_WIDTH0_REG, FSA_WIDTH0_REG,
 		DDP_DEVICE_REG);
 
-	DPRINTK("mem_cfg0 0x%lx, sync mode %lu, dev_page_size %lu, BURST LEN %lu",
-		MEM_CFG0_REG,
-		SYNC_MODE_REG,
-		DEV_PAGE_SIZE_REG,
-		BURST_LEN0_REG
-		);
+	DPRINTK("mem_cfg0 0x%lx, sync mode %lu, "
+		"dev_page_size %lu, BURST LEN %lu",
+		MEM_CFG0_REG, SYNC_MODE_REG,
+		DEV_PAGE_SIZE_REG, BURST_LEN0_REG);
 
 	DEV_PAGE_SIZE_REG = 0x1;
 
@@ -579,31 +593,33 @@ static void s3c_set_width_regs(struct onenand_chip *this)
 void s3c_onenand_init(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
+	u32 size = (4 << 10);	/* 4 KiB */
 
 	onenand = malloc(sizeof(struct s3c_onenand));
 	if (!onenand)
 		return;
 
-	onenand->page_buf = malloc(SZ_4K * sizeof(char));
+	onenand->page_buf = malloc(size * sizeof(char));
 	if (!onenand->page_buf)
 		return;
-	memset(onenand->page_buf, 0xFF, SZ_4K);
+	memset(onenand->page_buf, 0xff, size);
 
 	onenand->oob_buf = malloc(128 * sizeof(char));
 	if (!onenand->oob_buf)
 		return;
-	memset(onenand->oob_buf, 0xFF, 128);
+	memset(onenand->oob_buf, 0xff, 128);
 
 	onenand->mtd = mtd;
 
-#ifdef CONFIG_S5PC1XX
-	/* S5PC100 specific values */
-	onenand->base = (void *) 0xE7100000;
-	onenand->ahb_addr = (void *) 0xB0000000;
-	onenand->mem_addr = s5pc100_mem_addr;
-#else
-#error Please fix it at s3c6410
+#if defined(CONFIG_S3C64XX)
+	onenand->base = (void *)0x70100000;
+	onenand->ahb_addr = (void *)0x20000000;
+#elif defined(CONFIG_S5PC1XX)
+	onenand->base = (void *)0xE7100000;
+	onenand->ahb_addr = (void *)0xB0000000;
 #endif
+	onenand->mem_addr = s3c_mem_addr;
+	onenand->reg = (struct samsung_onenand *)onenand->base;
 
 	this->read_word = s3c_onenand_readw;
 	this->write_word = s3c_onenand_writew;
