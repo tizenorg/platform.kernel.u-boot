@@ -22,12 +22,6 @@
 #ifndef __ASM_ARM_ARCH_PWM_H_
 #define __ASM_ARM_ARCH_PWM_H_
 
-/*
- * PWM Timer
- */
-#define S5PC100_PWMTIMER_BASE	0xEA000000
-#define S5PC110_PWMTIMER_BASE	0xE2500000
-
 /* PWM timer addressing */
 #define S5PC100_TIMER_BASE	S5PC100_PWMTIMER_BASE
 #define S5PC110_TIMER_BASE	S5PC110_PWMTIMER_BASE
@@ -40,26 +34,26 @@
 #define S5PC1XX_TCON4_START		(1 << 20)
 
 #ifndef __ASSEMBLY__
-typedef struct s5pc1xx_timer {
-	volatile unsigned long	TCFG0;
-	volatile unsigned long	TCFG1;
-	volatile unsigned long	TCON;
-	volatile unsigned long	TCNTB0;
-	volatile unsigned long	TCMPB0;
-	volatile unsigned long	TCNTO0;
-	volatile unsigned long	TCNTB1;
-	volatile unsigned long	TCMPB1;
-	volatile unsigned long	TCNTO1;
-	volatile unsigned long	TCNTB2;
-	volatile unsigned long	TCMPB2;
-	volatile unsigned long	TCNTO2;
-	volatile unsigned long	TCNTB3;
-	volatile unsigned long	res1;
-	volatile unsigned long	TCNTO3;
-	volatile unsigned long	TCNTB4;
-	volatile unsigned long	TCNTO4;
-	volatile unsigned long	TINTCSTAT;
-} s5pc1xx_timers_t;
+struct s5pc1xx_timer {
+	unsigned long	tcfg0;
+	unsigned long	tcfg1;
+	unsigned long	tcon;
+	unsigned long	tcntb0;
+	unsigned long	tcmpb0;
+	unsigned long	tcnto0;
+	unsigned long	tcntb1;
+	unsigned long	tcmpb1;
+	unsigned long	tcnto1;
+	unsigned long	tcntb2;
+	unsigned long	tcmpb2;
+	unsigned long	tcnto2;
+	unsigned long	tcntb3;
+	unsigned long	res1;
+	unsigned long	tcnto3;
+	unsigned long	tcntb4;
+	unsigned long	tcnto4;
+	unsigned long	tintcstat;
+};
 #endif	/* __ASSEMBLY__ */
 
 #endif
