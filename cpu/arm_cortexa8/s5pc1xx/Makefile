@@ -30,14 +30,15 @@ LIB	= $(obj)lib$(SOC).a
 
 SOBJS	= reset.o
 
-COBJS-y	= timer.o
-COBJS-$(CONFIG_S5PC1XX)	+= clock.o
-COBJS-$(CONFIG_S5PC1XX)	+= cpu_info.o
-COBJS-$(CONFIG_S5PC1XX)	+= cache.o
+COBJS	+= cache.o
+COBJS	+= clock.o
+COBJS	+= cpu_info.o
+COBJS	+= timer.o
 COBJS-$(CONFIG_S5PC110)	+= sleep.o
 COBJS-$(CONFIG_CMD_USBDOWN) += usb-hs-otg.o usb_downloader.o
 
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS-y))
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
 
 all:	 $(obj).depend $(LIB)
 
