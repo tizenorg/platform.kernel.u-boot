@@ -1,5 +1,24 @@
 /*
- * OneNAND initialization at U-Boot
+ * Copyright (C) 2008-2009 Samsung Electronics
+ * Kyungmin Park <kyungmin.park@samsung.com>
+ *
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -27,16 +46,6 @@ static inline void onenand_write_reg(int value, int offset)
 	writel(value, S5PC100_ONENAND_BASE + offset);
 }
 
-static int s5pc1xx_clock_read(int offset)
-{
-	return readl(S5PC1XX_CLOCK_BASE + offset);
-}
-
-static void s5pc1xx_clock_write(int value, int offset)
-{
-	writel(value, S5PC1XX_CLOCK_BASE + offset);
-}
-
 void onenand_board_init(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
@@ -46,38 +55,37 @@ void onenand_board_init(struct mtd_info *mtd)
 		this->base = (void *) 0xB0000000;
 		this->options |= ONENAND_RUNTIME_BADBLOCK_CHECK;
 	} else {
+		struct s5pc100_clock *clk =
+			(struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
 		this->base = (void *) S5PC100_ONENAND_BASE;
 
 		/* D0 Domain system 1 clock gating */
-		value = s5pc1xx_clock_read(S5P_CLK_GATE_D00_OFFSET);
+		value = readl(&clk->gate_d00);
 		value &= ~(1 << 2);		/* CFCON */
 		value |= (1 << 2);
-		s5pc1xx_clock_write(value, S5P_CLK_GATE_D00_OFFSET);
+		writel(value, &clk->gate_d00);
 
 		/* D0 Domain memory clock gating */
-		value = s5pc1xx_clock_read(S5P_CLK_GATE_D01_OFFSET);
+		value = readl(&clk->gate_d01);
 		value &= ~(1 << 2);		/* CLK_ONENANDC */
 		value |= (1 << 2);
-		s5pc1xx_clock_write(value, S5P_CLK_GATE_D01_OFFSET);
+		writel(value, &clk->gate_d01);
 
 		/* System Special clock gating */
-		value = s5pc1xx_clock_read(S5P_CLK_GATE_SCLK0_OFFSET);
+		value = readl(&clk->gate_sclk0);
 		value &= ~(1 << 2);		/* OneNAND */
 		value |= (1 << 2);
-		s5pc1xx_clock_write(value, S5P_CLK_GATE_SCLK0_OFFSET);
+		writel(value, &clk->gate_sclk0);
 
-		value = s5pc1xx_clock_read(S5P_CLK_SRC0_OFFSET);
+		value = readl(&clk->src0);
 		value &= ~(1 << 24);		/* MUX_1nand: 0 from HCLKD0 */
-	//	value |= (1 << 24);		/* MUX_1nand: 1 from DIV_D1_BUS */
 		value &= ~(1 << 20);		/* MUX_HREF: 0 from FIN_27M */
-		s5pc1xx_clock_write(value, S5P_CLK_SRC0_OFFSET);
+		writel(value, &clk->src0);
 
-		value = s5pc1xx_clock_read(S5P_CLK_DIV1_OFFSET);
-	//	value &= ~(3 << 20);		/* DIV_1nand: 1 / (ratio+1) */
-	//	value |= (0 << 20);		/* ratio = 1 */
+		value = readl(&clk->div1);
 		value &= ~(3 << 16);
 		value |= (1 << 16);
-		s5pc1xx_clock_write(value, S5P_CLK_DIV1_OFFSET);
+		writel(value, &clk->div1);
 
 		onenand_write_reg(ONENAND_MEM_RESET_COLD, MEM_RESET_OFFSET);
 

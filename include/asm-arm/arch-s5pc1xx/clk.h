@@ -1,8 +1,7 @@
 /*
- * (C) Copyright 2009
- * Samsung Electronics, <www.samsung.com/sec>
- * Heungjun Kim <riverful.kim@samsung.com>
+ * (C) Copyright 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,24 +23,20 @@
 #ifndef __ASM_ARM_ARCH_CLK_H_
 #define __ASM_ARM_ARCH_CLK_H_
 
-unsigned long get_pll_clk(int pllreg);
-unsigned long get_arm_clk(void);
-unsigned long get_fclk(void);
-unsigned long get_mclk(void);
-unsigned long get_hclk(void);
-unsigned long get_pclk(void);
-unsigned long get_uclk(void);
+void s5pc1xx_clock_init(void);
 
-/*s5pc110 */
+extern unsigned long (*get_pll_clk)(int pllreg);
+extern unsigned long (*get_arm_clk)(void);
+extern unsigned long (*get_pclk)(void);
+
+#define APLL	0
+#define MPLL	1
+#define EPLL	2
+#define HPLL	3
+#define VPLL	4
+
 #define CLK_M	0
 #define CLK_D	1
 #define CLK_P	2
-
-unsigned long get_hclk_sys(int clk);
-unsigned long get_pclk_sys(int clk);
-
-/* s5pc100 */
-unsigned long get_pclkd0(void);
-unsigned long get_pclkd1(void);
 
 #endif

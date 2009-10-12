@@ -1091,33 +1091,25 @@ int usb_board_init(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
-static int s5pc1xx_clock_read_reg(int offset)
-{
-	return readl(S5PC1XX_CLOCK_BASE + offset);
-}
-
-static int s5pc1xx_clock_write_reg(unsigned int val, int offset)
-{
-	return writel(val, S5PC1XX_CLOCK_BASE + offset);
-}
 
 int board_mmc_init(bd_t *bis)
 {
 	unsigned int pin, reg;
 	unsigned int clock;
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	int i;
 
 	/* MMC0 Clock source = SCLKMPLL */
-	reg = s5pc1xx_clock_read_reg(S5P_CLK_SRC4_OFFSET);
+	reg = readl(&clk->src4);
 	reg &= ~0xf;
 	reg |= 0x6;
-	s5pc1xx_clock_write_reg(reg, S5P_CLK_SRC4_OFFSET);
+	writel(reg, &clk->src4);
 
-	reg = s5pc1xx_clock_read_reg(S5P_CLK_DIV4_OFFSET);
+	reg = readl(&clk->div4);
 	reg &= ~0xf;
 
 	/* set div value near 50MHz */
-	clock = get_mclk() / 1000000;
+	clock = get_pll_clk(MPLL) / 1000000;
 	for (i = 0; i < 0xf; i++) {
 		if ((clock / (i + 1)) <= 50) {
 			reg |= i << 0;
@@ -1125,7 +1117,7 @@ int board_mmc_init(bd_t *bis)
 		}
 	}
 
-	s5pc1xx_clock_write_reg(reg, S5P_CLK_DIV4_OFFSET);
+	writel(reg, &clk->div4);
 
 	/*
 	 * MMC0 GPIO

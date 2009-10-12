@@ -33,6 +33,8 @@ int arch_cpu_init(void)
 	s5pc1xx_cpu_id = readl(S5PC1XX_PRO_ID);
 	s5pc1xx_cpu_id = 0xC000 | ((s5pc1xx_cpu_id & 0x00FFF000) >> 12);
 
+	s5pc1xx_clock_init();
+
 	return 0;
 }
 #endif
@@ -49,26 +51,6 @@ int print_cpuinfo(void)
 
 	printf("CPU:\tS5P%X@%sMHz\n",
 			s5pc1xx_cpu_id, strmhz(buf, get_arm_clk()));
-	if (cpu_is_s5pc110()) {
-		printf("\tAPLL = %s MHz, ", strmhz(buf, get_fclk()));
-		printf("MPLL = %s MHz, ", strmhz(buf, get_mclk()));
-		printf("EPLL = %s MHz\n", strmhz(buf, get_uclk()));
-
-		printf("\tHclk: Msys %s MHz, ",
-				strmhz(buf, get_hclk_sys(CLK_M)));
-		printf("Dsys %7s MHz, ", strmhz(buf, get_hclk_sys(CLK_D)));
-		printf("Psys %7s MHz\n", strmhz(buf, get_hclk_sys(CLK_P)));
-
-		printf("\tPclk: Msys %s MHz, ",
-				strmhz(buf, get_pclk_sys(CLK_M)));
-		printf("Dsys %7s MHz, ", strmhz(buf, get_pclk_sys(CLK_D)));
-		printf("Psys %7s MHz\n", strmhz(buf, get_pclk_sys(CLK_P)));
-	} else {
-		printf("\tFclk = %s MHz\n", strmhz(buf, get_fclk()));
-		printf("\tHclkD0 = %s MHz\n", strmhz(buf, get_hclk()));
-		printf("\tPclkD0 = %s MHz\n", strmhz(buf, get_pclkd0()));
-		printf("\tPclkD1 = %s MHz\n", strmhz(buf, get_pclkd1()));
-	}
 
 	return 0;
 }
