@@ -482,7 +482,6 @@ void LoadCPImage(void)
 }
 
 U_BOOT_CMD(modem,	CONFIG_SYS_MAXARGS,	1,	do_modem,
-	"Modem init\n",
-	"info [l[ayout]]"
-		" - Display volume and ubi layout information\n"
+	"initialize the Modem",
+	"on"
 );
