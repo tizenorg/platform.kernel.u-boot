@@ -1,8 +1,7 @@
 /*
- * (C) Copyright 2009
- * Samsung Electronics, <www.samsung.com/sec>
- * Heungjun Kim <riverful.kim@samsung.com>
+ * (C) Copyright 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,37 +23,24 @@
 #ifndef __ASM_ARCH_UART_H_
 #define __ASM_ARCH_UART_H_
 
-/* 
- * UART
- */
-/* uart base address */
-#define S5PC100_PA_UART		0xEC000000
-#define S5PC110_PA_UART		0xE2900000
-
 #ifndef __ASSEMBLY__
-typedef struct s5pc1xx_uart {
-	volatile unsigned long	ULCON;
-	volatile unsigned long	UCON;
-	volatile unsigned long	UFCON;
-	volatile unsigned long	UMCON;
-	volatile unsigned long	UTRSTAT;
-	volatile unsigned long	UERSTAT;
-	volatile unsigned long	UFSTAT;
-	volatile unsigned long	UMSTAT;
-	volatile unsigned char	UTXH;
-	volatile unsigned char	res1[3];
-	volatile unsigned char	URXH;
-	volatile unsigned char	res2[3];
-	volatile unsigned long	UBRDIV;
-	volatile unsigned short	UDIVSLOT;
-	volatile unsigned char	res3[2];
-} s5pc1xx_uart_t;
-
-enum s5pc1xx_uarts_nr {
-	S5PC1XX_UART0,
-	S5PC1XX_UART1,
-	S5PC1XX_UART2,
-	S5PC1XX_UART3,
+struct s5pc1xx_uart {
+	unsigned long	ulcon;
+	unsigned long	ucon;
+	unsigned long	ufcon;
+	unsigned long	umcon;
+	unsigned long	utrstat;
+	unsigned long	uerstat;
+	unsigned long	ufstat;
+	unsigned long	umstat;
+	unsigned char	utxh;
+	unsigned char	res1[3];
+	unsigned char	urxh;
+	unsigned char	res2[3];
+	unsigned long	ubrdiv;
+	unsigned short	udivslot;
+	unsigned char	res3[2];
+	unsigned char	res4[0x3d0];
 };
 #endif	/* __ASSEMBLY__ */
 
