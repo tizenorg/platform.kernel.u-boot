@@ -727,15 +727,15 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_C0_OFFSET */
-		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
-		INPUT(4),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
-		PULL_DOWN(4),
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
+		OUTPUT0(4),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4),
 	}, {	/* S5PC110_GPIO_C1_OFFSET */
-		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
-		INPUT(4),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
-		PULL_DOWN(4),
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4),
 	}, {	/* S5PC110_GPIO_D0_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
@@ -824,16 +824,6 @@ static struct gpio_powermode powerdown_modes[] = {
 		OUTPUT0(4),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4),
-	}, {	/* S5PC110_GPIO_MP0_1_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT1(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_MP0_2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	},
 };
 
@@ -883,6 +873,29 @@ static void setup_power_down_mode_registers(void)
 		writel(p->conpdn, &bank->pdn_con);
 		writel(p->pudpdn, &bank->pdn_pull);
 	}
+	bank = &gpio->gpio_i;
+	writel(0x0008, &bank->dat);
+	bank = &gpio->gpio_mp0_1;
+	writel(0x5100, &bank->pdn_con);
+	writel(0x0000, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_2;
+	writel(0x0020, &bank->pdn_con);
+	writel(0x0000, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_3;
+	writel(0x0210, &bank->pdn_con);
+	writel(0x0000, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_4;
+	writel(0x2280, &bank->pdn_con);
+	writel(0x1140, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_5;
+	writel(0x00a2, &bank->pdn_con);
+	writel(0x0001, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_6;
+	writel(0x0000, &bank->pdn_con);
+	writel(0x0000, &bank->pdn_pull);
+	bank = &gpio->gpio_mp0_7;
+	writel(0x0000, &bank->pdn_con);
+	writel(0x0000, &bank->pdn_pull);
 
 #if 0
 	bank = &gpio->gpio_h0;

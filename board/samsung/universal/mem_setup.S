@@ -57,12 +57,12 @@ mem_ctrl_asm_init:
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL off */
-	ldr	r1, =0x50101001
+	ldr	r1, =0x50101009
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* auto refresh off */
-	ldr	r1, =0xff001010
+	ldr	r1, =0xff001010 | (1 << 7)
 	str	r1, [r0, #0x000]			@ CONCONTROL_OFFSET
 	strne	r1, [r6, #0x000]			@ CONCONTROL_OFFSET
 
@@ -231,7 +231,7 @@ swap_memory:
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
 	/* auto refresh on */
-	ldr	r1, =0xff002030
+	ldr	r1, =0xff002030 | (1 << 7)
 	str	r1, [r0, #0x000]			@ S5P_CONCONTROL
 	strne	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
