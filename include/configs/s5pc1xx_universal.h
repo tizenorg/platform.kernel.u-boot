@@ -140,30 +140,27 @@
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
-				",128k@0x40000(params)"\
-				",3m@0x60000(kernel)"\
-				",18m@0x360000(modem)"\
+				",128k(params)"\
+				",3m(kernel)"\
+				",18m(modem)"\
 				",-(UBI)"
+
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
-				",256k@0x40000(params)"\
-				",3m@0x80000(kernel)"\
-				",18m@0x380000(modem)"\
+				",256k(params)"\
+				",3m(kernel)"\
+				",18m(modem)"\
 				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#if 1
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
-#else
-#define CONFIG_BOOTCOMMAND	"bootm 0x31008000"
-#endif
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
 		" console=ttySAC2,115200n8" \
 		" ${meminfo}"
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" ${meminfo} " \
+		" ${meminfo}" \
 		" ${mtdparts}"
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
