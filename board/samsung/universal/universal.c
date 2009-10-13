@@ -42,27 +42,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define I2C_PMIC	1
 #define I2C_GPIO5	2
 
-/* GPIOs */
-#define CON_MASK(x)		(0xf << ((x) << 2))
-#define CON_INPUT(x)		(0x0 << ((x) << 2))
-#define CON_OUTPUT(x)		(0x1 << ((x) << 2))
-#define CON_SFR(x, v)		((v) << ((x) << 2))
-#define CON_IRQ(x)		(0xf << ((x) << 2))
-
-#define DAT_MASK(x)		(0x1 << (x))
-#define DAT_SET(x)		(0x1 << (x))
-
-#define PULL_MASK(x)		(0x3 << ((x) << 1))
-#define PULL_DIS(x)		(0x0 << ((x) << 1))
-#define PULL_DOWN(x)		(0x1 << ((x) << 1))
-#define PULL_UP(x)		(0x2 << ((x) << 1))
-
-#define PDN_MASK(x)		(0x3 << ((x) << 1))
-#define OUTPUT0(x)		(0x0 << ((x) << 1))
-#define OUTPUT1(x)		(0x1 << ((x) << 1))
-#define INPUT(x)		(0x2 << ((x) << 1))
-#define PREVIOUS(x)		(0x3 << ((x) << 1))
-
 static unsigned int board_rev;
 
 int board_init(void)
@@ -201,26 +180,27 @@ static void set_board_meminfo(void)
 	setenv("meminfo", "mem=80M mem=128M@0x40000000");
 }
 
+static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank* bank)
+{
+	unsigned int rev;
+
+	rev = gpio_get_value(bank, 2);
+	rev |= (gpio_get_value(bank, 3) << 1);
+	rev |= (gpio_get_value(bank, 4) << 2);
+
+	return rev;
+}
+
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
-	unsigned long pin;
-
-	if (cpu_is_s5pc110())
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J0_OFFSET);
-	else
-		pin = S5PC100_GPIO_BASE(S5PC100_GPIO_J0_OFFSET);
-
-	pin += S5PC1XX_GPIO_DAT_OFFSET;
-
-	/* check H/W revision */
-	board_rev  = readl(pin);
-
-	/* GPJ0[4:2] */
-	board_rev >>= 2;
-	board_rev &= 0x7;
 
 	if (cpu_is_s5pc100()) {
+		struct s5pc100_gpio *gpio =
+			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+
+		board_rev = get_hw_revision(&gpio->gpio_j0);
+
 		if (board_rev == 3) {
 			/* C100 TickerTape */
 			board = MACH_TICKERTAPE;
@@ -228,6 +208,11 @@ static void check_hw_revision(void)
 			setenv("meminfo", "mem=128M");
 		}
 	} else {
+		struct s5pc110_gpio *gpio =
+			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+		board_rev = get_hw_revision(&gpio->gpio_j0);
+
 		/*
 		 * Note Check 'Aquila' board first
 		 *
@@ -248,41 +233,30 @@ static void check_hw_revision(void)
 		 */
 
 		/* C110 Aquila */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
-		pin += S5PC1XX_GPIO_DAT_OFFSET;
-		if ((readl(pin) & 0xf0) == 0) {
+		if (gpio_get_value(&gpio->gpio_j1, 4) == 0) {
 			board = MACH_AQUILA;
 			board_rev |= J1_B2_BOARD_FEATURE;
 
 			/* Check board */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & (1 << 2)) == 0)
+			if (gpio_get_value(&gpio->gpio_h1, 2) == 0);
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & (1 << 2)) == 0)
+			if (gpio_get_value(&gpio->gpio_h3, 2) == 0);
 				board_rev |= LIMO_REAL_BOARD;
 #if 0
 			/* C110 Aquila ScreenSplit */
-			pin = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_3_OFFSET);
-			pin += S5PC1XX_GPIO_DAT_OFFSET;
-			if ((readl(pin) & (1 << 5)))
+			if (gpio_get_value(&gpio->gpio_mp0_3, 5))
 				board_rev |= SCREEN_SPLIT_FEATURE;
 			else {
-				pin = S5PC110_GPIO_BASE(S5PC110_GPIO_I_OFFSET);
-				pin += S5PC1XX_GPIO_DAT_OFFSET;
-				if ((readl(pin) & (1 << 3)))
+				if (gpio_get_value(&gpio->gpio_i, 3)
 					board_rev |= SCREEN_SPLIT_FEATURE;
 			}
 #endif
 		}
 
 		/* C110 TickerTape */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_D1_OFFSET);
-		pin += S5PC1XX_GPIO_DAT_OFFSET;
-		if ((readl(pin) & 0x03) == 0)
+		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
+			gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 	}
 
@@ -337,81 +311,10 @@ static void check_auto_burn(void)
 	writel(0xa5a55a5a, magic_base + 0x4);
 }
 
-static void gpio_direction_output(int reg, int offset, int enable)
-{
-	unsigned int value;
-
-	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~CON_MASK(offset);
-	value |= CON_OUTPUT(offset);
-	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-
-	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-	value &= ~DAT_MASK(offset);
-	if (enable)
-		value |= DAT_SET(offset);
-	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
-}
-
-static void gpio_direction_input(int reg, int offset)
-{
-	unsigned int value;
-
-	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~CON_MASK(offset);
-	value |= CON_INPUT(offset);
-	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-}
-
-static void gpio_irq_mode(int reg, int offset)
-{
-	unsigned int value;
-
-	value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-	value &= ~CON_MASK(offset);
-	value |= CON_IRQ(offset);
-	writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-}
-
-static void gpio_set_value(int reg, int offset, int enable)
-{
-	unsigned int value;
-
-	value = readl(reg + S5PC1XX_GPIO_DAT_OFFSET);
-	value &= ~DAT_MASK(offset);
-	if (enable)
-		value |= DAT_SET(offset);
-	writel(value, reg + S5PC1XX_GPIO_DAT_OFFSET);
-}
-
-enum pull_mode {
-	PULL_NONE_MODE,
-	PULL_DOWN_MODE,
-	PULL_UP_MODE,
-};
-
-static void gpio_pull_cfg(int reg, int offset, enum pull_mode mode)
-{
-	unsigned int value;
-
-	value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
-	value &= ~PULL_MASK(offset);
-	switch (mode) {
-	case PULL_DOWN_MODE:
-		value |= PULL_DOWN(offset);
-		break;
-	case PULL_UP_MODE:
-		value |= PULL_UP(offset);
-		break;
-	default:
-		break;
-	}
-	writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
-}
-
 static void pmic_pin_init(void)
 {
 	unsigned int reg, value;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (cpu_is_s5pc100())
 		return;
@@ -427,38 +330,35 @@ static void pmic_pin_init(void)
 	writel(value, reg);
 
 	/* nPOWER: XEINT_22: GPH2[6] interrupt mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
-	gpio_irq_mode(reg, 6);
-	gpio_pull_cfg(reg, 6, PULL_UP_MODE);
+	gpio_cfg_pin(&gpio->gpio_h2, 6, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h2, 6, GPIO_PULL_UP);
 }
 
 static void enable_ldos(void)
 {
-	unsigned int reg;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (cpu_is_s5pc100())
 		return;
 
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_G3_OFFSET);
-	gpio_direction_output(reg, 6, 1);
+	gpio_direction_output(&gpio->gpio_g3, 6, 1);
 }
 
 static void enable_t_flash(void)
 {
-	unsigned int reg;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET);
-	gpio_direction_output(reg, 4, 1);
+	gpio_direction_output(&gpio->gpio_mp0_5, 4, 1);
 }
 
 static void setup_limo_real_gpios(void)
 {
-	unsigned int reg, value;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (!board_is_limo_real())
 		return;
@@ -467,17 +367,14 @@ static void setup_limo_real_gpios(void)
 	 * Note: Please write GPIO alphabet order
 	 */
 	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET);
-	gpio_direction_output(reg, 4, 1);
+	gpio_direction_output(&gpio->gpio_f3, 4, 1);
 
 	/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_2_OFFSET);
-	gpio_direction_output(reg, 2, 1);
+	gpio_direction_output(&gpio->gpio_mp0_2, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-	gpio_irq_mode(reg, 4);
-	gpio_pull_cfg(reg, 4, PULL_UP_MODE);
+	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
 #define KBR3		(1 << 3)
@@ -488,63 +385,48 @@ static void setup_limo_real_gpios(void)
 static void check_keypad(void)
 {
 	unsigned int reg, value;
-	unsigned int col_mask, col_mode, row_mask, row_mode;
+	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int row_value[4], i;
 
 	if (cpu_is_s5pc100()) {
+		struct s5pc100_gpio *gpio =
+			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+
 		/* Set GPH2[2:0] to KP_COL[2:0] */
-		reg = S5PC100_GPIO_BASE(S5PC100_GPIO_H2_OFFSET);
-		reg += S5PC1XX_GPIO_CON_OFFSET;
-		value = readl(reg);
-		value &= ~(0xFFF);
-		value |= (0x333);
-		writel(value, reg);
+		gpio_cfg_pin(&gpio->gpio_h2, 0, 0x3);
+		gpio_cfg_pin(&gpio->gpio_h2, 1, 0x3);
+		gpio_cfg_pin(&gpio->gpio_h2, 2, 0x3);
 
 		/* Set GPH3[2:0] to KP_ROW[2:0] */
-		reg = S5PC100_GPIO_BASE(S5PC100_GPIO_H3_OFFSET);
-		reg += S5PC1XX_GPIO_CON_OFFSET;
-		value = readl(reg);
-		value &= ~(0xFFF);
-		value |= (0x333);
-		writel(value, reg);
+		gpio_cfg_pin(&gpio->gpio_h3, 0, 0x3);
+		gpio_cfg_pin(&gpio->gpio_h3, 1, 0x3);
+		gpio_cfg_pin(&gpio->gpio_h3, 2, 0x3);
 
 		reg = S5PC100_KEYPAD_BASE;
 	} else {
+		struct s5pc110_gpio *gpio =
+			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
 		if (board_is_limo_real() || board_is_limo_universal()) {
 			row_mask = 0x00FF;
-			row_mode = 0x0033;
 			col_mask = 0x0FFF;
-			col_mode = 0x0333;
 		} else {
-			row_mask = col_mask = 0xFFFF;
-			row_mode = col_mode = 0x3333;
+			row_mask = 0xFFFF;
+			col_mask = 0xFFFF;
 		}
 
-		/* Set GPH2[3:0] to KP_COL[3:0] */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H2_OFFSET);
-		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~col_mask;
-		value |= col_mode;
-		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
+		for (i = 0; i < 4; i++) {
+			/* Set GPH3[3:0] to KP_ROW[3:0] */
+			if (row_mask & (0xF << (i << 2))) {
+				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
+				gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
+			}
 
-		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
-
-		/* Set GPH3[3:0] to KP_ROW[3:0] */
-		reg = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-
-		value = readl(reg + S5PC1XX_GPIO_CON_OFFSET);
-		value &= ~row_mask;
-		value |= row_mode;
-		writel(value, reg + S5PC1XX_GPIO_CON_OFFSET);
-		value = readl(reg + S5PC1XX_GPIO_PULL_OFFSET);
-		value &= ~(0xFF);
-		/* Pull-up enabled */
-		for (i = 0; row_mask; row_mask >>= 4) {
-			if (row_mask & 0xF)
-				value |= PULL_UP(i++);
+			/* Set GPH2[3:0] to KP_COL[3:0] */
+			if (col_mask & (0xF << (i << 2)))
+				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
 		}
-		writel(value, reg + S5PC1XX_GPIO_PULL_OFFSET);
 
 		reg = S5PC110_KEYPAD_BASE;
 	}
@@ -609,23 +491,20 @@ static void check_mhl(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x39;	/* SIL9230 */
-	unsigned int reg;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	/* MHL Power enable */
 	/* HDMI_EN : GPJ2[2] output mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_J2_OFFSET);
-	gpio_direction_output(reg, 2, 1);
-
+	gpio_direction_output(&gpio->gpio_j2, 2, 1);
 
 	/* MHL_RST : MP0_4[7] output mode */
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET);
-	gpio_direction_output(reg, 7, 0);
+	gpio_direction_output(&gpio->gpio_mp0_4, 7, 0);
 
 	/* 10ms required after reset */
 	udelay(10000);
 
 	/* output enable */
-	gpio_set_value(reg, 7, 1);
+	gpio_set_value(&gpio->gpio_mp0_4, 7, 1);
 
 	i2c_gpio_set_bus(I2C_GPIO5);
 
@@ -803,6 +682,18 @@ static void check_micro_usb(void)
 	}
 }
 
+#define PDN_MASK(x)		(0x3 << ((x) << 1))
+
+#define OUTPUT0(x)		(0x0 << ((x) << 1))
+#define OUTPUT1(x)		(0x1 << ((x) << 1))
+#define INPUT(x)		(0x2 << ((x) << 1))
+
+#define PULL_DIS(x)		(0x0 << ((x) << 1))
+#define PULL_DOWN(x)		(0x1 << ((x) << 1))
+#define PULL_UP(x)		(0x2 << ((x) << 1))
+
+#define PREVIOUS(x)		(0x3 << ((x) << 1))
+
 struct gpio_powermode {
 	unsigned int	conpdn;
 	unsigned int	pudpdn;
@@ -920,11 +811,7 @@ static struct gpio_powermode powerdown_modes[] = {
 		INPUT(4),
 		PULL_DIS(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DIS(3) |
 		PULL_DOWN(4),
-	},
-};
-
-static struct gpio_powermode powerdown_mp0_modes[] = {
-	{	/* S5PC110_GPIO_MP0_1_OFFSET */
+	}, {	/* S5PC110_GPIO_MP0_1_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT1(7),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
@@ -935,13 +822,13 @@ static struct gpio_powermode powerdown_mp0_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	},
-
 };
 
 static void setup_power_down_mode_registers(void)
 {
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	struct s5pc1xx_gpio_bank *bank;
 	struct gpio_powermode *p;
-	unsigned int reg;
 	int i;
 
 	if (cpu_is_s5pc100())
@@ -950,20 +837,12 @@ static void setup_power_down_mode_registers(void)
 	if (!(machine_is_aquila() && board_is_limo_real()))
 		return;
 
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_A0_OFFSET);
+	bank = &gpio->gpio_a0;
 	p = powerdown_modes;
-	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++) {
-		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
-		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
-		reg += 0x20;
-	}
 
-	reg = S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET);
-	p = powerdown_mp0_modes;
-	for (i = 0; i < ARRAY_SIZE(powerdown_mp0_modes); i++, p++) {
-		writel(p->conpdn, reg + S5PC1XX_GPIO_PDNCON_OFFSET);
-		writel(p->pudpdn, reg + S5PC1XX_GPIO_PDNPULL_OFFSET);
-		reg += 0x20;
+	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++, bank++) {
+		writel(p->conpdn, &bank->pdn_con);
+		writel(p->pudpdn, &bank->pdn_pull);
 	}
 }
 
@@ -1091,12 +970,12 @@ int usb_board_init(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
-
 int board_mmc_init(bd_t *bis)
 {
-	unsigned int pin, reg;
+	unsigned int reg;
 	unsigned int clock;
 	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 	int i;
 
 	/* MMC0 Clock source = SCLKMPLL */
@@ -1126,14 +1005,12 @@ int board_mmc_init(bd_t *bis)
 	 * GPG0[2]	SD_0_CDn
 	 * GPG0[3:6]	SD_0_DATA[0:3]
 	 */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_G0_OFFSET);
-
-	/* GPG0[0:6] special function 2 */
-	writel(0x02222222, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	/* GPG0[0:6] pull up */
-	writel(0x00002aaa, pin + S5PC1XX_GPIO_PULL_OFFSET);
-	writel(0x00003fff, pin + S5PC1XX_GPIO_DRV_OFFSET);
+	for (i = 0; i < 7; i++) {
+		/* GPG0[0:6] special function 2 */
+		gpio_cfg_pin(&gpio->gpio_g0, i, 0x2);
+		/* GPG0[0:6] pull up */
+		gpio_set_pull(&gpio->gpio_g0, i, GPIO_PULL_UP);
+	}
 
 	return s5pc1xx_mmc_init(0);
 }

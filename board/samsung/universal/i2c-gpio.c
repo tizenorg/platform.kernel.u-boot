@@ -27,6 +27,7 @@
 #include <i2c-gpio.h>
 
 static unsigned int bus_index;
+static struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 /*
  * i2c gpio3
@@ -34,7 +35,6 @@ static unsigned int bus_index;
  * SCL: GPJ3[7]
  */
 static struct i2c_gpio_bus_data i2c_gpio3 = {
-	.gpio_base	= S5PC110_GPIO_BASE(S5PC110_GPIO_J3_OFFSET),
 	.sda_pin	= 6,
 	.scl_pin	= 7,
 };
@@ -45,7 +45,6 @@ static struct i2c_gpio_bus_data i2c_gpio3 = {
  * SCL: GPJ4[3]
  */
 static struct i2c_gpio_bus_data i2c_pmic = {
-	.gpio_base	= S5PC110_GPIO_BASE(S5PC110_GPIO_J4_OFFSET),
 	.sda_pin	= 0,
 	.scl_pin	= 3,
 };
@@ -56,7 +55,6 @@ static struct i2c_gpio_bus_data i2c_pmic = {
  * SCL: MP05[2]
  */
 static struct i2c_gpio_bus_data i2c_gpio5 = {
-	.gpio_base	= S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET),
 	.sda_pin	= 3,
 	.scl_pin	= 2,
 };
@@ -79,23 +77,23 @@ void i2c_gpio_set_bus(int bus)
 void i2c_gpio_init(void)
 {
 	int i;
-	unsigned int pin, reg;
+	struct s5pc1xx_gpio_bank *bank;
+
+	i2c_gpio[0].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
+	i2c_gpio[1].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
+	i2c_gpio[2].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
 
 	/* set to output */
 	for (i = 0; i < ARRAY_SIZE(i2c_gpio); i++) {
-		pin = i2c_gpio[i].bus->gpio_base;
+		bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[i].bus->gpio_base;
 
 		/* SDA */
-		reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-		reg &= ~(0xf << (i2c_gpio[i].bus->sda_pin * 4));
-		reg |= (1 << (i2c_gpio[i].bus->sda_pin * 4));
-		writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+		gpio_direction_output(bank,
+				i2c_gpio[i].bus->sda_pin, 1);
 
 		/* SCL */
-		reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-		reg &= ~(0xf << (i2c_gpio[i].bus->scl_pin * 4));
-		reg |= (1 << (i2c_gpio[i].bus->scl_pin * 4));
-		writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+		gpio_direction_output(bank,
+				i2c_gpio[i].bus->scl_pin, 1);
 	}
 }
 
@@ -113,41 +111,38 @@ void i2c_init_board(void)
 
 void i2c_gpio_set(int line, int value)
 {
-	unsigned int pin, reg;
+	struct s5pc1xx_gpio_bank *bank;
 
-	pin = i2c_gpio[bus_index].bus->gpio_base;
+	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 
 	if (line)
 		line = i2c_gpio[bus_index].bus->sda_pin;
 	else
 		line = i2c_gpio[bus_index].bus->scl_pin;
 
-	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	if (value)
-		reg |= (1 << line);
-	else
-		reg &= ~(1 << line);
-	writel(reg, pin + S5PC1XX_GPIO_DAT_OFFSET);
+	gpio_set_value(bank, line, value);
 }
 
 int i2c_gpio_get(void)
 {
-	unsigned int pin, reg;
+	struct s5pc1xx_gpio_bank *bank;
 
-	pin = i2c_gpio[bus_index].bus->gpio_base;
-	reg = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-	return reg & (1 << i2c_gpio[bus_index].bus->sda_pin);
+	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
+
+	return gpio_get_value(bank, i2c_gpio[bus_index].bus->sda_pin);
 }
 
 void i2c_gpio_dir(int dir)
 {
-	unsigned int pin, reg;
+	struct s5pc1xx_gpio_bank *bank;
 
-	pin = i2c_gpio[bus_index].bus->gpio_base;
+	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 
-	reg = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	reg &= ~(0xf << (i2c_gpio[bus_index].bus->sda_pin * 4));
-	if (dir)
-		reg |= (1 << (i2c_gpio[bus_index].bus->sda_pin * 4));
-	writel(reg, pin + S5PC1XX_GPIO_CON_OFFSET);
+	if (dir) {
+		gpio_direction_output(bank,
+				i2c_gpio[bus_index].bus->sda_pin, 0);
+	} else {
+		gpio_direction_input(bank,
+				i2c_gpio[bus_index].bus->sda_pin);
+	}
 }
