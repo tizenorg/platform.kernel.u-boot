@@ -168,13 +168,6 @@ lowlevel_init:
 	cmp	r1, r2
 	bne	1f
 wakeup:
-	cmp	r7, r8
-	/* Clear wakeup status register */
-	ldreq	r0, =S5PC100_WAKEUP_STAT
-	ldrne	r0, =S5PC110_WAKEUP_STAT
-	ldr	r1, [r0]
-	str	r1, [r0]
-
 #ifdef DEBUG_PM_C110
 	mov	r0, r8
 	ldr	r1, =0x22222222
@@ -215,9 +208,9 @@ wakeup:
 	ldrb	r3, [r0, #0x010]		@ UTRSTAT
 	tst	r3, #(1 << 2)
 	beq	1001b
-	cmp	r7, r8
 #endif
 
+	cmp	r7, r8
 	/* Load return address and jump to kernel */
 	ldreq	r0, =S5PC100_INFORM0
 	ldrne	r0, =S5PC110_INFORM0
@@ -229,6 +222,13 @@ wakeup:
 	mov	pc, r1
 	nop
 	nop
+#else
+	cmp	r7, r8
+	/* Clear wakeup status register */
+	ldreq	r0, =S5PC100_WAKEUP_STAT
+	ldrne	r0, =S5PC110_WAKEUP_STAT
+	ldr	r1, [r0]
+	str	r1, [r0]
 #endif
 1:
 	mov	lr, r11
