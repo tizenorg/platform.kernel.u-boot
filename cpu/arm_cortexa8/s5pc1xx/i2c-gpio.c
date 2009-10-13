@@ -27,64 +27,22 @@
 #include <i2c-gpio.h>
 
 static unsigned int bus_index;
-static struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+static struct i2c_gpio_bus *i2c_gpio;
 
-/*
- * i2c gpio3
- * SDA: GPJ3[6]
- * SCL: GPJ3[7]
- */
-static struct i2c_gpio_bus_data i2c_gpio3 = {
-	.sda_pin	= 6,
-	.scl_pin	= 7,
-};
-
-/*
- * i2c pmic
- * SDA: GPJ4[0]
- * SCL: GPJ4[3]
- */
-static struct i2c_gpio_bus_data i2c_pmic = {
-	.sda_pin	= 0,
-	.scl_pin	= 3,
-};
-
-/*
- * i2c gpio5
- * SDA: MP05[3]
- * SCL: MP05[2]
- */
-static struct i2c_gpio_bus_data i2c_gpio5 = {
-	.sda_pin	= 3,
-	.scl_pin	= 2,
-};
-
-static struct i2c_gpio_bus i2c_gpio[] = {
-	{
-		.bus	= &i2c_gpio3,
-	}, {
-		.bus	= &i2c_pmic,
-	}, {
-		.bus	= &i2c_gpio5,
-	},
-};
-
-void i2c_gpio_set_bus(int bus)
+void i2c_gpio_set_bus(int index)
 {
-	bus_index = bus;
+	bus_index = index;
 }
 
-void i2c_gpio_init(void)
+void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 {
 	int i;
 	struct s5pc1xx_gpio_bank *bank;
 
-	i2c_gpio[0].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
-	i2c_gpio[1].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
-	i2c_gpio[2].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
+	i2c_gpio = bus;
 
-	/* set to output */
-	for (i = 0; i < ARRAY_SIZE(i2c_gpio); i++) {
+	/* init all i2c gpio buses */
+	for (i = 0; i < len; i++) {
 		bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[i].bus->gpio_base;
 
 		/* SDA */
@@ -95,18 +53,9 @@ void i2c_gpio_init(void)
 		gpio_direction_output(bank,
 				i2c_gpio[i].bus->scl_pin, 1);
 	}
-}
 
-void i2c_init_board(void)
-{
-	if (cpu_is_s5pc100())
-		return;
-
-	/* init all i2c gpio buses */
-	i2c_gpio_init();
-
-	/* set default bus to gpio_pmic */
-	i2c_gpio_set_bus(1);
+	/* set default bus */
+	i2c_gpio_set_bus(index);
 }
 
 void i2c_gpio_set(int line, int value)

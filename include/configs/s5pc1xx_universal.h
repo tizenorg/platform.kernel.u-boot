@@ -295,12 +295,6 @@
 #define CONFIG_SOFT_I2C		1
 #define CONFIG_SYS_I2C_INIT_BOARD
 #define CONFIG_SYS_I2C_SPEED	50000
-#define I2C_SDA(x)		i2c_gpio_set(1, x)
-#define I2C_SCL(x)		i2c_gpio_set(0, x)
-#define I2C_READ		(!!i2c_gpio_get())
-#define I2C_ACTIVE		i2c_gpio_dir(1)
-#define I2C_TRISTATE		i2c_gpio_dir(0)
-#define I2C_DELAY		udelay(5)
 #endif
 
 /* USB Downloader */

@@ -38,11 +38,65 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
+static unsigned int board_rev;
+
 #define I2C_GPIO3	0
 #define I2C_PMIC	1
 #define I2C_GPIO5	2
 
-static unsigned int board_rev;
+/*
+ * i2c gpio3
+ * SDA: GPJ3[6]
+ * SCL: GPJ3[7]
+ */
+static struct i2c_gpio_bus_data i2c_gpio3 = {
+	.sda_pin	= 6,
+	.scl_pin	= 7,
+};
+
+/*
+ * i2c pmic
+ * SDA: GPJ4[0]
+ * SCL: GPJ4[3]
+ */
+static struct i2c_gpio_bus_data i2c_pmic = {
+	.sda_pin	= 0,
+	.scl_pin	= 3,
+};
+
+/*
+ * i2c gpio5
+ * SDA: MP05[3]
+ * SCL: MP05[2]
+ */
+static struct i2c_gpio_bus_data i2c_gpio5 = {
+	.sda_pin	= 3,
+	.scl_pin	= 2,
+};
+
+static struct i2c_gpio_bus i2c_gpio[] = {
+	{
+		.bus	= &i2c_gpio3,
+	}, {
+		.bus	= &i2c_pmic,
+	}, {
+		.bus	= &i2c_gpio5,
+	},
+};
+
+void i2c_init_board(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	i2c_gpio[0].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
+	i2c_gpio[1].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
+	i2c_gpio[2].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
+
+	i2c_gpio_init(i2c_gpio, ARRAY_SIZE(i2c_gpio), I2C_PMIC);
+}
 
 int board_init(void)
 {
