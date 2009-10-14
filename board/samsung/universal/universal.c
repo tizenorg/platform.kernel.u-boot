@@ -238,6 +238,9 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank* bank)
 {
 	unsigned int rev;
 
+	gpio_set_pull(bank, 2, GPIO_PULL_NONE);
+	gpio_set_pull(bank, 3, GPIO_PULL_NONE);
+	gpio_set_pull(bank, 4, GPIO_PULL_NONE);
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
