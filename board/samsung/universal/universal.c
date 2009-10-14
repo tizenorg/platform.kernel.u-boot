@@ -849,7 +849,7 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
 	}, {	/* S5PC110_GPIO_I_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
@@ -951,7 +951,6 @@ static void setup_power_down_mode_registers(void)
 	writel(0x0000, &bank->pdn_con);
 	writel(0x0000, &bank->pdn_pull);
 
-#if 0
 	bank = &gpio->gpio_h0;
 	ge = external_powerdown_modes;
 
@@ -960,7 +959,6 @@ static void setup_power_down_mode_registers(void)
 		writel(ge->dat, &bank->dat);
 		writel(ge->pud, &bank->pull);
 	}
-#endif
 }
 
 int misc_init_r(void)
