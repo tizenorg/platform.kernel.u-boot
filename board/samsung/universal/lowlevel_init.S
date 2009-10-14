@@ -27,7 +27,6 @@
 #include <version.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/mem.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/power.h>
 #include <asm/arch/watchdog.h>
@@ -54,8 +53,8 @@ lowlevel_init:
 	/* r5 has always zero */
 	mov	r5, #0
 
-	ldr	r7, =S5PC100_GPIO_BASE(0)
-	ldr	r8, =S5PC100_GPIO_BASE(0)
+	ldr	r7, =S5PC100_GPIO_BASE
+	ldr	r8, =S5PC100_GPIO_BASE
 	/* Read CPU ID */
 	ldr	r2, =S5PC1XX_PRO_ID
 	ldr	r0, [r2]
@@ -63,25 +62,25 @@ lowlevel_init:
 	and	r0, r0, r1
 	cmp	r0, r5
 	beq	100f
-	ldr	r8, =S5PC110_GPIO_BASE(0)
+	ldr	r8, =S5PC110_GPIO_BASE
 100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	cmp	r7, r8
 #ifndef DEBUG_PM_C110
-	addeq	r0, r8, #S5PC100_GPIO_J4_OFFSET
-	addne	r0, r8, #S5PC110_GPIO_J4_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	addeq	r0, r8, #0x280				@S5PC100_GPIO_J4_OFFSET
+	addne	r0, r8, #0x2C0				@S5PC110_GPIO_J4_OFFSET
+	ldr	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
 	orr	r1, r1, #(0x1 << 4)
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	ldr	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
 #ifdef CONFIG_ONENAND_IPL
 	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
 #else
 	bic	r1, r1, #(1 << 1)
 #endif
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	str	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
 #endif
 
 	/* IO retension release */
@@ -134,9 +133,6 @@ lowlevel_init:
 	/* for UART */
 	bl	uart_asm_init
 
-	/* for TZPC */
-	bl	tzpc_asm_init
-
 	bl	internal_ram_init
 #endif
 
@@ -172,35 +168,28 @@ lowlevel_init:
 	cmp	r1, r2
 	bne	1f
 wakeup:
-	cmp	r7, r8
-	/* Clear wakeup status register */
-	ldreq	r0, =S5PC100_WAKEUP_STAT
-	ldrne	r0, =S5PC110_WAKEUP_STAT
-	ldr	r1, [r0]
-	str	r1, [r0]
-
 #ifdef DEBUG_PM_C110
 	mov	r0, r8
 	ldr	r1, =0x22222222
-	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
+	str	r1, [r0, #0x0]			@S5PC100_GPIO_A0_OFFSET
 	ldr	r1, =0x00002222
-	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
+	str	r1, [r0, #0x20]			@S5PC100_GPIO_A1_OFFSET
 
 	/* UART_SEL MP0_5[7] at S5PC110 */
-	add	r0, r8, #S5PC110_GPIO_MP0_5_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	add	r0, r8, #0x360			@S5PC110_GPIO_MP0_5_OFFSET
+	ldr	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	ldr	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
 	orr	r1, r1, #(0x2 << 14)		@ Pull-up enabled
-	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	str	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	ldr	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	str	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 
 	ldr	r0, =0xE2900000			@ S5PC110_PA_UART
 	orr	r0, r0, #0x800
@@ -219,9 +208,9 @@ wakeup:
 	ldrb	r3, [r0, #0x010]		@ UTRSTAT
 	tst	r3, #(1 << 2)
 	beq	1001b
-	cmp	r7, r8
 #endif
 
+	cmp	r7, r8
 	/* Load return address and jump to kernel */
 	ldreq	r0, =S5PC100_INFORM0
 	ldrne	r0, =S5PC110_INFORM0
@@ -233,6 +222,13 @@ wakeup:
 	mov	pc, r1
 	nop
 	nop
+#else
+	cmp	r7, r8
+	/* Clear wakeup status register */
+	ldreq	r0, =S5PC100_WAKEUP_STAT
+	ldrne	r0, =S5PC110_WAKEUP_STAT
+	ldr	r1, [r0]
+	str	r1, [r0]
 #endif
 1:
 	mov	lr, r11
@@ -333,7 +329,11 @@ system_clock_init:
 	ldr	r1, =0x829B0C01			@ 667MHz
 	str	r1, [r0, #0x108]
 	/* S5PC110_EPLL_CON */
-	ldr	r1, =0x80600602			@  96MHz
+#ifdef CONFIG_EPLL_50MHZ
+	ldr	r1, =0x80640603			@  50MHz VSEL 0 P 6 M 100 S 3
+#else
+	ldr	r1, =0x80600602			@  96MHz VSEL 0 P 6 M 96 S 2
+#endif
 	str	r1, [r0, #0x110]
 	/* S5PC110_VPLL_CON */
 	ldr	r1, =0x806C0603			@  54MHz
@@ -349,7 +349,22 @@ system_clock_init:
 	ldr	r1, =0x30000000			@ ONEDRAM_RATIO[31:28] 3 + 1
 	str	r1, [r0, #0x318]		@ S5PC110_CLK_DIV6
 
-	ldr	r1, =0x00909000			@ DIV=10 MCLKSYS
+	/*
+	 * XCLKOUT = (FOUTAPLL/4) / (DIVVAL + 1)
+	 *         = (800 MHz/ 4) / (9 + 1)
+	 *         = 20 MHz
+	 *
+	 * XCLKOUT = (FOUTEPLL) / (DIVVAL + 1)
+	 *         = (50 MHz) / (1 + 1)
+	 *         = 25 MHz
+	 */
+#ifdef CONFIG_EPLL_50MHZ
+	ldr	r1, =0x00102000			@ DIVVAL[23:20] = 1
+						@ CLKSEL[16:12] = 2 FOUTEPLL
+#else
+	ldr	r1, =0x00900000			@ DIVVAL[23:20] = 9
+						@ CLKSEL[16:12] = 0 FOUTAPLL/4
+#endif
 	str	r1, [r0, #0x500]		@ S5PC110_CLK_OUT
 
 200:
@@ -378,9 +393,9 @@ uart_asm_init:
 	/* set GPIO to enable UART0-UART4 */
 	mov	r0, r8
 	ldr	r1, =0x22222222
-	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
+	str	r1, [r0, #0x0]			@S5PC100_GPIO_A0_OFFSET
 	ldr	r1, =0x00002222
-	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
+	str	r1, [r0, #0x20]			@S5PC100_GPIO_A1_OFFSET
 
 	/* Check S5PC100 */
 	cmp	r7, r8
@@ -388,20 +403,20 @@ uart_asm_init:
 
 #ifndef DEBUG_PM_C110
 	/* UART_SEL GPK0[5] at S5PC100 */
-	add	r0, r8, #S5PC100_GPIO_K0_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	add	r0, r8, #0x2A0			@S5PC100_GPIO_K0_OFFSET
+	ldr	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
 	orr	r1, r1, #(0x1 << 20)		@ Output
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	ldr	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 	bic	r1, r1, #(0x3 << 10)		@ 10 = 5 * 2-bit
 	orr	r1, r1, #(0x2 << 10)		@ Pull-up enabled
-	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	str	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	ldr	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 	orr	r1, r1, #(1 << 5)		@ 5 = 5 * 1-bit
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	str	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 #endif
 	b	200f
 110:
@@ -410,54 +425,20 @@ uart_asm_init:
 	 * 0xE020'0360 is reserved address at S5PC100
 	 */
 	/* UART_SEL MP0_5[7] at S5PC110 */
-	add	r0, r8, #S5PC110_GPIO_MP0_5_OFFSET
-	ldr	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	add	r0, r8, #0x360			@S5PC110_GPIO_MP0_5_OFFSET
+	ldr	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
-	str	r1, [r0, #S5PC1XX_GPIO_CON_OFFSET]
+	str	r1, [r0, #0x0]			@S5PC1XX_GPIO_CON_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	ldr	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
 	orr	r1, r1, #(0x2 << 14)		@ Pull-up enabled
-	str	r1, [r0, #S5PC1XX_GPIO_PULL_OFFSET]
+	str	r1, [r0, #0x8]			@S5PC1XX_GPIO_PULL_OFFSET
 
-	ldr	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	ldr	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
-	str	r1, [r0, #S5PC1XX_GPIO_DAT_OFFSET]
+	str	r1, [r0, #0x4]			@S5PC1XX_GPIO_DAT_OFFSET
 200:
-	mov	pc, lr
-
-/*
- * tzpc_asm_init: Initialize TZPC
- */
-tzpc_asm_init:
-	cmp	r7, r8
-	ldreq	r0, =0xE3800000			@ TZPC0
-	ldrne	r0, =0xF1500000			@ TZPC0
-	mov	r1, #0x0
-	str	r1, [r0]
-	mov	r1, #0xff
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-
-	ldreq	r0, =0xE2800000			@ TZPC1
-	ldrne	r0, =0xFAD00000			@ TZPC1
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-
-	ldreq	r0, =0xE2900000			@ TZPC2
-	ldrne	r0, =0xE0600000			@ TZPC2
-	str	r1, [r0, #0x804]
-	str	r1, [r0, #0x810]
-	str	r1, [r0, #0x81C]
-	str	r1, [r0, #0x828]
-
-	ldrne	r0, =0xE1C00000			@ TZPC3 S5PC110 only
-	strne	r1, [r0, #0x804]
-	strne	r1, [r0, #0x810]
-	strne	r1, [r0, #0x81C]
-
 	mov	pc, lr
 #endif

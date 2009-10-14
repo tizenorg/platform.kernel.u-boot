@@ -44,17 +44,17 @@ static unsigned long long timestamp;	/* Monotonic incrementing timer */
 static unsigned long lastdec;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
-static inline s5pc1xx_timers_t *s5pc1xx_get_base_timer(void)
+static inline struct s5pc1xx_timer *s5pc1xx_get_base_timer(void)
 {
 	if (cpu_is_s5pc110())
-		return (s5pc1xx_timers_t *)S5PC110_TIMER_BASE;
+		return (struct s5pc1xx_timer *)S5PC110_TIMER_BASE;
 	else
-		return (s5pc1xx_timers_t *)S5PC100_TIMER_BASE;
+		return (struct s5pc1xx_timer *)S5PC100_TIMER_BASE;
 }
 
 int timer_init(void)
 {
-	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
+	struct s5pc1xx_timer *const timer = s5pc1xx_get_base_timer();
 	u32 val;
 
 	/*
@@ -65,8 +65,8 @@ int timer_init(void)
 
 	/* set prescaler : 16 */
 	/* set divider : 2 */
-	writel((PRESCALER_1 & 0xff) << 8, &timer->TCFG0);
-	writel((MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT, &timer->TCFG1);
+	writel((PRESCALER_1 & 0xff) << 8, &timer->tcfg0);
+	writel((MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT, &timer->tcfg1);
 
 	if (count_value == 0) {
 		/* reset initial value */
@@ -79,17 +79,17 @@ int timer_init(void)
 	}
 
 	/* set count value */
-	writel(count_value, &timer->TCNTB4);
+	writel(count_value, &timer->tcntb4);
 	lastdec = count_value;
 
-	val = (readl(&timer->TCON) & ~(0x07 << TCON_TIMER4_SHIFT)) |
+	val = (readl(&timer->tcon) & ~(0x07 << TCON_TIMER4_SHIFT)) |
 		S5PC1XX_TCON4_AUTO_RELOAD;
 
 	/* auto reload & manual update */
-	writel(val | S5PC1XX_TCON4_UPDATE, &timer->TCON);
+	writel(val | S5PC1XX_TCON4_UPDATE, &timer->tcon);
 
 	/* start PWM timer 4 */
-	writel(val | S5PC1XX_TCON4_START, &timer->TCON);
+	writel(val | S5PC1XX_TCON4_START, &timer->tcon);
 
 	timestamp = 0;
 
@@ -154,17 +154,17 @@ void udelay(unsigned long usec)
 
 void reset_timer_masked(void)
 {
-	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
+	struct s5pc1xx_timer *const timer = s5pc1xx_get_base_timer();
 
 	/* reset time */
-	lastdec = readl(&timer->TCNTO4);
+	lastdec = readl(&timer->tcnto4);
 	timestamp = 0;
 }
 
 unsigned long get_timer_masked(void)
 {
-	s5pc1xx_timers_t *timer = s5pc1xx_get_base_timer();
-	unsigned long now = readl(&timer->TCNTO4);
+	struct s5pc1xx_timer *const timer = s5pc1xx_get_base_timer();
+	unsigned long now = readl(&timer->tcnto4);
 
 	if (lastdec >= now)
 		timestamp += lastdec - now;

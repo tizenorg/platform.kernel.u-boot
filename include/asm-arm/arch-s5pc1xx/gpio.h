@@ -1,6 +1,5 @@
 /*
  * (C) Copyright 2009 Samsung Electronics
- * Heungjun Kim <riverful.kim@samsung.com>
  * Minkyu Kang <mk7.kang@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,109 +18,130 @@
  * MA 02111-1307 USA
  */
 
-#ifndef __S5PC1XX_GPIO_H
-#define __S5PC1XX_GPIO_H
+#ifndef __ASM_ARCH_GPIO_H
+#define __ASM_ARCH_GPIO_H
 
-/* GPIO Bank Base */
-#define S5PC100_GPIO_BASE(x)		(0xE0300000 + (x))
-#define S5PC110_GPIO_BASE(x)		(0xE0200000 + (x))
+#ifndef __ASSEMBLY__
+struct s5pc1xx_gpio_bank {
+	unsigned long	con;
+	unsigned long	dat;
+	unsigned long	pull;
+	unsigned long	drv;
+	unsigned long	pdn_con;
+	unsigned long	pdn_pull;
+	unsigned char	res1[8];
+};
 
-/* S5PC100 bank offset */
-#define S5PC100_GPIO_A0_OFFSET		0x000
-#define S5PC100_GPIO_A1_OFFSET		0x020
-#define S5PC100_GPIO_B_OFFSET		0x040
-#define S5PC100_GPIO_C_OFFSET		0x060
-#define S5PC100_GPIO_D_OFFSET		0x080
-#define S5PC100_GPIO_E0_OFFSET		0x0A0
-#define S5PC100_GPIO_E1_OFFSET		0x0C0
-#define S5PC100_GPIO_F0_OFFSET		0x0E0
-#define S5PC100_GPIO_F1_OFFSET		0x100
-#define S5PC100_GPIO_F2_OFFSET		0x120
-#define S5PC100_GPIO_F3_OFFSET		0x140
-#define S5PC100_GPIO_G0_OFFSET		0x160
-#define S5PC100_GPIO_G1_OFFSET		0x180
-#define S5PC100_GPIO_G2_OFFSET		0x1A0
-#define S5PC100_GPIO_G3_OFFSET		0x1C0
-#define S5PC100_GPIO_I_OFFSET		0x1E0
-#define S5PC100_GPIO_J0_OFFSET		0x200
-#define S5PC100_GPIO_J1_OFFSET		0x220
-#define S5PC100_GPIO_J2_OFFSET		0x240
-#define S5PC100_GPIO_J3_OFFSET		0x260
-#define S5PC100_GPIO_J4_OFFSET		0x280
-#define S5PC100_GPIO_K0_OFFSET		0x2A0
-#define S5PC100_GPIO_K1_OFFSET		0x2C0
-#define S5PC100_GPIO_K2_OFFSET		0x2E0
-#define S5PC100_GPIO_K3_OFFSET		0x300
-#define S5PC100_GPIO_L0_OFFSET		0x320
-#define S5PC100_GPIO_L1_OFFSET		0x340
-#define S5PC100_GPIO_L2_OFFSET		0x360
-#define S5PC100_GPIO_L3_OFFSET		0x380
-#define S5PC100_GPIO_L4_OFFSET		0x3A0
-#define S5PC100_GPIO_H0_OFFSET		0xC00
-#define S5PC100_GPIO_H1_OFFSET		0xC20
-#define S5PC100_GPIO_H2_OFFSET		0xC40
-#define S5PC100_GPIO_H3_OFFSET		0xC60
+struct s5pc100_gpio {
+	struct s5pc1xx_gpio_bank gpio_a0;
+	struct s5pc1xx_gpio_bank gpio_a1;
+	struct s5pc1xx_gpio_bank gpio_b;
+	struct s5pc1xx_gpio_bank gpio_c;
+	struct s5pc1xx_gpio_bank gpio_d;
+	struct s5pc1xx_gpio_bank gpio_e0;
+	struct s5pc1xx_gpio_bank gpio_e1;
+	struct s5pc1xx_gpio_bank gpio_f0;
+	struct s5pc1xx_gpio_bank gpio_f1;
+	struct s5pc1xx_gpio_bank gpio_f2;
+	struct s5pc1xx_gpio_bank gpio_f3;
+	struct s5pc1xx_gpio_bank gpio_g0;
+	struct s5pc1xx_gpio_bank gpio_g1;
+	struct s5pc1xx_gpio_bank gpio_g2;
+	struct s5pc1xx_gpio_bank gpio_g3;
+	struct s5pc1xx_gpio_bank gpio_i;
+	struct s5pc1xx_gpio_bank gpio_j0;
+	struct s5pc1xx_gpio_bank gpio_j1;
+	struct s5pc1xx_gpio_bank gpio_j2;
+	struct s5pc1xx_gpio_bank gpio_j3;
+	struct s5pc1xx_gpio_bank gpio_j4;
+	struct s5pc1xx_gpio_bank gpio_k0;
+	struct s5pc1xx_gpio_bank gpio_k1;
+	struct s5pc1xx_gpio_bank gpio_k2;
+	struct s5pc1xx_gpio_bank gpio_k3;
+	struct s5pc1xx_gpio_bank gpio_l0;
+	struct s5pc1xx_gpio_bank gpio_l1;
+	struct s5pc1xx_gpio_bank gpio_l2;
+	struct s5pc1xx_gpio_bank gpio_l3;
+	struct s5pc1xx_gpio_bank gpio_l4;
+	struct s5pc1xx_gpio_bank gpio_h0;
+	struct s5pc1xx_gpio_bank gpio_h1;
+	struct s5pc1xx_gpio_bank gpio_h2;
+	struct s5pc1xx_gpio_bank gpio_h3;
+};
 
-/* S5PC110 bank offset */
-#define S5PC110_GPIO_A0_OFFSET		0x000
-#define S5PC110_GPIO_A1_OFFSET		0x020
-#define S5PC110_GPIO_B_OFFSET		0x040
-#define S5PC110_GPIO_C0_OFFSET		0x060
-#define S5PC110_GPIO_C1_OFFSET		0x080
-#define S5PC110_GPIO_D0_OFFSET		0x0A0
-#define S5PC110_GPIO_D1_OFFSET		0x0C0
-#define S5PC110_GPIO_E0_OFFSET		0x0E0
-#define S5PC110_GPIO_E1_OFFSET		0x110
-#define S5PC110_GPIO_F0_OFFSET		0x120
-#define S5PC110_GPIO_F1_OFFSET		0x140
-#define S5PC110_GPIO_F2_OFFSET		0x160
-#define S5PC110_GPIO_F3_OFFSET		0x180
-#define S5PC110_GPIO_G0_OFFSET		0x1A0
-#define S5PC110_GPIO_G1_OFFSET		0x1C0
-#define S5PC110_GPIO_G2_OFFSET		0x1E0
-#define S5PC110_GPIO_G3_OFFSET		0x200
-#define S5PC110_GPIO_I_OFFSET		0x220
-#define S5PC110_GPIO_J0_OFFSET		0x240
-#define S5PC110_GPIO_J1_OFFSET		0x260
-#define S5PC110_GPIO_J2_OFFSET		0x280
-#define S5PC110_GPIO_J3_OFFSET		0x2A0
-#define S5PC110_GPIO_J4_OFFSET		0x2C0
-#define S5PC110_GPIO_MP0_1_OFFSET	0x2E0
-#define S5PC110_GPIO_MP0_2_OFFSET	0x300
-#define S5PC110_GPIO_MP0_3_OFFSET	0x320
-#define S5PC110_GPIO_MP0_4_OFFSET	0x340
-#define S5PC110_GPIO_MP0_5_OFFSET	0x360
-#define S5PC110_GPIO_MP0_6_OFFSET	0x380
-#define S5PC110_GPIO_MP0_7_OFFSET	0x3A0
-#define S5PC110_GPIO_MP1_0_OFFSET	0x3C0
-#define S5PC110_GPIO_MP1_1_OFFSET	0x3E0
-#define S5PC110_GPIO_MP1_2_OFFSET	0x410
-#define S5PC110_GPIO_MP1_3_OFFSET	0x420
-#define S5PC110_GPIO_MP1_4_OFFSET	0x440
-#define S5PC110_GPIO_MP1_5_OFFSET	0x460
-#define S5PC110_GPIO_MP1_6_OFFSET	0x480
-#define S5PC110_GPIO_MP1_7_OFFSET	0x4A0
-#define S5PC110_GPIO_MP1_8_OFFSET	0x4C0
-#define S5PC110_GPIO_MP2_0_OFFSET	0x4E0
-#define S5PC110_GPIO_MP2_1_OFFSET	0x510
-#define S5PC110_GPIO_MP2_2_OFFSET	0x520
-#define S5PC110_GPIO_MP2_3_OFFSET	0x540
-#define S5PC110_GPIO_MP2_4_OFFSET	0x560
-#define S5PC110_GPIO_MP2_5_OFFSET	0x580
-#define S5PC110_GPIO_MP2_6_OFFSET	0x5A0
-#define S5PC110_GPIO_MP2_7_OFFSET	0x5C0
-#define S5PC110_GPIO_MP2_8_OFFSET	0x5E0
-#define S5PC110_GPIO_H0_OFFSET		0xC00
-#define S5PC110_GPIO_H1_OFFSET		0xC20
-#define S5PC110_GPIO_H2_OFFSET		0xC40
-#define S5PC110_GPIO_H3_OFFSET		0xC60
+struct s5pc110_gpio {
+	struct s5pc1xx_gpio_bank gpio_a0;
+	struct s5pc1xx_gpio_bank gpio_a1;
+	struct s5pc1xx_gpio_bank gpio_b;
+	struct s5pc1xx_gpio_bank gpio_c0;
+	struct s5pc1xx_gpio_bank gpio_c1;
+	struct s5pc1xx_gpio_bank gpio_d0;
+	struct s5pc1xx_gpio_bank gpio_d1;
+	struct s5pc1xx_gpio_bank gpio_e0;
+	struct s5pc1xx_gpio_bank gpio_e1;
+	struct s5pc1xx_gpio_bank gpio_f0;
+	struct s5pc1xx_gpio_bank gpio_f1;
+	struct s5pc1xx_gpio_bank gpio_f2;
+	struct s5pc1xx_gpio_bank gpio_f3;
+	struct s5pc1xx_gpio_bank gpio_g0;
+	struct s5pc1xx_gpio_bank gpio_g1;
+	struct s5pc1xx_gpio_bank gpio_g2;
+	struct s5pc1xx_gpio_bank gpio_g3;
+	struct s5pc1xx_gpio_bank gpio_i;
+	struct s5pc1xx_gpio_bank gpio_j0;
+	struct s5pc1xx_gpio_bank gpio_j1;
+	struct s5pc1xx_gpio_bank gpio_j2;
+	struct s5pc1xx_gpio_bank gpio_j3;
+	struct s5pc1xx_gpio_bank gpio_j4;
+	struct s5pc1xx_gpio_bank gpio_mp0_1;
+	struct s5pc1xx_gpio_bank gpio_mp0_2;
+	struct s5pc1xx_gpio_bank gpio_mp0_3;
+	struct s5pc1xx_gpio_bank gpio_mp0_4;
+	struct s5pc1xx_gpio_bank gpio_mp0_5;
+	struct s5pc1xx_gpio_bank gpio_mp0_6;
+	struct s5pc1xx_gpio_bank gpio_mp0_7;
+	struct s5pc1xx_gpio_bank gpio_mp1_0;
+	struct s5pc1xx_gpio_bank gpio_mp1_1;
+	struct s5pc1xx_gpio_bank gpio_mp1_2;
+	struct s5pc1xx_gpio_bank gpio_mp1_3;
+	struct s5pc1xx_gpio_bank gpio_mp1_4;
+	struct s5pc1xx_gpio_bank gpio_mp1_5;
+	struct s5pc1xx_gpio_bank gpio_mp1_6;
+	struct s5pc1xx_gpio_bank gpio_mp1_7;
+	struct s5pc1xx_gpio_bank gpio_mp1_8;
+	struct s5pc1xx_gpio_bank gpio_mp2_0;
+	struct s5pc1xx_gpio_bank gpio_mp2_1;
+	struct s5pc1xx_gpio_bank gpio_mp2_2;
+	struct s5pc1xx_gpio_bank gpio_mp2_3;
+	struct s5pc1xx_gpio_bank gpio_mp2_4;
+	struct s5pc1xx_gpio_bank gpio_mp2_5;
+	struct s5pc1xx_gpio_bank gpio_mp2_6;
+	struct s5pc1xx_gpio_bank gpio_mp2_7;
+	struct s5pc1xx_gpio_bank gpio_mp2_8;
+	struct s5pc1xx_gpio_bank res1[48];
+	struct s5pc1xx_gpio_bank gpio_h0;
+	struct s5pc1xx_gpio_bank gpio_h1;
+	struct s5pc1xx_gpio_bank gpio_h2;
+	struct s5pc1xx_gpio_bank gpio_h3;
+};
 
-/* GPIO bank Offset */
-#define S5PC1XX_GPIO_CON_OFFSET		0x0
-#define S5PC1XX_GPIO_DAT_OFFSET		0x4
-#define S5PC1XX_GPIO_PULL_OFFSET	0x8
-#define S5PC1XX_GPIO_DRV_OFFSET		0xc
-#define S5PC1XX_GPIO_PDNCON_OFFSET	0x10
-#define S5PC1XX_GPIO_PDNPULL_OFFSET	0x14
+/* functions */
+void gpio_cfg_pin(struct s5pc1xx_gpio_bank *bank, int gpio, int cfg);
+void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int enable);
+void gpio_direction_input(struct s5pc1xx_gpio_bank *bank, int gpio);
+void gpio_set_value(struct s5pc1xx_gpio_bank *bank, int gpio, int enable);
+unsigned int gpio_get_value(struct s5pc1xx_gpio_bank *bank, int gpio);
+void gpio_set_pull(struct s5pc1xx_gpio_bank *bank, int gpio, int mode);
+#endif
+
+/* Pin configurations */
+#define GPIO_INPUT	0x0
+#define GPIO_OUTPUT	0x1
+#define GPIO_IRQ	0xf
+
+/* Pull mode */
+#define GPIO_PULL_NONE	0x0
+#define GPIO_PULL_DOWN	0x1
+#define GPIO_PULL_UP	0x2
 
 #endif

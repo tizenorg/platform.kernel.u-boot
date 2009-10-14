@@ -80,6 +80,12 @@
 #define CONFIG_SERIAL_MULTI	1
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
+/* MMC */
+#define CONFIG_GENERIC_MMC	1
+#define CONFIG_MMC		1
+#define CONFIG_S5PC1XX_MMC	1
+#define CONFIG_MMC_INDEX	0
+
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -114,6 +120,7 @@
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_I2C
+#define CONFIG_CMD_MMC
 
 #define CONFIG_SYS_64BIT_VSPRINTF	1
 
@@ -133,30 +140,27 @@
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
-				",128k@0x40000(params)"\
-				",3m@0x60000(kernel)"\
-				",18m@0x360000(modem)"\
+				",128k(params)"\
+				",3m(kernel)"\
+				",18m(modem)"\
 				",-(UBI)"
+
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
-				",256k@0x40000(params)"\
-				",3m@0x80000(kernel)"\
-				",18m@0x380000(modem)"\
+				",256k(params)"\
+				",3m(kernel)"\
+				",18m(modem)"\
 				",-(UBI)"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#if 1
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
-#else
-#define CONFIG_BOOTCOMMAND	"bootm 0x31008000"
-#endif
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
 		" console=ttySAC2,115200n8" \
 		" ${meminfo}"
 
 #define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" ${meminfo} " \
+		" ${meminfo}" \
 		" ${mtdparts}"
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock5 ubi.mtd=4" \
@@ -272,6 +276,7 @@
 #define CONFIG_ENV_OFFSET		0x40000
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
+#define CONFIG_SAMSUNG_ONENAND		1
 #define CONFIG_SYS_ONENAND_BASE		0xB0000000
 
 #define CONFIG_DOS_PARTITION	1
@@ -290,12 +295,6 @@
 #define CONFIG_SOFT_I2C		1
 #define CONFIG_SYS_I2C_INIT_BOARD
 #define CONFIG_SYS_I2C_SPEED	50000
-#define I2C_SDA(x)		i2c_gpio_set(1, x)
-#define I2C_SCL(x)		i2c_gpio_set(0, x)
-#define I2C_READ		(!!i2c_gpio_get())
-#define I2C_ACTIVE		i2c_gpio_dir(1)
-#define I2C_TRISTATE		i2c_gpio_dir(0)
-#define I2C_DELAY		udelay(5)
 #endif
 
 /* USB Downloader */

@@ -81,6 +81,7 @@
 #endif /* CONFIG_ADSTYPE == CONFIG_SYS_8272ADS */
 
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* Call board_early_init_f	*/
+#define CONFIG_RESET_PHY_R	1	/* Call reset_phy()		*/
 
 /* allow serial and ethaddr to be overwritten */
 #define CONFIG_ENV_OVERWRITE
@@ -209,7 +210,6 @@
 #define CONFIG_OF_LIBFDT	1
 #define CONFIG_OF_BOARD_SETUP	1
 #if defined(CONFIG_OF_LIBFDT)
-#define OF_CPU			"cpu@0"
 #define OF_TBCLK		(bd->bi_busfreq / 4)
 #endif
 

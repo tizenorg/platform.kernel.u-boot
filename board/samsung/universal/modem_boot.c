@@ -42,11 +42,8 @@
 #define CRC_OK				0x01
 #define CRC_ERR				0xff
 
-#define GPIO_CON_MASK			0xF
-#define GPIO_DAT_MASK			0x1
-#define GPIO_PUL_MASK			0x3
-
 extern struct serial_device s5pc1xx_serial3_device;
+static struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 int uart_serial_pollc(struct serial_device *uart, int retry)
 {
@@ -89,8 +86,7 @@ static int machine_is_tickertape(void)
 
 static int aquila_infineon_modem_on(void)
 {
-	unsigned int con, dat, pud, exit = 0;
-	unsigned int pin;
+	unsigned int dat, exit = 0;
 	unsigned int nInfoSize;
 	unsigned char *pDataPSI;
 	int nCnt;
@@ -101,60 +97,22 @@ static int aquila_infineon_modem_on(void)
 	/* Infineon modem */
 	/* 1. Modem gpio init */
 	/* Phone_on */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
-
-	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	con &= ~(0xf << 0); /* 0 = 0 * 4 */
-	con |= (0x1 << 0); /* Set to output (0x1) */
-	writel(con, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	pud = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
-	pud &= ~(0x3 << 0); /* 0 = 0 * 2 */
-	pud |= (0x0 << 0); /* Pull-up/down disabled */
-	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	gpio_direction_output(&gpio->gpio_j1, 0, 1);
+	gpio_set_pull(&gpio->gpio_j1, 0, GPIO_PULL_NONE);
 
 	/* CP_Reset */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-
-	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	con &= ~(0xf << 28); /* 28 = 7 * 4 */
-	con |= (0x1 << 28); /* Set to output (0x1) */
-	writel(con, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	pud = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
-	pud &= ~(0x3 << 14); /* 14 = 7 * 2 */
-	pud |= (0x0 << 14); /* Pull-up/down disabled */
-	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	gpio_direction_output(&gpio->gpio_h3, 7, 1);
+	gpio_set_pull(&gpio->gpio_h3, 7, GPIO_PULL_NONE);
 
 	/* nINT_ONEDRAN_AP */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-
-	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	con &= ~(0xf << 12); /* 12 = 3 * 4 */
-	con |= (0x0 << 12); /* Set to input (0x0) */
-	writel(con, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	pud = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
-	pud &= ~(0x3 << 6); /* 6 = 3 * 2 */
-	pud |= (0x0 << 6); /* Pull-up/down disabled */
-	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	gpio_direction_output(&gpio->gpio_h1, 3, 1);
+	gpio_set_pull(&gpio->gpio_h1, 3, GPIO_PULL_NONE);
 
 	/* 2. Uart3 init */
-	pin = S5PC110_GPIO_BASE(S5PC110_GPIO_A1_OFFSET);
-
-	con = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-	con &= ~(0xf << 8); /* 8 = 2 * 4 */
-	con |= (0x2 << 8); /* Set to UART3_RXD */
-	con &= ~(0xf << 12); /* 12 = 3 * 4 */
-	con |= (0x2 << 12); /* Set to UART3_TXD */
-	writel(con, pin + S5PC1XX_GPIO_CON_OFFSET);
-
-	pud = readl(pin + S5PC1XX_GPIO_PULL_OFFSET);
-	pud &= ~(0x3 << 4); /* 4 = 2 * 2 */
-	pud |= (0x0 << 4); /* Pull-up/down disabled */
-	pud &= ~(0x3 << 6); /* 6 = 3 * 2 */
-	pud |= (0x0 << 6); /* Pull-up/down disabled */
-	writel(pud, pin + S5PC1XX_GPIO_PULL_OFFSET);
+	gpio_cfg_pin(&gpio->gpio_a1, 2, 0x2);
+	gpio_cfg_pin(&gpio->gpio_a1, 3, 0x2);
+	gpio_set_pull(&gpio->gpio_a1, 2, GPIO_PULL_NONE);
+	gpio_set_pull(&gpio->gpio_a1, 3, GPIO_PULL_NONE);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
 	writel(0x0, 0xE2900C08);
@@ -168,30 +126,18 @@ static int aquila_infineon_modem_on(void)
 	/* 3. Modem reset */
 	while (1) {
 		/* PHONE_ON -> low */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
-		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-		dat &= ~(0x1 << 0);
-		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		gpio_set_value(&gpio->gpio_j1, 0, 0);
 
 		/* CP_RESET -> low */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-		dat &= ~(0x1 << 7);
-		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		gpio_set_value(&gpio->gpio_h3, 7, 0);
 
 		udelay(200*1000);	/* 200ms */
 
 		/* CP_RESET -> high */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
-		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-		dat |= (0x1 << 7);
-		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		gpio_set_value(&gpio->gpio_h3, 7, 1);
 
 		/* PHONE_ON -> high */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
-		dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-		dat |= (0x1 << 0);
-		writel(dat, pin + S5PC1XX_GPIO_DAT_OFFSET);
+		gpio_set_value(&gpio->gpio_j1, 0, 1);
 
 		udelay(27*1000);	/* > 26.6ms */
 
@@ -273,11 +219,8 @@ static int aquila_infineon_modem_on(void)
 		}
 
 		/* check Modem reaction */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		do {
-			dat = readl(pin + S5PC1XX_GPIO_DAT_OFFSET);
-			dat &= (0x1 << 3);
-		} while (dat);
+		while (gpio_get_value(&gpio->gpio_h1, 3))
+			;
 
 		if (rOneDRAM_MAILBOX_AB != IPC_CP_READY_FOR_LOADING) {
 			printf("OneDRAM is NOT initialized for Modem\n");
@@ -323,11 +266,8 @@ static int aquila_infineon_modem_on(void)
 		rOneDRAM_MAILBOX_BA = IPC_CP_IMG_LOADED;
 
 		/* check Modem reaction */
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
-		do {
-			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-			dat &= (0x1 << 3);
-		} while (dat);
+		while (gpio_get_value(&gpio->gpio_h1, 3))
+			;
 
 		if (rOneDRAM_MAILBOX_AB != IPC_CP_READY) {
 			printf("Modem is NOT ready to boot\n");
@@ -370,10 +310,8 @@ static int aquila_infineon_modem_on(void)
 		printf("\n");
 		printf("Waiting for 5 secs for modem to respond\n");
 
-		pin = S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET);
 		for (i = 0; i < 50000; i++) {
-			dat = readl(pin + S5PC1XX_GPIO_CON_OFFSET);
-			dat &= (0x1 << 3);
+			dat = gpio_get_value(&gpio->gpio_h1, 3);
 			if (dat == 0)
 				break;
 			udelay(100);
@@ -388,31 +326,6 @@ static int aquila_infineon_modem_on(void)
 	return 0;
 }
 
-static void gpio_direction_output(int base, int offset, int value)
-{
-	int tmp;
-
-	tmp = readl(base + S5PC1XX_GPIO_CON_OFFSET);
-	tmp &= ~(GPIO_CON_MASK << (offset << 2));
-	tmp |= (1 << (offset << 2));
-	writel(tmp, base + S5PC1XX_GPIO_CON_OFFSET);
-
-	tmp = readl(base + S5PC1XX_GPIO_DAT_OFFSET);
-	tmp &= ~(GPIO_DAT_MASK << (offset << 0));
-	tmp |= (value << (offset << 0));
-	writel(tmp, base + S5PC1XX_GPIO_DAT_OFFSET);
-}
-
-static void gpio_set_value(int base, int offset, int value)
-{
-	int tmp;
-
-	tmp = readl(base + S5PC1XX_GPIO_DAT_OFFSET);
-	tmp &= ~(GPIO_DAT_MASK << (offset << 0));
-	tmp |= (value << (offset << 0));
-	writel(tmp, base + S5PC1XX_GPIO_DAT_OFFSET);
-}
-
 static void mdelay(int msec)
 {
 	int i;
@@ -422,25 +335,22 @@ static void mdelay(int msec)
 
 static void tickertape_modem_on(void)
 {
-	int gpio_phone_on_base, gpio_phone_on;
-	int gpio_cp_rst_base, gpio_cp_rst;
+	int gpio_phone_on, gpio_cp_rst;
 
 	printf("Tickertape phone on\n");
 
-	gpio_phone_on_base = S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET);
 	gpio_phone_on = 0;
-	gpio_cp_rst_base = S5PC110_GPIO_BASE(S5PC110_GPIO_H3_OFFSET);
 	gpio_cp_rst = 7;
 
-	gpio_direction_output(gpio_phone_on_base, gpio_phone_on, 0);
-	gpio_direction_output(gpio_cp_rst_base, gpio_cp_rst, 0);
+	gpio_direction_output(&gpio->gpio_j1, gpio_phone_on, 0);
+	gpio_direction_output(&gpio->gpio_h3, gpio_cp_rst, 0);
 
-	gpio_set_value(gpio_cp_rst_base, gpio_cp_rst, 0);
-	gpio_set_value(gpio_phone_on_base, gpio_phone_on, 1);
+	gpio_set_value(&gpio->gpio_h3, gpio_cp_rst, 0);
+	gpio_set_value(&gpio->gpio_j1, gpio_phone_on, 1);
 	mdelay(100);
-	gpio_set_value(gpio_cp_rst_base, gpio_cp_rst, 1);
+	gpio_set_value(&gpio->gpio_h3, gpio_cp_rst, 1);
 	mdelay(900);
-	gpio_set_value(gpio_phone_on_base, gpio_phone_on, 0);
+	gpio_set_value(&gpio->gpio_j1, gpio_phone_on, 0);
 }
 
 int do_modem(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -482,7 +392,6 @@ void LoadCPImage(void)
 }
 
 U_BOOT_CMD(modem,	CONFIG_SYS_MAXARGS,	1,	do_modem,
-	"Modem init\n",
-	"info [l[ayout]]"
-		" - Display volume and ubi layout information\n"
+	"initialize the Modem",
+	"on"
 );

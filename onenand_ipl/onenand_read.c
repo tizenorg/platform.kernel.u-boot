@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2005-2008 Samsung Electronics
+ * (C) Copyright 2005-2009 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -37,8 +37,7 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
-int (*onenand_read_page)(ulong block, ulong page,
-				u_char *buf, int pagesize);
+int (*onenand_read_page)(ulong block, ulong page, u_char *buf, int pagesize);
 
 /* read a page with ECC */
 static int generic_onenand_read_page(ulong block, ulong page,

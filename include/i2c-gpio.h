@@ -35,10 +35,18 @@ struct i2c_gpio_bus {
 	struct i2c_gpio_bus_data *bus;
 };
 
+void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index);
 void i2c_gpio_dir(int dir);
 void i2c_gpio_set(int line, int value);
 int i2c_gpio_get(void);
-void i2c_gpio_set_bus(int bus);
+void i2c_gpio_set_bus(int index);
+
+#define I2C_SDA(x)		i2c_gpio_set(1, x)
+#define I2C_SCL(x)		i2c_gpio_set(0, x)
+#define I2C_READ		(!!i2c_gpio_get())
+#define I2C_ACTIVE		i2c_gpio_dir(1)
+#define I2C_TRISTATE		i2c_gpio_dir(0)
+#define I2C_DELAY		udelay(5)
 
 #endif
 #endif

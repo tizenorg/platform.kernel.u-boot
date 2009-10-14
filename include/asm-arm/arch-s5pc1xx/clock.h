@@ -1,8 +1,7 @@
 /*
- * (C) Copyright 2009
- * Samsung Electronics, <www.samsung.com/sec>
- * Heungjun Kim <riverful.kim@samsung.com>
+ * (C) Copyright 2009 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ * Heungjun Kim <riverful.kim@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,57 +23,78 @@
 #ifndef __ASM_ARM_ARCH_CLOCK_H_
 #define __ASM_ARM_ARCH_CLOCK_H_
 
-/*
- * Clock control
- */
+#ifndef __ASSEMBLY__
+struct s5pc100_clock {
+	unsigned long	apll_lock;
+	unsigned long	mpll_lock;
+	unsigned long	epll_lock;
+	unsigned long	hpll_lock;
+	unsigned char	res1[0xf0];
+	unsigned long	apll_con;
+	unsigned long	mpll_con;
+	unsigned long	epll_con;
+	unsigned long	hpll_con;
+	unsigned char	res2[0xf0];
+	unsigned long	src0;
+	unsigned long	src1;
+	unsigned long	src2;
+	unsigned long	src3;
+	unsigned char	res3[0xf0];
+	unsigned long	div0;
+	unsigned long	div1;
+	unsigned long	div2;
+	unsigned long	div3;
+	unsigned long	div4;
+	unsigned char	res4[0x1ec];
+	unsigned long	gate_d00;
+	unsigned long	gate_d01;
+	unsigned long	gate_d02;
+	unsigned char	res5[0x54];
+	unsigned long	gate_sclk0;
+	unsigned long	gate_sclk1;
+};
 
-/* Clock Register */
-#define S5PC100_APLL_LOCK_OFFSET	0x0
-#define S5PC100_MPLL_LOCK_OFFSET	0x4
-#define S5PC100_EPLL_LOCK_OFFSET	0x8
-#define S5PC100_HPLL_LOCK_OFFSET	0xc
-
-#define S5PC100_APLL_CON_OFFSET		0x100
-#define S5PC100_MPLL_CON_OFFSET		0x104
-#define S5PC100_EPLL_CON_OFFSET		0x108
-#define S5PC100_HPLL_CON_OFFSET		0x10c
-
-#define S5PC110_APLL_LOCK_OFFSET	0x00
-#define S5PC110_MPLL_LOCK_OFFSET	0x08
-#define S5PC110_EPLL_LOCK_OFFSET	0x10
-#define S5PC110_VPLL_LOCK_OFFSET	0x20
-
-#define S5PC110_APLL_CON_OFFSET		0x100
-#define S5PC110_MPLL_CON_OFFSET		0x108
-#define S5PC110_EPLL_CON_OFFSET		0x110
-#define S5PC110_VPLL_CON_OFFSET		0x120
-
-#define S5P_CLK_SRC0_OFFSET		0x200
-#define S5P_CLK_SRC1_OFFSET		0x204
-#define S5P_CLK_SRC2_OFFSET		0x208
-#define S5P_CLK_SRC3_OFFSET		0x20c
-
-#define S5P_CLK_DIV0_OFFSET		0x300
-#define S5P_CLK_DIV1_OFFSET		0x304
-#define S5P_CLK_DIV2_OFFSET		0x308
-#define S5P_CLK_DIV3_OFFSET		0x30c
-#define S5P_CLK_DIV4_OFFSET		0x310
-
-#define S5P_CLK_OUT_OFFSET		0x400
-
-#define S5P_CLK_GATE_D00_OFFSET		0x500
-#define S5P_CLK_GATE_D01_OFFSET		0x504
-#define S5P_CLK_GATE_D02_OFFSET		0x508
-
-#define S5P_CLK_GATE_D10_OFFSET		0x520
-#define S5P_CLK_GATE_D11_OFFSET		0x524
-#define S5P_CLK_GATE_D12_OFFSET		0x528
-#define S5P_CLK_GATE_D13_OFFSET		0x530
-#define S5P_CLK_GATE_D14_OFFSET		0x534
-
-#define S5P_CLK_GATE_D20_OFFSET		0x540
-
-#define S5P_CLK_GATE_SCLK0_OFFSET	0x560
-#define S5P_CLK_GATE_SCLK1_OFFSET	0x564
+struct s5pc110_clock {
+	unsigned long	apll_lock;
+	unsigned char	res1[0x4];
+	unsigned long	mpll_lock;
+	unsigned char	res2[0x4];
+	unsigned long	epll_lock;
+	unsigned char	res3[0xc];
+	unsigned long	vpll_lock;
+	unsigned char	res4[0xdc];
+	unsigned long	apll_con;
+	unsigned char	res5[0x4];
+	unsigned long	mpll_con;
+	unsigned char	res6[0x4];
+	unsigned long	epll_con;
+	unsigned char	res7[0xc];
+	unsigned long	vpll_con;
+	unsigned char	res8[0xdc];
+	unsigned long	src0;
+	unsigned long	src1;
+	unsigned long	src2;
+	unsigned long	src3;
+	unsigned long	src4;
+	unsigned long	src5;
+	unsigned long	src6;
+	unsigned char	res9[0xe4];
+	unsigned long	div0;
+	unsigned long	div1;
+	unsigned long	div2;
+	unsigned long	div3;
+	unsigned long	div4;
+	unsigned long	div5;
+	unsigned long	div6;
+	unsigned long	div7;
+	unsigned char	res10[0x1e0];
+	unsigned long	gate_d00;
+	unsigned long	gate_d01;
+	unsigned long	gate_d02;
+	unsigned char	res11[0x54];
+	unsigned long	gate_sclk0;
+	unsigned long	gate_sclk1;
+};
+#endif
 
 #endif

@@ -57,12 +57,12 @@ mem_ctrl_asm_init:
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL off */
-	ldr	r1, =0x50101001
+	ldr	r1, =0x50101009
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* auto refresh off */
-	ldr	r1, =0xff001010
+	ldr	r1, =0xff001010 | (1 << 7)
 	str	r1, [r0, #0x000]			@ CONCONTROL_OFFSET
 	strne	r1, [r6, #0x000]			@ CONCONTROL_OFFSET
 
@@ -106,15 +106,29 @@ swap_memory:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 
-	/* Check Limo Real board */
-	ldrne	r1, =0xE0200C64
-	ldrne	r1, [r1]
-	movne	r2, #(1 << 2)
-	andne	r1, r1, r2
-	cmp	r1, #0
-	ldreq	r4, =0x40f00322				@ 2Gib
-	ldrne	r4, =0x40f80222				@ 1Gib
+	/*
+	 * Check Limo Real board
+	 *	LR (suspend)	LU		J1B2
+	 * 0x04 0x01 (0x01)	0x01 (0x01)	0x01 (0x01)
+	 * 0x24 0x28 (0xA8)	0x28 (0x6A)	0x1C (0x1C)
+	 * 0x44 0x00 (0xC7)	0x00 (0x47)	0x00 (0x47)
+	 * 0x64 0x03 (0x1F)	0x07 (0x1F)	0x0f (0x0F)
+	 *
+	 * Check (0 << 2) at 0x64 at boot
+	 * Check (1 << 7) at 0x24 at suspend
+	 */
+	ldrne	r4, =0x40f00322				@ 2Gib
 
+	ldrne	r2, =0xE0200C00
+	ldrne	r1, [r2, #0x64]
+	mov	r1, r1, lsr #2
+	cmp	r1, #0
+	beq	2f
+	ldr	r1, [r2, #0x24]
+	mov	r1, r1, lsr #7
+	cmp	r1, #1
+	ldrne	r4, =0x40f80222				@ 1Gib
+2:
 	cmp	r7, r8
 	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
 
@@ -217,7 +231,7 @@ swap_memory:
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
 	/* auto refresh on */
-	ldr	r1, =0xff002030
+	ldr	r1, =0xff002030 | (1 << 7)
 	str	r1, [r0, #0x000]			@ S5P_CONCONTROL
 	strne	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
