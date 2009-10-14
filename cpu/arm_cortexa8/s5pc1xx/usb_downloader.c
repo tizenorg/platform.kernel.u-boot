@@ -47,7 +47,25 @@ static int __usb_board_init(void)
 
 int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 
-/* This function is interfaced between
+#ifdef CONFIG_GENERIC_MMC
+#include <mmc.h>
+
+void usbd_set_mmc_dev(struct usbd_ops *usbd)
+{
+	struct mmc *mmc;
+
+	usbd->mmc_dev = 0;
+	usbd->mmc_max = 0xffff;
+
+	mmc = find_mmc_device(usbd->mmc_dev);
+	mmc_init(mmc);
+
+	usbd->mmc_blk = mmc->read_bl_len;
+}
+#endif
+
+/*
+ * This function is interfaced between
  * USB Device Controller and USB Downloader
  */
 struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
@@ -62,6 +80,10 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->tx_len = tx_len;
 	usbd->rx_len = rx_len;
 	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
+
+#ifdef CONFIG_GENERIC_MMC
+	usbd_set_mmc_dev(usbd);
+#endif
 
 	return usbd;
 }

@@ -25,6 +25,7 @@ enum {
 	FILESYSTEM2_PART_ID,
 	FILESYSTEM3_PART_ID,
 	MODEM_PART_ID,
+	MMC_PART_ID,
 	NUM_PARTITION,
 };
 
@@ -39,8 +40,8 @@ enum {
 #define COMMAND_WRITE_PART_6	207
 #define COMMAND_WRITE_PART_7	208
 #define COMMAND_WRITE_PART_8	209
-#define COMMAND_WRITE_UBI_INFO	210
-#define COMMAND_PARTITION_CHECK	211
+#define COMMAND_WRITE_PART_9	210
+#define COMMAND_WRITE_UBI_INFO	211
 #define COMMAND_PARTITION_SYNC	212
 #define COMMAND_ERASE_PARAMETER	213
 #define COMMAND_RESET_PDA	214
@@ -66,6 +67,10 @@ enum {
  * tx_len	: size of send data
  * rx_len	: size of receive data
  * ram_addr	: address of will be stored data on RAM
+ *
+ * mmc_dev	: device number of mmc
+ * mmc_max	: number of max blocks
+ * mmc_blk	: mmc block size
  */
 struct usbd_ops {
 	void (*usb_init)(void);
@@ -78,6 +83,11 @@ struct usbd_ops {
 	ulong tx_len;
 	ulong rx_len;
 	ulong ram_addr;
+
+	/* mmc device info */
+	uint mmc_dev;
+	ulong mmc_max;
+	ulong mmc_blk;
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader
