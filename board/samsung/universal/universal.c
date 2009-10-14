@@ -583,10 +583,10 @@ static void check_mhl(void)
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	/* MHL Power enable */
-	/* HDMI_EN : GPJ2[2] output mode */
+	/* HDMI_EN : GPJ2[2] XMSMDATA_2 output mode */
 	gpio_direction_output(&gpio->gpio_j2, 2, 1);
 
-	/* MHL_RST : MP0_4[7] output mode */
+	/* MHL_RST : MP0_4[7] XM0ADDR_7 output mode */
 	gpio_direction_output(&gpio->gpio_mp0_4, 7, 0);
 
 	/* 10ms required after reset */
@@ -915,9 +915,6 @@ int misc_init_r(void)
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check max17040 */
 		check_battery();
-
-		/* check usb path */
-		check_mhl();
 	}
 
 	setup_power_down_mode_registers();
@@ -985,10 +982,10 @@ void board_sleep_init(void)
 }
 
 #ifdef CONFIG_CMD_USBDOWN
-#ifdef CONFIG_HARD_I2C
 int usb_board_init(void)
 {
 	if (cpu_is_s5pc100()) {
+#ifdef CONFIG_HARD_I2C
 		uchar val[2] ={0,};
 
 		/* PMIC */
@@ -1004,10 +1001,18 @@ int usb_board_init(void)
 			printf("i2c_write error\n");
 			return 1;
 		}
+#endif
+		return 0;
 	}
+
+	/* S5PC110 */
+	if (board_is_limo_universal() || board_is_limo_real()) {
+		/* check usb path */
+		check_mhl();
+	}
+
 	return 0;
 }
-#endif
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
