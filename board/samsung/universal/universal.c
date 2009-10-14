@@ -292,10 +292,10 @@ static void check_hw_revision(void)
 			board_rev |= J1_B2_BOARD_FEATURE;
 
 			/* Check board */
-			if (gpio_get_value(&gpio->gpio_h1, 2) == 0);
+			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_h3, 2) == 0);
+			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 #if 0
 			/* C110 Aquila ScreenSplit */
