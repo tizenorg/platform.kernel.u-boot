@@ -146,6 +146,18 @@ static int machine_is_aquila(void)
 	return board == MACH_AQUILA;
 }
 
+static int board_is_j1b2(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_AQUILA && (board_rev & J1_B2_BOARD_FEATURE);
+}
+
 static int board_is_limo_universal(void)
 {
 	int board;
@@ -292,10 +304,10 @@ static void check_hw_revision(void)
 			board_rev |= J1_B2_BOARD_FEATURE;
 
 			/* Check board */
-			if (gpio_get_value(&gpio->gpio_h1, 2) == 0);
+			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_h3, 2) == 0);
+			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 #if 0
 			/* C110 Aquila ScreenSplit */
@@ -408,6 +420,17 @@ static void enable_t_flash(void)
 
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
 	gpio_direction_output(&gpio->gpio_mp0_5, 4, 1);
+}
+
+static void enable_codec_ldo(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	if (!(board_is_limo_universal() || board_is_j1b2()))
+		return;
+
+	/* CODEC_LDO_EN: XM0FRNB_2: MP0_3[6] output high */
+	gpio_direction_output(&gpio->gpio_mp0_3, 6, 1);
 }
 
 static void setup_limo_real_gpios(void)
@@ -864,6 +887,9 @@ int misc_init_r(void)
 
 	/* Enable T-Flash at Limo Universal */
 	enable_t_flash();
+
+	/* Enable Codec LDO at Limo Universal an J1_B2 */
+	enable_codec_ldo();
 
 	/* Setup Limo Real board GPIOs */
 	setup_limo_real_gpios();
