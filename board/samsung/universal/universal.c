@@ -122,6 +122,11 @@ u32 get_board_rev(void)
 	return board_rev;
 }
 
+static int hwrevision(int rev)
+{
+	return (board_rev & 0xf) == rev;
+}
+
 enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
@@ -449,8 +454,12 @@ static void setup_limo_real_gpios(void)
 	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
 	gpio_direction_output(&gpio->gpio_f3, 4, 1);
 
-	/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
-	gpio_direction_output(&gpio->gpio_mp0_2, 2, 1);
+	if (hwrevision(0))
+		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
+		gpio_direction_output(&gpio->gpio_mp0_2, 1, 1);
+	else
+		/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
+		gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
 	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
