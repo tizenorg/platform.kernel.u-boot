@@ -11,7 +11,7 @@
 #include <asm/errno.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.0"
+#define APP_VERSION	"1.3.1"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -229,6 +229,55 @@ int ubi_cmd(int part, char *p1, char *p2, char *p3)
 }
 #endif
 
+#ifdef CONFIG_CMD_MMC
+extern int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+
+#define MMC_BLK_SIZE	512
+
+int mmc_cmd(char *p1, char *p2, char *p3)
+{
+	char *argv[] = {"mmc", "write", "0", p1, p2, p3};
+	int ret;
+
+	ret = do_mmcops(NULL, 0, 6, argv);
+
+	return ret;
+}
+
+int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, ulong len,
+		char *offset, char *length)
+{
+	uint blocks;
+	uint cnt;
+	int i;
+	int loop;
+	int ret;
+
+	blocks = len / usbd->mmc_blk;
+	if (len % usbd->mmc_blk)
+		blocks++;
+
+	loop = blocks / usbd->mmc_max;
+	if (blocks % usbd->mmc_max)
+		loop++;
+
+	for (i = 0; i < loop; i++) {
+		if (i == loop - 1)
+			cnt = blocks % usbd->mmc_max;
+		else
+			cnt = usbd->mmc_max;
+
+		sprintf(length, "%x", cnt);
+		sprintf(offset, "%x", fs_offset);
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		fs_offset += cnt;
+	}
+
+	return ret;
+}
+#endif
+
 int write_file_system(char *ramaddr, ulong len, char *offset,
 		char *length, int part_num, int ubi_update)
 {
@@ -305,7 +354,7 @@ static int process_data(struct usbd_ops *usbd)
 	ulong cmd = 0, arg = 0, len = 0, flag = 0;
 	char offset[12], length[12], ramaddr[12];
 	int recvlen = 0;
-	int blocks = 0;
+	unsigned int blocks = 0;
 	int ret = 0;
 	int ubi_update = 0;
 	int ubi_mode = 0;
@@ -351,11 +400,6 @@ static int process_data(struct usbd_ops *usbd)
 			*((ulong *) usbd->tx_data) = 0;
 
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
-		return 1;
-
-	/* Report number of partitions - NOT USE */
-	case COMMAND_PARTITION_CHECK:
-		printf("COMMAND_PARTITION_CHECK\n");
 		return 1;
 
 	/* Report partition info */
@@ -445,6 +489,11 @@ static int process_data(struct usbd_ops *usbd)
 	case COMMAND_WRITE_PART_8:
 		printf("COMMAND_WRITE_MODEM\n");
 		part_id = MODEM_PART_ID;
+		break;
+
+	case COMMAND_WRITE_PART_9:
+		printf("COMMAND_WRITE_MMC\n");
+		part_id = MMC_PART_ID;
 		break;
 
 	case COMMAND_WRITE_UBI_INFO:
@@ -570,6 +619,12 @@ static int process_data(struct usbd_ops *usbd)
 		sprintf(length, "%x", (unsigned int) len);
 		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
+
+#ifdef CONFIG_CMD_MMC
+	case MMC_PART_ID:
+		write_file_mmc(usbd, ramaddr, len, offset, length);
+		break;
+#endif
 
 	default:
 		/* Retry? */
