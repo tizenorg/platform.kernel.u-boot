@@ -526,6 +526,7 @@ static void check_keypad(void)
 
 	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 
+
 	/* VOLUMEDOWN and CAM(Half shot) Button */
 	if ((value & KBR1) == 0) {
 		i = 0;
@@ -534,14 +535,13 @@ static void check_keypad(void)
 			value |= 0xff;
 			value &= ~(1 << i);
 			writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+			udelay(10*1000);
 			row_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-
 			writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 		}
-		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
+		if ((row_value[0] & 0x3) != 0x3 && (row_value[1] & 0x3) == 0x1)
 			auto_download = 1;
 	}
-
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
 }
