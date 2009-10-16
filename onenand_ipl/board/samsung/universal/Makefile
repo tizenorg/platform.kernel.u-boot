@@ -30,6 +30,7 @@ OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o mem_setup.o
 SOBJS	+= start.o _memcpy32.o
+SOBJS	+= cache.o
 COBJS	+= onenand_read.o samsung_read.o
 COBJS	+= onenand_boot.o
 
@@ -64,6 +65,11 @@ checksum: checksum.c
 $(obj)start.S:
 	@rm -f $@
 	ln -s $(SRCTREE)/cpu/$(CPU)/start.S $@
+
+# from SoC directory
+$(obj)cache.S:
+	@rm -f $@
+	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/cache.S $@
 
 $(obj)mem_setup.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/mem_setup.S $@

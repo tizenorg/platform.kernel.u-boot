@@ -210,6 +210,19 @@ wakeup:
 	beq	1001b
 #endif
 
+	/* turn off L2 cache */
+	bl	l2_cache_disable
+
+	cmp	r7, r8
+	ldreq	r0, =0xC100
+	ldrne	r0, =0xC110
+
+	/* invalidate L2 cache also */
+	bl	invalidate_dcache
+
+	/* turn on L2 cache */
+	bl	l2_cache_enable
+
 	cmp	r7, r8
 	/* Load return address and jump to kernel */
 	ldreq	r0, =S5PC100_INFORM0
