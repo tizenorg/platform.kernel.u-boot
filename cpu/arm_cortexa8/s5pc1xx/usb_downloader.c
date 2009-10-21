@@ -55,7 +55,8 @@ void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	struct mmc *mmc;
 
 	usbd->mmc_dev = 0;
-	usbd->mmc_max = 0xffff;
+	/* FIX 0x400 */
+	usbd->mmc_max = 0x400;
 
 	mmc = find_mmc_device(usbd->mmc_dev);
 	mmc_init(mmc);
