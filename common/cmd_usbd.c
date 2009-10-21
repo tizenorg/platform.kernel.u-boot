@@ -262,13 +262,19 @@ int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, ulong len,
 		loop++;
 
 	for (i = 0; i < loop; i++) {
-		if (i == loop - 1)
+		if (i == loop - 1) {
 			cnt = blocks % usbd->mmc_max;
-		else
+			if (cnt == 0)
+				cnt = usbd->mmc_max;
+		} else {
 			cnt = usbd->mmc_max;
+		}
+
 
 		sprintf(length, "%x", cnt);
 		sprintf(offset, "%x", fs_offset);
+		sprintf(ramaddr, "0x%x", (uint)down_ram_addr +
+				i * usbd->mmc_blk * usbd->mmc_max);
 		ret = mmc_cmd(ramaddr, offset, length);
 
 		fs_offset += cnt;
