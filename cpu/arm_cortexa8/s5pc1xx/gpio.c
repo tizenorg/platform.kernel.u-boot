@@ -31,6 +31,11 @@
 #define PULL_MASK(x)		(0x3 << ((x) << 1))
 #define PULL_MODE(x, v)		((v) << ((x) << 1))
 
+#define DRV_MASK(x)		(0x3 << (x))
+#define DRV_SET(x,m)		((m) << (x))
+#define RATE_MASK(x)		(0x1 << (x + 16))
+#define RATE_SET(x)		(0x1 << (x + 16))
+
 void gpio_cfg_pin(struct s5pc1xx_gpio_bank *bank, int gpio, int cfg)
 {
 	unsigned int value;
@@ -93,4 +98,44 @@ void gpio_set_pull(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 		break;
 	}
 	writel(value, &bank->pull);
+}
+
+void gpio_set_drv(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
+{
+	unsigned int value;
+
+	value = readl(&bank->drv);
+	value &= ~DRV_MASK(gpio);
+
+	switch (mode) {
+	case GPIO_DRV_1x:
+	case GPIO_DRV_2x:
+	case GPIO_DRV_3x:
+	case GPIO_DRV_4x:
+		value |= DRV_SET(gpio, mode);
+		break;
+	default:
+		break;
+	}
+
+	writel(value, &bank->drv);
+}
+
+void gpio_set_rate(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
+{
+	unsigned int value;
+
+	value = readl(&bank->drv);
+	value &= ~RATE_MASK(gpio);
+
+	switch (mode) {
+	case GPIO_DRV_FAST:
+	case GPIO_DRV_SLOW:
+		value |= RATE_SET(gpio);
+		break;
+	default:
+		break;
+	}
+
+	writel(value, &bank->drv);
 }
