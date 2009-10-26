@@ -337,20 +337,11 @@ static void s6e63m0_panel_send_sequence(const unsigned short *wbuf)
 
 void lcd_panel_power_on(void)
 {
-	udelay(25000);
-
-	/* set gpio data for MLCD_RST to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	/* set gpio data for MLCD_ON to HIGH */
 	gpio_set_value(&gpio->gpio_j1, 3, 1);
 
-	/* set gpio data for MLCD_RST to LOW */
-	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
-	udelay(20);
 	/* set gpio data for MLCD_RST to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-
-	udelay(120000);
 
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
@@ -368,8 +359,6 @@ static inline void s6e63m0_c110_panel_hw_reset(void)
 
 	/* set gpio pin for MLCD_RST to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-
-	udelay(10000);
 }
 
 void lcd_panel_enable(void)

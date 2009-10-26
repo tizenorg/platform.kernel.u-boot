@@ -52,7 +52,6 @@ static unsigned long *lcd_base_addr;
 static vidinfo_t *pvid = NULL;
 
 extern unsigned long get_pll_clk(int pllreg);
-extern void s5pc1xx_clock_init(void);
 
 void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_size)
 {
