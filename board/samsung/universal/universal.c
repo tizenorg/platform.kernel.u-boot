@@ -485,13 +485,13 @@ static void check_keypad(void)
 		for (i = 0; i < 4; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
-				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
-				gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
+				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
+				gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
 			}
 
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
-				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
+				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
 		}
 
 		reg = S5PC110_KEYPAD_BASE;
@@ -500,9 +500,7 @@ static void check_keypad(void)
 	/* init col */
 	value = 0x00;
 	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
-
 	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-
 
 	/* VOLUMEDOWN and CAM(Half shot) Button */
 	if ((value & KBR1) == 0) {
@@ -514,11 +512,15 @@ static void check_keypad(void)
 			writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
 			udelay(10*1000);
 			row_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-			writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 		}
-		if ((row_value[0] & 0x3) != 0x3 && (row_value[1] & 0x3) == 0x1)
+		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+		/*  expected value is  row_value[0] = 0x00  row_value[1] = 0x01 */
+		/* workaround */
+		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
 			auto_download = 1;
 	}
+
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
 }
