@@ -25,6 +25,8 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 
+struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define	DEFMASK			0xFF00
@@ -33,24 +35,12 @@
 
 #define PACKET_LEN		8
 
-#define S5PCFB_C110_CS_LOW	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) & 0xfd, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
-#define S5PCFB_C110_CS_HIGH	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) | 0x02, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
-#define S5PCFB_C110_CLK_LOW	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) & 0xfd, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
-#define S5PCFB_C110_CLK_HIGH	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) | 0x02, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
-#define S5PCFB_C110_SDA_LOW	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) & 0xf7, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
-#define S5PCFB_C110_SDA_HIGH	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET)) | 0x08, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
-		S5PC1XX_GPIO_DAT_OFFSET))
+#define S5PCFB_C110_CS_LOW	gpio_set_value(&gpio->gpio_mp0_1, 1, 0)
+#define S5PCFB_C110_CS_HIGH	gpio_set_value(&gpio->gpio_mp0_1, 1, 1)
+#define S5PCFB_C110_CLK_LOW	gpio_set_value(&gpio->gpio_mp0_4, 1, 0)
+#define S5PCFB_C110_CLK_HIGH	gpio_set_value(&gpio->gpio_mp0_4, 1, 1)
+#define S5PCFB_C110_SDA_LOW	gpio_set_value(&gpio->gpio_mp0_4, 3, 0)
+#define S5PCFB_C110_SDA_HIGH	gpio_set_value(&gpio->gpio_mp0_4, 3, 1)
 
 const unsigned short SEQ_PANEL_CONDITION_SET[] = {
 	0xF8, 0x01,
@@ -350,27 +340,15 @@ void lcd_panel_power_on(void)
 	udelay(25000);
 
 	/* set gpio data for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x20,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	/* set gpio data for MLCD_ON to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x8,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_j1, 3, 1);
 
 	/* set gpio data for MLCD_RST to LOW */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) & 0xdf,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 	udelay(20);
 	/* set gpio data for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x20,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 
 	udelay(120000);
 
@@ -383,16 +361,14 @@ void lcd_panel_power_on(void)
 static inline void s6e63m0_c110_panel_hw_reset(void)
 {
 	/* set gpio pin for MLCD_RST to LOW */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) & 0x7f,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
-	udelay(1);	/* Shorter than 5 usec */
+	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
+
+	/* Shorter than 5 usec */
+	udelay(1);
+
 	/* set gpio pin for MLCD_RST to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x80,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+
 	udelay(10000);
 }
 
@@ -408,18 +384,9 @@ static void s6e63m0_panel_disable(void)
 void lcd_panel_init(void)
 {
 	/* set gpio pin for DISPLAY_CS to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_1, 1, 1);
 	/* set gpio pin for DISPLAY_CLK to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x02,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_4, 1, 1);
 	/* set gpio pin for DISPLAY_SI to HIGH */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-			S5PC1XX_GPIO_DAT_OFFSET)) | 0x08,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+
-		    S5PC1XX_GPIO_DAT_OFFSET));
+	gpio_set_value(&gpio->gpio_mp0_4, 3, 1);
 }

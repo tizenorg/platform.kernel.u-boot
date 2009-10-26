@@ -52,6 +52,7 @@ static unsigned long *lcd_base_addr;
 static vidinfo_t *pvid = NULL;
 
 extern unsigned long get_pll_clk(int pllreg);
+extern void s5pc1xx_clock_init(void);
 
 void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_size)
 {
@@ -64,91 +65,58 @@ void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_s
 
 void s5pc_c100_gpio_setup(void)
 {
-	/* set GPF0[0:7] for RGB Interface and Data lines */
-	writel(0x22222222, S5PC100_GPIO_BASE(S5PC100_GPIO_F0_OFFSET));
-
-	/* set Data lines */
-	writel(0x22222222, S5PC100_GPIO_BASE(S5PC100_GPIO_F1_OFFSET));
-	writel(0x22222222, S5PC100_GPIO_BASE(S5PC100_GPIO_F2_OFFSET));
-	writel(0x2222, S5PC100_GPIO_BASE(S5PC100_GPIO_F3_OFFSET));
-
-	/* set gpio configuration pin for MLCD_RST */
-	writel(0x10000000, S5PC100_GPIO_BASE(S5PC100_GPIO_H1_OFFSET));
-
-	/* set gpio configuration pin for MLCD_ON */
-	writel(0x1000, S5PC100_GPIO_BASE(S5PC100_GPIO_J1_OFFSET));
-	writel(readl(S5PC100_GPIO_BASE(S5PC100_GPIO_J1_OFFSET+S5PC1XX_GPIO_DAT_OFFSET)) & 0xf7,
-		S5PC100_GPIO_BASE(S5PC100_GPIO_J1_OFFSET+S5PC1XX_GPIO_DAT_OFFSET));
-
-	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK and DISPLSY_SI */
-	writel(0x11100000, S5PC100_GPIO_BASE(S5PC100_GPIO_K3_OFFSET));
 }
 
 void s5pc_c110_gpio_setup(void)
 {
-	/* set GPF0[0:7] for RGB Interface and Data lines (32bit) */
-	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET));
-	/* pull-up/down disable */
-	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
-	/* drive strength to max (24bit) */
-	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F0_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
+	unsigned int i;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	/* set Data lines (32bit) */
-	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET));
-	writel(0x22222222, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) & 0xFF0000,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET)) | 0x002222,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET));
+	for (i = 0; i < 8; i++) {
+		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f2, i, GPIO_FUNC(2));
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f2, i, GPIO_PULL_NONE);
 
-	/* drive strength to max (24bit) */
-	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
-	writel(0xffffff, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
-	/* [11:0](drive stength level), [15:12](none), [21:16](Slew Rate) */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET)) & 0x3FFF00,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET)) | 0x0000FF,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_DRV_OFFSET));
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio->gpio_f0, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f1, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f2, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f2, i, GPIO_DRV_SLOW);
+	}
 
-	/* pull-up/down disable */
-	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F1_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
-	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F2_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
-	writel(0x0, S5PC110_GPIO_BASE(S5PC110_GPIO_F3_OFFSET+S5PC1XX_GPIO_PULL_OFFSET));
-
+	for (i =0; i < 4; i++) {
+		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio->gpio_f3, i, GPIO_PULL_UP);
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio->gpio_f3, i, GPIO_PULL_NONE);
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio->gpio_f3, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f3, i, GPIO_DRV_SLOW);
+	}
 	/* display output path selection (only [1:0] valid) */
 	writel(0x2, DCR);
 
-	/* set gpio configuration pin for MLCD_RST */
-	/* for s5pc110 Universal board.
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) & 0x0fffffff,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET)) | 0x10000000,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_H1_OFFSET));
-	*/
+	/* gpio pad configuration for LCD reset. */
+	gpio_cfg_pin(&gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
 
-	/* for s5pc110 Limo board. */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)) & 0xff0fffff,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET)) | 0x00100000,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_5_OFFSET));
+	/* gpio pad configuration for LCD ON. */
+	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
 
-	/* set gpio configuration pin for MLCD_ON and then to LOW */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET)) & 0xFFFF0FFF,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET)) | 0x00001000,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+4)) & 0xf7,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_J1_OFFSET+S5PC1XX_GPIO_DAT_OFFSET));
+	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
+	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
 
-	/* set gpio configuration pin for DISPLAY_CS, DISPLAY_CLK, DISPLSY_SI and LCD_ID */
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) & 0xFFFFFF0F,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET)) | 0x00000010,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_1_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET)) & 0xFFFF000F,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET));
-	writel(readl(S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET)) | 0x00001110,
-		S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET));
+	s5pc1xx_clock_init();
+
 	return;
 }
 
@@ -224,7 +192,12 @@ static void s5pc_fimd_set_clock(void)
 		pvid->vl_elw + pvid->vl_width) * (pvid->vl_vpw +
 		    pvid->vl_bfw + pvid->vl_efw + pvid->vl_height);
 
-	src_clock = get_pll_clk(MPLL);
+	if (get_pll_clk == NULL) {
+		printf("get_pll_clk is null.\n");
+		return;
+	}
+	//src_clock = get_pll_clk(MPLL);
+	src_clock = 667000000;
 
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
@@ -256,9 +229,9 @@ static void s5pc_fimd_set_clock(void)
 	return;
 }
 
-static s5pc_fimd_lcd_on(unsigned int win_id)
+static void s5pc_fimd_lcd_on(unsigned int win_id)
 {
-	int cfg = 0;
+	unsigned int cfg = 0;
 
 	/* display on */
 	cfg = readl(ctrl_base + S5P_VIDCON0);
@@ -272,6 +245,20 @@ static s5pc_fimd_lcd_on(unsigned int win_id)
 	writel(cfg, ctrl_base + S5P_WINCON(win_id));
 	udebug("wincon%d=%x\n", win_id, cfg);
 }
+
+void s5pc_fimc_lcd_off(unsigned int win_id)
+{
+	unsigned int cfg = 0;
+
+	cfg = readl(ctrl_base + S5P_VIDCON0);
+	cfg &= (S5P_VIDCON0_ENVID_DISABLE | S5P_VIDCON0_ENVID_F_DISABLE);
+	writel(cfg, ctrl_base + S5P_VIDCON0);
+
+	cfg = readl(ctrl_base + S5P_WINCON(win_id));
+	cfg &= S5P_WINCON_ENWIN_DISABLE;
+	writel(cfg, ctrl_base + S5P_WINCON(win_id));
+}
+
 
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
