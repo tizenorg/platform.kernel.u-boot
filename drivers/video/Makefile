@@ -37,7 +37,7 @@ COBJS-$(CONFIG_SED156X) += sed156x.o
 COBJS-$(CONFIG_VIDEO_SM501) += sm501.o
 COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
-COBJS-$(CONFIG_S5PC1XXFB) += s5p-fb.o s5p-fimd.o tl2796.o
+COBJS-$(CONFIG_S5PC1XXFB) += s5p-fb.o s5p-fimd.o s6e63m0.o
 #COBJS-$(CONFIG_S5PC1XXFB) += s5p-fb.o s5p_fimd_aquila.o tl2796_aquila.o
 
 #COBJS-$(CONFIG_S5PC1XXFB) += s5p-dualfb.o s5p-dualfimd.o tl2796_dual.o
