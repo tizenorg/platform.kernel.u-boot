@@ -371,16 +371,6 @@ int checkcpu (void)
 		strcpy(addstr, "Security support");
 		break;
 
-	case PVR_405EX2_RA:
-		puts("EX Rev. A");
-		strcpy(addstr, "No Security support");
-		break;
-
-	case PVR_405EXR1_RA:
-		puts("EXr Rev. A");
-		strcpy(addstr, "Security support");
-		break;
-
 	case PVR_405EXR2_RA:
 		puts("EXr Rev. A");
 		strcpy(addstr, "No Security support");
@@ -403,6 +393,26 @@ int checkcpu (void)
 
 	case PVR_405EXR2_RC:
 		puts("EXr Rev. C");
+		strcpy(addstr, "No Security support");
+		break;
+
+	case PVR_405EX1_RD:
+		puts("EX Rev. D");
+		strcpy(addstr, "Security support");
+		break;
+
+	case PVR_405EX2_RD:
+		puts("EX Rev. D");
+		strcpy(addstr, "No Security support");
+		break;
+
+	case PVR_405EXR1_RD:
+		puts("EXr Rev. D");
+		strcpy(addstr, "Security support");
+		break;
+
+	case PVR_405EXR2_RD:
+		puts("EXr Rev. D");
 		strcpy(addstr, "No Security support");
 		break;
 
@@ -598,10 +608,17 @@ int checkcpu (void)
 		break;
 	}
 
-	printf (" at %s MHz (PLB=%lu, OPB=%lu, EBC=%lu MHz)\n", strmhz(buf, clock),
+	printf (" at %s MHz (PLB=%lu OPB=%lu EBC=%lu",
+		strmhz(buf, clock),
 		sys_info.freqPLB / 1000000,
 		get_OPB_freq() / 1000000,
 		sys_info.freqEBC / 1000000);
+#if defined(CONFIG_PCI) && \
+	(defined(CONFIG_440EP) || defined(CONFIG_440EPX) || \
+	 defined(CONFIG_440GR) || defined(CONFIG_440GRX))
+	printf(" PCI=%lu MHz", sys_info.freqPCI / 1000000);
+#endif
+	printf(")\n");
 
 	if (addstr[0] != 0)
 		printf("       %s\n", addstr);

@@ -29,15 +29,14 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).a
 
 SOBJS	= reset.o
-SOBJS	+= cache.o
 
-COBJS-y	+= clock.o
-COBJS-y	+= cpu_info.o
-COBJS-y	+= gpio.o
-COBJS-y	+= timer.o
-COBJS-$(CONFIG_S5PC110)	+= sleep.o
-COBJS-$(CONFIG_SOFT_I2C) += i2c-gpio.o
-COBJS-$(CONFIG_CMD_USBDOWN) += usb-hs-otg.o usb_downloader.o
+COBJS-y		+= cache.o
+COBJS-y		+= clock.o
+COBJS-y		+= cpu_info.o
+COBJS-y		+= gpio.o
+COBJS-y		+= timer.o
+COBJS-$(CONFIG_SOFT_I2C)	+= i2c-gpio.o
+COBJS-$(CONFIG_CMD_USBDOWN)	+= usb-hs-otg.o usb_downloader.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))

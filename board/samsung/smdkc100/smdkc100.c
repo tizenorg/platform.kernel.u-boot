@@ -27,7 +27,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int board_init(void)
 {
-	gd->bd->bi_arch_number = MACH_TYPE;
+	gd->bd->bi_arch_number = MACH_TYPE_SMDKC100;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
@@ -36,7 +36,8 @@ int board_init(void)
 int dram_init(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+	gd->bd->bi_dram[0].size = get_ram_size((long *)PHYS_SDRAM_1,
+						PHYS_SDRAM_1_SIZE);
 
 	return 0;
 }

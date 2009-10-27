@@ -501,6 +501,9 @@ unconfig:
 		$(obj)board/*/config.tmp $(obj)board/*/*/config.tmp \
 		$(obj)include/autoconf.mk $(obj)include/autoconf.mk.dep
 
+%: %_config
+	$(MAKE)
+
 #========================================================================
 # PowerPC
 #========================================================================
@@ -2511,9 +2514,21 @@ P2020DS_config:		unconfig
 	@$(MKCONFIG) -t $(@:_config=) P2020DS ppc mpc85xx p2020ds freescale
 
 P1011RDB_config	\
+P1011RDB_NAND_config \
+P1011RDB_SDCARD_config \
+P1011RDB_SPIFLASH_config \
 P1020RDB_config	\
+P1020RDB_NAND_config \
+P1020RDB_SDCARD_config \
+P1020RDB_SPIFLASH_config \
 P2010RDB_config \
-P2020RDB_config:	unconfig
+P2010RDB_NAND_config \
+P2010RDB_SDCARD_config \
+P2010RDB_SPIFLASH_config \
+P2020RDB_config \
+P2020RDB_NAND_config \
+P2020RDB_SDCARD_config \
+P2020RDB_SPIFLASH_config:	unconfig
 	@$(MKCONFIG) -t $(@:_config=) P1_P2_RDB ppc mpc85xx p1_p2_rdb freescale
 
 PM854_config:	unconfig
@@ -2927,8 +2942,14 @@ davinci_sonata_config :	unconfig
 davinci_dm355evm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm355evm davinci davinci
 
+davinci_dm355leopard_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm355leopard davinci davinci
+
 davinci_dm365evm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm365evm davinci davinci
+
+davinci_dm6467evm_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm6467evm davinci davinci
 
 imx27lite_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs imx27lite logicpd mx27
@@ -3138,21 +3159,24 @@ omap3_evm_config :	unconfig
 omap3_pandora_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 pandora NULL omap3
 
+omap3_sdp3430_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 sdp3430 ti omap3
+
 omap3_zoom1_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom1 logicpd omap3
 
 omap3_zoom2_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom2 logicpd omap3
 
-s5pc1xx_universal_config:	unconfig
-	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
-	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
-	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
-
 smdkc100_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 smdkc100 samsung s5pc1xx
+	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
+
+s5pc1xx_universal_config:	unconfig
+	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
@@ -3541,10 +3565,6 @@ BFIN_BOARDS += ibf-dsp561
 
 $(BFIN_BOARDS:%=%_config)	: unconfig
 	@$(MKCONFIG) $(@:_config=) blackfin blackfin $(@:_config=)
-
-$(BFIN_BOARDS):
-	$(MAKE) $@_config
-	$(MAKE)
 
 #========================================================================
 # AVR32

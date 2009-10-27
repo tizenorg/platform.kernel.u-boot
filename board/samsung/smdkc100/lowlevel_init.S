@@ -1,8 +1,7 @@
 /*
- * Memory Setup stuff - taken from blob memsetup.S
- *
  * Copyright (C) 2009 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
+ * Minkyu Kang <mk7.kang@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -26,12 +25,7 @@
 #include <config.h>
 #include <version.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/mem.h>
-#include <asm/arch/gpio.h>
-#include <asm/arch/clock.h>
 #include <asm/arch/power.h>
-#include <asm/arch/watchdog.h>
-#include <asm/arch/interrupt.h>
 
 /*
  * Register usages:
@@ -49,7 +43,7 @@ lowlevel_init:
 	/* r5 has always zero */
 	mov	r5, #0
 
-	ldr	r8, =S5PC100_GPIO_BASE(0)
+	ldr	r8, =S5PC100_GPIO_BASE
 
 	/* Disable Watchdog */
 	ldr	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
@@ -70,20 +64,20 @@ lowlevel_init:
 
 	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
-	str	r3, [r0, #VIC_INTENCLEAR_OFFSET]
-	str	r3, [r1, #VIC_INTENCLEAR_OFFSET]
-	str	r3, [r2, #VIC_INTENCLEAR_OFFSET]
+	str	r3, [r0, #0x14]				@INTENCLEAR
+	str	r3, [r1, #0x14]				@INTENCLEAR
+	str	r3, [r2, #0x14]				@INTENCLEAR
 
 #ifndef CONFIG_ONENAND_IPL
 	/* Set all interrupts as IRQ */
-	str	r5, [r0, #VIC_INTSELECT_OFFSET]
-	str	r5, [r1, #VIC_INTSELECT_OFFSET]
-	str	r5, [r2, #VIC_INTSELECT_OFFSET]
+	str	r5, [r0, #0xc]				@INTSELECT
+	str	r5, [r1, #0xc]				@INTSELECT
+	str	r5, [r2, #0xc]				@INTSELECT
 
 	/* Pending Interrupt Clear */
-	str	r5, [r0, #VIC_INTADDRESS_OFFSET]
-	str	r5, [r1, #VIC_INTADDRESS_OFFSET]
-	str	r5, [r2, #VIC_INTADDRESS_OFFSET]
+	str	r5, [r0, #0xf00]			@INTADDRESS
+	str	r5, [r1, #0xf00]			@INTADDRESS
+	str	r5, [r2, #0xf00]			@INTADDRESS
 #endif
 
 #ifndef CONFIG_ONENAND_IPL
@@ -137,7 +131,7 @@ wakeup_reset:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r8, =S5PC1XX_CLOCK_BASE			@ 0xE0100000
+	ldr	r8, =S5PC1XX_CLOCK_BASE		@ 0xE0100000
 
 	/* Set Clock divider */
 	ldr	r1, =0x00011110
@@ -191,9 +185,9 @@ system_clock_init:
 uart_asm_init:
 	mov	r0, r8
 	ldr	r1, =0x22222222
-	str	r1, [r0, #S5PC100_GPIO_A0_OFFSET]		@ GPA0_CON
+	str	r1, [r0, #0x0]			@ GPA0_CON
 	ldr	r1, =0x00022222
-	str	r1, [r0, #S5PC100_GPIO_A1_OFFSET]		@ GPA1_CON
+	str	r1, [r0, #0x20]			@ GPA1_CON
 
 	mov	pc, lr
 

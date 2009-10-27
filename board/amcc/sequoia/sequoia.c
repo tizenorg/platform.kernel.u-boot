@@ -40,6 +40,15 @@ extern flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS]; /* info for FLASH ch
 extern void __ft_board_setup(void *blob, bd_t *bd);
 ulong flash_get_size(ulong base, int banknum);
 
+static inline u32 get_async_pci_freq(void)
+{
+	if (in_8((void *)(CONFIG_SYS_BCSR_BASE + 5)) &
+		CONFIG_SYS_BCSR5_PCI66EN)
+		return 66666666;
+	else
+		return 33333333;
+}
+
 int board_early_init_f(void)
 {
 	u32 sdr0_cust0;
@@ -75,6 +84,9 @@ int board_early_init_f(void)
 	mtdcr(UIC2TR, 0x00000000);	/* per ref-board manual */
 	mtdcr(UIC2VR, 0x00000000);	/* int31 highest, base=0x000 */
 	mtdcr(UIC2SR, 0xffffffff);	/* clear all */
+
+	/* Check and reconfigure the PCI sync clock if necessary */
+	ppc4xx_pci_sync_clock_config(get_async_pci_freq());
 
 	/* 50MHz tmrclk */
 	out_8((u8 *) CONFIG_SYS_BCSR_BASE + 0x04, 0x00);
@@ -319,7 +331,7 @@ int checkboard(void)
 {
 	char *s = getenv("serial#");
 	u8 rev;
-	u8 val;
+	u32 clock = get_async_pci_freq();
 
 #ifdef CONFIG_440EPX
 	printf("Board: Sequoia - AMCC PPC440EPx Evaluation Board");
@@ -328,14 +340,22 @@ int checkboard(void)
 #endif
 
 	rev = in_8((void *)(CONFIG_SYS_BCSR_BASE + 0));
-	val = in_8((void *)(CONFIG_SYS_BCSR_BASE + 5)) & CONFIG_SYS_BCSR5_PCI66EN;
-	printf(", Rev. %X, PCI=%d MHz", rev, val ? 66 : 33);
+	printf(", Rev. %X, PCI-Async=%d MHz", rev, clock / 1000000);
 
 	if (s != NULL) {
 		puts(", serial# ");
 		puts(s);
 	}
 	putc('\n');
+
+	/*
+	 * Reconfiguration of the PCI sync clock is already done,
+	 * now check again if everything is in range:
+	 */
+	if (ppc4xx_pci_sync_clock_config(clock)) {
+		printf("ERROR: PCI clocking incorrect (async=%d "
+		       "sync=%ld)!\n", clock, get_PCI_freq());
+	}
 
 	return (0);
 }
@@ -428,26 +448,26 @@ void pci_target_init(struct pci_controller *hose)
 	 * Use byte reversed out routines to handle endianess.
 	 * Make this region non-prefetchable.
 	 */
-	out32r(PCIX0_PMM0MA, 0x00000000);	/* PMM0 Mask/Attribute */
+	out32r(PCIL0_PMM0MA, 0x00000000);	/* PMM0 Mask/Attribute */
 						/* - disabled b4 setting */
-	out32r(PCIX0_PMM0LA, CONFIG_SYS_PCI_MEMBASE);	/* PMM0 Local Address */
-	out32r(PCIX0_PMM0PCILA, CONFIG_SYS_PCI_MEMBASE); /* PMM0 PCI Low Address */
-	out32r(PCIX0_PMM0PCIHA, 0x00000000);	/* PMM0 PCI High Address */
-	out32r(PCIX0_PMM0MA, 0xE0000001);	/* 512M + No prefetching, */
+	out32r(PCIL0_PMM0LA, CONFIG_SYS_PCI_MEMBASE);	/* PMM0 Local Address */
+	out32r(PCIL0_PMM0PCILA, CONFIG_SYS_PCI_MEMBASE); /* PMM0 PCI Low Address */
+	out32r(PCIL0_PMM0PCIHA, 0x00000000);	/* PMM0 PCI High Address */
+	out32r(PCIL0_PMM0MA, 0xE0000001);	/* 512M + No prefetching, */
 						/* and enable region */
 
-	out32r(PCIX0_PMM1MA, 0x00000000);	/* PMM0 Mask/Attribute */
+	out32r(PCIL0_PMM1MA, 0x00000000);	/* PMM0 Mask/Attribute */
 						/* - disabled b4 setting */
-	out32r(PCIX0_PMM1LA, CONFIG_SYS_PCI_MEMBASE2); /* PMM0 Local Address */
-	out32r(PCIX0_PMM1PCILA, CONFIG_SYS_PCI_MEMBASE2); /* PMM0 PCI Low Address */
-	out32r(PCIX0_PMM1PCIHA, 0x00000000);	/* PMM0 PCI High Address */
-	out32r(PCIX0_PMM1MA, 0xE0000001);	/* 512M + No prefetching, */
+	out32r(PCIL0_PMM1LA, CONFIG_SYS_PCI_MEMBASE2); /* PMM0 Local Address */
+	out32r(PCIL0_PMM1PCILA, CONFIG_SYS_PCI_MEMBASE2); /* PMM0 PCI Low Address */
+	out32r(PCIL0_PMM1PCIHA, 0x00000000);	/* PMM0 PCI High Address */
+	out32r(PCIL0_PMM1MA, 0xE0000001);	/* 512M + No prefetching, */
 						/* and enable region */
 
-	out32r(PCIX0_PTM1MS, 0x00000001);	/* Memory Size/Attribute */
-	out32r(PCIX0_PTM1LA, 0);		/* Local Addr. Reg */
-	out32r(PCIX0_PTM2MS, 0);		/* Memory Size/Attribute */
-	out32r(PCIX0_PTM2LA, 0);		/* Local Addr. Reg */
+	out32r(PCIL0_PTM1MS, 0x00000001);	/* Memory Size/Attribute */
+	out32r(PCIL0_PTM1LA, 0);		/* Local Addr. Reg */
+	out32r(PCIL0_PTM2MS, 0);		/* Memory Size/Attribute */
+	out32r(PCIL0_PTM2LA, 0);		/* Local Addr. Reg */
 
 	/*
 	 * Set up Configuration registers

@@ -29,14 +29,4 @@ extern unsigned long (*get_pll_clk)(int pllreg);
 extern unsigned long (*get_arm_clk)(void);
 extern unsigned long (*get_pclk)(void);
 
-#define APLL	0
-#define MPLL	1
-#define EPLL	2
-#define HPLL	3
-#define VPLL	4
-
-#define CLK_M	0
-#define CLK_D	1
-#define CLK_P	2
-
 #endif
