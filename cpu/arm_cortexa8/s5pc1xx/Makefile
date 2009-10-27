@@ -35,6 +35,7 @@ COBJS-y		+= clock.o
 COBJS-y		+= cpu_info.o
 COBJS-y		+= gpio.o
 COBJS-y		+= timer.o
+COBJS-y		+= sleep.o
 COBJS-$(CONFIG_SOFT_I2C)	+= i2c-gpio.o
 COBJS-$(CONFIG_CMD_USBDOWN)	+= usb-hs-otg.o usb_downloader.o
 
