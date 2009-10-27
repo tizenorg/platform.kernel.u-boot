@@ -131,6 +131,7 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
+	MACH_P1P2,
 };
 
 #define SCREEN_SPLIT_FEATURE	0x100
@@ -180,6 +181,7 @@ static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
+	"P1P2",
 };
 
 enum {
@@ -221,6 +223,7 @@ static void check_board_revision(int board, int rev)
 		}
 		break;
 	case MACH_TICKERTAPE:
+	case MACH_P1P2:
 		board_rev &= ~FEATURE_MASK;
 		break;
 	default:
@@ -283,15 +286,18 @@ static void check_hw_revision(void)
 		 * LRA: Limo Real Aquila
 		 * LUA: Limo Universal Aquila
 		 * OA: Old Aquila
+		 * P1P2: Smart Book
 		 *
-		 * 			Universal LRA  LUA  OA   TT   SS
-		 *   J1: 0xE0200264	0x10      0x00 0x00 0x00 0x00 0x00
-		 *   H1: 0xE0200C24	          0x28 0xA8 0x1C
-		 *   H3: 0xE0200C64	          0x02 0x07 0x0F
-		 *   D1: 0xE02000C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
-		 *    I: 0xE0200224	                    0x02 0x00 0x08
-		 * MP03: 0xE0200324	                    0x9x      0xbx 0x9x
-		 * MP05: 0xE0200364	                    0x80      0x88
+		 * ADDR = 0xE0200000 + OFF
+		 *
+		 * 	 OFF	Universal LRA  LUA  OA   TT   SS	P1P2
+		 *   J1: 0x0264	0x10      0x00 0x00 0x00 0x00 0x00	0x00
+		 *   H1: 0x0C24	          0x28 0xA8 0x1C		0x18
+		 *   H3: 0x0C64	          0x03 0x07 0x0F		0xff
+		 *   D1: 0x00C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
+		 *    I: 0x0224	                    0x02 0x00 0x08
+		 * MP03: 0x0324	                    0x9x      0xbx 0x9x
+		 * MP05: 0x0364	                    0x80      0x88
 		 */
 
 		/* C110 Aquila */
@@ -320,6 +326,11 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
 			gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
+
+		/* C110 P1P2 */
+		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
+			board = MACH_P1P2;
+		}
 	}
 
 	/* Set machine id */
