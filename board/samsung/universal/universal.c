@@ -152,6 +152,18 @@ static int machine_is_aquila(void)
 	return board == MACH_AQUILA;
 }
 
+static int machine_is_p1p2(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_P1P2;
+}
+
 static int board_is_limo_universal(void)
 {
 	int board;
@@ -414,6 +426,9 @@ static void enable_ldos(void)
 	if (cpu_is_s5pc100())
 		return;
 
+	if (machine_is_p1p2())
+		return;
+
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
 	gpio_direction_output(&gpio->gpio_g3, 6, 1);
 }
@@ -423,6 +438,9 @@ static void enable_t_flash(void)
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (!(board_is_limo_universal() || board_is_limo_real()))
+		return;
+
+	if (machine_is_p1p2())
 		return;
 
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
@@ -484,6 +502,9 @@ static void check_keypad(void)
 	} else {
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+		if (machine_is_p1p2())
+			return;
 
 		if (board_is_limo_real() || board_is_limo_universal()) {
 			row_mask = 0x00FF;
@@ -970,7 +991,6 @@ int board_late_init(void)
 	return 0;
 }
 #endif
-
 
 /* Used for sleep test */
 void board_sleep_init(void)
