@@ -472,6 +472,22 @@ static void setup_limo_real_gpios(void)
 	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
+static void setup_p1p2_gpios(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+	if (!machine_is_p1p2())
+		return;
+
+	/*
+	 * Note: Please write GPIO alphabet order
+	 */
+	/* RESET_REQ_N: XM0FRnB[1]: MP0_3[5] output high */
+	gpio_direction_output(&gpio->gpio_mp0_3, 5, 1);
+	/* CODEC_LDO_EN: XM0FRnB[2]: MP0_3[6] output high */
+	gpio_direction_output(&gpio->gpio_mp0_3, 6, 1);
+}
+
 #define KBR3		(1 << 3)
 #define KBR2		(1 << 2)
 #define KBR1		(1 << 1)
@@ -961,6 +977,9 @@ int misc_init_r(void)
 
 	/* Setup Limo Real board GPIOs */
 	setup_limo_real_gpios();
+
+	/* Setup P1P2 board GPIOS */
+	setup_p1p2_gpios();
 
 	/* To usbdown automatically */
 	check_keypad();
