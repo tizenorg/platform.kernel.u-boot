@@ -261,7 +261,7 @@ void s5pc_fimc_lcd_off(unsigned int win_id)
 
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
-	unsigned int cfg = 0, rgb_mode, win_id = 0;
+	unsigned int cfg = 0, rgb_mode, win_id = 1;
 
 	/* store panel info to global variable */
 	pvid = vid;

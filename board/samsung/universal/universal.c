@@ -963,6 +963,8 @@ int misc_init_r(void)
 {
 #ifdef CONFIG_LCD
 	lcd_is_enabled = 0;
+
+	setenv("lcd", "lcd=s6e63m0");
 #endif
 	check_hw_revision();
 
