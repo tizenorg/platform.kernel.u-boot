@@ -31,11 +31,6 @@ static long rx_len = 64;
 
 struct usbd_ops *usbd_set_interface(struct usbd_ops *);
 
-void usb_init(void);
-int usb_receive_packet(void);
-
-void recv_setup(char *, int);
-
 extern int s5p_receive_done;
 extern int s5p_usb_connected;
 extern otg_dev_t otg;
@@ -47,10 +42,81 @@ static int __usb_board_init(void)
 
 int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 
+/* clear download informations */
+static void s5p_usb_clear_dnfile_info(void)
+{
+	otg.dn_addr = 0;
+	otg.dn_filesize = 0;
+	otg.dn_ptr = 0;
+}
+
+/* clear upload informations */
+static void s5p_usb_clear_upfile_info(void)
+{
+	otg.up_addr = 0;
+	otg.up_size = 0;
+	otg.up_ptr = 0;
+}
+
+/* start the usb controller */
+static void usb_init(void)
+{
+	if (usb_board_init()) {
+		printf("Failed to usb_board_init\n");
+		return;
+	}
+
+	s5p_usbctl_init();
+	s5p_usbc_activate();
+
+	printf("USB Start!! - %s Speed\n",
+			otg.speed ? "Full" : "High");
+
+	while (!s5p_usb_connected) {
+		if (s5p_usb_detect_irq()) {
+			s5p_udc_int_hndlr();
+			s5p_usb_clear_irq();
+		}
+	}
+
+	s5p_usb_clear_dnfile_info();
+
+	printf("Connected!!\n");
+}
+
+/*
+ * receive the packet from host PC
+ * return received size
+ */
+static int usb_receive_packet(void)
+{
+	while (1) {
+		if (s5p_usb_detect_irq()) {
+			s5p_udc_int_hndlr();
+			s5p_usb_clear_irq();
+		}
+
+		if (s5p_receive_done) {
+			s5p_receive_done = 0;
+			return otg.dn_filesize;
+		}
+	}
+}
+
+/* setup the download informations */
+static void recv_setup(char *addr, int len)
+{
+	s5p_usb_clear_dnfile_info();
+
+	otg.dn_addr = (u32)addr;
+	otg.dn_ptr = (u8 *) addr;
+	otg.dn_filesize = len;
+}
+
 #ifdef CONFIG_GENERIC_MMC
 #include <mmc.h>
 
-void usbd_set_mmc_dev(struct usbd_ops *usbd)
+static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 {
 	struct mmc *mmc;
 
@@ -91,72 +157,3 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	return usbd;
 }
 
-/* clear download informations */
-void s5p_usb_clear_dnfile_info(void)
-{
-	otg.dn_addr = 0;
-	otg.dn_filesize = 0;
-	otg.dn_ptr = 0;
-}
-
-/* clear upload informations */
-void s5p_usb_clear_upfile_info(void)
-{
-	otg.up_addr = 0;
-	otg.up_size = 0;
-	otg.up_ptr = 0;
-}
-
-/* start the usb controller */
-void usb_init(void)
-{
-	if (usb_board_init()) {
-		printf("Failed to usb_board_init\n");
-		return;
-	}
-
-	s5p_usbctl_init();
-	s5p_usbc_activate();
-
-	printf("USB Start!! - %s Speed\n",
-			otg.speed ? "Full" : "High");
-
-	while (!s5p_usb_connected) {
-		if (s5p_usb_detect_irq()) {
-			s5p_udc_int_hndlr();
-			s5p_usb_clear_irq();
-		}
-	}
-
-	s5p_usb_clear_dnfile_info();
-
-	printf("Connected!!\n");
-}
-
-/* receive the packet from host PC
- * return received size
- */
-int usb_receive_packet(void)
-{
-	while (1) {
-		if (s5p_usb_detect_irq()) {
-			s5p_udc_int_hndlr();
-			s5p_usb_clear_irq();
-		}
-
-		if (s5p_receive_done) {
-			s5p_receive_done = 0;
-			return otg.dn_filesize;
-		}
-	}
-}
-
-/* setup the download informations */
-void recv_setup(char *addr, int len)
-{
-	s5p_usb_clear_dnfile_info();
-
-	otg.dn_addr = (u32)addr;
-	otg.dn_ptr = (u8 *) addr;
-	otg.dn_filesize = len;
-}
