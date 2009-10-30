@@ -9,9 +9,10 @@
 #include <common.h>
 #include <usbd.h>
 #include <asm/errno.h>
+#include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.1"
+#define APP_VERSION	"1.3.2"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -230,11 +231,11 @@ int ubi_cmd(int part, char *p1, char *p2, char *p3)
 #endif
 
 #ifdef CONFIG_CMD_MMC
+#include <fat.h>
+
 extern int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
-#define MMC_BLK_SIZE	512
-
-int mmc_cmd(char *p1, char *p2, char *p3)
+static int mmc_cmd(char *p1, char *p2, char *p3)
 {
 	char *argv[] = {"mmc", "write", "0", p1, p2, p3};
 	int ret;
@@ -244,25 +245,33 @@ int mmc_cmd(char *p1, char *p2, char *p3)
 	return ret;
 }
 
-int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, ulong len,
-		char *offset, char *length)
+static unsigned int org_blk_offset;
+static unsigned int org_root_blk;
+static unsigned int org_data_blk;
+
+static unsigned int cur_blk_offset;
+static unsigned int cur_root_blk;
+static unsigned int cur_data_blk;
+
+static int erase_mmc_block(struct usbd_ops *usbd,
+		unsigned int blocks, unsigned int start)
 {
-	uint blocks;
-	uint cnt;
+	char *data;
+	char offset[12], length[12], ramaddr[12];
 	int i;
 	int loop;
-	int ret;
-
-	blocks = len / usbd->mmc_blk;
-	if (len % usbd->mmc_blk)
-		blocks++;
+	u32 cnt;
+	int ret = 0;
 
 	loop = blocks / usbd->mmc_max;
 	if (blocks % usbd->mmc_max)
 		loop++;
 
+	data = malloc(usbd->mmc_max);
+	memset(data, 0, usbd->mmc_max);
+
 	for (i = 0; i < loop; i++) {
-		if (i == loop - 1) {
+		if (i == 0) {
 			cnt = blocks % usbd->mmc_max;
 			if (cnt == 0)
 				cnt = usbd->mmc_max;
@@ -270,14 +279,140 @@ int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, ulong len,
 			cnt = usbd->mmc_max;
 		}
 
-
 		sprintf(length, "%x", cnt);
-		sprintf(offset, "%x", fs_offset);
-		sprintf(ramaddr, "0x%x", (uint)down_ram_addr +
-				i * usbd->mmc_blk * usbd->mmc_max);
+		sprintf(offset, "%x", start);
+		sprintf(ramaddr, "0x%x", (u32)data);
 		ret = mmc_cmd(ramaddr, offset, length);
 
-		fs_offset += cnt;
+		start += cnt;
+	}
+
+	free(data);
+
+	return ret;
+}
+
+static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
+		char *offset, char *length)
+{
+	uint blocks;
+	uint cnt;
+	uint ram_addr;
+	int i;
+	int loop;
+	int ret;
+
+	if (cur_blk_offset == 0) {
+		boot_sector *bs;
+		u16 cluster_size;
+		u32 fat32_length;
+		u32 total_sect;
+
+		/* boot block */
+		bs = (boot_sector *)down_ram_addr;
+
+		org_root_blk = bs->fat32_length + bs->reserved;
+		org_data_blk = bs->fat32_length * 2 + bs->reserved;
+
+		cluster_size = bs->cluster_size;
+		fat32_length = bs->fat32_length;
+		total_sect = bs->total_sect;
+
+		if (cluster_size != 0x8) {
+			printf("Cluster size must be 0x8\n");
+			return 1;
+		}
+
+		bs->total_sect = usbd->mmc_total;
+		bs->fat32_length = usbd->mmc_total / usbd->mmc_blk / 2;
+
+		cur_root_blk = bs->fat32_length + bs->reserved;
+		cur_data_blk = (bs->fat32_length + 0x10) * 2;
+
+		/* backup boot block */
+		bs = (boot_sector *)(down_ram_addr +
+				usbd->mmc_blk * bs->backup_boot);
+		bs->total_sect = usbd->mmc_total;
+		bs->fat32_length = usbd->mmc_total / usbd->mmc_blk / 2;
+
+		/* write reserved blocks */
+		sprintf(length, "%x", bs->reserved);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", (uint)down_ram_addr);
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		cur_blk_offset = bs->reserved;
+
+		/* write root blocks */
+		erase_mmc_block(usbd, bs->fat32_length, cur_blk_offset);
+		sprintf(length, "%x", fat32_length);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
+				cur_blk_offset * usbd->mmc_blk));
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		org_blk_offset = org_root_blk;
+		cur_blk_offset = cur_root_blk;
+
+		erase_mmc_block(usbd, bs->fat32_length, cur_blk_offset);
+		sprintf(length, "%x", fat32_length);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
+				org_blk_offset * usbd->mmc_blk));
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		org_blk_offset = org_data_blk;
+		cur_blk_offset = cur_data_blk;
+
+		/* write file list */
+		sprintf(length, "%x", cluster_size);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
+				org_blk_offset * usbd->mmc_blk));
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		org_blk_offset += cluster_size;
+		cur_blk_offset += cluster_size;
+
+		ram_addr = down_ram_addr + org_blk_offset * usbd->mmc_blk;
+		blocks = len / usbd->mmc_blk - org_blk_offset;
+
+		if (len % usbd->mmc_blk)
+			blocks++;
+
+		loop = blocks / usbd->mmc_max;
+		if (blocks % usbd->mmc_max)
+			loop++;
+	} else {
+		blocks = len / usbd->mmc_blk;
+		if (len % usbd->mmc_blk)
+			blocks++;
+
+		loop = blocks / usbd->mmc_max;
+		if (blocks % usbd->mmc_max)
+			loop++;
+
+		ram_addr = down_ram_addr;
+	}
+
+	for (i = 0; i < loop; i++) {
+		if (i == 0) {
+			cnt = blocks % usbd->mmc_max;
+			if (cnt == 0)
+				cnt = usbd->mmc_max;
+		} else {
+			cnt = usbd->mmc_max;
+		}
+
+		sprintf(length, "%x", cnt);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", ram_addr);
+		ret = mmc_cmd(ramaddr, offset, length);
+
+		org_blk_offset += cnt;
+		cur_blk_offset += cnt;
+
+		ram_addr += cnt * usbd->mmc_blk;
 	}
 
 	return ret;

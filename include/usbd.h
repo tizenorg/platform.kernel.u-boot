@@ -71,6 +71,7 @@ enum {
  * mmc_dev	: device number of mmc
  * mmc_max	: number of max blocks
  * mmc_blk	: mmc block size
+ * mmc_total	: mmc total blocks
  */
 struct usbd_ops {
 	void (*usb_init)(void);
@@ -88,6 +89,7 @@ struct usbd_ops {
 	uint mmc_dev;
 	ulong mmc_max;
 	ulong mmc_blk;
+	ulong mmc_total;
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader

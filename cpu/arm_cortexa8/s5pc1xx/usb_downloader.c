@@ -57,6 +57,8 @@ void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	usbd->mmc_dev = 0;
 	/* FIX 0x400 */
 	usbd->mmc_max = 0x400;
+	/* get from mmc->capacity?? */
+	usbd->mmc_total = 0xf50000;	/* 8GB / 0x200  */
 
 	mmc = find_mmc_device(usbd->mmc_dev);
 	mmc_init(mmc);
