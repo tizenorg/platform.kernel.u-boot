@@ -306,10 +306,9 @@
 #define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
-#if 0		/* For LCD test */
+#if 1		/* For LCD test */
 #define CONFIG_LCD		1
 #define CONFIG_S5PC1XXFB	1
-#define BOARD_LATE_INIT
 #endif
 
 #endif	/* __CONFIG_H */

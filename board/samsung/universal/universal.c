@@ -961,6 +961,9 @@ static void setup_power_down_mode_registers(void)
 
 int misc_init_r(void)
 {
+#ifdef CONFIG_LCD
+	lcd_is_enabled = 0;
+#endif
 	check_hw_revision();
 
 	/* Set proper PMIC pins */
@@ -997,16 +1000,6 @@ int misc_init_r(void)
 
 	setup_power_down_mode_registers();
 
-	return 0;
-}
-#endif
-
-#ifdef BOARD_LATE_INIT
-int board_late_init(void)
-{
-#ifdef CONFIG_LCD
-	lcd_is_enabled = 0;
-#endif
 	return 0;
 }
 #endif
