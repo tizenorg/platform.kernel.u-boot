@@ -254,7 +254,7 @@ static void set_board_meminfo(void)
 	setenv("meminfo", "mem=80M mem=128M@0x40000000");
 }
 
-static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank* bank)
+static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
 
@@ -330,7 +330,7 @@ static void check_hw_revision(void)
 			if (gpio_get_value(&gpio->gpio_mp0_3, 5))
 				board_rev |= SCREEN_SPLIT_FEATURE;
 			else {
-				if (gpio_get_value(&gpio->gpio_i, 3)
+				if (gpio_get_value(&gpio->gpio_i, 3))
 					board_rev |= SCREEN_SPLIT_FEATURE;
 			}
 #endif
@@ -342,9 +342,8 @@ static void check_hw_revision(void)
 			board = MACH_TICKERTAPE;
 
 		/* C110 P1P2 */
-		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
+		if (gpio_get_value(&gpio->gpio_h3, 7) == 1)
 			board = MACH_P1P2;
-		}
 	}
 
 	/* Set machine id */
@@ -565,7 +564,7 @@ static void check_keypad(void)
 		}
 		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-		/*  expected value is  row_value[0] = 0x00  row_value[1] = 0x01 */
+		/* expected value is  row_value[0] = 0x00  row_value[1] = 0x01 */
 		/* workaround */
 		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
 			auto_download = 1;
@@ -721,7 +720,8 @@ static void init_pmic(void)
 	 * Disable LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
 	 * LDO12(CAM_ISP_1.2V), LDO13(CAM_A_2.8V)
 	 */
-	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 | MAX8998_LDO12 | MAX8998_LDO13);
+	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
+			MAX8998_LDO12 | MAX8998_LDO13);
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* ONOFF3 */
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
@@ -729,7 +729,8 @@ static void init_pmic(void)
 	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
 	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
 	 */
-	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 | MAX8998_LDO16 | MAX8998_LDO17);
+	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
+			MAX8998_LDO16 | MAX8998_LDO17);
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 }
 
@@ -1017,16 +1018,16 @@ void board_sleep_init(void)
 	unsigned char val[2];
 
 	/* Set wakeup mask register */
-        value = 0xFFFF;
-        value &= ~(1 << 4);     /* Keypad */
-        value &= ~(1 << 3);     /* RTC */
-        value &= ~(1 << 2);     /* RTC Alarm */
-        writel(value, S5PC110_WAKEUP_MASK);
+	value = 0xFFFF;
+	value &= ~(1 << 4);     /* Keypad */
+	value &= ~(1 << 3);     /* RTC */
+	value &= ~(1 << 2);     /* RTC Alarm */
+	writel(value, S5PC110_WAKEUP_MASK);
 
-        /* Set external wakeup mask register */
-        value = 0xFFFFFFFF;
-        value &= ~(1 << 18);    /* T-Flash */
-        writel(value, S5PC110_EINT_WAKEUP_MASK);
+	/* Set external wakeup mask register */
+	value = 0xFFFFFFFF;
+	value &= ~(1 << 18);    /* T-Flash */
+	writel(value, S5PC110_EINT_WAKEUP_MASK);
 
 	i2c_gpio_set_bus(I2C_PMIC);
 	addr = 0xCC >> 1;
@@ -1037,13 +1038,15 @@ void board_sleep_init(void)
 
 	/* Set ONOFF1 */
 	i2c_read(addr, 0x11, 1, val, 1);
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0));
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
+			(1 << 1) | (1 << 0));
 	i2c_write(addr, 0x11, 1, val, 1);
 	i2c_read(addr, 0x11, 1, val, 1);
 	printf("ONOFF1 0x%02x\n", val[0]);
 	/* Set ONOFF2 */
 	i2c_read(addr, 0x12, 1, val, 1);
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0));
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
+			(1 << 2) | (1 << 1) | (1 << 0));
 	i2c_write(addr, 0x12, 1, val, 1);
 	i2c_read(addr, 0x12, 1, val, 1);
 	printf("ONOFF2 0x%02x\n", val[0]);
@@ -1061,7 +1064,7 @@ int usb_board_init(void)
 {
 	if (cpu_is_s5pc100()) {
 #ifdef CONFIG_HARD_I2C
-		uchar val[2] ={0,};
+		uchar val[2] = {0,};
 
 		/* PMIC */
 		if (i2c_read(0x66, 0, 1, val, 2)) {
