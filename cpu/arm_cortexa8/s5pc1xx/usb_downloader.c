@@ -22,6 +22,7 @@
 #include <common.h>
 #include "usbd.h"
 #include "usb-hs-otg.h"
+#include <fbutils.h>
 
 static char tx_data[8] = "MPL";
 static long tx_len = 4;
@@ -72,6 +73,12 @@ static void usb_init(void)
 	printf("USB Start!! - %s Speed\n",
 			otg.speed ? "Full" : "High");
 
+#ifdef CONFIG_S5PC1XXFB
+	init_font();
+	set_font_color(FONT_WHITE);
+	fb_printf("Ready to USB Connection\n");
+#endif
+
 	while (!s5p_usb_connected) {
 		if (s5p_usb_detect_irq()) {
 			s5p_udc_int_hndlr();
@@ -82,6 +89,12 @@ static void usb_init(void)
 	s5p_usb_clear_dnfile_info();
 
 	printf("Connected!!\n");
+
+#ifdef CONFIG_S5PC1XXFB
+	fb_printf("Download Start\n");
+	exit_font();
+#endif
+
 }
 
 /*
