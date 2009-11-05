@@ -26,6 +26,7 @@
 #include <asm/io.h>
 #include <lcd.h>
 
+#include <asm/arch/clk.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
 #include <asm/arch/hardware.h>
@@ -50,8 +51,6 @@
 static unsigned int ctrl_base;
 static unsigned long *lcd_base_addr;
 static vidinfo_t *pvid = NULL;
-
-extern unsigned long get_pll_clk(int pllreg);
 
 void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_size)
 {
@@ -195,8 +194,7 @@ static void s5pc_fimd_set_clock(void)
 		printf("get_pll_clk is null.\n");
 		return;
 	}
-	//src_clock = get_pll_clk(MPLL);
-	src_clock = 667000000;
+	src_clock = get_pll_clk(MPLL);
 
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
