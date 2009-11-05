@@ -29,7 +29,6 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
-#include <asm/arch/hardware.h>
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
