@@ -164,6 +164,18 @@ static int machine_is_p1p2(void)
 	return board == MACH_P1P2;
 }
 
+static int machine_is_tickertape(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_TICKERTAPE;
+}
+
 static int board_is_limo_universal(void)
 {
 	int board;
@@ -1087,6 +1099,14 @@ int usb_board_init(void)
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check usb path */
 		check_mhl();
+	}
+
+	if (machine_is_tickertape()) {
+		struct s5pc110_gpio *gpio =
+			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+		/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
+		gpio_direction_output(&gpio->gpio_mp0_4, 0, 0);
 	}
 
 	return 0;
