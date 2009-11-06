@@ -115,11 +115,7 @@ static int serial_err_check(const int dev_index, int op)
 	else
 		err = 0xf;
 
-	if (readl(&uart->uerstat) & err) {
-		return 1;
-	}
-
-	return 0;
+	return !!(readl(&uart->uerstat) & err);
 }
 
 /*
