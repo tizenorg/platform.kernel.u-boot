@@ -698,7 +698,7 @@ static void check_micro_usb(void)
 		i2c_write(addr, 0x0C, 1, val, 1);
 	}
 
-	/* If Factory Mode Boot ON-USB, go to download mode */
+	/* If Factory Mode is Boot ON-USB, go to download mode */
 	i2c_read(addr, 0x07, 1, val, 1);
 
 #define FSA_ADC_FAC_USB		0x19
