@@ -67,17 +67,17 @@ static void usb_init(void)
 		return;
 	}
 
-	s5p_usbctl_init();
-	s5p_usbc_activate();
-
-	printf("USB Start!! - %s Speed\n",
-			otg.speed ? "Full" : "High");
-
 #ifdef CONFIG_S5PC1XXFB
 	init_font();
 	set_font_color(FONT_WHITE);
 	fb_printf("Ready to USB Connection\n");
 #endif
+
+	s5p_usbctl_init();
+	s5p_usbc_activate();
+
+	printf("USB Start!! - %s Speed\n",
+			otg.speed ? "Full" : "High");
 
 	while (!s5p_usb_connected) {
 		if (s5p_usb_detect_irq()) {
