@@ -697,6 +697,15 @@ static void check_micro_usb(void)
 		val[0] |= 5;		/* 600mA */
 		i2c_write(addr, 0x0C, 1, val, 1);
 	}
+
+	/* If Factory Mode Boot ON-USB, go to download mode */
+	i2c_read(addr, 0x07, 1, val, 1);
+
+#define FSA_ADC_FAC_USB		0x19
+#define FSA_ADC_FAC_UART	0x1d
+
+	if (val[0] == FSA_ADC_FAC_USB)
+		setenv("bootcmd", "usbdown");
 }
 
 #define MAX8998_REG_ONOFF1	0x11
