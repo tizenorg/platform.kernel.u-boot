@@ -510,9 +510,16 @@ static void check_touchkey(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
-	/* TOUCH_EN - GPIO_J3(5) : (AQUILA) */
+	/* TOUCH_EN - GPIO_J3(0) : (J1B2) */
+	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
+	if (board_rev & J1_B2_BOARD_FEATURE)
+		gpio_direction_output(&gpio->gpio_j3, 0, 1);
+	else 
+		/*if ((board_rev & LIMO_REAL_BOARD)
+			|| (board_rev & LIMO_UNIVERSAL_BOARD)) */
+		gpio_direction_output(&gpio->gpio_j3, 5, 1);
+
 	/* TOUCH_CE - GPIO_J2(6) */
-	gpio_direction_output(&gpio->gpio_j3, 5, 1);	/* TOUCH_EN */
 	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
 }
 
