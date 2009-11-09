@@ -514,9 +514,7 @@ static void check_touchkey(void)
 	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
 	if (board_rev & J1_B2_BOARD_FEATURE)
 		gpio_direction_output(&gpio->gpio_j3, 0, 1);
-	else 
-		/*if ((board_rev & LIMO_REAL_BOARD)
-			|| (board_rev & LIMO_UNIVERSAL_BOARD)) */
+	else
 		gpio_direction_output(&gpio->gpio_j3, 5, 1);
 
 	/* TOUCH_CE - GPIO_J2(6) */
