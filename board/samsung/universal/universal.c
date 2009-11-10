@@ -506,6 +506,21 @@ static void setup_p1p2_gpios(void)
 #define KBR1		(1 << 1)
 #define KBR0		(1 << 0)
 
+static void check_touchkey(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	/* TOUCH_EN - GPIO_J3(0) : (J1B2) */
+	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
+	if (board_rev & J1_B2_BOARD_FEATURE)
+		gpio_direction_output(&gpio->gpio_j3, 0, 1);
+	else
+		gpio_direction_output(&gpio->gpio_j3, 5, 1);
+
+	/* TOUCH_CE - GPIO_J2(6) */
+	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
+}
+
 static void check_keypad(void)
 {
 	unsigned int reg, value;
@@ -1013,6 +1028,9 @@ int misc_init_r(void)
 
 	/* To usbdown automatically */
 	check_keypad();
+
+	/* Power on Touckey */
+	check_touchkey();
 
 	/* check fsa9480 */
 	check_micro_usb();
