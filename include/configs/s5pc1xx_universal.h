@@ -216,8 +216,6 @@
 
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x4800000)
 
-#define CONFIG_SYS_TIMERBASE		(OMAP34XX_GPT2)
-#define CONFIG_SYS_PTV			2       /* Divisor: 2^(PTV+1) => 8 */
 #define CONFIG_SYS_HZ			1000
 
 /* valid baudrates */
