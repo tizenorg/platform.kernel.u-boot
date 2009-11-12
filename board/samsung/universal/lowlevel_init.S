@@ -342,11 +342,7 @@ system_clock_init:
 	ldr	r1, =0x829B0C01			@ 667MHz
 	str	r1, [r0, #0x108]
 	/* S5PC110_EPLL_CON */
-#ifdef CONFIG_EPLL_50MHZ
-	ldr	r1, =0x80640603			@  50MHz VSEL 0 P 6 M 100 S 3
-#else
 	ldr	r1, =0x80600602			@  96MHz VSEL 0 P 6 M 96 S 2
-#endif
 	str	r1, [r0, #0x110]
 	/* S5PC110_VPLL_CON */
 	ldr	r1, =0x806C0603			@  54MHz
@@ -361,24 +357,6 @@ system_clock_init:
 	str	r1, [r0, #0x218]		@ S5PC110_CLK_SRC6
 	ldr	r1, =0x30000000			@ ONEDRAM_RATIO[31:28] 3 + 1
 	str	r1, [r0, #0x318]		@ S5PC110_CLK_DIV6
-
-	/*
-	 * XCLKOUT = (FOUTAPLL/4) / (DIVVAL + 1)
-	 *         = (800 MHz/ 4) / (9 + 1)
-	 *         = 20 MHz
-	 *
-	 * XCLKOUT = (FOUTEPLL) / (DIVVAL + 1)
-	 *         = (50 MHz) / (1 + 1)
-	 *         = 25 MHz
-	 */
-#ifdef CONFIG_EPLL_50MHZ
-	ldr	r1, =0x00102000			@ DIVVAL[23:20] = 1
-						@ CLKSEL[16:12] = 2 FOUTEPLL
-#else
-	ldr	r1, =0x00900000			@ DIVVAL[23:20] = 9
-						@ CLKSEL[16:12] = 0 FOUTAPLL/4
-#endif
-	str	r1, [r0, #0x500]		@ S5PC110_CLK_OUT
 
 200:
 	/* wait at least 200us to stablize all clock */
