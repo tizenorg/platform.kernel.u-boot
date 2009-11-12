@@ -681,6 +681,11 @@ static void check_micro_usb(void)
 	unsigned char val[2];
 	int ta = 0;
 
+	if (board_is_limo_real()) {
+		if (hwrevision(0) || hwrevision(1))
+			return;
+	}
+
 	i2c_gpio_set_bus(I2C_PMIC);
 
 	addr = 0x25;		/* fsa9480 */
