@@ -49,4 +49,6 @@ if [ "$USER" = "kmpark" ]; then
 elif [ "$USER" = "dofmind" ]; then
 	tar cvf system_uboot.tar u-boot-onenand.bin
 	mv -f system_uboot.tar /home/work
+elif [ "$USER" = "prom" ]; then
+	tar cvf system_uboot.tar u-boot-onenand.bin
 fi
