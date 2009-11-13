@@ -274,10 +274,18 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
 	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
+
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
+
+	/*
+	 * Workaround for Rev 0.3 + CP Ver ES 3.1
+	 * it's Rev 0.4
+	 */
+	if (rev == 0)
+		rev = 0x4;
 
 	return rev;
 }
