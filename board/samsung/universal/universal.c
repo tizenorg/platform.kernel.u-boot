@@ -43,6 +43,7 @@ static unsigned int board_rev;
 #define I2C_GPIO3	0
 #define I2C_PMIC	1
 #define I2C_GPIO5	2
+#define I2C_GPIO6	3
 
 /*
  * i2c gpio3
@@ -74,6 +75,17 @@ static struct i2c_gpio_bus_data i2c_gpio5 = {
 	.scl_pin	= 2,
 };
 
+/*
+ * i2c gpio6
+ * SDA: GPJ3[0]
+ * SCL: GPJ3[0]
+ */
+static struct i2c_gpio_bus_data i2c_gpio6 = {
+	.sda_pin	= 0,
+	.scl_pin	= 1,
+};
+
+
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{
 		.bus	= &i2c_gpio3,
@@ -81,8 +93,12 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 		.bus	= &i2c_pmic,
 	}, {
 		.bus	= &i2c_gpio5,
+	}, {
+		.bus	= &i2c_gpio6,
 	},
 };
+
+static void enable_touchkey(void);
 
 void i2c_init_board(void)
 {
@@ -94,8 +110,12 @@ void i2c_init_board(void)
 	i2c_gpio[0].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
 	i2c_gpio[1].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
 	i2c_gpio[2].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
+	i2c_gpio[3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
 
 	i2c_gpio_init(i2c_gpio, ARRAY_SIZE(i2c_gpio), I2C_PMIC);
+
+	/* XXX Power on Touckey early (it requires 100 msec power up time) */
+	enable_touchkey();
 }
 
 int board_init(void)
@@ -525,7 +545,7 @@ static void setup_p1p2_gpios(void)
 #define KBR1		(1 << 1)
 #define KBR0		(1 << 0)
 
-static void check_touchkey(void)
+static void enable_touchkey(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
@@ -546,6 +566,8 @@ static void check_keypad(void)
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int row_value[4], i;
+	unsigned char val[2];
+	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
 
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
@@ -618,6 +640,27 @@ static void check_keypad(void)
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
+
+	/* 3 touchkey */
+	i2c_gpio_set_bus(I2C_GPIO6);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found 3 touchkey\n");
+		return;
+	}
+
+#define MCS5000_TK_HW_VERSION  0x06
+#define MCS5000_TK_FW_VERSION  0x0A
+#define MCS5000_TK_MI_VERSION  0x0B
+	reg = MCS5000_TK_MI_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	printf("3-touchkey M/I 0x%x, ", val[0]);
+	reg = MCS5000_TK_HW_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	printf("H/W 0x%x, ", val[0]);
+	reg = MCS5000_TK_FW_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	printf("F/W 0x%x\n", val[0]);
 }
 
 static void check_battery(void)
@@ -1024,14 +1067,15 @@ static void setup_power_down_mode_registers(void)
 
 int misc_init_r(void)
 {
+	/* Check H/W Revision */
+	check_hw_revision();
+
 #ifdef CONFIG_LCD
 	lcd_is_enabled = 0;
 
 	if (board_is_limo_real() || board_is_limo_universal())
 		setenv("lcd", "lcd=s6e63m0");
 #endif
-	check_hw_revision();
-
 	/* Set proper PMIC pins */
 	pmic_pin_init();
 
@@ -1052,9 +1096,6 @@ int misc_init_r(void)
 
 	/* To usbdown automatically */
 	check_keypad();
-
-	/* Power on Touckey */
-	check_touchkey();
 
 	/* check fsa9480 */
 	check_micro_usb();
