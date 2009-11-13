@@ -236,6 +236,7 @@ static void dprintf(const char *fmt, ...)
 	va_end(args);
 
 	strcat(device_info, buf);
+	puts(buf);
 }
 
 #ifdef CONFIG_LCD
@@ -437,8 +438,6 @@ static void check_hw_revision(void)
 		gd->bd->bi_arch_number = C100_MACH_START + board;
 
 	check_board_revision(board, board_rev);
-	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
-		display_features(board_rev));
 	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
 		display_features(board_rev));
 
@@ -692,15 +691,12 @@ static void check_keypad(void)
 #define MCS5000_TK_MI_VERSION  0x0B
 	reg = MCS5000_TK_MI_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
-	printf("3-touchkey M/I 0x%x, ", val[0]);
 	dprintf("3-touchkey M/I 0x%x, ", val[0]);
 	reg = MCS5000_TK_HW_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
-	printf("H/W 0x%x, ", val[0]);
 	dprintf("H/W 0x%x, ", val[0]);
 	reg = MCS5000_TK_FW_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
-	printf("F/W 0x%x\n", val[0]);
 	dprintf("F/W 0x%x\n", val[0]);
 }
 
@@ -728,7 +724,6 @@ static void check_battery(void)
 		printf("i2c_read error: %x\n", addr);
 		return;
 	}
-	printf("battery:\t%d%%\n", val[0]);
 	dprintf("battery:\t%d%%\n", val[0]);
 
 	/* TODO */
