@@ -289,8 +289,14 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	 * Workaround for Rev 0.3 + CP Ver ES 3.1
 	 * it's Rev 0.4
 	 */
-	if (rev == 0)
-		rev = 0x4;
+	if (rev == 0) {
+		udelay(2000);
+
+		if (gpio_get_value(bank, 2) &&
+			gpio_get_value(bank, 3) &&
+			gpio_get_value(bank, 4))
+			rev = 0x4;
+	}
 
 	return rev;
 }
