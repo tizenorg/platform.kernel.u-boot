@@ -358,6 +358,12 @@ system_clock_init:
 	ldr	r1, =0x30000000			@ ONEDRAM_RATIO[31:28] 3 + 1
 	str	r1, [r0, #0x318]		@ S5PC110_CLK_DIV6
 
+	/* XCLKOUT = XUSBXTI 24MHz */
+	add	r2, r0, #0xE000			@ S5PC110_OTHERS
+	ldr     r1, [r2]
+	orr	r1, r1, #(0x3 << 8)		@ CLKOUT[9:8] 3 XUSBXTI
+	str	r1, [r2]
+
 200:
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
