@@ -270,6 +270,11 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
 
+	gpio_direction_input(bank, 1);
+	gpio_direction_input(bank, 2);
+	gpio_direction_input(bank, 3);
+	gpio_direction_input(bank, 4);
+
 	gpio_set_pull(bank, 1, GPIO_PULL_NONE);		/* HWREV_MODE3 */
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
