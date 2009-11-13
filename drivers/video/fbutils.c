@@ -34,6 +34,7 @@
 
 #define XORMODE			0x80000000
 #define CARRIAGE_RETURN		10
+#define HORIZONTAL_TAP		9
 
 extern struct fbcon_font_desc font_vga_8x16;
 
@@ -177,6 +178,11 @@ static void put_char(int c)
 	if (c == CARRIAGE_RETURN) {
 		g_y += font_vga_8x16.height;
 		g_x = g_default_x - font_vga_8x16.width;
+		return;
+	}
+
+	if (c == HORIZONTAL_TAP) {
+		g_x += 20;
 		return;
 	}
 
