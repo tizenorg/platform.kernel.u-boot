@@ -1067,12 +1067,14 @@ static void setup_power_down_mode_registers(void)
 
 int misc_init_r(void)
 {
+#ifdef CONFIG_LCD
+	/* It should be located at first */
+	lcd_is_enabled = 0;
+#endif
 	/* Check H/W Revision */
 	check_hw_revision();
 
 #ifdef CONFIG_LCD
-	lcd_is_enabled = 0;
-
 	if (board_is_limo_real() || board_is_limo_universal())
 		setenv("lcd", "lcd=s6e63m0");
 #endif
