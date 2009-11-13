@@ -32,6 +32,7 @@
 #include <asm/arch/keypad.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/power.h>
+#include <fbutils.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -221,6 +222,38 @@ static int board_is_limo_real(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
+static char device_info[1024];
+static int display_info = 0;
+
+static void dprintf(const char *fmt, ...)
+{
+	va_list args;
+	uint i;
+	char buf[128];
+
+	va_start(args, fmt);
+	i = vsprintf(buf, fmt, args);
+	va_end(args);
+
+	strcat(device_info, buf);
+}
+
+#ifdef CONFIG_LCD
+static void display_device_info(void)
+{
+	if (!display_info)
+		return;
+
+	init_font();
+	set_font_xy(0, 450);
+	set_font_color(FONT_WHITE);
+	fb_printf(device_info);
+	exit_font();
+
+	udelay(5 * 1000 * 1000);
+}
+#endif
+
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
@@ -405,6 +438,8 @@ static void check_hw_revision(void)
 
 	check_board_revision(board, board_rev);
 	printf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
+		display_features(board_rev));
+	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
 		display_features(board_rev));
 
 	/* Architecture Common settings */
@@ -636,6 +671,9 @@ static void check_keypad(void)
 		/* workaround */
 		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
 			auto_download = 1;
+
+		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) != 0x3)
+			display_info = 1;
 	}
 
 	if (auto_download)
@@ -655,12 +693,15 @@ static void check_keypad(void)
 	reg = MCS5000_TK_MI_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
 	printf("3-touchkey M/I 0x%x, ", val[0]);
+	dprintf("3-touchkey M/I 0x%x, ", val[0]);
 	reg = MCS5000_TK_HW_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
 	printf("H/W 0x%x, ", val[0]);
+	dprintf("H/W 0x%x, ", val[0]);
 	reg = MCS5000_TK_FW_VERSION;
 	i2c_read(addr, reg, 1, val, 1);
 	printf("F/W 0x%x\n", val[0]);
+	dprintf("F/W 0x%x\n", val[0]);
 }
 
 static void check_battery(void)
@@ -688,6 +729,7 @@ static void check_battery(void)
 		return;
 	}
 	printf("battery:\t%d%%\n", val[0]);
+	dprintf("battery:\t%d%%\n", val[0]);
 
 	/* TODO */
 	/* If battery level is low then entering charge mode */
@@ -1109,6 +1151,10 @@ int misc_init_r(void)
 		/* check max17040 */
 		check_battery();
 	}
+
+#ifdef CONFIG_LCD
+	display_device_info();
+#endif
 
 	setup_power_down_mode_registers();
 
