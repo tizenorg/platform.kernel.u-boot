@@ -25,7 +25,6 @@
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
-#include <asm/sizes.h>
 
 /*
  * High Level Configuration Options
@@ -226,7 +225,7 @@
  *
  * The stack sizes are set up in start.S using the settings below
  */
-#define CONFIG_STACKSIZE	0x40000		/* regular stack 256KB */
+#define CONFIG_STACKSIZE	(256 << 10)	/* regular stack 256KB */
 
 /*******************************
  Support Clock Settings(APLL)
@@ -252,10 +251,10 @@
 /* Universal has 2 banks of DRAM, but swap the bank */
 #define CONFIG_NR_DRAM_BANKS	2
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
-#define PHYS_SDRAM_1_SIZE	0x05000000		/* 80 MB in Bank #0 */
+#define PHYS_SDRAM_1_SIZE	(80 << 20)		/* 80 MB in Bank #0 */
 #define S5PC100_PHYS_SDRAM_2	0x38000000		/* mDDR DMC0 Bank #1 */
 #define S5PC110_PHYS_SDRAM_2	0x40000000		/* mDDR DMC1 Bank #0 */
-#define PHYS_SDRAM_2_SIZE	0x08000000		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_2_SIZE	(128 << 20)		/* 128 MB in Bank #1 */
 
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
@@ -264,15 +263,15 @@
  * FLASH and environment organization
  */
 
-#define CONFIG_SYS_MONITOR_LEN		SZ_256K	/* Reserve 2 sectors */
+#define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
 /* OneNAND IPL uses 8KiB */
 #define CONFIG_ONENAND_START_PAGE	4
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#define CONFIG_ENV_SIZE			0x20000
-#define CONFIG_ENV_ADDR			0x40000
-#define CONFIG_ENV_OFFSET		0x40000
+#define CONFIG_ENV_SIZE			(128 << 10)	/* 128 KiB, 0x20000 */
+#define CONFIG_ENV_ADDR			(256 << 10)	/* 256 KiB, 0x40000 */
+#define CONFIG_ENV_OFFSET		(256 << 10)	/* 256 KiB, 0x40000 */
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
 #define CONFIG_SAMSUNG_ONENAND		1

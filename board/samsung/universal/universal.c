@@ -1160,7 +1160,8 @@ int dram_init(void)
 		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
 
 		if (board_is_limo_real())
-			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
+			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE +
+						(128 << 20);
 		else
 			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
 	}
