@@ -409,7 +409,7 @@ static void show_hw_revision(void)
 	 * it's Rev 0.4
 	 */
 	if (board_is_limo_real()) {
-		if ((board_rev & 0xf) == 0) {
+		if (hwrevision(0)) {
 			struct s5pc110_gpio *gpio =
 				(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
