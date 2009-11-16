@@ -119,25 +119,6 @@ void i2c_init_board(void)
 	enable_touchkey();
 }
 
-int board_init(void)
-{
-	gd->bd->bi_arch_number = MACH_TYPE;
-	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-
-	return 0;
-}
-
-int dram_init(void)
-{
-	/* In mem setup, we swap the bank. So below size is correct */
-	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_2_SIZE;
-	gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
-	gd->bd->bi_dram[1].size = PHYS_SDRAM_1_SIZE;
-
-	return 0;
-}
-
 u32 get_board_rev(void)
 {
 	return board_rev;
@@ -309,17 +290,6 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
-static void set_board_meminfo(void)
-{
-	if (board_is_limo_real()) {
-		setenv("meminfo", "mem=80M mem=256M@0x40000000");
-		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
-		return;
-	}
-
-	setenv("meminfo", "mem=80M mem=128M@0x40000000");
-}
-
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
@@ -339,19 +309,6 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
 
-	/*
-	 * Workaround for Rev 0.3 + CP Ver ES 3.1
-	 * it's Rev 0.4
-	 */
-	if (rev == 0) {
-		udelay(2000);
-
-		if (gpio_get_value(bank, 2) &&
-			gpio_get_value(bank, 3) &&
-			gpio_get_value(bank, 4))
-			rev = 0x4;
-	}
-
 	return rev;
 }
 
@@ -365,12 +322,9 @@ static void check_hw_revision(void)
 
 		board_rev = get_hw_revision(&gpio->gpio_j0);
 
-		if (board_rev == 3) {
-			/* C100 TickerTape */
+		/* C100 TickerTape */
+		if (board_rev == 3)
 			board = MACH_TICKERTAPE;
-			/* Workaround: OneDRAM is broken at tickertape */
-			setenv("meminfo", "mem=128M");
-		}
 	} else {
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
@@ -437,24 +391,47 @@ static void check_hw_revision(void)
 	else
 		gd->bd->bi_arch_number = C100_MACH_START + board;
 
-	check_board_revision(board, board_rev);
-	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
-		display_features(board_rev));
-
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
-		/* In S5PC110, we can't swap the DMC0/1 */
-		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
-		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
-		gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
-		set_board_meminfo();
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
-		setenv("meminfo", "mem=80M mem=128M@0x38000000");
 		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; bootm 0x30007FC0");
 		setenv("updatek", "onenand erase 0x60000 0x300000; onenand write 0x31008000 0x60000 0x300000");
 	}
+}
+
+static void show_hw_revision()
+{
+	int board;
+
+	/*
+	 * Workaround for Rev 0.3 + CP Ver ES 3.1
+	 * it's Rev 0.4
+	 */
+	if (board_is_limo_real()) {
+		if ((board_rev & 0xf) == 0) {
+			struct s5pc110_gpio *gpio =
+				(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+			udelay(2000);
+
+			if (gpio_get_value(&gpio->gpio_j0, 2) &&
+				gpio_get_value(&gpio->gpio_j0, 3) &&
+				gpio_get_value(&gpio->gpio_j0, 4)) {
+				board_rev &= ~0xf;
+				board_rev |= 0x4;
+			}
+		}
+	}
+
+	if (cpu_is_s5pc110())
+		board = gd->bd->bi_arch_number - C110_MACH_START;
+	else
+		board = gd->bd->bi_arch_number - C100_MACH_START;
+
+	check_board_revision(board, board_rev);
+	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
+		display_features(board_rev));
 }
 
 static void check_auto_burn(void)
@@ -1107,14 +1084,12 @@ int misc_init_r(void)
 #ifdef CONFIG_LCD
 	/* It should be located at first */
 	lcd_is_enabled = 0;
-#endif
-	/* Check H/W Revision */
-	check_hw_revision();
 
-#ifdef CONFIG_LCD
 	if (board_is_limo_real() || board_is_limo_universal())
 		setenv("lcd", "lcd=s6e63m0");
 #endif
+	show_hw_revision();
+
 	/* Set proper PMIC pins */
 	pmic_pin_init();
 
@@ -1156,6 +1131,48 @@ int misc_init_r(void)
 	return 0;
 }
 #endif
+
+int board_init(void)
+{
+	gd->bd->bi_arch_number = MACH_TYPE;
+	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
+
+	/* Check H/W Revision */
+	check_hw_revision();
+
+	return 0;
+}
+
+int dram_init(void)
+{
+	char meminfo[64] = {0,};
+
+	if (cpu_is_s5pc100()) {
+		/* In mem setup, we swap the bank. So below size is correct */
+		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_2_SIZE;
+		gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
+		gd->bd->bi_dram[1].size = PHYS_SDRAM_1_SIZE;
+	} else {
+		/* In S5PC110, we can't swap the DMC0/1 */
+		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
+
+		if (board_is_limo_real())
+			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE + SZ_128M;
+		else
+			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+	}
+
+	sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
+			(int)gd->bd->bi_dram[0].size / 1024 / 1024,
+			(int)gd->bd->bi_dram[1].size / 1024 / 1024,
+			(unsigned int)gd->bd->bi_dram[1].start);
+	setenv("meminfo", meminfo);
+
+	return 0;
+}
 
 /* Used for sleep test */
 void board_sleep_init(void)
