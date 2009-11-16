@@ -400,7 +400,7 @@ static void check_hw_revision(void)
 	}
 }
 
-static void show_hw_revision()
+static void show_hw_revision(void)
 {
 	int board;
 
@@ -820,7 +820,6 @@ static void init_pmic(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
-	int ta = 0;
 
 	i2c_gpio_set_bus(I2C_PMIC);
 
