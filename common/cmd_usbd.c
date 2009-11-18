@@ -16,7 +16,7 @@
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
-static struct part_info *parts[6];
+static struct part_info *parts[8];
 #endif
 
 static const char pszMe[] = "usbd: ";
@@ -427,12 +427,6 @@ int write_file_system(char *ramaddr, ulong len, char *offset,
 	int yaffs_write = 0;
 #endif
 	int ret = 0;
-	int ubi_set = 0;
-
-	if (part_num == FILESYSTEM3_PART_ID) {
-		part_num = FILESYSTEM_PART_ID;
-		ubi_set = 1;
-	}
 
 #ifdef CONFIG_CMD_UBI
 	/* UBI Update */
