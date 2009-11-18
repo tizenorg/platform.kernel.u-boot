@@ -220,7 +220,7 @@ static void dprintf(const char *fmt, ...)
 	puts(buf);
 }
 
-#ifdef CONFIG_LCD
+#ifdef CONFIG_S5PC1XXFB
 static void display_device_info(void)
 {
 	if (!display_info)
@@ -1121,7 +1121,7 @@ int misc_init_r(void)
 		check_battery();
 	}
 
-#ifdef CONFIG_LCD
+#ifdef CONFIG_S5PC1XXFB
 	display_device_info();
 #endif
 
