@@ -1086,6 +1086,8 @@ int misc_init_r(void)
 
 	if (board_is_limo_real() || board_is_limo_universal())
 		setenv("lcd", "lcd=s6e63m0");
+	else
+		setenv("lcd", "lcd=tl2796-dual");
 #endif
 	show_hw_revision();
 
