@@ -720,7 +720,7 @@ static int process_data(struct usbd_ops *usbd)
 		/* Erase Environment */
 		{
 			int param_id;
-			param_id = get_part_id("param", 1);
+			param_id = get_part_id("params", 1);
 
 			if (param_id == -1) {
 				sprintf(offset, "%x", CONFIG_ENV_OFFSET);
