@@ -717,7 +717,7 @@ static int process_data(struct usbd_ops *usbd)
 	switch (part_id) {
 	case BOOT_PART_ID:
 #if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
-		/* Erase Environment */
+		/* Erase the environment also when write bootloader */
 		{
 			int param_id;
 			param_id = get_part_id("params", 1);
@@ -732,6 +732,7 @@ static int process_data(struct usbd_ops *usbd)
 			nand_cmd(0, offset, length, NULL);
 		}
 #endif
+		/* Fall through for write bootloader */
 	case KERNEL_PART_ID:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
