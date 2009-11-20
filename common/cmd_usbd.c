@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.2"
+#define APP_VERSION	"1.3.3"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -707,10 +707,14 @@ static int process_data(struct usbd_ops *usbd)
 		do_reset();
 		return 0;
 #endif
+	case COMMAND_PROGRESS:
+		if (usbd->set_progress)
+			usbd->set_progress(arg);
+		return 1;
 
 	default:
 		printf("Error: Unknown command -> (%d)\n", (int)cmd);
-		return 0;
+		return 1;
 	}
 
 	/* Erase and Write to NAND */

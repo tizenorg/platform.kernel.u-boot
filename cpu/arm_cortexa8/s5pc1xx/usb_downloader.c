@@ -22,7 +22,9 @@
 #include <common.h>
 #include "usbd.h"
 #include "usb-hs-otg.h"
+#ifdef CONFIG_S5PC1XXFB
 #include <fbutils.h>
+#endif
 
 static char tx_data[8] = "MPL";
 static long tx_len = 4;
@@ -92,9 +94,16 @@ static void usb_init(void)
 
 #ifdef CONFIG_S5PC1XXFB
 	fb_printf("Download Start\n");
+	draw_progress(40, 0, FONT_WHITE);
+#endif
+}
+
+void usb_stop(void)
+{
+	s5p_usb_stop();
+#ifdef CONFIG_S5PC1XXFB
 	exit_font();
 #endif
-
 }
 
 /*
@@ -146,6 +155,12 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 }
 #endif
 
+#ifdef CONFIG_S5PC1XXFB
+static void set_progress(int progress)
+{
+	draw_progress(40, progress, FONT_WHITE);
+}
+#endif
 /*
  * This function is interfaced between
  * USB Device Controller and USB Downloader
@@ -153,7 +168,7 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 {
 	usbd->usb_init = usb_init;
-	usbd->usb_stop = s5p_usb_stop;
+	usbd->usb_stop = usb_stop;
 	usbd->send_data = s5p_usb_tx;
 	usbd->recv_data = usb_receive_packet;
 	usbd->recv_setup = recv_setup;
@@ -162,7 +177,9 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->tx_len = tx_len;
 	usbd->rx_len = rx_len;
 	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
-
+#ifdef CONFIG_S5PC1XXFB
+	usbd->set_progress = set_progress;
+#endif
 #ifdef CONFIG_GENERIC_MMC
 	usbd_set_mmc_dev(usbd);
 #endif

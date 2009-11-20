@@ -52,6 +52,7 @@ enum {
 #define COMMAND_DOWN_PHONE	220
 #define COMMAND_CHANGE_USB	221
 #endif
+#define COMMAND_PROGRESS	230
 
 /*
  * USB Downloader Operations
@@ -90,6 +91,8 @@ struct usbd_ops {
 	ulong mmc_max;
 	ulong mmc_blk;
 	ulong mmc_total;
+
+	void (*set_progress)(int);
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader
