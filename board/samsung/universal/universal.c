@@ -413,12 +413,15 @@ static void show_hw_revision(void)
 			struct s5pc110_gpio *gpio =
 				(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
+			/* default is Rev 0.4 */
+			board_rev &= ~0xf;
+			board_rev |= 0x4;
+
 			udelay(2000);
 
-			if (gpio_get_value(&gpio->gpio_j0, 4)) {
+			/* if GPJ0[4] is low, it's Rev 0.0 */
+			if (gpio_get_value(&gpio->gpio_j0, 4) == 0)
 				board_rev &= ~0xf;
-				board_rev |= 0x4;
-			}
 		}
 	}
 
