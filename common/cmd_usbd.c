@@ -124,7 +124,7 @@ static int get_part_id(char *name, int id)
 	int i;
 
 	for (i = 0; i < nparts; i++) {
-		if (strncmp(parts[i]->name, name, 4) == 0)
+		if (strcmp(parts[i]->name, name) == 0)
 			return i;
 	}
 
@@ -582,7 +582,7 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_PART_1:
 		printf("COMMAND_WRITE_PART_BOOT\n");
-		part_id = get_part_id("boot", BOOT_PART_ID);
+		part_id = get_part_id("bootloader", BOOT_PART_ID);
 		break;
 
 	case COMMAND_WRITE_PART_2:
@@ -718,9 +718,19 @@ static int process_data(struct usbd_ops *usbd)
 	case BOOT_PART_ID:
 #if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
 		/* Erase Environment */
-		sprintf(offset, "%x", CONFIG_ENV_OFFSET);
-		sprintf(length, "%x", CONFIG_ENV_SIZE);
-		nand_cmd(0, offset, length, NULL);
+		{
+			int param_id;
+			param_id = get_part_id("param", 1);
+
+			if (param_id == -1) {
+				sprintf(offset, "%x", CONFIG_ENV_OFFSET);
+				sprintf(length, "%x", CONFIG_ENV_SIZE);
+			} else {
+				sprintf(offset, "%x", parts[param_id]->offset);
+				sprintf(length, "%x", parts[param_id]->size);
+			}
+			nand_cmd(0, offset, length, NULL);
+		}
 #endif
 	case KERNEL_PART_ID:
 		sprintf(offset, "%x", parts[part_id]->offset);
