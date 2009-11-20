@@ -415,9 +415,7 @@ static void show_hw_revision(void)
 
 			udelay(2000);
 
-			if (gpio_get_value(&gpio->gpio_j0, 2) &&
-				gpio_get_value(&gpio->gpio_j0, 3) &&
-				gpio_get_value(&gpio->gpio_j0, 4)) {
+			if (gpio_get_value(&gpio->gpio_j0, 4)) {
 				board_rev &= ~0xf;
 				board_rev |= 0x4;
 			}
