@@ -250,6 +250,42 @@ void draw_wheel(int x, int y, unsigned char color)
 		sw = 1;
 }
 
+void draw_progress(int y, int per, unsigned char color)
+{
+	int i;
+	int num;
+	int chars;
+	static char buf[64] ={0,};
+	char per_buf[8];
+
+	set_font_xy(0, y);
+	set_font_color(FONT_XOR);
+	fb_printf(buf);
+	memset(buf, 0x0, 64);
+
+	chars = panel_info.vl_width / font_vga_8x16.width - 7;
+	num = (per * 100) / (10000 / chars);
+
+	sprintf(buf, "[");
+
+	for (i = 0; i < num; i++)
+		strcat(buf, "=");
+
+	sprintf(per_buf, ">%3d%%", per);
+	strcat(buf, per_buf);
+
+	num = chars - num;
+
+	for (i = 0; i < num; i++)
+		strcat(buf, " ");
+
+	strcat(buf, "]");
+
+	set_font_color(color);
+	set_font_xy(0, y);
+	fb_printf(buf);
+}
+
 void init_font(void)
 {
 	int addr = 0, y;

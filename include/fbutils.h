@@ -63,4 +63,7 @@ void fb_printf(char *s);
 /* draw wheel */
 void draw_wheel(int x, int y, unsigned char color);
 
+/* draw progress */
+void draw_progress(int y, int per, unsigned char color);
+
 #endif /* _FONT_H */
