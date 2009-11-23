@@ -228,6 +228,14 @@ void lcd_ctrl_init(void *lcdbase)
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
+
+	/* font test */
+	/*
+	init_font();
+	set_font_color(FONT_WHITE);
+	fb_printf("Test\n");
+	exit_font();
+	*/
 }
 
 
