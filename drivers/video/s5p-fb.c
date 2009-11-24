@@ -175,10 +175,10 @@ static void lcd_test(void)
 			makepixel8888(0, 255, 255, 255));
 }
 
-int convrgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
+int conv_rgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
 {
 	char red, green, blue;
-	unsigned int threshold = 100;
+	unsigned int threshold = 150;
 
 	red = (rgb565 & 0xF800) >> 11;
 	green = (rgb565 & 0x7E0) >> 5;
@@ -188,7 +188,7 @@ int convrgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
 	green = green << 2;
 	blue = blue << 3;
 
-	/* correct pixel value because of drawing samsung logo. */
+	/* correct error pixels of samsung logo. */
 	if (sw) {
 		if (red > threshold)
 			red = 255;
@@ -215,14 +215,23 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 
 void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned short *bmp)
 {
-	int i, j;
+	int i, j, error_range = 40;
 	short k = 0;
+	unsigned int pixel;
 	unsigned long *fb = (unsigned  long*)lcdbase;
 
 	for (j = y; j < (y + h); j++) {
-		for (i = x; i < (x + w); i++)
-			*(fb + (j * PANEL_WIDTH) + i) =
-				convrgb565_to_rgb888(*(bmp + k++), 1);
+		for (i = x; i < (x + w); i++) {
+			pixel = (*(bmp + k++));
+
+			/* 40 lines under samsung logo image are error range. */
+			if (j > h + y - error_range)
+				*(fb + (j * PANEL_WIDTH) + i) =
+					conv_rgb565_to_rgb888(pixel, 1);
+			else
+				*(fb + (j * PANEL_WIDTH) + i) =
+					conv_rgb565_to_rgb888(pixel, 0);
+		}
 	}
 }
 
