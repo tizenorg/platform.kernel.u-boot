@@ -233,7 +233,7 @@ static void draw_samsung_logo(void* lcdbase)
 	x = (PANEL_WIDTH - 298) / 2;
 	y = (PANEL_HEIGHT - 78) / 2 - 5;
 
-	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned long *)logo);
+	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned short *) logo);
 }
 
 static void lcd_panel_on(void)
