@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2009 Texas Instruments Incorporated
+ * Copyright 2009, Matthias Fuchs <matthias.fuchs@esd.eu>
+ *
+ * SJA1000 register layout for basic CAN mode
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -19,34 +21,40 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#ifndef _GPIO_DEFS_H_
-#define _GPIO_DEFS_H_
 
-#define DAVINCI_GPIO_BINTEN	0x01C67008
-#define DAVINCI_GPIO_BANK01	0x01C67010
-#define DAVINCI_GPIO_BANK23	0x01C67038
-#define DAVINCI_GPIO_BANK45	0x01C67060
-#define DAVINCI_GPIO_BANK67	0x01C67088
+#ifndef _SJA1000_H_
+#define _SJA1000_H_
 
-struct davinci_gpio {
-	unsigned int dir;
-	unsigned int out_data;
-	unsigned int set_data;
-	unsigned int clr_data;
-	unsigned int in_data;
-	unsigned int set_rising;
-	unsigned int clr_rising;
-	unsigned int set_falling;
-	unsigned int clr_falling;
-	unsigned int intstat;
+/*
+ * SJA1000 register layout in basic can mode
+ */
+struct sja1000_basic_s {
+	u8 cr;
+	u8 cmr;
+	u8 sr;
+	u8 ir;
+	u8 ac;
+	u8 am;
+	u8 btr0;
+	u8 btr1;
+	u8 oc;
+	u8 txb[10];
+	u8 rxb[10];
+	u8 unused;
+	u8 cdr;
 };
 
-struct davinci_gpio_bank {
-	int num_gpio;
-	unsigned int irq_num;
-	unsigned int irq_mask;
-	unsigned long *in_use;
-	unsigned long base;
-};
+/* control register */
+#define CR_RR		0x01
+
+/* output control register */
+#define OC_MODE0	0x01
+#define OC_MODE1	0x02
+#define OC_POL0		0x04
+#define OC_TN0		0x08
+#define OC_TP0		0x10
+#define OC_POL1		0x20
+#define OC_TN1		0x40
+#define OC_TP1		0x80
 
 #endif
