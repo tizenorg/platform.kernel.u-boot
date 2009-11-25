@@ -202,6 +202,18 @@ static int board_is_limo_real(void)
 	return board == MACH_AQUILA && (board_rev & LIMO_REAL_BOARD);
 }
 
+static int board_is_j1b2(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_AQUILA && (board_rev & J1_B2_BOARD_FEATURE);
+}
+
 #ifdef CONFIG_MISC_INIT_R
 static char device_info[1024];
 static int display_info = 0;
@@ -1085,7 +1097,9 @@ int misc_init_r(void)
 	/* It should be located at first */
 	lcd_is_enabled = 0;
 
-	if (board_is_limo_real() || board_is_limo_universal())
+	if (board_is_limo_real() ||
+		board_is_limo_universal() ||
+		board_is_j1b2())
 		setenv("lcd", "lcd=s6e63m0");
 	else
 		setenv("lcd", "lcd=tl2796-dual");
