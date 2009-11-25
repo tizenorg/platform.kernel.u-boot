@@ -288,7 +288,15 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* set polarity */
 	cfg = 0;
-	cfg |= S5P_VIDCON1_IVDEN_INVERT | S5P_VIDCON1_IVCLK_RISING_EDGE;
+	if (!pvid->vl_clkp)
+		cfg |= S5P_VIDCON1_IVCLK_RISING_EDGE;
+	if (!pvid->vl_hsp)
+		cfg |= S5P_VIDCON1_IHSYNC_INVERT;
+	if (!pvid->vl_vsp)
+		cfg |= S5P_VIDCON1_IVSYNC_INVERT;
+	if (!pvid->vl_dp)
+		cfg |= S5P_VIDCON1_IVDEN_INVERT;
+
 	writel(cfg, ctrl_base + S5P_VIDCON1);
 
 	/* set timing */

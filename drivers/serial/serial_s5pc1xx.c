@@ -101,21 +101,21 @@ int serial_init_dev(const int dev_index)
 static int serial_err_check(const int dev_index, int op)
 {
 	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
-	unsigned int err;
+	unsigned int mask;
 
 	/*
 	 * UERSTAT
 	 * Break Detect	[3]
-	 * Frame Err	[2] : recevie operation
-	 * Parity Err	[1] : recevie operation
-	 * Overrun Err	[0] : recevie operation
+	 * Frame Err	[2] : receive operation
+	 * Parity Err	[1] : receive operation
+	 * Overrun Err	[0] : receive operation
 	 */
 	if (op)
-		err = 0x8;
+		mask = 0x8;
 	else
-		err = 0xf;
+		mask = 0xf;
 
-	return !!(readl(&uart->uerstat) & err);
+	return readl(&uart->uerstat) & mask;
 }
 
 /*

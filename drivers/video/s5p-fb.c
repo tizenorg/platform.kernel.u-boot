@@ -29,9 +29,11 @@
 #include <lcd.h>
 
 #include "s5p-fb.h"
-#include "opening_wvga_32.h"
-//#include "logo_rgb24_wvga_portrait.h"
-//#include "opening_logo_rgb24_143_44.h"
+#include "logo.h"
+/*
+#include "logo_rgb24_wvga_portrait.h"
+#include "opening_logo_rgb24_143_44.h"
+*/
 
 #define PANEL_WIDTH		480
 #define PANEL_HEIGHT		800
@@ -173,9 +175,36 @@ static void lcd_test(void)
 			makepixel8888(0, 255, 255, 255));
 }
 
+int conv_rgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
+{
+	char red, green, blue;
+	unsigned int threshold = 150;
+
+	red = (rgb565 & 0xF800) >> 11;
+	green = (rgb565 & 0x7E0) >> 5;
+	blue = (rgb565 & 0x1F);
+
+	red = red << 3;
+	green = green << 2;
+	blue = blue << 3;
+
+	/* correct error pixels of samsung logo. */
+	if (sw) {
+		if (red > threshold)
+			red = 255;
+		if (green > threshold)
+			green = 255;
+		if (blue > threshold)
+			blue = 255;
+	}
+
+	return (red << 16 | green << 8 | blue);
+}
+
 void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 {
-	int i, j, k = 0;
+	int i, j;
+	short k = 0;
 	unsigned long *fb = (unsigned  long*)lcdbase;
 
 	for (j = y; j < (y + h); j++) {
@@ -184,14 +213,36 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 	}
 }
 
+void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned short *bmp)
+{
+	int i, j, error_range = 40;
+	short k = 0;
+	unsigned int pixel;
+	unsigned long *fb = (unsigned  long*)lcdbase;
+
+	for (j = y; j < (y + h); j++) {
+		for (i = x; i < (x + w); i++) {
+			pixel = (*(bmp + k++));
+
+			/* 40 lines under samsung logo image are error range. */
+			if (j > h + y - error_range)
+				*(fb + (j * PANEL_WIDTH) + i) =
+					conv_rgb565_to_rgb888(pixel, 1);
+			else
+				*(fb + (j * PANEL_WIDTH) + i) =
+					conv_rgb565_to_rgb888(pixel, 0);
+		}
+	}
+}
+
 static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 
-	x = (PANEL_WIDTH - 138) / 2;
-	y = (PANEL_HEIGHT - 28) / 2 - 5;
+	x = (PANEL_WIDTH - 298) / 2;
+	y = (PANEL_HEIGHT - 78) / 2 - 5;
 
-	draw_bitmap(lcdbase, x, y, 138, 28, (unsigned long *)opening_32);
+	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned short *) logo);
 }
 
 static void lcd_panel_on(void)
@@ -228,6 +279,14 @@ void lcd_ctrl_init(void *lcdbase)
 	s5pc_gpio_setup();
 
 	s5pc_lcd_init(&panel_info);
+
+	/* font test */
+	/*
+	init_font();
+	set_font_color(FONT_WHITE);
+	fb_printf("Test\n");
+	exit_font();
+	*/
 }
 
 

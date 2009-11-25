@@ -103,6 +103,7 @@ void usb_stop(void)
 	s5p_usb_stop();
 #ifdef CONFIG_S5PC1XXFB
 	exit_font();
+	s5pc_fimc_lcd_off(1);
 #endif
 }
 

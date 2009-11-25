@@ -148,7 +148,7 @@ static int smc911x_init(struct eth_device *dev, bd_t * bd)
 {
 	struct chip_id *id = dev->priv;
 
-        printf(DRIVERNAME ": detected %s controller\n", id->name);
+	printf(DRIVERNAME ": detected %s controller\n", id->name);
 
 	smc911x_reset(dev);
 
@@ -243,7 +243,7 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	dev = malloc(sizeof(*dev));
 	if (!dev) {
 		free(dev);
-		return 0;
+		return -1;
 	}
 	memset(dev, 0, sizeof(*dev));
 
@@ -277,5 +277,5 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	}
 
 	eth_register(dev);
-	return 0;
+	return 1;
 }
