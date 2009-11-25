@@ -265,6 +265,149 @@ init_fnc_t *init_sequence[] = {
 	NULL,
 };
 
+void start_armboot_resume(void)
+{
+	init_fnc_t **init_fnc_ptr;
+	char *s;
+#if defined(CONFIG_VFD) || defined(CONFIG_LCD)
+	unsigned long addr;
+#endif
+
+	/* Pointer is writable since we allocated a register for it */
+	gd = (gd_t*)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
+	/* compiler optimization barrier needed for GCC >= 3.4 */
+	__asm__ __volatile__("": : :"memory");
+
+	memset ((void*)gd, 0, sizeof (gd_t));
+	gd->bd = (bd_t*)((char*)gd - sizeof(bd_t));
+	memset (gd->bd, 0, sizeof (bd_t));
+
+	gd->flags |= GD_FLG_RELOC;
+
+	monitor_flash_len = _bss_start - _armboot_start;
+
+	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
+		if ((*init_fnc_ptr)() != 0) {
+			hang ();
+		}
+	}
+
+#ifdef CONFIG_VFD
+#	ifndef PAGE_SIZE
+#	  define PAGE_SIZE 4096
+#	endif
+	/*
+	 * reserve memory for VFD display (always full pages)
+	 */
+	/* bss_end is defined in the board-specific linker script */
+	addr = (_bss_end + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
+	vfd_setmem (addr);
+	gd->fb_base = addr;
+#endif /* CONFIG_VFD */
+
+#ifdef CONFIG_LCD
+	/* board init may have inited fb_base */
+	if (!gd->fb_base) {
+#		ifndef PAGE_SIZE
+#		  define PAGE_SIZE 4096
+#		endif
+		/*
+		 * reserve memory for LCD display (always full pages)
+		 */
+		/* bss_end is defined in the board-specific linker script */
+		addr = (_bss_end + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
+		lcd_setmem (addr);
+		gd->fb_base = addr;
+	}
+#endif /* CONFIG_LCD */
+
+#if defined(CONFIG_CMD_NAND)
+	puts ("NAND:  ");
+	nand_init();		/* go init the NAND */
+#endif
+
+#if defined(CONFIG_CMD_ONENAND)
+	onenand_init();
+#endif
+
+#ifdef CONFIG_HAS_DATAFLASH
+	AT91F_DataflashInit();
+	dataflash_print_info();
+#endif
+
+	/* initialize environment */
+	env_relocate ();
+
+#ifdef CONFIG_VFD
+	/* must do this after the framebuffer is allocated */
+	drv_vfd_init();
+#endif /* CONFIG_VFD */
+
+#ifdef CONFIG_SERIAL_MULTI
+	serial_initialize();
+#endif
+
+	stdio_init_resume ();	/* get the devices list going. */
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+	/* miscellaneous arch dependent initialisations */
+	arch_misc_init ();
+#endif
+
+#if defined(CONFIG_MISC_INIT_R)
+	/* miscellaneous platform dependent initialisations */
+	misc_init_r ();
+#endif
+
+	/* enable exceptions */
+	enable_interrupts ();
+
+	/* Perform network card initialisation if necessary */
+#ifdef CONFIG_DRIVER_TI_EMAC
+	/* XXX: this needs to be moved to board init */
+extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
+	if (getenv ("ethaddr")) {
+		uchar enetaddr[6];
+		eth_getenv_enetaddr("ethaddr", enetaddr);
+		davinci_eth_set_mac_addr(enetaddr);
+	}
+#endif
+
+#if defined(CONFIG_DRIVER_SMC91111) || defined (CONFIG_DRIVER_LAN91C96)
+	/* XXX: this needs to be moved to board init */
+	if (getenv ("ethaddr")) {
+		uchar enetaddr[6];
+		eth_getenv_enetaddr("ethaddr", enetaddr);
+		smc_set_mac_addr(enetaddr);
+	}
+#endif /* CONFIG_DRIVER_SMC91111 || CONFIG_DRIVER_LAN91C96 */
+
+	/* Initialize from environment */
+	if ((s = getenv ("loadaddr")) != NULL) {
+		load_addr = simple_strtoul (s, NULL, 16);
+	}
+
+#ifdef BOARD_LATE_INIT
+	board_late_init ();
+#endif
+
+#ifdef CONFIG_GENERIC_MMC
+	puts ("MMC:   ");
+	mmc_initialize (gd->bd);
+#endif
+
+#ifdef CONFIG_BITBANGMII
+	bb_miiphy_init();
+#endif
+#if defined(CONFIG_CMD_NET)
+#if defined(CONFIG_NET_MULTI)
+	puts ("Net:   ");
+#endif
+	eth_initialize(gd->bd);
+#endif
+
+}
+
 void start_armboot (void)
 {
 	init_fnc_t **init_fnc_ptr;

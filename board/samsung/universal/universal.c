@@ -400,7 +400,7 @@ static void check_hw_revision(void)
 	}
 }
 
-static void show_hw_revision(void)
+void show_hw_revision(void)
 {
 	int board;
 
@@ -697,6 +697,7 @@ static void check_battery(void)
 		printf("i2c_write error: %x\n", addr);
 		return;
 	}
+	i2c_read(addr, 0x06, 1, val, 2);
 
 	if (i2c_read(addr, 0x04, 1, val, 1)) {
 		printf("i2c_read error: %x\n", addr);
@@ -741,6 +742,7 @@ static void check_mhl(void)
 	 */
 	val[0] = 0x35;
 	i2c_write((0x72 >> 1), 0x08, 1, val, 1);
+	i2c_read((0x72 >> 1), 0x08, 1, val, 1);
 
 	/*
 	 * MHL TX Control #1
@@ -750,6 +752,7 @@ static void check_mhl(void)
 	 */
 	val[0] = 0xd0;
 	i2c_write((0x72 >> 1), 0xa0, 1, val, 1);
+	i2c_read((0x72 >> 1), 0xa0, 1, val, 1);
 }
 
 static void check_micro_usb(void)
@@ -793,6 +796,7 @@ static void check_micro_usb(void)
 		val[0] &= ~(0x7 << 0);
 		val[0] |= 5;		/* 600mA */
 		i2c_write(addr, 0x0C, 1, val, 1);
+		i2c_read(addr, 0x0C, 1, val, 1);
 	}
 
 	/* If Factory Mode is Boot ON-USB, go to download mode */
@@ -840,6 +844,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* ONOFF3 */
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	/*
@@ -849,6 +854,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
 			MAX8998_LDO16 | MAX8998_LDO17);
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 }
 
 #define PDN_MASK(x)		(0x3 << ((x) << 1))
@@ -901,7 +907,9 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4),
 	}, {	/* S5PC110_GPIO_C1_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		/* OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4), */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
 		OUTPUT0(4),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4),
@@ -980,7 +988,7 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_J2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT1(5) | OUTPUT0(6) | INPUT(7),
+		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | INPUT(7),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DOWN(7),
 	}, {	/* S5PC110_GPIO_J3_OFFSET */
@@ -1002,12 +1010,19 @@ static struct gpio_external external_powerdown_modes[] = {
 		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_INPUT(7),
 		DAT_SET(0) | DAT_CLEAR(2) | DAT_CLEAR(3) |
 		DAT_CLEAR(4) | DAT_CLEAR(5),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5),
 	}, {	/* S5PC110_GPIO_H1_OFFSET */
-		CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
+		/* CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
 		CON_IRQ(4) | CON_INPUT(5) | CON_INPUT(6) | CON_INPUT(7),
 		DAT_CLEAR(2),
 		PULL_DOWN(0) | PULL_DOWN(1) |
-		PULL_DOWN(6),
+		PULL_DOWN(6),		*/
+		CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
+		CON_INPUT(4) | CON_INPUT(5) | CON_OUTPUT(6) | CON_INPUT(7),
+		DAT_SET(0),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DOWN(4),
 	}, {	/* S5PC110_GPIO_H2_OFFSET */
 		CON_OUTPUT(0) | CON_OUTPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
 		CON_IRQ(4) | CON_IRQ(5) | CON_IRQ(6) | CON_IRQ(7),
@@ -1066,6 +1081,11 @@ static void setup_power_down_mode_registers(void)
 	writel(0x0000, &bank->pdn_con);
 	writel(0x0000, &bank->pdn_pull);
 
+	/* M299 */
+	writel(0xff0022b0, (unsigned int*) 0xF0000000);
+	writel(0xff0022b0, (unsigned int*) 0xF1400000);
+
+
 	bank = &gpio->gpio_h0;
 	ge = external_powerdown_modes;
 
@@ -1090,6 +1110,7 @@ int misc_init_r(void)
 	else
 		setenv("lcd", "lcd=tl2796-dual");
 #endif
+
 	show_hw_revision();
 
 	/* Set proper PMIC pins */
@@ -1178,11 +1199,13 @@ int dram_init(void)
 }
 
 /* Used for sleep test */
+static unsigned char saved_val[3][2];
 void board_sleep_init(void)
 {
 	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
+	unsigned char dummy = 0;
 
 	/* Set wakeup mask register */
 	value = 0xFFFF;
@@ -1205,25 +1228,56 @@ void board_sleep_init(void)
 
 	/* Set ONOFF1 */
 	i2c_read(addr, 0x11, 1, val, 1);
+	saved_val[0][0] = val[0];
+	saved_val[0][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
 			(1 << 1) | (1 << 0));
 	i2c_write(addr, 0x11, 1, val, 1);
 	i2c_read(addr, 0x11, 1, val, 1);
-	printf("ONOFF1 0x%02x\n", val[0]);
 	/* Set ONOFF2 */
 	i2c_read(addr, 0x12, 1, val, 1);
+	saved_val[1][0] = val[0];
+	saved_val[1][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
 			(1 << 2) | (1 << 1) | (1 << 0));
 	i2c_write(addr, 0x12, 1, val, 1);
 	i2c_read(addr, 0x12, 1, val, 1);
-	printf("ONOFF2 0x%02x\n", val[0]);
 	/* Set ONOFF3 */
 	i2c_read(addr, 0x13, 1, val, 1);
+	saved_val[2][0] = val[0];
+	saved_val[2][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
 	val[0] = 0x0;
 	i2c_write(addr, 0x13, 1, val, 1);
 	i2c_read(addr, 0x13, 1, val, 1);
-	printf("ONOFF3 0x%02x\n", val[0]);
+	printf("Preparing to sleep.\n");
+	/* Strangely, unless printf is used,
+	 * it does not work. (i2c_read seems to be ignored)
+	 * Probably, the compiler's optimization mechanism is
+	 * doing this. */
+}
+void board_sleep_resume(void)
+{
+	unsigned char addr;
+	unsigned char val[2];
+
+	i2c_gpio_set_bus(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return;
+	}
+
+	/* Set ONOFF1 */
+	i2c_write(addr, 0x11, 1, saved_val[0], 1);
+	i2c_read(addr, 0x11, 1, val, 1);
+	/* Set ONOFF2 */
+	i2c_write(addr, 0x12, 1, saved_val[1], 1);
+	i2c_read(addr, 0x12, 1, val, 1);
+	/* Set ONOFF3 */
+	i2c_write(addr, 0x13, 1, saved_val[2], 1);
+	i2c_read(addr, 0x13, 1, val, 1);
+	printf("Waked up.\n");
 }
 
 #ifdef CONFIG_CMD_USBDOWN
@@ -1246,6 +1300,7 @@ int usb_board_init(void)
 			printf("i2c_write error\n");
 			return 1;
 		}
+		i2c_read(0x66, 0, 1, val, 2);
 #endif
 		return 0;
 	}

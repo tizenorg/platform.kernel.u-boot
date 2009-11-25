@@ -199,6 +199,21 @@ int stdio_deregister(char *devname)
 }
 #endif	/* CONFIG_SYS_STDIO_DEREGISTER */
 
+
+int stdio_init_resume (void)
+{
+#if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
+	i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
+#endif
+#ifdef CONFIG_LCD
+	drv_lcd_init_resume ();
+#endif
+#if defined(CONFIG_VIDEO) || defined(CONFIG_CFB_CONSOLE)
+	drv_video_init ();
+#endif
+	return 0;
+}
+
 int stdio_init (void)
 {
 #if !defined(CONFIG_RELOC_FIXUP_WORKS)

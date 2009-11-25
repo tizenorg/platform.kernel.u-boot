@@ -319,6 +319,18 @@ static void test_pattern (void)
 /************************************************************************/
 /* ** GENERIC Initialization Routines					*/
 /************************************************************************/
+int drv_lcd_init_resume (void)
+{
+	int rc;
+
+	lcd_base = (void *)(gd->fb_base);
+
+	lcd_line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+
+	lcd_init (lcd_base);		/* LCD initialization */
+
+	return 0;
+}
 
 int drv_lcd_init (void)
 {
