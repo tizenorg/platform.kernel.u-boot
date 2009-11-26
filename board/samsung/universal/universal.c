@@ -134,6 +134,7 @@ enum {
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
 	MACH_P1P2,
+	MACH_GEMINUS,
 };
 
 #define SCREEN_SPLIT_FEATURE	0x100
@@ -176,6 +177,18 @@ static int machine_is_tickertape(void)
 	board = gd->bd->bi_arch_number - C110_MACH_START;
 
 	return board == MACH_TICKERTAPE;
+}
+
+static int machine_is_geminus(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_GEMINUS;
 }
 
 static int board_is_limo_universal(void)
@@ -253,6 +266,7 @@ static const char *board_name[] = {
 	"TickerTape",
 	"Aquila",
 	"P1P2",
+	"Geminus",
 };
 
 enum {
@@ -295,6 +309,7 @@ static void check_board_revision(int board, int rev)
 		break;
 	case MACH_TICKERTAPE:
 	case MACH_P1P2:
+	case MACH_GEMINUS:
 		board_rev &= ~FEATURE_MASK;
 		break;
 	default:
@@ -395,6 +410,14 @@ static void check_hw_revision(void)
 		/* C110 P1P2 */
 		if (gpio_get_value(&gpio->gpio_h3, 7) == 1)
 			board = MACH_P1P2;
+
+		/* C110 Geminus */
+		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j1, 2);
+		if (gpio_get_value(&gpio->gpio_j1, 2) == 1)
+			board = MACH_GEMINUS;
+		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
+		gpio_direction_output(&gpio->gpio_j1, 2, 0);
 	}
 
 	/* Set machine id */
@@ -668,26 +691,28 @@ static void check_keypad(void)
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
 
-	/* 3 touchkey */
-	i2c_gpio_set_bus(I2C_GPIO6);
+	if (machine_is_aquila()) {
+		/* 3 touchkey */
+		i2c_gpio_set_bus(I2C_GPIO6);
 
-	if (i2c_probe(addr)) {
-		printf("Can't found 3 touchkey\n");
-		return;
-	}
+		if (i2c_probe(addr)) {
+			printf("Can't found 3 touchkey\n");
+			return;
+		}
 
 #define MCS5000_TK_HW_VERSION  0x06
 #define MCS5000_TK_FW_VERSION  0x0A
 #define MCS5000_TK_MI_VERSION  0x0B
-	reg = MCS5000_TK_MI_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("3-touchkey M/I 0x%x, ", val[0]);
-	reg = MCS5000_TK_HW_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("H/W 0x%x, ", val[0]);
-	reg = MCS5000_TK_FW_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("F/W 0x%x\n", val[0]);
+		reg = MCS5000_TK_MI_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		dprintf("3-touchkey M/I 0x%x, ", val[0]);
+		reg = MCS5000_TK_HW_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		dprintf("H/W 0x%x, ", val[0]);
+		reg = MCS5000_TK_FW_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		dprintf("F/W 0x%x\n", val[0]);
+	}
 }
 
 static void check_battery(void)
