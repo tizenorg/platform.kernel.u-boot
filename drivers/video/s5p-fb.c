@@ -39,10 +39,11 @@
 #define PANEL_HEIGHT		800
 #define S5P_LCD_BPP		32
 /* AMOLED Panel 
-#define PANEL_WIDTH		480
-#define PANEL_HEIGHT		800
+#define PANEL_WIDTH		1024
+#define PANEL_HEIGHT		600
 #define S5P_LCD_BPP		32
 */
+
 extern void tl2796_panel_power_on(void);
 extern void tl2796_panel_enable(void);
 extern void tl2796_panel_init(void);
@@ -130,7 +131,7 @@ vidinfo_t panel_info = {
 		.vl_bfw		= 8,
 		.vl_efw		= 8,
 		*/
-		/* AMS701KA AMOLED Panel 
+		/* AMS701KA AMOLED Panel
 		.vl_hpw		= 30,
 		.vl_blw		= 114,
 		.vl_elw		= 48,
