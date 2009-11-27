@@ -42,6 +42,62 @@ struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 #define S5PCFB_C110_SDO_READ	gpio_get_value(&gpio->gpio_mp0_4, 4)
 
+const unsigned short SEQ_DISPLAY_ON[] = {
+	0x12, 0x00df,
+	SLEEPMSEC, 1,
+	0x2e, 0x0605,
+	SLEEPMSEC, 1,
+	0x30, 0x2307,
+	0x31, 0x161E,
+	0xf4, 0x0003,
+	ENDDEF, 0x0000
+};
+
+const unsigned short SEQ_MANUAL_DISPLAY_ON[] = {
+	0x12, 0x0001,
+	SLEEPMSEC, 1,
+	0x12, 0x0003,
+	SLEEPMSEC, 1,
+	0x12, 0x0007,
+	SLEEPMSEC, 1,
+	0x2e, 0x0605,
+	SLEEPMSEC, 1,
+	0x30, 0x2307,
+	0x31, 0x161E,
+	SLEEPMSEC, 5,
+	0x12, 0x000f,
+	SLEEPMSEC, 10,
+	0x12, 0x001f,
+	SLEEPMSEC, 10,
+
+	0xf4, 0x0003,
+
+	ENDDEF, 0x0000
+};
+
+const unsigned short SEQ_DISPLAY_OFF[] = {
+	0x12, 0x000f,
+	0x12, 0x0007,
+	SLEEPMSEC, 1,	/* FIXME */
+	0x12, 0x0001,
+	0x12, 0x0000,
+	SLEEPMSEC, 1,	/* FIXME */
+	ENDDEF, 0x0000
+};
+
+const unsigned short SEQ_STANDBY_ON[] = {
+	0x02, 0x2301,
+
+	ENDDEF, 0x0000
+};
+
+const unsigned short SEQ_STANDBY_OFF[] = {
+	0x02, 0x2300,
+
+	ENDDEF, 0x0000
+};
+
+
 const unsigned short GAMMA_SETTING[] = {
 	0x3f, 0x0000,	/* gamma setting : ams701ka */
 
@@ -64,25 +120,6 @@ const unsigned short GAMMA_SETTING[] = {
 	0x4b, 0x00C7,
 
 #if 0
-	/* Low Red Gamma */
-	0x4c, 0x005f,
-	0x4d, 0x0001,
-	0x4e, 0x0009,
-	0x4f, 0x0063,
-
-	/* Low Green Gamma */
-	0x50, 0x007f,
-	0x51, 0x005f,
-	0x52, 0x0005,
-	0x53, 0x005f,
-
-	/* Low Blue Gamma */
-	0x54, 0x0002,
-	0x55, 0x0002,
-	0x56, 0x0002,
-	0x57, 0x0002,
-#endif
-
 	0xb0, 0x0002,
 	0xb1, 0x0068,
 	0xb2, 0x007f,
@@ -106,74 +143,48 @@ const unsigned short GAMMA_SETTING[] = {
 	0xc2, 0x0005,
 	0xc3, 0x005f,
 	0xc4, 0x0002,
+#endif
 
 	ENDDEF, 0x0000
+};
+const unsigned short MANUAL_POWER_ON_SETTING[] = {
+	0x06, 0x0000,
+	
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x0001,
+#if 1
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x0005,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x0007,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x000f,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x001f,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x003f,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x007f,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x00ff,
+	SLEEPMSEC, 30,	/* FIXME */
+	0x06, 0x08ff,
+	SLEEPMSEC, 30,	/* FIXME */
 
+	0x03, 0x134A,	/* ETC Register setting */
+//	0x04, 0x86a4,	/* LTPS Power on setting VCIR=2.7V Display is not clean */
+	0x04, 0x8664,	/* LTPS Power on setting VCIR=2.5V */
+
+	0x14, 0x0808,	/* VFP, VBP Register setting */
+	0x15, 0x3090,	/* HSW,HFP,HBP Register setting */
+#endif
+	ENDDEF, 0x0000
 
 };
 
 const unsigned short SEQ_SLEEP_OUT[] = {
-	0x02, 0x2300,	/* Sleep Out */
-	SLEEPMSEC, 1,
-	ENDDEF, 0x0000
-};
-
-const unsigned short MANUAL_POWER_ON_SETTING[] = {
-	0x06, 0x4000,
-	0x12, 0x0040,
-	ENDDEF, 0x0000
-};
-
-
-const unsigned short MANUAL_LTPS_SETTING[] = {
-	0x06, 0x0000,
-	0x06, 0x0001,
-	SLEEPMSEC, 1,
-	0x06, 0x0003,
-	SLEEPMSEC, 5,
-	0x06, 0x0007,
-	SLEEPMSEC, 10,
-	0x06, 0x000f,
-	SLEEPMSEC, 50,
-	0x06, 0x001f,
-	SLEEPMSEC, 5,
-	0x06, 0x003f,
-	SLEEPMSEC, 5,
-	0x06, 0x007f,
-	SLEEPMSEC, 5,
-	0x06, 0x00ff,
-	SLEEPMSEC, 5,
-	0x06, 0x08ff,
-	SLEEPMSEC, 10,
-
-	0x03, 0x134A,	/* ETC Register setting */
-	0x04, 0x86a4,	/* LTPS Power on setting VCIR=2.7V */
-	0x32, 0x0002,
-	0x3f, 0x0004,
-
-	0x14, 0x0808,	/* VFP, VBP Register setting */
-	0x15, 0x3090,	/* HSW,HFP,HBP Register setting */
-	ENDDEF, 0x0000
-
-};
-
-const unsigned short SEQ_MANUAL_DISPLAY_ON[] = {
-	0x12, 0x0001,
-	SLEEPMSEC, 1,
-	0x12, 0x0003,
-	SLEEPMSEC, 1,
-	0x12, 0x0007,
-	SLEEPMSEC, 1,
-	0x12, 0x000f,
-	SLEEPMSEC, 1,
-	0x2e, 0x0605,
-	SLEEPMSEC, 1,
-	0x30, 0x0f11,
-	0x31, 0x0709,
-	SLEEPMSEC, 5,
-	0x12, 0x001f,
-	SLEEPMSEC, 10,
-
+	0x02, 0x2300,		/* Sleep Out */
+	SLEEPMSEC, 1,	/* FIXME */
 	ENDDEF, 0x0000
 };
 
@@ -195,55 +206,6 @@ const unsigned short ACL_ON_WINDOW_SETTING[] = {
 	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_MANUAL_DISPLAY_OFF[] = {
-	0x12, 0x000f,
-	SLEEPMSEC, 1,
-	0x2e, 0x0604,
-	SLEEPMSEC, 1,
-	0x12, 0x0001,
-	SLEEPMSEC, 1,
-	0x12, 0x0000,
-	SLEEPMSEC, 2,
-
-	ENDDEF, 0x0000
-};
-
-const unsigned short SEQ_STANDBY_ON[] = {
-	0x02, 0x2301,
-
-	ENDDEF, 0x0000
-};
-
-const unsigned short SEQ_STANDBY_OFF[] = {
-	0x02, 0x2300,
-
-	ENDDEF, 0x0000
-};
-
-const unsigned short SEQ_MANUAL_LTPS_OFF[] = {
-	0x06, 0x08ff,
-	SLEEPMSEC, 1,
-	0x06, 0x03ff,
-	SLEEPMSEC, 5,
-	0x06, 0x007f,
-	SLEEPMSEC, 5,
-	0x06, 0x003f,
-	SLEEPMSEC, 5,
-	0x06, 0x001f,
-	SLEEPMSEC, 5,
-	0x06, 0x000f,
-	SLEEPMSEC, 5,
-	0x06, 0x0007,
-	SLEEPMSEC, 5,
-	0x06, 0x0003,
-	SLEEPMSEC, 5,
-	0x06, 0x0001,
-	SLEEPMSEC, 5,
-	0x06, 0x0000,
-
-	ENDDEF, 0x0000
-
-};
 static void ams701ka_c110_spi_write_byte(unsigned char address, unsigned short command)
 {
 	int     j;
@@ -359,13 +321,8 @@ static void ams701ka_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-/* test */
-
-
 void lcd_panel_power_on(void)
 {
-	/* set gpio data for MLCD_ON to HIGH */
-
 	/* set gpio data for MLCD_RST to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
@@ -376,16 +333,12 @@ void lcd_panel_power_on(void)
 	gpio_set_value(&gpio->gpio_j1, 3, 1);
 	udelay(100000);
 
-	udelay(10000);
 
 
 	ams701ka_panel_send_sequence(GAMMA_SETTING);
-	ams701ka_panel_send_sequence(MANUAL_POWER_ON_SETTING);
 	ams701ka_panel_send_sequence(SEQ_SLEEP_OUT);
-	ams701ka_panel_send_sequence(MANUAL_LTPS_SETTING);
-	ams701ka_panel_send_sequence(SEQ_MANUAL_DISPLAY_ON);
-
-	udelay(90000);
+	ams701ka_panel_send_sequence(MANUAL_POWER_ON_SETTING);
+	ams701ka_panel_send_sequence(SEQ_DISPLAY_ON);
 	ams701ka_panel_send_sequence(ACL_ON_DISPLAY_SETTING);
 }
 
@@ -403,12 +356,12 @@ static inline void ams701ka_c110_panel_hw_reset(void)
 
 void lcd_panel_enable(void)
 {
-	ams701ka_panel_send_sequence(SEQ_MANUAL_DISPLAY_ON);
+	ams701ka_panel_send_sequence(SEQ_DISPLAY_ON);
 }
 
 static void ams701ka_panel_disable(void)
 {
-	ams701ka_panel_send_sequence(SEQ_MANUAL_DISPLAY_OFF);
+	ams701ka_panel_send_sequence(SEQ_DISPLAY_OFF);
 }
 
 
