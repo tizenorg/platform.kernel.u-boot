@@ -1147,8 +1147,10 @@ int misc_init_r(void)
 		board_is_limo_universal() ||
 		board_is_j1b2())
 		setenv("lcd", "lcd=s6e63m0");
+	/* it can't classify tl2796 with single-lcd and dual-lcd.
 	else
 		setenv("lcd", "lcd=tl2796-dual");
+	*/
 #endif
 
 	show_hw_revision();
