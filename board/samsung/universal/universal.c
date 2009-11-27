@@ -835,7 +835,6 @@ static void check_micro_usb(void)
 		val[0] &= ~(0x7 << 0);
 		val[0] |= 5;		/* 600mA */
 		i2c_write(addr, 0x0C, 1, val, 1);
-		i2c_read(addr, 0x0C, 1, val, 1);
 	}
 
 	/* If Factory Mode is Boot ON-USB, go to download mode */
