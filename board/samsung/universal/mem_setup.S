@@ -105,30 +105,11 @@ swap_memory:
 	 * [ 7:4 ] 2: 14 bits - Row
 	 * [ 3:0 ] 2: 4 banks
 	 */
+	/* Default : 2GiB */
+	ldr	r4, =0x40f00322				@ 2Gib
+	cmp	r9, #1
+	ldreq	r4, =0x40f80222				@ 1Gib
 
-	/*
-	 * Check Limo Real board
-	 *	LR (suspend)	LU		J1B2
-	 * 0x04 0x01 (0x01)	0x01 (0x01)	0x01 (0x01)
-	 * 0x24 0x28 (0xA8)	0x28 (0x6A)	0x1C (0x1C)
-	 * 0x44 0x00 (0xC7)	0x00 (0x47)	0x00 (0x47)
-	 * 0x64 0x03 (0x1F)	0x07 (0x1F)	0x0f (0x0F)
-	 *
-	 * Check (0 << 2) at 0x64 at boot
-	 * Check (1 << 7) at 0x24 at suspend
-	 */
-	ldrne	r4, =0x40f00322				@ 2Gib
-
-	ldrne	r2, =0xE0200C00
-	ldrne	r1, [r2, #0x64]
-	mov	r1, r1, lsr #2
-	cmp	r1, #0
-	beq	2f
-	ldr	r1, [r2, #0x24]
-	mov	r1, r1, lsr #7
-	cmp	r1, #1
-	ldrne	r4, =0x40f80222				@ 1Gib
-2:
 	cmp	r7, r8
 	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
 
