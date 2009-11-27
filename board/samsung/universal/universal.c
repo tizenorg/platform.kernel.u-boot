@@ -228,7 +228,7 @@ static int board_is_j1b2(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
-static char device_info[1024];
+static char device_info[512];
 static int display_info = 0;
 
 static void dprintf(const char *fmt, ...)
@@ -256,6 +256,8 @@ static void display_device_info(void)
 	set_font_color(FONT_WHITE);
 	fb_printf(device_info);
 	exit_font();
+
+	memset(device_info, 0x0, 512);
 
 	udelay(5 * 1000 * 1000);
 }
