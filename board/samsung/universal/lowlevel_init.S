@@ -41,6 +41,7 @@
  * r5 has zero always
  * r7 has S5PC100 GPIO base, 0xE0300000
  * r8 has real GPIO base, 0xE0300000, 0xE0200000 at S5PC100, S5PC110 repectively
+ * r9 has Mobile DDR size, 1 means 1GiB, 2 means 2GiB and so on
  */
 
 _TEXT_BASE:
@@ -139,6 +140,28 @@ lowlevel_init:
 #ifdef CONFIG_ONENAND_IPL
 	/* init system clock */
 	bl	system_clock_init
+
+	/* r9 has 2Gib default */
+	mov	r9, #2
+	/* FIXME 1Gib detection: Universal, J1B2, Limo Universal */
+	/* Check Limo Real board
+	 *      LR (suspend)    LU              J1B2
+	 * 0x04 0x01 (0x01)     0x01 (0x01)     0x01 (0x01)
+	 * 0x24 0x28 (0xA8)     0x28 (0x6A)     0x1C (0x1C)
+	 * 0x44 0x00 (0xC7)     0x00 (0x47)     0x00 (0x47)
+	 * 0x64 0x03 (0x1F)     0x07 (0x1F)     0x0f (0x0F)
+	 *
+	 * Check (0 << 3) at 0x64 at boot
+	 * Check 0x47 at 0x44 at suspend
+	 */
+	ldrne	r2, =0xE0200C00
+	ldrne	r1, [r2, #0x64]
+	mov	r1, r1, lsr #2
+	cmp	r1, #1
+	moveq	r9, #1
+	ldr	r1, [r2, #0x44]
+	cmp	r1, #0x47
+	moveq	r9, #1
 
 	bl	mem_ctrl_asm_init
 
