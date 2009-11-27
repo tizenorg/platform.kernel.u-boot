@@ -141,9 +141,11 @@ lowlevel_init:
 	/* init system clock */
 	bl	system_clock_init
 
-	/* r9 has 2Gib default */
-	mov	r9, #2
-	/* FIXME 1Gib detection: Universal, J1B2, Limo Universal */
+	/* Board detection to set proper memory configuration */
+	cmp	r7, r8
+	moveq	r9, #1		/* r9 has 1Gib default at s5pc100 */
+	movne	r9, #2		/* r9 has 2Gib default at s5pc110 */
+	/* FIXME 1Gib detection: Universal, Limo Universal */
 	/* Check Limo Real board
 	 *      LR (suspend)    LU              J1B2
 	 * 0x04 0x01 (0x01)     0x01 (0x01)     0x01 (0x01)
@@ -156,8 +158,8 @@ lowlevel_init:
 	 */
 	ldrne	r2, =0xE0200C00
 	ldrne	r1, [r2, #0x64]
-	mov	r1, r1, lsr #2
-	cmp	r1, #1
+	and	r1, r1, #(1 << 2)
+	cmp	r1, #(1 << 2)
 	moveq	r9, #1
 	ldr	r1, [r2, #0x44]
 	cmp	r1, #0x47
