@@ -145,7 +145,7 @@ lowlevel_init:
 	cmp	r7, r8
 	moveq	r9, #1		/* r9 has 1Gib default at s5pc100 */
 	movne	r9, #2		/* r9 has 2Gib default at s5pc110 */
-	/* FIXME 1Gib detection: Universal, Limo Universal */
+	/* FIXME 1Gib detection: Limo Universal */
 	/* Check Limo Real board
 	 *      LR (suspend)    LU              J1B2
 	 * 0x04 0x01 (0x01)     0x01 (0x01)     0x01 (0x01)
