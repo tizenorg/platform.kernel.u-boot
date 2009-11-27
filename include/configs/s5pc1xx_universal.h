@@ -173,6 +173,7 @@
 			" onenand write 0x32008000 0x0 0x40000\0"
 
 #define CONFIG_ENV_OVERWRITE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=onenand erase 0x80000 0x300000;" \
