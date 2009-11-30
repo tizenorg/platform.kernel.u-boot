@@ -53,13 +53,13 @@ struct regs_to_save {
 static struct regs_to_save core_save[] = {
 	{ .start_address=0xE0100200, .size=7},
 	{ .start_address=0xE0100280, .size=2},
-	{ .start_address=0xE0100300, .size=7},
+	{ .start_address=0xE0100300, .size=8},
 	{ .start_address=0xE0100460, .size=5},
 	{ .start_address=0xE0100480, .size=3},
 	{ .start_address=0xE0100500, .size=1},
 	{ .start_address=0xE0107008, .size=1},
 };
-static unsigned int buf_core_save[7+2+7+5+3+1+1];
+static unsigned int buf_core_save[7+2+8+5+3+1+1];
 static struct regs_to_save gpio_save[] = {
 	{ .start_address=0xE0200000, .size=6},
 	{ .start_address=0xE0200020, .size=6},
@@ -230,6 +230,7 @@ void s5pc110_wakeup(void)
 
 static int s5pc110_sleep(int mode)
 {
+	static int counter;
 	unsigned long regs_save[16];
 	unsigned int value;
 	int i;
@@ -251,6 +252,11 @@ static int s5pc110_sleep(int mode)
 	value |= (1 << 3);
 	value |= (1 << 2);
 	value |= (1 << 1);
+
+	value &= ~(1 << 5);
+	value &= ~(1 << 4);
+	value &= ~(1 << 3);
+
 	writel(value, S5PC110_WAKEUP_MASK);
 
 	value = __raw_readl(S5PC110_EINT_WAKEUP_MASK);
@@ -316,12 +322,16 @@ static int s5pc110_sleep(int mode)
 	writel(value, S5PC110_OTHERS);
 
 	if (mode == SLEEP_WFI) {
-		value = 0;
 		s5pc110_sleep_save_phys = (unsigned int) regs_save;
 
 		value = readl(S5PC110_OTHERS);
 		value |= 1;
 		writel(value, S5PC110_OTHERS);
+
+		/* cache flush */
+		asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (0)); 
+		l2_cache_disable();
+		invalidate_dcache(get_device_type());
 
 #ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
 		if (s5pc110_cpu_save(regs_save) == 0) {
@@ -338,16 +348,15 @@ static int s5pc110_sleep(int mode)
 		s5pc110_wakeup();
 
 		writel(0, S5PC110_EINT_WAKEUP_MASK);
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
 		readl(S5PC110_EINT_WAKEUP_MASK);
 		for (i = 0; i < 4; i++)
 			readl(0xE0200F40+i*4);
-#endif
 		value = readl(S5PC110_WAKEUP_STAT);
 		writel(0xFFFF & value, S5PC110_WAKEUP_STAT);
 
 		printf("Wakeup Source: 0x%08x\n", value);
 		value = readl(S5PC110_WAKEUP_STAT);
+
 
 #else
 		asm("b	1f\n\t"
@@ -364,6 +373,7 @@ static int s5pc110_sleep(int mode)
 
 	show_hw_revision();
 
+	counter++;
 	board_sleep_resume();
 	return 0;
 }
@@ -387,3 +397,4 @@ U_BOOT_CMD(
 	"S5PC110 sleep",
 	"sleep - sleep mode"
 );
+

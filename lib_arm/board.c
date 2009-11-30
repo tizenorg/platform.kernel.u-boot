@@ -273,6 +273,10 @@ void start_armboot_resume(void)
 	unsigned long addr;
 #endif
 
+	timer_init();
+	init_func_i2c();
+
+#if 0
 	/* Pointer is writable since we allocated a register for it */
 	gd = (gd_t*)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
 	/* compiler optimization barrier needed for GCC >= 3.4 */
@@ -291,6 +295,7 @@ void start_armboot_resume(void)
 			hang ();
 		}
 	}
+#endif
 
 #ifdef CONFIG_VFD
 #	ifndef PAGE_SIZE
@@ -321,44 +326,51 @@ void start_armboot_resume(void)
 	}
 #endif /* CONFIG_LCD */
 
+#if 0
 #if defined(CONFIG_CMD_NAND)
 	puts ("NAND:  ");
 	nand_init();		/* go init the NAND */
+#endif
 #endif
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
 #endif
 
+#if 0
 #ifdef CONFIG_HAS_DATAFLASH
 	AT91F_DataflashInit();
 	dataflash_print_info();
 #endif
 
+#endif
 	/* initialize environment */
-	env_relocate ();
-
+	/* env_relocate (); */
+#if 0
 #ifdef CONFIG_VFD
 	/* must do this after the framebuffer is allocated */
 	drv_vfd_init();
 #endif /* CONFIG_VFD */
+#endif
 
 #ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();
 #endif
-
 	stdio_init_resume ();	/* get the devices list going. */
 
+#if 0
 #if defined(CONFIG_ARCH_MISC_INIT)
 	/* miscellaneous arch dependent initialisations */
 	arch_misc_init ();
 #endif
+#endif
 
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
-	misc_init_r ();
+	misc_init_r();
 #endif
 
+#if 0
 	/* enable exceptions */
 	enable_interrupts ();
 
@@ -390,12 +402,13 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 #ifdef BOARD_LATE_INIT
 	board_late_init ();
 #endif
-
+#endif
 #ifdef CONFIG_GENERIC_MMC
 	puts ("MMC:   ");
 	mmc_initialize (gd->bd);
 #endif
 
+#if 0
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();
 #endif
@@ -405,7 +418,7 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 #endif
 	eth_initialize(gd->bd);
 #endif
-
+#endif
 }
 
 void start_armboot (void)

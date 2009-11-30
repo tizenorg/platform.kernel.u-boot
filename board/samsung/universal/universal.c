@@ -228,7 +228,8 @@ static int board_is_j1b2(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
-static char device_info[512];
+#define LENGTH_device_info	512
+static char device_info[LENGTH_device_info];
 static int display_info = 0;
 
 static void dprintf(const char *fmt, ...)
@@ -241,6 +242,13 @@ static void dprintf(const char *fmt, ...)
 	i = vsprintf(buf, fmt, args);
 	va_end(args);
 
+	buf[127] = 0;
+
+	if ((strlen(device_info) + strlen(buf)) > (LENGTH_device_info - 1)) {
+		puts("Flushing device info...\n");
+		puts(device_info);
+		device_info[0] = 0;
+	}
 	strcat(device_info, buf);
 	puts(buf);
 }
@@ -914,6 +922,9 @@ static void init_pmic(void)
 
 #define PREVIOUS(x)		(0x3 << ((x) << 1))
 
+#define R225_229_755_756_NOT_REMOVED
+#undef R225_229_755_756_NOT_REMOVED
+
 struct gpio_powermode {
 	unsigned int	conpdn;
 	unsigned int	pudpdn;
@@ -955,10 +966,19 @@ static struct gpio_powermode powerdown_modes[] = {
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
 	}, {	/* S5PC110_GPIO_D1_OFFSET */
+#ifdef R225_229_755_756_NOT_REMOVED
+		/* Original */
 		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
 		OUTPUT0(4) | OUTPUT0(5),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5),
+#else
+		/* For current test board only with R225-229 / R755-756 removed  */
+		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
+		INPUT(4) | INPUT(5),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5),
+#endif
 	}, {	/* S5PC110_GPIO_E0_OFFSET */
 		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
 		INPUT(4) | INPUT(5) | INPUT(6) | INPUT(7),
@@ -995,10 +1015,19 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
 	}, {	/* S5PC110_GPIO_G1_OFFSET */
+#ifdef R225_229_755_756_NOT_REMOVED
+		/* Original */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+#else
+		/* For the current test board */
+		OUTPUT0(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
+		INPUT(4) | INPUT(5) | INPUT(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
+#endif
 	}, {	/* S5PC110_GPIO_G2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),

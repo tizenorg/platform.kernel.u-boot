@@ -65,8 +65,14 @@ int timer_init(void)
 
 	/* set prescaler : 16 */
 	/* set divider : 2 */
-	writel((PRESCALER_1 & 0xff) << 8, &timer->tcfg0);
-	writel((MUX_DIV_2 & 0xf) << MUX4_DIV_SHIFT, &timer->tcfg1);
+	val = readl(&timer->tcfg0);
+	val &= ~(0xff << 8);
+	val |= (PRESCALER_1 & 0xff) << 8;
+	writel(val, &timer->tcfg0);
+	val = readl(&timer->tcfg1);
+	val &= ~(0xf << MUX4_DIV_SHIFT);
+	val |= (MUX_DIV_2 & 0xF) << MUX4_DIV_SHIFT;
+	writel(val, &timer->tcfg1);
 
 	if (count_value == 0) {
 		/* reset initial value */
@@ -117,7 +123,7 @@ void set_timer(unsigned long t)
 /* delay x useconds */
 void udelay(unsigned long usec)
 {
-	unsigned long tmo, tmp;
+	unsigned long tmo, tmp, now, until;
 
 	if (usec >= 1000) {
 		/*
@@ -137,18 +143,23 @@ void udelay(unsigned long usec)
 	}
 
 	/* get current timestamp */
-	tmp = get_timer(0);
+	tmp = get_timer_masked();
 
 	/* if setting this fordward will roll time stamp */
 	/* reset "advancing" timestamp to 0, set lastdec value */
 	/* else, set advancing stamp wake up time */
-	if ((tmo + tmp + 1) < tmp)
+	until = tmo + tmp + count_value;
+	if (until < tmp) {
 		reset_timer_masked();
+		tmp = get_timer_masked();
+		tmo += tmp;
+
+	}
 	else
 		tmo += tmp;
 
-	/* loop till event */
-	while (get_timer_masked() < tmo)
+	/* loop till event */ /* FIX: consider the overflow case */
+	while ((now = get_timer_masked()) < tmo && now >= tmp)
 		;	/* nop */
 }
 
