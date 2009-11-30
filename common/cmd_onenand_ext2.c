@@ -51,8 +51,6 @@ unsigned int block_size_of_fs = 0;
 
 unsigned int inode_block_size = 0;
 
-struct ext2_dirent g_dirent;
-
 /* set system memory region stored with onenand region. */
 static unsigned int allocate_ext2_buf(void)
 {
@@ -68,7 +66,7 @@ static unsigned int allocate_ext2_buf(void)
 }
 
 /* load onenand region into system memory. */
-static void onenand_read_to_ram(void)
+static void load_onenand_to_ram(void)
 {
 	unsigned int i, out_size;
 	char *buf = NULL;
@@ -282,7 +280,7 @@ void test_onenand_ext2(void)
 {
 	unsigned int inode;
 
-	onenand_read_to_ram();
+	load_onenand_to_ram();
 
 	inode = (unsigned int) mount_ext2fs();
 
