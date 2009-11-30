@@ -1533,7 +1533,7 @@ int mtdparts_init(void)
 	const char *ids, *parts;
 	const char *current_partition;
 	int ids_changed;
-	char tmp_ep[PARTITION_MAXLEN];
+	char tmp_ep[PARTITION_MAXLEN+1];
 
 	DEBUGF("\n---mtdparts_init---\n");
 	if (!initialized) {
