@@ -43,8 +43,6 @@
 
 extern vidinfo_t panel_info;
 extern int onenand_read(ulong off, char *buf, unsigned int *out_size);
-extern int onenand_block_read(loff_t from, ssize_t len,
-	ssize_t *retlen, u_char *buf, int oob);
 
 static char *ext2_buf = NULL;
 
@@ -252,6 +250,8 @@ static int get_dir_entry(unsigned int *inode, struct ext2_dirent *dirent)
 	memcpy(dirent, (char *) *inode, sizeof(struct ext2_dirent));
 	*inode += dirent->direntlen;
 
+	dirent->name[dirent->namelen] = '\0';
+
 	return 0;
 }
 
@@ -272,10 +272,10 @@ unsigned int find_file_ext2(unsigned int inode, const char *filename)
 	do {
 		ret = get_dir_entry(&inode, &dirent);
 
-		dprint("soure file = %s, dst file = %s\n", filename,
-			dirent.name);
+		dprint("soure file = %s, dst file = %s, len = %d\n", filename,
+			dirent.name, dirent.namelen);
 
-		if ((strcmp(dirent.name, filename)) == 0)
+		if ((strncmp(dirent.name, filename, dirent.namelen)) == 0)
 			return dirent.inode;
 
 	} while (ret == 0);
@@ -296,16 +296,22 @@ int open_file_ext2(unsigned int f_inode)
 {
 	unsigned int d_inode;
 
-	d_inode = ext2_buf + inode_table_location + (f_inode - 1) *
+	d_inode = inode_table_location + (f_inode - 1) *
 		INODE_TABLE_ENTRY_SIZE;
+
+	dprint("f_inode = %d, d_inode = %d\n", f_inode, d_inode);
 
 	return d_inode;
 }
 
-int read_file_ext2(char *buf, unsigned int d_inode, unsigned int size)
+int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 {
 	struct ext2_datablock d_block;
 	struct ext2_inode inode;
+	int i;
+
+	/* calculate location of system memory for data block inode. */
+	d_inode = ext2_buf + d_inode;
 
 	/* get inode table entry for file. */
 	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
@@ -314,6 +320,17 @@ int read_file_ext2(char *buf, unsigned int d_inode, unsigned int size)
 	memcpy(&d_block, (char *) &inode.b.blocks, sizeof(struct ext2_datablock));
 
 	d_inode = (unsigned int) ext2_buf + d_block.dir_blocks[0] * EXT2_BLOCK_UNIT;
+
+	for (i = 0; i < 15; i++)
+		dprint("blocks[%d] = %d\n", i, d_block.dir_blocks[i]);
+
+	dprint("blocks = %d\n",d_block.indir_block);
+	dprint("blocks = %d\n",d_block.double_indir_block);
+	dprint("blocks = %d\n",d_block.tripple_indir_block);
+
+	dprint("system memory for data block is %x\n", d_inode);
+
+
 	memcpy(buf, (char *) d_inode, size);
 }
 
@@ -339,18 +356,18 @@ void ls_ext2(unsigned int inode)
 void test_onenand_ext2(void)
 {
 	unsigned int inode;
-	char name[11];
+	char name[10];
 
 	load_onenand_to_ram();
 
 	inode = (unsigned int) mount_ext2fs();
 
 
-	inode = find_file_ext2(inode, "test.txt");
+	inode = find_file_ext2(inode, "Downloading_progr_left.jpg");
 	inode = open_file_ext2(inode);
-	read_file_ext2(name, inode, 10);
+	read_file_ext2(inode, name, 9);
 
-	dprint("name = %s\n", name);
+	dprint("data = %s\n", name);
 
 	/* ls test
 	inode = (unsigned int) mount_ext2fs();
