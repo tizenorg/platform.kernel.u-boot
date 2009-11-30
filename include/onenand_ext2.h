@@ -138,18 +138,11 @@ struct ext2_dirent2 {
 	char name[EXT2_NAME_LEN];
 };
 
-struct ext2fs_node {
-	struct ext2_data *data;
-	struct ext2_inode inode;
-	int ino;
-	int inode_read;
-};
-
-/* Information about a "mounted" ext2 filesystem.  */
-struct ext2_data {
-	struct ext2_sblock sblock;
-	struct ext2_inode *inode;
-	struct ext2fs_node diropen;
+struct ext2_datablock {
+	uint32_t dir_blocks[INDIRECT_BLOCKS];
+	uint32_t indir_block;
+	uint32_t double_indir_block;
+	uint32_t tripple_indir_block;
 };
 
 /*
@@ -167,3 +160,12 @@ enum {
 	EXT2_FT_SYMLINK,
 	EXT2_FT_MAX
 };
+
+#define ONENAND_EXT2_DEBUG	1
+
+#ifdef ONENAND_EXT2_DEBUG
+#define dprint	printf
+#else
+#define dprint	do { } while (0);
+#endif
+
