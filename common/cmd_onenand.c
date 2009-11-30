@@ -292,6 +292,42 @@ next:
 	return 0;
 }
 
+int onenand_read(ulong off, char *buf, unsigned int *out_size)
+{
+	mtd = &onenand_mtd;
+
+	int ret;
+	u_char *datbuf;
+	struct mtd_oob_ops ops;
+	loff_t addr;
+
+	datbuf = malloc(mtd->writesize);
+	if (!datbuf) {
+		puts("No memory for page buffer\n");
+		return -1;
+	}
+	off &= ~(mtd->writesize - 1);
+	addr = (loff_t) off;
+	memset(&ops, 0, sizeof(ops));
+	ops.datbuf = datbuf;
+
+	ops.len = mtd->writesize;
+	ops.retlen = 0;
+	ret = mtd->read_oob(mtd, addr, &ops);
+	if (ret < 0) {
+		printf("Error (%d) reading page %08lx\n", ret, off);
+		free(datbuf);
+		return -1;
+	}
+
+	memcpy(buf, datbuf, ops.retlen);
+	*out_size = ops.retlen;
+
+	free(datbuf);
+
+	return 0;
+}
+
 static int onenand_dump(struct mtd_info *mtd, ulong off, int only_oob)
 {
 	int i;
