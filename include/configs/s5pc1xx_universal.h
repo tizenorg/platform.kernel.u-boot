@@ -309,4 +309,7 @@
 #define CONFIG_S5PC1XXFB	1
 #endif
 
+#define CONFIG_CMD_EXT2			1
+#define CONFIG_CMD_ONENAND_EXT2		1
+
 #endif	/* __CONFIG_H */
