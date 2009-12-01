@@ -32,6 +32,7 @@
 #include <asm/arch/keypad.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/power.h>
+#include <asm/arch/mem.h>
 #include <fbutils.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -1240,31 +1241,39 @@ int board_init(void)
 int dram_init(void)
 {
 	char meminfo[64] = {0,};
+	unsigned int base, memconfig0, size;
 
 	if (cpu_is_s5pc100()) {
 		/* In mem setup, we swap the bank. So below size is correct */
 		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_2_SIZE;
 		gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
-		gd->bd->bi_dram[1].size = PHYS_SDRAM_1_SIZE;
+		size = 128;
 	} else {
 		/* In S5PC110, we can't swap the DMC0/1 */
 		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
-		gd->bd->bi_dram[1].start = S5PC110_PHYS_SDRAM_2;
 
-		if (board_is_limo_real() || machine_is_p1p2() ||
-		    machine_is_geminus())
-			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE +
-						(128 << 20);
-		else
-			gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
+		base = S5PC110_DMC1_BASE;
+		/* DMC configuration */
+		memconfig0 = readl(base + MEMCONFIG0_OFFSET);
+		gd->bd->bi_dram[1].start = memconfig0 & 0xFF000000;
+
+		size = (memconfig0 >> 16) & 0xFF;
+		size = ((unsigned char) ~size) + 1;
+
+		/*
+		 * (0x07 + 1) * 16 = 128 MiB
+		 * (0x0f + 1) * 16 = 256 MiB
+		 */
+		size = size << 4;
+
 	}
+	gd->bd->bi_dram[1].size = size << 20;
 
 	sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
-			(int)gd->bd->bi_dram[0].size / 1024 / 1024,
-			(int)gd->bd->bi_dram[1].size / 1024 / 1024,
-			(unsigned int)gd->bd->bi_dram[1].start);
+			(int)gd->bd->bi_dram[0].size >> 20,
+			size, (unsigned int)gd->bd->bi_dram[1].start);
 	setenv("meminfo", meminfo);
 
 	return 0;
