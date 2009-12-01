@@ -419,7 +419,12 @@ static void check_hw_revision(void)
 			board = MACH_TICKERTAPE;
 
 		/* C110 P1P2 */
-		if (gpio_get_value(&gpio->gpio_h3, 7) == 1)
+		if (gpio_get_value(&gpio->gpio_j0, 2) == 1 &&
+			gpio_get_value(&gpio->gpio_j0, 3) == 0 &&
+			gpio_get_value(&gpio->gpio_j0, 4) == 0 &&
+			gpio_get_value(&gpio->gpio_j0, 1) == 0 &&
+			gpio_get_value(&gpio->gpio_j0, 6) == 0 &&
+			gpio_get_value(&gpio->gpio_j0, 7) == 1)
 			board = MACH_P1P2;
 
 		/* C110 Geminus */
