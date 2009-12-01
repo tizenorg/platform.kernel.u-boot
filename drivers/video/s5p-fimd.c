@@ -105,6 +105,7 @@ void s5pc_c110_gpio_setup(void)
 
 	/* gpio pad configuration for LCD ON. */
 	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_j1, 4, GPIO_OUTPUT);
 
 	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
 	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
