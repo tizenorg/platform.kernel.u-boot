@@ -235,8 +235,6 @@ void s5pc110_wakeup(void)
 #endif
 	stdio_init_resume ();   /* get the devices list going. */
 
-	start_armboot_resume();
-
 	return;
 }
 
