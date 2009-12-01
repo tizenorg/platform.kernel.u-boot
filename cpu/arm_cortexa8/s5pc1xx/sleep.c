@@ -223,6 +223,18 @@ void s5pc110_wakeup(void)
 
 	printf("%s: Waking up...\n", __func__);
 
+	timer_init();
+#if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
+	i2c_init (CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE); /* init_func_i2c */
+#endif
+#if defined(CONFIG_CMD_ONENAND)
+	onenand_init();
+#endif  
+#ifdef CONFIG_SERIAL_MULTI
+	serial_initialize();
+#endif
+	stdio_init_resume ();   /* get the devices list going. */
+
 	start_armboot_resume();
 
 	return;
