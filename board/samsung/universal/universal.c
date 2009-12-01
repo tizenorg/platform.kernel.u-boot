@@ -695,7 +695,7 @@ static void check_keypad(void)
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
 		if (machine_is_p1p2()) {
-			if ((row_value[0] & 0xd) == 0xd)
+			if ((col_value[0] & 0xd) == 0xd)
 				auto_download = 1;
 		}
 	}
