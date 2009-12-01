@@ -365,9 +365,11 @@ void start_armboot_resume(void)
 #endif
 #endif
 
+#if 0
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
+#endif
 #endif
 
 #if 0
