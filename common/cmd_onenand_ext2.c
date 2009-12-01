@@ -37,7 +37,7 @@
 #define ONENAND_READ_SIZE	(4 * 1024)
 #define FRAMEBUFFER_SIZE	(480 * 800 * 4)
 
-#define EXT2_BLOCK_UNIT		(1024)
+#define BOOT_BLOCK_SIZE		(1024)
 #define DATA_BLOCK_UNIT		(512)
 #define INODE_TABLE_ENTRY_SIZE	(128)
 
@@ -94,7 +94,8 @@ static char *get_sblock(struct ext2_sblock *sblock)
 		return NULL;
 	}
 
-	buf_sblock = ext2_buf + EXT2_BLOCK_UNIT;
+	/* first 1k is boot block. */
+	buf_sblock = ext2_buf + BOOT_BLOCK_SIZE;
 
 	/* get super block. */
 	memcpy(sblock, buf_sblock, sizeof(struct ext2_sblock));
@@ -115,7 +116,15 @@ static char *get_group_dec(struct ext2_block_group *group)
 	}
 
 	/* get group descriptor. */
-	buf_group = ext2_buf + EXT2_BLOCK_UNIT * 2;
+	if (block_size_of_fs == 1024)
+		/* boot block : 1k, super block : 1k. */
+		buf_group = ext2_buf + block_size_of_fs * 2;
+	else if (block_size_of_fs == 4096)
+		/* boot block : 1k, super block : 3k. */
+		buf_group = ext2_buf + block_size_of_fs;
+
+	dprint("buf_group = 0x%8x\n", buf_group);
+
 	memcpy(group, buf_group, sizeof(struct ext2_block_group));
 
 	dprint("block_id = %d, inode_id = %d, inode_table_id = %d\n",
@@ -140,7 +149,7 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
 	}
 
 	/* get location of inode table. */
-	inode_table_location = group->inode_table_id * EXT2_BLOCK_UNIT;
+	inode_table_location = group->inode_table_id * block_size_of_fs;
 
 	dprint("inode table location = %d\n", inode_table_location);
 
@@ -177,7 +186,7 @@ static char *get_root_dir_entry(struct ext2_dirent *dirent, struct ext2_inode *i
 	}
 
 	/* get block number stored with data of inode. */
-	buf_root_dir = ext2_buf + inode->b.blocks.dir_blocks[0] * EXT2_BLOCK_UNIT;
+	buf_root_dir = ext2_buf + inode->b.blocks.dir_blocks[0] * block_size_of_fs;
 	memcpy(dirent, buf_root_dir, sizeof(struct ext2_dirent));
 
 	dprint("first entry name of root directory is name = %s\n",
@@ -203,13 +212,30 @@ char *mount_ext2fs(void)
 		return NULL;
 	}
 
-	/* in case that log2_block_size is 0, block_size is 1024 and 2048 for 1. */
-	block_size_of_fs = (sblock.log2_block_size + 1) * EXT2_BLOCK_UNIT;
+	/* 
+	 * in case that log2_block_size is 0, block_size is 1024,
+	 * 2048 for 1 and 4096 for 2. 
+	 */
+	switch (sblock.log2_block_size + 1) {
+	case 1:
+		block_size_of_fs = 1024;
+		break;
+	case 2:
+		block_size_of_fs = 2048;
+		break;
+	case 3:
+		block_size_of_fs = 4096;
+		break;
+	default:
+		block_size_of_fs = 4096;
+		break;
+	}
+
 	dprint("block size of filesystem = %d\n", block_size_of_fs);
 
 	/* get block size for inode table. */
 	need_block = sblock.total_inodes * INODE_TABLE_ENTRY_SIZE /
-		EXT2_BLOCK_UNIT;
+		block_size_of_fs;
 
 	dprint("need_block for inode table = %d\n", need_block);
 
@@ -341,12 +367,12 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 
 			/* calculate real data address. */
 			d_block_addr = (unsigned int) ext2_buf + d_block.dir_blocks[i] *
-				EXT2_BLOCK_UNIT;
-			if (size > EXT2_BLOCK_UNIT) {
-				memcpy(buf, (char *) d_block_addr, EXT2_BLOCK_UNIT);
-				size -= EXT2_BLOCK_UNIT;
-				buf += EXT2_BLOCK_UNIT;
-				read_size += EXT2_BLOCK_UNIT;
+				block_size_of_fs;
+			if (size > block_size_of_fs) {
+				memcpy(buf, (char *) d_block_addr, block_size_of_fs);
+				size -= block_size_of_fs;
+				buf += block_size_of_fs;
+				read_size += block_size_of_fs;
 
 				if (size <= 0)
 					return read_size;
@@ -365,10 +391,10 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	 */
 	if (d_block.indir_block > 0 && d_block.double_indir_block <= 0) {
 		d_block_addr = (unsigned int) ext2_buf + d_block.indir_block *
-			EXT2_BLOCK_UNIT;
+			block_size_of_fs;
 		dprint("1-dim indirect block address = 0x%8x\n",  d_block_addr);
 		/* 1-dim indirect block has 1k block and the size per entry is 4byte. */
-		for (i = 0; i < EXT2_BLOCK_UNIT; i+=4) {
+		for (i = 0; i < block_size_of_fs; i+=4) {
 			/* get indirect block number. */
 			memcpy(&id_block_num, (char *) d_block_addr + i, 4);
 
@@ -378,13 +404,13 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 			if (id_block_num > 0) {
 				/* calculate block number having real data. */
 				id_block_addr = (unsigned int) ext2_buf + id_block_num *
-					EXT2_BLOCK_UNIT;
+					block_size_of_fs;
 
-				if (size > EXT2_BLOCK_UNIT) {
-					memcpy(buf, (char *) id_block_addr, EXT2_BLOCK_UNIT);
-					size -= EXT2_BLOCK_UNIT;
-					buf += EXT2_BLOCK_UNIT;
-					read_size += EXT2_BLOCK_UNIT;
+				if (size > block_size_of_fs) {
+					memcpy(buf, (char *) id_block_addr, block_size_of_fs);
+					size -= block_size_of_fs;
+					buf += block_size_of_fs;
+					read_size += block_size_of_fs;
 
 					if (size <= 0)
 						return read_size;
@@ -402,7 +428,7 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	/* to do */
 
 	/*
-	dprint("idir = %x\n",  (unsigned int) ext2_buf + d_block.indir_block * EXT2_BLOCK_UNIT);
+	dprint("idir = %x\n",  (unsigned int) ext2_buf + d_block.indir_block * block_size_of_fs);
 	*/
 }
 
