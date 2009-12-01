@@ -156,7 +156,7 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
 	/* get inode block size and used to find the end of directory entry. */
 	inode_block_size = inode->blockcnt * DATA_BLOCK_UNIT;
 
-	dprint("dir_blocks = %x, size = %d, blockcnt = %d\n", inode->b.blocks.dir_blocks[0],
+	dprint("dir_blocks = 0x%8x, size = %d, blockcnt = %d\n", inode->b.blocks.dir_blocks[0],
 		inode->size, inode->blockcnt);
 
 	return buf_root_dir;
@@ -308,6 +308,7 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 {
 	struct ext2_datablock d_block;
 	struct ext2_inode inode;
+	unsigned int d_block_addr, id_block_addr, read_size = 0, id_block_num;
 	int i;
 
 	/* calculate location of system memory for data block inode. */
@@ -316,22 +317,80 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	/* get inode table entry for file. */
 	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
 
-	/* get data block for file. */
+	/* get data block information for file. */
 	memcpy(&d_block, (char *) &inode.b.blocks, sizeof(struct ext2_datablock));
 
-	d_inode = (unsigned int) ext2_buf + d_block.dir_blocks[0] * EXT2_BLOCK_UNIT;
+	/* get real data from direct blocks. */
+	for (i = 0; i < INDIRECT_BLOCKS; i++) {
+		if (d_block.dir_blocks[i] > 0) {
 
-	for (i = 0; i < 15; i++)
-		dprint("blocks[%d] = %d\n", i, d_block.dir_blocks[i]);
+			dprint("direct block[%d] num = %d\n", i, d_block.dir_blocks[i]);
 
-	dprint("blocks = %d\n",d_block.indir_block);
-	dprint("blocks = %d\n",d_block.double_indir_block);
-	dprint("blocks = %d\n",d_block.tripple_indir_block);
+			/* calculate real data address. */
+			d_block_addr = (unsigned int) ext2_buf + d_block.dir_blocks[i] *
+				EXT2_BLOCK_UNIT;
+			if (size > EXT2_BLOCK_UNIT) {
+				memcpy(buf, (char *) d_block_addr, EXT2_BLOCK_UNIT);
+				size -= EXT2_BLOCK_UNIT;
+				buf += EXT2_BLOCK_UNIT;
+				read_size += EXT2_BLOCK_UNIT;
 
-	dprint("system memory for data block is %x\n", d_inode);
+				if (size <= 0)
+					return read_size;
+			} else {
+				memcpy(buf, (char *) d_block_addr, size);
+				read_size += size;
 
+				return read_size;
+			}
+		}
+	}
 
-	memcpy(buf, (char *) d_inode, size);
+	/* 
+	 * get real data from 1-dim indirect blocks only in case that
+	 * 2-dim indirect block has no block num. 
+	 */
+	if (d_block.indir_block > 0 && d_block.double_indir_block <= 0) {
+		d_block_addr = (unsigned int) ext2_buf + d_block.indir_block *
+			EXT2_BLOCK_UNIT;
+		dprint("1-dim indirect block address = 0x%8x\n",  d_block_addr);
+		/* 1-dim indirect block has 1k block and the size per entry is 4byte. */
+		for (i = 0; i < EXT2_BLOCK_UNIT; i+=4) {
+			/* get indirect block number. */
+			memcpy(&id_block_num, (char *) d_block_addr + i, 4);
+
+			dprint("1-dim indirect block[%d] num = %d\n", i, id_block_num);
+
+			/* get real data from indirect block in case of hole. */
+			if (id_block_num > 0) {
+				/* calculate block number having real data. */
+				id_block_addr = (unsigned int) ext2_buf + id_block_num *
+					EXT2_BLOCK_UNIT;
+
+				if (size > EXT2_BLOCK_UNIT) {
+					memcpy(buf, (char *) id_block_addr, EXT2_BLOCK_UNIT);
+					size -= EXT2_BLOCK_UNIT;
+					buf += EXT2_BLOCK_UNIT;
+					read_size += EXT2_BLOCK_UNIT;
+
+					if (size <= 0)
+						return read_size;
+				} else {
+					memcpy(buf, id_block_addr, size);
+					read_size += size;
+
+					return read_size;
+				}
+			}
+		}
+	}
+
+	return read_size;
+	/* to do */
+
+	/*
+	dprint("idir = %x\n",  (unsigned int) ext2_buf + d_block.indir_block * EXT2_BLOCK_UNIT);
+	*/
 }
 
 void ls_ext2(unsigned int inode)
@@ -355,19 +414,23 @@ void ls_ext2(unsigned int inode)
 
 void test_onenand_ext2(void)
 {
-	unsigned int inode;
-	char name[10];
+	unsigned int inode, in_size, out_size;
+	char *data;
+
+	in_size = 31922;
+	data = malloc(in_size);
 
 	load_onenand_to_ram();
 
 	inode = (unsigned int) mount_ext2fs();
 
 
-	inode = find_file_ext2(inode, "Downloading_progr_left.jpg");
+	inode = find_file_ext2(inode, "s3cfb.c");
 	inode = open_file_ext2(inode);
-	read_file_ext2(inode, name, 9);
+	out_size = read_file_ext2(inode, data, in_size);
+	dprint("read size = %d\n", out_size);
 
-	dprint("data = %s\n", name);
+	free(data);
 
 	/* ls test
 	inode = (unsigned int) mount_ext2fs();
