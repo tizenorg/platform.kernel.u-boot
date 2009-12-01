@@ -626,7 +626,6 @@ static void check_keypad(void)
 	unsigned int col_value[4], i;
 	unsigned char val[2];
 	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
-
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
@@ -646,9 +645,6 @@ static void check_keypad(void)
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
-		if (machine_is_p1p2())
-			return;
-
 		if (board_is_limo_real() || board_is_limo_universal()) {
 			row_mask = 0x00FF;
 			col_mask = 0x0FFF;
@@ -656,27 +652,28 @@ static void check_keypad(void)
 			row_mask = 0xFFFF;
 			col_mask = 0xFFFF;
 		}
-
+	
 		for (i = 0; i < 4; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
 				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
-				gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
+				if (!machine_is_p1p2())
+					gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
 			}
 
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
 				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
+				if (machine_is_p1p2()) 
+					gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
 		}
-
+	
 		reg = S5PC110_KEYPAD_BASE;
 	}
-
 	/* init col */
 	value = 0x00;
 	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
 	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-
 	/* VOLUMEDOWN and CAM(Half shot) Button */
 	if ((value & KBR1) == 0) {
 		i = 0;
@@ -697,6 +694,10 @@ static void check_keypad(void)
 
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
+		if (machine_is_p1p2()) {
+			if ((row_value[0] & 0xd) == 0xd)
+				auto_download = 1;
+		}
 	}
 
 	if (auto_download)
