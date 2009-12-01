@@ -623,7 +623,7 @@ static void check_keypad(void)
 	unsigned int reg, value;
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
-	unsigned int row_value[4], i;
+	unsigned int col_value[4], i;
 	unsigned char val[2];
 	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
 
@@ -686,16 +686,16 @@ static void check_keypad(void)
 			value &= ~(1 << i);
 			writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
 			udelay(10*1000);
-			row_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+			col_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 		}
 		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
 		/* expected value is  row_value[0] = 0x00  row_value[1] = 0x01 */
 		/* workaround */
-		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) == 0x3)
+		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
 			auto_download = 1;
 
-		if ((row_value[0] & 0x3) == 0x3 && (row_value[1] & 0x3) != 0x3)
+		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
 	}
 
