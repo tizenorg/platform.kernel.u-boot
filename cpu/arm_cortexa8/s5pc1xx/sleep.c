@@ -263,9 +263,7 @@ static int s5pc110_sleep(int mode)
 	value |= (1 << 2);
 	value |= (1 << 1);
 
-	value &= ~(1 << 5);
-	value &= ~(1 << 4);
-	value &= ~(1 << 3);
+	value &= ~(1 << 5); /* Enable KEY I/F */
 
 	writel(value, S5PC110_WAKEUP_MASK);
 
@@ -331,55 +329,59 @@ static int s5pc110_sleep(int mode)
 	value |= S5PC110_OTHERS_SYSCON_INT_DISABLE;
 	writel(value, S5PC110_OTHERS);
 
-	if (mode == SLEEP_WFI) {
-		s5pc110_sleep_save_phys = (unsigned int) regs_save;
+	s5pc110_sleep_save_phys = (unsigned int) regs_save;
 
-		value = readl(S5PC110_OTHERS);
-		value |= 1;
-		writel(value, S5PC110_OTHERS);
+	value = readl(S5PC110_OTHERS);
+	value |= 1;
+	writel(value, S5PC110_OTHERS);
 
+	/* cache flush */
+	asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (0)); 
+	l2_cache_disable();
+	invalidate_dcache(get_device_type());
+
+	if (s5pc110_cpu_save(regs_save) == 0) {
 		/* cache flush */
 		asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (0)); 
 		l2_cache_disable();
 		invalidate_dcache(get_device_type());
 
+		if (mode == SLEEP_WFI) {
 #ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-		if (s5pc110_cpu_save(regs_save) == 0) {
-			/* cache flush */
-			asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (0)); 
-			l2_cache_disable();
-			invalidate_dcache(get_device_type());
+			printf("Warn: Entering SLEEP_WFI mode with EVT0_ERRATA. \n");
+			printf("Warn: This sleep will probably fail. \n");
+#endif
+			value = readl(S5PC110_PWR_CFG);
+			value &= ~S5PC110_CFG_STANDBYWFI_MASK;
+			value |= S5PC110_CFG_STANDBYWFI_SLEEP;
+			writel(value, S5PC110_PWR_CFG);
 
+			asm("b	1f\n\t"
+					".align 5\n\t"
+					"1:\n\t"
+					"mcr p15, 0, %0, c7, c10, 5\n\t"
+					"mcr p15, 0, %0, c7, c10, 4\n\t"
+					".word 0xe320f003" :: "r" (value));
+
+		} else { /* SLEEP_REGISTER */
 			value = (1 << 2);
 			writel(value, S5PC110_PWR_MODE);
 			while(1);
 		}
-
-		s5pc110_wakeup();
-
-		writel(0, S5PC110_EINT_WAKEUP_MASK);
-		readl(S5PC110_EINT_WAKEUP_MASK);
-		for (i = 0; i < 4; i++)
-			readl(0xE0200F40+i*4);
-		value = readl(S5PC110_WAKEUP_STAT);
-		writel(0xFFFF & value, S5PC110_WAKEUP_STAT);
-
-		printf("Wakeup Source: 0x%08x\n", value);
-		value = readl(S5PC110_WAKEUP_STAT);
-
-
-#else
-		asm("b	1f\n\t"
-			".align 5\n\t"
-			"1:\n\t"
-			"mcr p15, 0, %0, c7, c10, 5\n\t"
-			"mcr p15, 0, %0, c7, c10, 4\n\t"
-			".word 0xe320f003" :: "r" (value));
-#endif
-	} else {
-		value = S5PC110_PWR_MODE_SLEEP;
-		writel(value, S5PC110_PWR_MODE);
 	}
+
+
+	s5pc110_wakeup();
+
+	writel(0, S5PC110_EINT_WAKEUP_MASK);
+	readl(S5PC110_EINT_WAKEUP_MASK);
+	for (i = 0; i < 4; i++)
+		readl(0xE0200F40+i*4);
+	value = readl(S5PC110_WAKEUP_STAT);
+	writel(0xFFFF & value, S5PC110_WAKEUP_STAT);
+
+	printf("Wakeup Source: 0x%08x\n", value);
+	value = readl(S5PC110_WAKEUP_STAT);
 
 	show_hw_revision();
 
@@ -405,6 +407,6 @@ int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(
 	sleep,		CONFIG_SYS_MAXARGS,	1, do_sleep,
 	"S5PC110 sleep",
-	"sleep - sleep mode"
+	"[sleep mode]\n# sleep: Sleep with SLEEP_WFI mode\n# sleep 1: Sleep with SLEEP_REGISTER mode\n"
 );
 
