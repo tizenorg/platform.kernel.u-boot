@@ -304,6 +304,19 @@ int open_file_ext2(unsigned int f_inode)
 	return d_inode;
 }
 
+int get_filesize_ext2(unsigned int d_inode)
+{
+	struct ext2_inode inode;
+
+	/* calculate location of system memory for data block inode. */
+	d_inode = ext2_buf + d_inode;
+
+	/* get inode table entry for file. */
+	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
+
+	return inode.size;
+}
+
 int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 {
 	struct ext2_datablock d_block;
@@ -417,18 +430,19 @@ void test_onenand_ext2(void)
 	unsigned int inode, in_size, out_size;
 	char *data;
 
-	in_size = 31922;
-	data = malloc(in_size);
-
 	load_onenand_to_ram();
 
 	inode = (unsigned int) mount_ext2fs();
 
-
 	inode = find_file_ext2(inode, "s3cfb.c");
 	inode = open_file_ext2(inode);
+	in_size = get_filesize_ext2(inode);
+	dprint("in size = %d\n", in_size);
+
+	data = malloc(in_size);
+
 	out_size = read_file_ext2(inode, data, in_size);
-	dprint("read size = %d\n", out_size);
+	dprint("out size = %d, data address = 0x%8x\n", out_size, data);
 
 	free(data);
 
