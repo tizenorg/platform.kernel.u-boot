@@ -41,6 +41,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C110_MACH_START			3100
 
 static unsigned int board_rev;
+static unsigned int battery_soc;
 
 #define I2C_GPIO3	0
 #define I2C_PMIC	1
@@ -780,8 +781,7 @@ static void check_battery(void)
 	}
 	dprintf("battery:\t%d%%\n", val[0]);
 
-	/* TODO */
-	/* If battery level is low then entering charge mode */
+	battery_soc = val[0];
 }
 
 static void check_mhl(void)
@@ -830,11 +830,67 @@ static void check_mhl(void)
 	i2c_read((0x72 >> 1), 0xa0, 1, val, 1);
 }
 
+static void into_charge_mode(void)
+{
+	unsigned char addr = 0xCC >> 1;	/* max8998 */;
+	unsigned char val[2];
+	unsigned int level;
+	int i, j;
+
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return;
+	}
+
+	printf("Charge Mode\n");
+
+	i2c_read(addr, 0x0C, 1, val, 1);
+	val[0] &= ~(0x7 << 0);
+	val[0] |= 5;		/* 600mA */
+	i2c_write(addr, 0x0C, 1, val, 1);
+
+#ifdef CONFIG_S5PC1XXFB
+	/* TODO: change to Image animation */
+	init_font();
+	set_font_xy(0, 0);
+	set_font_color(FONT_WHITE);
+	fb_printf("charging");
+
+	level = battery_soc / 25;
+
+	for (i = 0; i < 3; i++) {
+		if (level == 0)
+			udelay(1 * 1000 * 1000);
+
+		for (j = 0; j < 4; j++) {
+			fb_printf("..");
+
+			if (j >= level)
+				udelay(1 * 1000 * 1000);
+		}
+
+		if (level <= 4)
+			udelay(1 * 1000 * 1000);
+
+		set_font_xy(0, 0);
+		set_font_color(FONT_XOR);
+		fb_printf("charging........");
+
+		set_font_xy(0, 0);
+		set_font_color(FONT_WHITE);
+		fb_printf("charging");
+	}
+
+	exit_font();
+#endif
+
+	run_command("sleep", 0);
+}
+
 static void check_micro_usb(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
-	int ta = 0;
 
 	if (board_is_limo_real()) {
 		if (hwrevision(0) || hwrevision(1))
@@ -849,6 +905,9 @@ static void check_micro_usb(void)
 		return;
 	}
 
+	/* Clear Interrupt */
+	i2c_read(addr, 0x03, 1, val, 2);
+
 	/* Read Device Type 1 */
 	i2c_read(addr, 0x0a, 1, val, 1);
 
@@ -856,22 +915,12 @@ static void check_micro_usb(void)
 #define FSA_UART		(1 << 3)
 #define FSA_USB			(1 << 2)
 
+	/*
+	 * If USB, use default 475mA
+	 * If Charger, use 600mA and go to charge mode
+	 */
 	if (val[0] & FSA_DEDICATED_CHARGER)
-		ta = 1;
-
-	/* If USB, use default 475mA */
-	if (ta) {
-		addr = 0xCC >> 1;	/* max8998 */
-		if (i2c_probe(addr)) {
-			printf("Can't found max8998\n");
-			return;
-		}
-
-		i2c_read(addr, 0x0C, 1, val, 1);
-		val[0] &= ~(0x7 << 0);
-		val[0] |= 5;		/* 600mA */
-		i2c_write(addr, 0x0C, 1, val, 1);
-	}
+		into_charge_mode();
 
 	/* If Factory Mode is Boot ON-USB, go to download mode */
 	i2c_read(addr, 0x07, 1, val, 1);
@@ -1233,9 +1282,6 @@ int misc_init_r(void)
 	/* To usbdown automatically */
 	check_keypad();
 
-	/* check fsa9480 */
-	check_micro_usb();
-
 	/* check max8998 */
 	init_pmic();
 
@@ -1249,6 +1295,9 @@ int misc_init_r(void)
 #endif
 
 	setup_power_down_mode_registers();
+
+	/* check fsa9480 */
+	check_micro_usb();
 
 	return 0;
 }
@@ -1386,6 +1435,14 @@ void board_sleep_resume(void)
 	i2c_write(addr, 0x13, 1, saved_val[2], 1);
 	i2c_read(addr, 0x13, 1, val, 1);
 	printf("Waked up.\n");
+
+	if (board_is_limo_universal() || board_is_limo_real()) {
+		/* check max17040 */
+		check_battery();
+	}
+
+	/* check fsa9480 */
+	check_micro_usb();
 }
 
 #ifdef CONFIG_CMD_USBDOWN
