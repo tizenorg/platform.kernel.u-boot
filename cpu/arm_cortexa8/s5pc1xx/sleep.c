@@ -172,12 +172,15 @@ void s5pc110_save_regs(void)
 void s5pc110_restore_reg(struct regs_to_save * list, unsigned int * buf, int length)
 {
 	int i;
+#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
+	unsigned int tmp;
+#endif
 	for (i=0; i<length; i++) {
 		int j;
 		for (j=0; j<list[i].size; j++) {
 			writel(*buf, (unsigned int *)(list[i].start_address+j*4));
 #ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-			readl((unsigned int *)(list[i].start_address+j*4));
+			tmp = readl((unsigned int *)(list[i].start_address+j*4));
 #endif
 			buf++;
 		}
@@ -263,19 +266,21 @@ static int s5pc110_sleep(int mode)
 	value |= (1 << 2);
 	value |= (1 << 1);
 
-	value &= ~(1 << 5); /* Enable KEY I/F */
-
 	writel(value, S5PC110_WAKEUP_MASK);
 
-	value = __raw_readl(S5PC110_EINT_WAKEUP_MASK);
+	value = readl(S5PC110_EINT_WAKEUP_MASK);
 	value = 0xFFFFFFFF;
 	value &= ~(1 << 7);       /* AP_PMIC_IRQ */
 	value &= ~(1 << 22);      /* nPOWER */
+	/*      value &= ~(1 << 23);*/    /* JACK_nINT */
+	value &= ~(1 << 24);      /* KBR(0) */
+	value &= ~(1 << 25);      /* KBR(1) */
+	/*      value &= ~(1 << 28);*/    /* T-Flash */
 	writel(value, S5PC110_EINT_WAKEUP_MASK);
 #ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-	readl(S5PC110_EINT_WAKEUP_MASK);
+	value = readl(S5PC110_EINT_WAKEUP_MASK);
         for (i = 0; i < 4; i++)
-		readl(0xE0200F40+i*4);
+		value = readl(0xE0200F40+i*4);
 #endif
 
 	s5pc110_save_regs();
@@ -322,7 +327,9 @@ static int s5pc110_sleep(int mode)
 	value = readl(0xE0200000 + 0xF48);
 	writel(0xff, 0xE0200000 + 0xF4C);
 	value = readl(0xE0200000 + 0xF4C);
-	writel(0xFFFF , S5PC110_WAKEUP_STAT);
+
+	value = readl(S5PC110_WAKEUP_STAT);
+	writel(value, S5PC110_WAKEUP_STAT);
 
 
 	value = readl(S5PC110_OTHERS);
