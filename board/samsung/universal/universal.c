@@ -138,10 +138,16 @@ enum {
 	MACH_GEMINUS,
 };
 
+/* board is MACH_AQUILA and board is like below. */
 #define SCREEN_SPLIT_FEATURE	0x100
 #define J1_B2_BOARD_FEATURE	0x200
 #define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
+/* board is MACH_P1P2 and board is like below. */
+#define P1P2_UNIVERSAL_BOARD	0x100
+#define P1_REAL_BOARD		0x200
+#define P2_REAL_BOARD		0x400
+
 #define FEATURE_MASK		0xF00
 
 static int machine_is_aquila(void)
@@ -288,20 +294,30 @@ enum {
 
 static char feature_buffer[32];
 
-static char *display_features(int board_rev)
+static char *display_features(int board, int board_rev)
 {
 	int count = 0;
 	char *buf = feature_buffer;
 
-	if (board_rev & SCREEN_SPLIT_FEATURE)
-		count += sprintf(buf + count, " - ScreenSplit");
-	if (board_rev & J1_B2_BOARD_FEATURE)
-		count += sprintf(buf + count, " - J1 B2 board");
-	/* Limo Real or Universal */
-	if (board_rev & LIMO_REAL_BOARD)
-		count += sprintf(buf + count, " - Limo Real");
-	else if (board_rev & LIMO_UNIVERSAL_BOARD)
-		count += sprintf(buf + count, " - Limo Universal");
+	if (board == MACH_AQUILA) {
+		if (board_rev & SCREEN_SPLIT_FEATURE)
+			count += sprintf(buf + count, " - ScreenSplit");
+		if (board_rev & J1_B2_BOARD_FEATURE)
+			count += sprintf(buf + count, " - J1 B2 board");
+		/* Limo Real or Universal */
+		if (board_rev & LIMO_REAL_BOARD)
+			count += sprintf(buf + count, " - Limo Real");
+		else if (board_rev & LIMO_UNIVERSAL_BOARD)
+			count += sprintf(buf + count, " - Limo Universal");
+	} else if (board == MACH_P1P2) {
+		/* P1P2 */
+		if (board_rev & P1P2_UNIVERSAL_BOARD)
+			count += sprintf(buf + count, " - Universal");
+		else if	(board_rev & P1_REAL_BOARD)
+			count += sprintf(buf + count, " - P1 Real");
+		else if (board_rev & P2_REAL_BOARD)
+			count += sprintf(buf + count, " - P2 Real");
+	}
 
 	return buf;
 }
@@ -318,8 +334,9 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD);
 		}
 		break;
-	case MACH_TICKERTAPE:
 	case MACH_P1P2:
+		break;
+	case MACH_TICKERTAPE:
 	case MACH_GEMINUS:
 		board_rev &= ~FEATURE_MASK;
 		break;
@@ -383,7 +400,7 @@ static void check_hw_revision(void)
 		 *
 		 * 	 OFF	Universal LRA  LUA  OA   TT   SS	P1P2
 		 *   J1: 0x0264	0x10      0x00 0x00 0x00 0x00 0x00	0x00
-		 *   H1: 0x0C24	          0x28 0xA8 0x1C		0x18
+		 *   H1: 0x0C24	    W      0x28 0xA8 0x1C		0x18
 		 *   H3: 0x0C64	          0x03 0x07 0x0F		0xff
 		 *   D1: 0x00C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
 		 *    I: 0x0224	                    0x02 0x00 0x08
@@ -419,13 +436,16 @@ static void check_hw_revision(void)
 			board = MACH_TICKERTAPE;
 
 		/* C110 P1P2 */
-		if (gpio_get_value(&gpio->gpio_j0, 2) == 1 &&
-			gpio_get_value(&gpio->gpio_j0, 3) == 0 &&
-			gpio_get_value(&gpio->gpio_j0, 4) == 0 &&
-			gpio_get_value(&gpio->gpio_j0, 1) == 0 &&
-			gpio_get_value(&gpio->gpio_j0, 6) == 0 &&
-			gpio_get_value(&gpio->gpio_j0, 7) == 1)
+		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
 			board = MACH_P1P2;
+			board_rev = P1P2_UNIVERSAL_BOARD;
+		} else if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
+			board = MACH_P1P2;
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
+				board_rev = P1_REAL_BOARD;
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)
+				board_rev = P2_REAL_BOARD;
+		}
 
 		/* C110 Geminus */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
@@ -483,7 +503,7 @@ void show_hw_revision(void)
 
 	check_board_revision(board, board_rev);
 	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
-		display_features(board_rev));
+		display_features(board, board_rev));
 }
 
 static void check_auto_burn(void)
