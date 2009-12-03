@@ -14,7 +14,7 @@
 #ifndef _S5PCFB_H_
 #define _S5PCFB_H_
 
-#define ON 	1
+#define ON	1
 #define OFF	0
 
 #define DEBUG
@@ -256,6 +256,10 @@ void s5pc_c110_gpio_setup(void);
 extern void s6e63m0_lcd_panel_init(void);
 extern void s6e63m0_lcd_panel_power_on(void);
 extern void s6e63m0_lcd_panel_enable(void);
+
+extern void ams701ka_lcd_panel_init(void);
+extern void ams701ka_lcd_panel_power_on(void);
+extern void ams701ka_lcd_panel_enable(void);
 
 #endif
 

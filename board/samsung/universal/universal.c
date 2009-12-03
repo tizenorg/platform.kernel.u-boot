@@ -102,6 +102,7 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 };
 
 static void enable_touchkey(void);
+static void enable_battery(void);
 
 void i2c_init_board(void)
 {
@@ -119,6 +120,10 @@ void i2c_init_board(void)
 
 	/* XXX Power on Touckey early (it requires 100 msec power up time) */
 	enable_touchkey();
+
+	/* Reset on max17040 early */
+	if (battery_soc == 0)
+		enable_battery();
 }
 
 u32 get_board_rev(void)
@@ -755,10 +760,13 @@ static void check_keypad(void)
 	}
 }
 
-static void check_battery(void)
+static void enable_battery(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	if (!board_is_limo_universal() && !board_is_limo_real())
+		return;
 
 	i2c_gpio_set_bus(I2C_GPIO3);
 
@@ -767,19 +775,28 @@ static void check_battery(void)
 		return;
 	}
 
-	/* quick-start */
-	val[0] = 0x40;
-	val[1] = 0x00;
-	if (i2c_write(addr, 0x06, 1, val, 2)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
-	i2c_read(addr, 0x06, 1, val, 2);
+	val[0] = 0x00;
+	val[1] = 0x54;
+	i2c_write(addr, 0xfe, 1, val, 2);
+}
 
-	if (i2c_read(addr, 0x04, 1, val, 1)) {
-		printf("i2c_read error: %x\n", addr);
+static void check_battery(void)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	if (!board_is_limo_universal() && !board_is_limo_real())
+		return;
+
+	i2c_gpio_set_bus(I2C_GPIO3);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found max17040 fuel gauge\n");
 		return;
 	}
+
+	i2c_read(addr, 0x04, 1, val, 1);
+
 	dprintf("battery:\t%d%%\n", val[0]);
 
 	battery_soc = val[0];
@@ -1286,10 +1303,8 @@ int misc_init_r(void)
 	/* check max8998 */
 	init_pmic();
 
-	if (board_is_limo_universal() || board_is_limo_real()) {
-		/* check max17040 */
-		check_battery();
-	}
+	/* check max17040 */
+	check_battery();
 
 #ifdef CONFIG_S5PC1XXFB
 	display_device_info();
@@ -1436,10 +1451,8 @@ void board_sleep_resume(void)
 	i2c_read(addr, 0x13, 1, val, 1);
 	printf("Waked up.\n");
 
-	if (board_is_limo_universal() || board_is_limo_real()) {
-		/* check max17040 */
-		check_battery();
-	}
+	/* check max17040 */
+	check_battery();
 
 	/* check fsa9480 */
 	check_micro_usb();

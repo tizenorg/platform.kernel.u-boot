@@ -190,16 +190,13 @@ typedef struct vidinfo {
 	ushort	vl_height;	/* Height of display area in millimeters */
 
 	/* LCD configuration register */
+	u_char	vl_freq;	/* Frequency */
 	u_char	vl_clkp;	/* Clock polarity */
 	u_char	vl_oep;		/* Output Enable polarity */
 	u_char	vl_hsp;		/* Horizontal Sync polarity */
 	u_char	vl_vsp;		/* Vertical Sync polarity */
 	u_char	vl_dp;		/* Data polarity */
 	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
-	u_char	vl_lbw;		/* LCD Bus width, 0 = 4, 1 = 8 */
-	u_char	vl_splt;	/* Split display, 0 = single-scan, 1 = dual-scan */
-	u_char	vl_clor;	/* Color, 0 = mono, 1 = color */
-	u_char	vl_tft;		/* 0 = passive, 1 = TFT */
 
 	/* Horizontal control register. Timing from data sheet */
 	ushort	vl_hpw;		/* Horz sync pulse width */
@@ -211,8 +208,6 @@ typedef struct vidinfo {
 	u_char	vl_bfw;		/* Wait before of frame */
 	u_char	vl_efw;		/* Wait end of frame */
 } vidinfo_t;
-
-extern vidinfo_t panel_info;
 
 #else
 
