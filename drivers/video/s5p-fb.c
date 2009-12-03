@@ -92,12 +92,7 @@ static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos,
 }
 
 /* LCD Panel data */
-vidinfo_t panel_info = {
-		.vl_lbw		= 0,
-		.vl_splt	= 0,
-		.vl_clor	= 1,
-		.vl_tft		= 1,
-};
+vidinfo_t panel_info;
 
 struct lcd_panel_operation {
 	void (*lcd_panel_init)(void);
@@ -236,6 +231,7 @@ static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *cal
 		return;
 	}
 #if 1
+	vid->vl_freq	= 60;
 	vid->vl_col	= 480,
 	vid->vl_row	= 800,
 	vid->vl_width	= 480,
@@ -260,6 +256,7 @@ static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *cal
 	calls->lcd_panel_enable = s6e63m0_lcd_panel_enable;
 #endif
 #if 0
+	vid->vl_freq	= 60;
 	vid->vl_col	= 480,
 	vid->vl_row	= 800,
 	vid->vl_width	= 480,
@@ -284,6 +281,7 @@ static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *cal
 	calls->lcd_panel_enable = /* */;
 #endif
 #if 0
+	vid->vl_freq	= 60;
 	vid->vl_col	= 1024,
 	vid->vl_row	= 600,
 	vid->vl_width	= 1024,
