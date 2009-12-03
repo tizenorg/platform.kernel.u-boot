@@ -910,6 +910,9 @@ static void check_micro_usb(void)
 	unsigned char addr;
 	unsigned char val[2];
 
+	if (cpu_is_s5pc100())
+		return;
+
 	if (board_is_limo_real()) {
 		if (hwrevision(0) || hwrevision(1))
 			return;
@@ -966,6 +969,9 @@ static void init_pmic(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
+
+	if (cpu_is_s5pc100())
+		return;
 
 	i2c_gpio_set_bus(I2C_PMIC);
 
