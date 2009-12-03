@@ -174,6 +174,7 @@ lowlevel_init:
 	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
 	 * HF[2]	: High Frequency Enable (Over 66MHz)
 	 */
+	cmp	r7, r8
 	ldrne	r1, =0xE00C
 
 	ldrne	r0, =0xB001E442
