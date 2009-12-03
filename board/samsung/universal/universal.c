@@ -142,7 +142,7 @@ enum {
 #define SCREEN_SPLIT_FEATURE	0x100
 
 /* board is MACH_AQUILA and board is like below. */
-#define J1_B2_BOARD	0x200
+#define J1_B2_BOARD		0x200
 #define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
 /* board is MACH_P1P2 and board is like below. */
@@ -236,8 +236,8 @@ static int board_is_j1b2(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
-#define LENGTH_device_info	512
-static char device_info[LENGTH_device_info];
+#define DEV_INFO_LEN		512
+static char device_info[DEV_INFO_LEN];
 static int display_info = 0;
 
 static void dprintf(const char *fmt, ...)
@@ -252,7 +252,7 @@ static void dprintf(const char *fmt, ...)
 
 	buf[127] = 0;
 
-	if ((strlen(device_info) + strlen(buf)) > (LENGTH_device_info - 1)) {
+	if ((strlen(device_info) + strlen(buf)) > (DEV_INFO_LEN - 1)) {
 		puts("Flushing device info...\n");
 		puts(device_info);
 		device_info[0] = 0;
@@ -273,7 +273,7 @@ static void display_device_info(void)
 	fb_printf(device_info);
 	exit_font();
 
-	memset(device_info, 0x0, 512);
+	memset(device_info, 0x0, DEV_INFO_LEN);
 
 	udelay(5 * 1000 * 1000);
 }
@@ -679,7 +679,7 @@ static void check_keypad(void)
 			row_mask = 0xFFFF;
 			col_mask = 0xFFFF;
 		}
-	
+
 		for (i = 0; i < 4; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
@@ -691,10 +691,10 @@ static void check_keypad(void)
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
 				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
-				if (machine_is_p1p2()) 
-					gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
+			if (machine_is_p1p2())
+				gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
 		}
-	
+
 		reg = S5PC110_KEYPAD_BASE;
 	}
 	/* init col */
@@ -742,6 +742,7 @@ static void check_keypad(void)
 #define MCS5000_TK_HW_VERSION  0x06
 #define MCS5000_TK_FW_VERSION  0x0A
 #define MCS5000_TK_MI_VERSION  0x0B
+
 		reg = MCS5000_TK_MI_VERSION;
 		i2c_read(addr, reg, 1, val, 1);
 		dprintf("3-touchkey M/I 0x%x, ", val[0]);
@@ -1226,8 +1227,8 @@ static void setup_power_down_mode_registers(void)
 	writel(0x0000, &bank->pdn_pull);
 
 	/* M299 */
-	writel(0xff0022b0, (unsigned int*) 0xF0000000);
-	writel(0xff0022b0, (unsigned int*) 0xF1400000);
+	writel(0xff0022b0, (unsigned int *)0xF0000000);
+	writel(0xff0022b0, (unsigned int *)0xF1400000);
 
 
 	bank = &gpio->gpio_h0;
@@ -1362,7 +1363,6 @@ void board_sleep_init(void)
 	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
-	unsigned char dummy = 0;
 
 	/* Set wakeup mask register */
 	value = 0xFFFF;
