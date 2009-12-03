@@ -83,8 +83,8 @@ static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos,
 	unsigned int offset_s;
 	int i, j;
 
-	for(i = y1pos; i < y2pos; i++) {
-		for(j = x1pos; j < x2pos; j++) {
+	for (i = y1pos; i < y2pos; i++) {
+		for (j = x1pos; j < x2pos; j++) {
 			offset_s = i * panel_width + j;
 			*(pDst+offset_s) = pixel;
 		}
@@ -99,12 +99,20 @@ vidinfo_t panel_info = {
 		.vl_tft		= 1,
 };
 
+struct lcd_panel_operation {
+	void (*lcd_panel_init)(void);
+	void (*lcd_panel_power_on)(void);
+	void (*lcd_panel_enable)(void);
+};
+
+static struct lcd_panel_operation lcd_calls;
+
 static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 {
 	unsigned long palette_size, palette_mem_size;
 	unsigned int fb_size;
 
-	fb_size = vid->vl_row * vid->vl_col * (vid->vl_bpix / 8);
+	fb_size = vid->vl_row * vid->vl_col * (vid->vl_bpix >> 3);
 
 	lcd_base = lcdbase;
 
@@ -210,14 +218,23 @@ static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 
-	x = (panel_width - 298) / 2;
-	y = (panel_height - 78) / 2 - 5;
+	x = ((panel_width - 298) >> 1);
+	y = ((panel_height - 78) >> 1) - 5;
 
 	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned short *) logo);
 }
 
-static void s5pc_init_panel_info(vidinfo_t *vid)
+static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *calls)
 {
+	if (vid == NULL) {
+		printf("lcd info is NULL.\n");
+		return;
+	}
+
+	if (calls == NULL) {
+		printf("lcd calls is NULL.\n");
+		return;
+	}
 #if 1
 	vid->vl_col	= 480,
 	vid->vl_row	= 800,
@@ -237,6 +254,10 @@ static void s5pc_init_panel_info(vidinfo_t *vid)
 	vid->vl_vpw	= 2,	/* VLW */
 	vid->vl_bfw	= 3,	/* VBP */
 	vid->vl_efw	= 28,	/* VFP */
+
+	calls->lcd_panel_init = s6e63m0_lcd_panel_init;
+	calls->lcd_panel_power_on = s6e63m0_lcd_panel_power_on;
+	calls->lcd_panel_enable = s6e63m0_lcd_panel_enable;
 #endif
 #if 0
 	vid->vl_col	= 480,
@@ -257,6 +278,10 @@ static void s5pc_init_panel_info(vidinfo_t *vid)
 	vid->vl_vpw	= 4,
 	vid->vl_bfw	= 8,
 	vid->vl_efw	= 8,
+
+	calls->lcd_panel_init = /* */;
+	calls->lcd_panel_power_on = /* */;
+	calls->lcd_panel_enable = /* */;
 #endif
 #if 0
 	vid->vl_col	= 1024,
@@ -277,18 +302,29 @@ static void s5pc_init_panel_info(vidinfo_t *vid)
 	vid->vl_vpw	= 2,
 	vid->vl_bfw	= 6,
 	vid->vl_efw	= 8,
+
+	calls->lcd_panel_init = /* */;
+	calls->lcd_panel_power_on = /* */;
+	calls->lcd_panel_enable = /* */;
 #endif
 
 	panel_width = vid->vl_col;
 	panel_height = vid->vl_row;
 }
 
-static void lcd_panel_on(void)
+static void lcd_panel_on(struct lcd_panel_operation *calls)
 {
-	lcd_panel_init();
-	lcd_panel_power_on();
+	if (calls == NULL) {
+		printf("lcd calls is NULL.\n");
+		return ;
+	}
 
-	lcd_panel_enable();
+	if (calls->lcd_panel_init)
+		calls->lcd_panel_init();
+	if (calls->lcd_panel_power_on)
+		calls->lcd_panel_power_on();
+	if (calls->lcd_panel_enable)
+		calls->lcd_panel_enable();
 }
 
 void lcd_ctrl_init(void *lcdbase)
@@ -298,7 +334,7 @@ void lcd_ctrl_init(void *lcdbase)
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
 	/* initialize parameters which is specific to panel. */
-	s5pc_init_panel_info(&panel_info);
+	s5pc_init_panel_info(&panel_info, &lcd_calls);
 
 	option = getenv("lcd");
 
@@ -338,7 +374,7 @@ void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)
 
 void lcd_enable(void)
 {
-	lcd_panel_on();
+	lcd_panel_on((struct lcd_panel_operation *) &lcd_calls);
 }
 
 ulong calc_fbsize(void)
