@@ -303,9 +303,9 @@ static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *cal
 	vid->vl_bfw	= 6,
 	vid->vl_efw	= 8,
 
-	calls->lcd_panel_init = /* */;
-	calls->lcd_panel_power_on = /* */;
-	calls->lcd_panel_enable = /* */;
+	calls->lcd_panel_init = ams701ka_lcd_panel_init;
+	calls->lcd_panel_power_on = ams701ka_lcd_panel_power_on;
+	calls->lcd_panel_enable = ams701ka_lcd_panel_enable;
 #endif
 
 	panel_width = vid->vl_col;

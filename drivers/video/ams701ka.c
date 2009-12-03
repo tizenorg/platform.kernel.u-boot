@@ -101,7 +101,7 @@ const unsigned short SEQ_STANDBY_OFF[] = {
 const unsigned short GAMMA_SETTING[] = {
 	0x3f, 0x0000,	/* gamma setting : ams701ka */
 
-#if 0 /* 0.0 */
+#if 0 	/* 0.0 */
 	/* Low Red Gamma */
 	0x4c, 0xc209,
 	0x4d, 0xdac8,
@@ -120,7 +120,7 @@ const unsigned short GAMMA_SETTING[] = {
 	0x56, 0xbcc4,
 	0x57, 0x00b7,
 #endif
-#if  1/* 1.0 */
+#if 1	/* 1.0 */
 	/* High Red Gamma */
 	0x40, 0x0720,
 	0x41, 0xCBA7,
@@ -314,7 +314,7 @@ static void ams701ka_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-void lcd_panel_power_on(void)
+void ams701ka_lcd_panel_power_on(void)
 {
 	/* set gpio data for MLCD_RST to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
@@ -346,7 +346,7 @@ static inline void ams701ka_c110_panel_hw_reset(void)
 	udelay(10000);
 }
 
-void lcd_panel_enable(void)
+void ams701ka_lcd_panel_enable(void)
 {
 	ams701ka_panel_send_sequence(SEQ_DISPLAY_ON);
 }
@@ -357,7 +357,7 @@ static void ams701ka_panel_disable(void)
 }
 
 
-void lcd_panel_init(void)
+void ams701ka_lcd_panel_init(void)
 {
 	/* set gpio pin for DISPLAY_CS to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_1, 1, 1);
