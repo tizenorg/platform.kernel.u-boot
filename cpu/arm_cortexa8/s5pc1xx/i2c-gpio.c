@@ -25,13 +25,13 @@
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 #include <i2c-gpio.h>
+#include <i2c.h>
 
-static unsigned int bus_index;
 static struct i2c_gpio_bus *i2c_gpio;
 
 void i2c_gpio_set_bus(int index)
 {
-	bus_index = index;
+	i2c_set_bus_num(index);
 }
 
 void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
@@ -61,6 +61,9 @@ void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 void i2c_gpio_set(int line, int value)
 {
 	struct s5pc1xx_gpio_bank *bank;
+	unsigned int bus_index;
+
+	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 
@@ -75,6 +78,9 @@ void i2c_gpio_set(int line, int value)
 int i2c_gpio_get(void)
 {
 	struct s5pc1xx_gpio_bank *bank;
+	unsigned int bus_index;
+
+	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 
@@ -84,6 +90,9 @@ int i2c_gpio_get(void)
 void i2c_gpio_dir(int dir)
 {
 	struct s5pc1xx_gpio_bank *bank;
+	unsigned int bus_index;
+
+	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 
