@@ -255,6 +255,18 @@ static int board_is_j1b2(void)
 	return board == MACH_AQUILA && (board_rev & J1_B2_BOARD);
 }
 
+static int board_is_p2_real(void)
+{
+	int board;
+
+	if (cpu_is_s5pc100())
+		return 0;
+
+	board = gd->bd->bi_arch_number - C110_MACH_START;
+
+	return board == MACH_P1P2 && (board_rev & P2_REAL_BOARD);
+}
+
 #ifdef CONFIG_MISC_INIT_R
 #define DEV_INFO_LEN		512
 static char device_info[DEV_INFO_LEN];
@@ -663,6 +675,10 @@ static void enable_touchkey(void)
 
 	/* TOUCH_CE - GPIO_J2(6) */
 	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
+}
+
+static void check_p2_keypad(void)
+{
 }
 
 static void check_keypad(void)
@@ -1319,7 +1335,10 @@ int misc_init_r(void)
 	setup_p1p2_gpios();
 
 	/* To usbdown automatically */
-	check_keypad();
+	if (board_is_p2_real())
+		check_p2_keypad();
+	else
+		check_keypad();
 
 	/* check max8998 */
 	init_pmic();
