@@ -125,11 +125,11 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
-#define CONFIG_NETMASK	255.255.255.0
-#define CONFIG_IPADDR	192.168.129.3
-#define CONFIG_SERVERIP	192.168.129.1
-#define CONFIG_GATEWAY	192.168.129.1
-#define CONFIG_ETHADDR	00:0E:99:34:10:00
+#define CONFIG_NETMASK		255.255.255.0
+#define CONFIG_IPADDR		192.168.129.3
+#define CONFIG_SERVERIP		192.168.129.1
+#define CONFIG_GATEWAYIP	192.168.129.1
+#define CONFIG_ETHADDR		00:0E:99:34:10:00
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
@@ -188,7 +188,7 @@
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
+	"nfsboot=set bootargs root=/dev/nfs rw ubi.mtd=${ubiblock}" \
 	 " nfsroot=${nfsroot},nolock,tcp ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
