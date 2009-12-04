@@ -1356,13 +1356,17 @@ int dram_init(void)
 }
 
 /* Used for sleep test */
-static unsigned char saved_val[3][2];
+static unsigned char saved_val[4][2];
+static unsigned int gpio_CP;
+static unsigned int gpio_T_FLASH;
 void board_sleep_init(void)
 {
 	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
 	unsigned char dummy = 0;
+	struct s5pc110_gpio *gpio =
+		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	/* Set wakeup mask register */
 	value = 0xFFFF;
@@ -1379,62 +1383,94 @@ void board_sleep_init(void)
 	i2c_gpio_set_bus(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+		printf("Can't find max8998\n");
 		return;
 	}
 
+	/* CP off */
+	gpio_CP = gpio_get_value(&gpio->gpio_h3, 7);
+	gpio_set_value(&gpio->gpio_h3, 7, 0);
+	value = gpio_get_value(&gpio->gpio_h3, 7);
+	/* MMC T_FLASH off */
+	gpio_T_FLASH = gpio_get_value(&gpio->gpio_mp0_5, 4);
+	gpio_set_value(&gpio->gpio_mp0_5, 4, 0);
+	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
+	/* MHL off */
+#define HDMI_EN1	&gpio->gpio_j2, 2
+#define MHL_RST		&gpio->gpio_mp0_4, 7
+	gpio_set_value(HDMI_EN1, 0);
+	gpio_set_value(MHL_RST, 0);
+	gpio_set_value(&gpio->gpio_j2, 3, 0); /* MHL_ON for REV02 or higher */
+
 	/* Set ONOFF1 */
-	i2c_read(addr, 0x11, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 	saved_val[0][0] = val[0];
 	saved_val[0][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
 			(1 << 1) | (1 << 0));
-	i2c_write(addr, 0x11, 1, val, 1);
-	i2c_read(addr, 0x11, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 	/* Set ONOFF2 */
-	i2c_read(addr, 0x12, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	saved_val[1][0] = val[0];
 	saved_val[1][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
 			(1 << 2) | (1 << 1) | (1 << 0));
-	i2c_write(addr, 0x12, 1, val, 1);
-	i2c_read(addr, 0x12, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* Set ONOFF3 */
-	i2c_read(addr, 0x13, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	saved_val[2][0] = val[0];
 	saved_val[2][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
 	val[0] = 0x0;
-	i2c_write(addr, 0x13, 1, val, 1);
-	i2c_read(addr, 0x13, 1, val, 1);
-	printf("Preparing to sleep.\n");
-	/* Strangely, unless printf is used,
-	 * it does not work. (i2c_read seems to be ignored)
-	 * Probably, the compiler's optimization mechanism is
-	 * doing this. */
+	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	/* Set ONOFF4 */
+	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+	saved_val[3][0] = val[0];
+	saved_val[3][1] = val[1];
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
+	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+	printf("Turned off regulators. Preparing to sleep. [%s:%d]\n",
+			__FILE__, __LINE__);
 }
 void board_sleep_resume(void)
 {
+	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
+	struct s5pc110_gpio *gpio =
+		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	i2c_gpio_set_bus(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+		printf("Can't find max8998\n");
 		return;
 	}
 
 	/* Set ONOFF1 */
-	i2c_write(addr, 0x11, 1, saved_val[0], 1);
-	i2c_read(addr, 0x11, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF1, 1, saved_val[0], 1);
+	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 	/* Set ONOFF2 */
-	i2c_write(addr, 0x12, 1, saved_val[1], 1);
-	i2c_read(addr, 0x12, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF2, 1, saved_val[1], 1);
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* Set ONOFF3 */
-	i2c_write(addr, 0x13, 1, saved_val[2], 1);
-	i2c_read(addr, 0x13, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF3, 1, saved_val[2], 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	/* Set ONOFF4 */
+	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, saved_val[3], 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	printf("Waked up.\n");
+
+	/* CP */
+	gpio_set_value(&gpio->gpio_h3, 7, gpio_CP);
+	value = gpio_get_value(&gpio->gpio_h3, 7);
+	/* MMC T_FLASH */
+	gpio_set_value(&gpio->gpio_mp0_5, 4, gpio_T_FLASH);
+	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
 
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check max17040 */
