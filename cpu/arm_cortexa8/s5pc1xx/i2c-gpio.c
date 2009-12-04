@@ -29,11 +29,6 @@
 
 static struct i2c_gpio_bus *i2c_gpio;
 
-void i2c_gpio_set_bus(int index)
-{
-	i2c_set_bus_num(index);
-}
-
 void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 {
 	int i;
@@ -55,7 +50,7 @@ void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 	}
 
 	/* set default bus */
-	i2c_gpio_set_bus(index);
+	i2c_set_bus_num(index);
 }
 
 void i2c_gpio_set(int line, int value)

@@ -768,7 +768,7 @@ static void check_keypad(void)
 
 	if (machine_is_aquila()) {
 		/* 3 touchkey */
-		i2c_gpio_set_bus(I2C_GPIO6);
+		i2c_set_bus_num(I2C_GPIO6);
 
 		if (i2c_probe(addr)) {
 			printf("Can't found 3 touchkey\n");
@@ -799,7 +799,7 @@ static void enable_battery(void)
 	if (!board_is_limo_universal() && !board_is_limo_real())
 		return;
 
-	i2c_gpio_set_bus(I2C_GPIO3);
+	i2c_set_bus_num(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -819,7 +819,7 @@ static void check_battery(void)
 	if (!board_is_limo_universal() && !board_is_limo_real())
 		return;
 
-	i2c_gpio_set_bus(I2C_GPIO3);
+	i2c_set_bus_num(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -852,7 +852,7 @@ static void check_mhl(void)
 	/* output enable */
 	gpio_set_value(&gpio->gpio_mp0_4, 7, 1);
 
-	i2c_gpio_set_bus(I2C_GPIO5);
+	i2c_set_bus_num(I2C_GPIO5);
 
 	/* set usb path */
 	if (i2c_probe(addr)) {
@@ -949,7 +949,7 @@ static void check_micro_usb(void)
 			return;
 	}
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
@@ -1004,7 +1004,7 @@ static void init_pmic(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 
 	addr = 0xCC >> 1;	/* max8998 */
 	if (i2c_probe(addr)) {
@@ -1435,7 +1435,7 @@ void board_sleep_init(void)
 	value &= ~(1 << 18);    /* T-Flash */
 	writel(value, S5PC110_EINT_WAKEUP_MASK);
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
 		printf("Can't find max8998\n");
@@ -1499,7 +1499,7 @@ void board_sleep_resume(void)
 	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
 		printf("Can't find max8998\n");
@@ -1629,7 +1629,7 @@ static int pmic_status(void)
 	unsigned char addr, val[2];
 	int reg, i;
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
 		printf("Can't found max8998\n");
@@ -1680,7 +1680,7 @@ static int pmic_ldo_control(int buck, int ldo, int on)
 	} else
 		return -1;
 
-	i2c_gpio_set_bus(I2C_PMIC);
+	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
 		printf("Can't found max8998\n");
