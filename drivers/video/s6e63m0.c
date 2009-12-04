@@ -350,13 +350,10 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 			S5PCFB_C110_CLK_LOW;
 
 			/* data high or low */
-			if ((data >> (j - 8)) & 0x0001) {
+			if ((data >> (j - 8)) & 0x0001)
 				S5PCFB_C110_SDA_HIGH;
-				printf("1");
-			} else {
+			else
 				S5PCFB_C110_SDA_LOW;
-				printf("0");
-			}
 
 			udelay(DELAY);
 			S5PCFB_C110_CLK_HIGH;
@@ -368,13 +365,10 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 
 			S5PCFB_C110_CLK_LOW;
 
-			if (S5PCFB_C110_SDA_READ & 0x1) {
+			if (S5PCFB_C110_SDA_READ & 0x1)
 				command |= 1 << j;
-				printf("1");
-			} else {
+			else
 				command |= 0 << j;
-				printf("0");
-			}
 
 			udelay(DELAY);
 			S5PCFB_C110_CLK_HIGH;
@@ -415,6 +409,8 @@ static void s6e63m0_panel_send_sequence(const unsigned short *wbuf)
 
 void s6e63m0_lcd_panel_power_on(void)
 {
+	char data = 0;
+
 	udelay(25000);
 
 	/* set gpio data for MLCD_ON to HIGH */
@@ -424,6 +420,11 @@ void s6e63m0_lcd_panel_power_on(void)
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 
 	udelay(120000);
+
+	/*
+	data = s6e63m0_c110_spi_read_byte(0x0, 0xdd);
+	printf("data = %d, %x\n", data, &data);
+	*/
 
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
