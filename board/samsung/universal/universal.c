@@ -102,6 +102,7 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 };
 
 static void enable_touchkey(void);
+static void enable_battery(void);
 
 void i2c_init_board(void)
 {
@@ -119,6 +120,10 @@ void i2c_init_board(void)
 
 	/* XXX Power on Touckey early (it requires 100 msec power up time) */
 	enable_touchkey();
+
+	/* Reset on max17040 early */
+	if (battery_soc == 0)
+		enable_battery();
 }
 
 u32 get_board_rev(void)
@@ -142,7 +147,7 @@ enum {
 #define SCREEN_SPLIT_FEATURE	0x100
 
 /* board is MACH_AQUILA and board is like below. */
-#define J1_B2_BOARD	0x200
+#define J1_B2_BOARD		0x200
 #define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
 /* board is MACH_P1P2 and board is like below. */
@@ -236,8 +241,8 @@ static int board_is_j1b2(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
-#define LENGTH_device_info	512
-static char device_info[LENGTH_device_info];
+#define DEV_INFO_LEN		512
+static char device_info[DEV_INFO_LEN];
 static int display_info = 0;
 
 static void dprintf(const char *fmt, ...)
@@ -252,7 +257,7 @@ static void dprintf(const char *fmt, ...)
 
 	buf[127] = 0;
 
-	if ((strlen(device_info) + strlen(buf)) > (LENGTH_device_info - 1)) {
+	if ((strlen(device_info) + strlen(buf)) > (DEV_INFO_LEN - 1)) {
 		puts("Flushing device info...\n");
 		puts(device_info);
 		device_info[0] = 0;
@@ -273,7 +278,7 @@ static void display_device_info(void)
 	fb_printf(device_info);
 	exit_font();
 
-	memset(device_info, 0x0, 512);
+	memset(device_info, 0x0, DEV_INFO_LEN);
 
 	udelay(5 * 1000 * 1000);
 }
@@ -679,7 +684,7 @@ static void check_keypad(void)
 			row_mask = 0xFFFF;
 			col_mask = 0xFFFF;
 		}
-	
+
 		for (i = 0; i < 4; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
@@ -691,10 +696,10 @@ static void check_keypad(void)
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
 				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
-				if (machine_is_p1p2()) 
-					gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
+			if (machine_is_p1p2())
+				gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
 		}
-	
+
 		reg = S5PC110_KEYPAD_BASE;
 	}
 	/* init col */
@@ -742,6 +747,7 @@ static void check_keypad(void)
 #define MCS5000_TK_HW_VERSION  0x06
 #define MCS5000_TK_FW_VERSION  0x0A
 #define MCS5000_TK_MI_VERSION  0x0B
+
 		reg = MCS5000_TK_MI_VERSION;
 		i2c_read(addr, reg, 1, val, 1);
 		dprintf("3-touchkey M/I 0x%x, ", val[0]);
@@ -754,10 +760,13 @@ static void check_keypad(void)
 	}
 }
 
-static void check_battery(void)
+static void enable_battery(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	if (!board_is_limo_universal() && !board_is_limo_real())
+		return;
 
 	i2c_gpio_set_bus(I2C_GPIO3);
 
@@ -766,19 +775,28 @@ static void check_battery(void)
 		return;
 	}
 
-	/* quick-start */
-	val[0] = 0x40;
-	val[1] = 0x00;
-	if (i2c_write(addr, 0x06, 1, val, 2)) {
-		printf("i2c_write error: %x\n", addr);
-		return;
-	}
-	i2c_read(addr, 0x06, 1, val, 2);
+	val[0] = 0x00;
+	val[1] = 0x54;
+	i2c_write(addr, 0xfe, 1, val, 2);
+}
 
-	if (i2c_read(addr, 0x04, 1, val, 1)) {
-		printf("i2c_read error: %x\n", addr);
+static void check_battery(void)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	if (!board_is_limo_universal() && !board_is_limo_real())
+		return;
+
+	i2c_gpio_set_bus(I2C_GPIO3);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found max17040 fuel gauge\n");
 		return;
 	}
+
+	i2c_read(addr, 0x04, 1, val, 1);
+
 	dprintf("battery:\t%d%%\n", val[0]);
 
 	battery_soc = val[0];
@@ -892,6 +910,9 @@ static void check_micro_usb(void)
 	unsigned char addr;
 	unsigned char val[2];
 
+	if (cpu_is_s5pc100())
+		return;
+
 	if (board_is_limo_real()) {
 		if (hwrevision(0) || hwrevision(1))
 			return;
@@ -948,6 +969,9 @@ static void init_pmic(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
+
+	if (cpu_is_s5pc100())
+		return;
 
 	i2c_gpio_set_bus(I2C_PMIC);
 
@@ -1226,8 +1250,8 @@ static void setup_power_down_mode_registers(void)
 	writel(0x0000, &bank->pdn_pull);
 
 	/* M299 */
-	writel(0xff0022b0, (unsigned int*) 0xF0000000);
-	writel(0xff0022b0, (unsigned int*) 0xF1400000);
+	writel(0xff0022b0, (unsigned int *)0xF0000000);
+	writel(0xff0022b0, (unsigned int *)0xF1400000);
 
 
 	bank = &gpio->gpio_h0;
@@ -1285,10 +1309,8 @@ int misc_init_r(void)
 	/* check max8998 */
 	init_pmic();
 
-	if (board_is_limo_universal() || board_is_limo_real()) {
-		/* check max17040 */
-		check_battery();
-	}
+	/* check max17040 */
+	check_battery();
 
 #ifdef CONFIG_S5PC1XXFB
 	display_device_info();
@@ -1364,9 +1386,12 @@ void board_sleep_init(void)
 	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
+<<<<<<< HEAD:board/samsung/universal/universal.c
 	unsigned char dummy = 0;
 	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+=======
+>>>>>>> a865b1b389f7ab75a669e614fc95c1dfbb5b2015:board/samsung/universal/universal.c
 
 	/* Set wakeup mask register */
 	value = 0xFFFF;
@@ -1465,6 +1490,7 @@ void board_sleep_resume(void)
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	printf("Waked up.\n");
 
+<<<<<<< HEAD:board/samsung/universal/universal.c
 	/* CP */
 	gpio_set_value(&gpio->gpio_h3, 7, gpio_CP);
 	value = gpio_get_value(&gpio->gpio_h3, 7);
@@ -1476,6 +1502,10 @@ void board_sleep_resume(void)
 		/* check max17040 */
 		check_battery();
 	}
+=======
+	/* check max17040 */
+	check_battery();
+>>>>>>> a865b1b389f7ab75a669e614fc95c1dfbb5b2015:board/samsung/universal/universal.c
 
 	/* check fsa9480 */
 	check_micro_usb();

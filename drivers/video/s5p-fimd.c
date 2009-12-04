@@ -45,8 +45,6 @@
 
 #define MPLL 1
 
-#define S5P_VFRAME_FREQ		60
-
 static unsigned int ctrl_base;
 static unsigned long *lcd_base_addr;
 static vidinfo_t *pvid = NULL;
@@ -186,7 +184,7 @@ static void s5pc_fimd_set_clock(void)
 
 	max_clock = 66 * 1000000;
 
-	pixel_clock = S5P_VFRAME_FREQ * (pvid->vl_hpw + pvid->vl_blw +
+	pixel_clock = pvid->vl_freq * (pvid->vl_hpw + pvid->vl_blw +
 		pvid->vl_elw + pvid->vl_width) * (pvid->vl_vpw +
 		    pvid->vl_bfw + pvid->vl_efw + pvid->vl_height);
 

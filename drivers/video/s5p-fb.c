@@ -35,15 +35,6 @@
 #include "opening_logo_rgb24_143_44.h"
 */
 
-#define PANEL_WIDTH		480
-#define PANEL_HEIGHT		800
-#define S5P_LCD_BPP		32
-/* AMOLED Panel 
-#define PANEL_WIDTH		1024
-#define PANEL_HEIGHT		600
-#define S5P_LCD_BPP		32
-*/
-
 extern void tl2796_panel_power_on(void);
 extern void tl2796_panel_enable(void);
 extern void tl2796_panel_init(void);
@@ -57,6 +48,8 @@ void *lcd_console_address;
 
 short console_col;
 short console_row;
+
+static unsigned int panel_width, panel_height;
 
 static unsigned short makepixel565(char r, char g, char b)
 {
@@ -77,7 +70,7 @@ static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos,
 
 	for(i = y1pos; i < y2pos; i++) {
 		for(j = x1pos; j < x2pos; j++) {
-			offset_s = i * PANEL_WIDTH + j;
+			offset_s = i * panel_width + j;
 			*(pDst + offset_s) = pixel;
 		}
 	}
@@ -90,64 +83,31 @@ static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos,
 	unsigned int offset_s;
 	int i, j;
 
-	for(i = y1pos; i < y2pos; i++) {
-		for(j = x1pos; j < x2pos; j++) {
-			offset_s = i * PANEL_WIDTH + j;
+	for (i = y1pos; i < y2pos; i++) {
+		for (j = x1pos; j < x2pos; j++) {
+			offset_s = i * panel_width + j;
 			*(pDst+offset_s) = pixel;
 		}
 	}
 }
 
 /* LCD Panel data */
-vidinfo_t panel_info = {
-		.vl_col		= PANEL_WIDTH,
-		.vl_row		= PANEL_HEIGHT,
-		.vl_width	= PANEL_WIDTH,
-		.vl_height	= PANEL_HEIGHT,
-		.vl_clkp	= CONFIG_SYS_HIGH,
-		.vl_hsp		= CONFIG_SYS_LOW,
-		.vl_vsp		= CONFIG_SYS_LOW,
-		.vl_dp		= CONFIG_SYS_HIGH,
-		.vl_bpix	= S5P_LCD_BPP,
-		.vl_lbw		= 0,
-		.vl_splt	= 0,
-		.vl_clor	= 1,
-		.vl_tft		= 1,
+vidinfo_t panel_info;
 
-		/* S6E63M0 LCD Panel */
-		.vl_hpw		= 2,
-		.vl_blw		= 16,
-		.vl_elw		= 16,
-
-		.vl_vpw		= 2,
-		.vl_bfw		= 3,
-		.vl_efw		= 28,
-		/* tl2796 panel.
-		.vl_hpw		= 4,
-		.vl_blw		= 8,
-		.vl_elw		= 8,
-
-		.vl_vpw		= 4,
-		.vl_bfw		= 8,
-		.vl_efw		= 8,
-		*/
-		/* AMS701KA AMOLED Panel
-		.vl_hpw		= 30,
-		.vl_blw		= 114,
-		.vl_elw		= 48,
-
-		.vl_vpw		= 2,
-		.vl_bfw		= 6,
-		.vl_efw		= 8,
-		*/
+struct lcd_panel_operation {
+	void (*lcd_panel_init)(void);
+	void (*lcd_panel_power_on)(void);
+	void (*lcd_panel_enable)(void);
 };
+
+static struct lcd_panel_operation lcd_calls;
 
 static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 {
 	unsigned long palette_size, palette_mem_size;
 	unsigned int fb_size;
 
-	fb_size = vid->vl_row * vid->vl_col * (vid->vl_bpix / 8);
+	fb_size = vid->vl_row * vid->vl_col * (vid->vl_bpix >> 3);
 
 	lcd_base = lcdbase;
 
@@ -223,7 +183,7 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 
 	for (j = y; j < (y + h); j++) {
 		for (i = x; i < (x + w); i++)
-			*(fb + (j * PANEL_WIDTH) + i) = *(bmp + k++);
+			*(fb + (j * panel_width) + i) = *(bmp + k++);
 	}
 }
 
@@ -240,10 +200,10 @@ void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned shor
 
 			/* 40 lines under samsung logo image are error range. */
 			if (j > h + y - error_range)
-				*(fb + (j * PANEL_WIDTH) + i) =
+				*(fb + (j * panel_width) + i) =
 					conv_rgb565_to_rgb888(pixel, 1);
 			else
-				*(fb + (j * PANEL_WIDTH) + i) =
+				*(fb + (j * panel_width) + i) =
 					conv_rgb565_to_rgb888(pixel, 0);
 		}
 	}
@@ -253,18 +213,116 @@ static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 
-	x = (PANEL_WIDTH - 298) / 2;
-	y = (PANEL_HEIGHT - 78) / 2 - 5;
+	x = ((panel_width - 298) >> 1);
+	y = ((panel_height - 78) >> 1) - 5;
 
 	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned short *) logo);
 }
 
-static void lcd_panel_on(void)
+static void s5pc_init_panel_info(vidinfo_t *vid, struct lcd_panel_operation *calls)
 {
-	lcd_panel_init();
-	lcd_panel_power_on();
+	if (vid == NULL) {
+		printf("lcd info is NULL.\n");
+		return;
+	}
 
-	lcd_panel_enable();
+	if (calls == NULL) {
+		printf("lcd calls is NULL.\n");
+		return;
+	}
+#if 1
+	vid->vl_freq	= 60;
+	vid->vl_col	= 480,
+	vid->vl_row	= 800,
+	vid->vl_width	= 480,
+	vid->vl_height	= 800,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_LOW,
+	vid->vl_vsp	= CONFIG_SYS_LOW,
+	vid->vl_dp	= CONFIG_SYS_HIGH,
+	vid->vl_bpix	= 32,
+
+	/* S6E63M0 LCD Panel */
+	vid->vl_hpw	= 2,	/* HLW */
+	vid->vl_blw	= 16,	/* HBP */
+	vid->vl_elw	= 16,	/* HFP */
+
+	vid->vl_vpw	= 2,	/* VLW */
+	vid->vl_bfw	= 3,	/* VBP */
+	vid->vl_efw	= 28,	/* VFP */
+
+	calls->lcd_panel_init = s6e63m0_lcd_panel_init;
+	calls->lcd_panel_power_on = s6e63m0_lcd_panel_power_on;
+	calls->lcd_panel_enable = s6e63m0_lcd_panel_enable;
+#endif
+#if 0
+	vid->vl_freq	= 60;
+	vid->vl_col	= 480,
+	vid->vl_row	= 800,
+	vid->vl_width	= 480,
+	vid->vl_height	= 800,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_LOW,
+	vid->vl_vsp	= CONFIG_SYS_LOW,
+	vid->vl_dp	= CONFIG_SYS_HIGH,
+	vid->vl_bpix	= 32,
+
+	/* tl2796 panel. */
+	vid->vl_hpw	= 4,
+	vid->vl_blw	= 8,
+	vid->vl_elw	= 8,
+
+	vid->vl_vpw	= 4,
+	vid->vl_bfw	= 8,
+	vid->vl_efw	= 8,
+
+	calls->lcd_panel_init = /* */;
+	calls->lcd_panel_power_on = /* */;
+	calls->lcd_panel_enable = /* */;
+#endif
+#if 0
+	vid->vl_freq	= 60;
+	vid->vl_col	= 1024,
+	vid->vl_row	= 600,
+	vid->vl_width	= 1024,
+	vid->vl_height	= 600,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_HIGH,
+	vid->vl_vsp	= CONFIG_SYS_HIGH,
+	vid->vl_dp	= CONFIG_SYS_LOW,
+	vid->vl_bpix	= 32,
+
+	/* AMS701KA AMOLED Panel. */
+	vid->vl_hpw	= 30,
+	vid->vl_blw	= 114,
+	vid->vl_elw	= 48,
+
+	vid->vl_vpw	= 2,
+	vid->vl_bfw	= 6,
+	vid->vl_efw	= 8,
+
+	calls->lcd_panel_init = ams701ka_lcd_panel_init;
+	calls->lcd_panel_power_on = ams701ka_lcd_panel_power_on;
+	calls->lcd_panel_enable = ams701ka_lcd_panel_enable;
+#endif
+
+	panel_width = vid->vl_col;
+	panel_height = vid->vl_row;
+}
+
+static void lcd_panel_on(struct lcd_panel_operation *calls)
+{
+	if (calls == NULL) {
+		printf("lcd calls is NULL.\n");
+		return ;
+	}
+
+	if (calls->lcd_panel_init)
+		calls->lcd_panel_init();
+	if (calls->lcd_panel_power_on)
+		calls->lcd_panel_power_on();
+	if (calls->lcd_panel_enable)
+		calls->lcd_panel_enable();
 }
 
 void lcd_ctrl_init(void *lcdbase)
@@ -272,6 +330,9 @@ void lcd_ctrl_init(void *lcdbase)
 	char *option;
 
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
+
+	/* initialize parameters which is specific to panel. */
+	s5pc_init_panel_info(&panel_info, &lcd_calls);
 
 	option = getenv("lcd");
 
@@ -287,7 +348,7 @@ void lcd_ctrl_init(void *lcdbase)
 	}
 	*/
 
-	memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+	memset(lcdbase, 0, panel_width * panel_height * (32 >> 3));
 	draw_samsung_logo(lcdbase);
 
 	s5pc_gpio_setup();
@@ -311,7 +372,7 @@ void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blud)
 
 void lcd_enable(void)
 {
-	lcd_panel_on();
+	lcd_panel_on((struct lcd_panel_operation *) &lcd_calls);
 }
 
 ulong calc_fbsize(void)
@@ -323,6 +384,4 @@ void s5pc1xxfb_test(void *lcdbase)
 {
 	lcd_ctrl_init(lcdbase);
 	lcd_enable();
-
-	//memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 }
