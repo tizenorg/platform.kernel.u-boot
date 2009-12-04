@@ -1312,6 +1312,8 @@ int misc_init_r(void)
 	else
 		setenv("lcd", "lcd=tl2796-dual");
 	*/
+	if (machine_is_geminus())
+		setenv("lcd", "lcd=lms480jc01");
 #endif
 
 	show_hw_revision();
