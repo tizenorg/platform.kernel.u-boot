@@ -1386,12 +1386,8 @@ void board_sleep_init(void)
 	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
-<<<<<<< HEAD:board/samsung/universal/universal.c
-	unsigned char dummy = 0;
 	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-=======
->>>>>>> a865b1b389f7ab75a669e614fc95c1dfbb5b2015:board/samsung/universal/universal.c
 
 	/* Set wakeup mask register */
 	value = 0xFFFF;
@@ -1490,7 +1486,6 @@ void board_sleep_resume(void)
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	printf("Waked up.\n");
 
-<<<<<<< HEAD:board/samsung/universal/universal.c
 	/* CP */
 	gpio_set_value(&gpio->gpio_h3, 7, gpio_CP);
 	value = gpio_get_value(&gpio->gpio_h3, 7);
@@ -1502,10 +1497,8 @@ void board_sleep_resume(void)
 		/* check max17040 */
 		check_battery();
 	}
-=======
 	/* check max17040 */
 	check_battery();
->>>>>>> a865b1b389f7ab75a669e614fc95c1dfbb5b2015:board/samsung/universal/universal.c
 
 	/* check fsa9480 */
 	check_micro_usb();
