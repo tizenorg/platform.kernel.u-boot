@@ -1493,10 +1493,6 @@ void board_sleep_resume(void)
 	gpio_set_value(&gpio->gpio_mp0_5, 4, gpio_T_FLASH);
 	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
 
-	if (board_is_limo_universal() || board_is_limo_real()) {
-		/* check max17040 */
-		check_battery();
-	}
 	/* check max17040 */
 	check_battery();
 
