@@ -17,6 +17,7 @@
 
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
+#include <asm/arch/sys_proto.h>
 
 #define CONFIG_CPU_S5PC110_EVT0_ERRATA
 
