@@ -189,15 +189,18 @@
 	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"nfsboot=set bootargs root=/dev/nfs ubi.mtd=${ubiblock}" \
-	 " nfsroot=${nfsroot},nolock ip=${ipaddr}:${serverip}:${gatewayip}:" \
+	 " nfsroot=${nfsroot},nolock,tcp ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x33000000,8M ramdisk=8192\0" \
+	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
+	 " ubi.mtd=${ubiblock} ${opts} ${lcd} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT "\0" \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
+	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=7\0" \
 	"ubiblock=6\0" \
 	"ubi=enabled"
