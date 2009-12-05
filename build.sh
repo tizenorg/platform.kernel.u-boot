@@ -44,8 +44,8 @@ check_users
 build_uboot $*
 
 size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
-if [ "$size" -eq "262144" ]; then
-	echo "u-boot-onenand.bin execced the 256KiB -> $size"
+if [ "$size" -ge "262144" ]; then
+	echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
 	exit
 fi
 
