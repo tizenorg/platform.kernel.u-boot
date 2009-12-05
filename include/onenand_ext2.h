@@ -161,6 +161,11 @@ enum {
 	EXT2_FT_MAX
 };
 
+enum {
+	EXT2_LS_FILE,
+	EXT2_LS_ALL
+};
+
 #define ONENAND_EXT2_DEBUG	1
 
 #ifdef ONENAND_EXT2_DEBUG

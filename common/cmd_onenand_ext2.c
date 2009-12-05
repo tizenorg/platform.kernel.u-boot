@@ -49,6 +49,9 @@ static char *ext2_buf = NULL;
 /* it indicates block size of ext2 filesystem formatted. */
 unsigned int block_size_of_fs = 0;
 
+/* it indicates inode block number for root directory and current directory. */
+unsigned int root_inode, current_inode;
+
 unsigned int inode_block_size = 0;
 unsigned int inode_table_location;
 
@@ -69,7 +72,7 @@ static unsigned int allocate_ext2_buf(void)
 /* load onenand region into system memory. */
 void load_onenand_to_ram(void)
 {
-	unsigned int i, out_size;
+	unsigned int i, out_size, test = 0;
 	char *buf = NULL;
 
 	ext2_buf = (char *) allocate_ext2_buf();
@@ -78,6 +81,7 @@ void load_onenand_to_ram(void)
 
 	for (i = 0; i < IMAGE_SIZE ; i+=ONENAND_READ_SIZE) {
 		onenand_read(IMAGE_BASE + i, buf, &out_size);
+		test+=out_size;
 		memcpy(ext2_buf + i, buf, ONENAND_READ_SIZE);
 	}
 
@@ -425,39 +429,52 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	}
 
 	return read_size;
-	/* to do */
-
-	/*
-	dprint("idir = %x\n",  (unsigned int) ext2_buf + d_block.indir_block * block_size_of_fs);
-	*/
 }
 
-void ls_ext2(unsigned int inode)
+void ls_ext2(unsigned int in_inode, const int cmd)
 {
 	struct ext2_dirent dirent;
+	int inode;
 	int ret;
 
-	ret = get_dir_entry(&inode, &dirent);
-	if (ret < 0) {
-		dprint("failed to get directory entry.\n");
+	switch (cmd) {
+	case EXT2_LS_FILE:
+	case EXT2_LS_ALL:
+		ret = get_dir_entry(&in_inode, &dirent);
+		if (ret < 0) {
+			dprint("failed to get directory entry.\n");
+			return;
+		}
+
+		do {
+			if (cmd == EXT2_LS_FILE) {
+				if (dirent.filetype == EXT2_FT_REG_FILE)
+					printf("%s\n", dirent.name);
+			} else
+				printf("%s\n", dirent.name);
+
+			ret = get_dir_entry(&in_inode, &dirent);
+		} while (ret == 0);
+
 		return;
-	}
-
-	dprint("inode = %d, name = %s\n", dirent.inode, dirent.name);
-
-	do {
-		ret = get_dir_entry(&inode, &dirent);
-		dprint("inode = %d, name = %s\n", dirent.inode, dirent.name);
-	} while (ret == 0);
+	default:
+		printf("it's wrong command.\n");
+		return;
+	};
 }
 
-void test_onenand_ext2(void)
+void init_onenand_ext2(void)
 {
-	unsigned int inode, in_size, out_size;
+	unsigned int in_size, out_size;
 	char *data;
 
 	load_onenand_to_ram();
 
+	root_inode = (unsigned int) mount_ext2fs();
+
+	current_inode = root_inode;
+
+	/*
 	inode = (unsigned int) mount_ext2fs();
 
 	inode = find_file_ext2(inode, "s3cfb.c");
@@ -471,9 +488,25 @@ void test_onenand_ext2(void)
 	dprint("out size = %d, data address = 0x%8x\n", out_size, data);
 
 	free(data);
-
-	/* ls test
-	inode = (unsigned int) mount_ext2fs();
-	ls_ext2(inode);
 	*/
 }
+
+int do_ls_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int cmd = -1;
+
+	if (argc == 1 && argv[1] == NULL) {
+		cmd = EXT2_LS_FILE;
+	} else if (argc == 2 && (strncmp(argv[1], "-a", 2) == 0)) {
+		cmd = EXT2_LS_ALL;
+	}
+
+	ls_ext2(current_inode, cmd);
+
+	return 0;
+}
+
+U_BOOT_CMD(ls_ext2, 3, 1, do_ls_ext2,
+	"list files from ext2 filesystem.\n",
+	"ls_ext2 [-al] [direct_name]\n"
+);
