@@ -209,6 +209,7 @@ void fb_printf(char *s)
 		put_char (*s);
 }
 
+#if 0
 static void draw_ve_wheel(int x, int y, unsigned char color)
 {
 	set_font_xy(x, y);
@@ -249,6 +250,7 @@ void draw_wheel(int x, int y, unsigned char color)
 	else
 		sw = 1;
 }
+#endif
 
 void draw_progress(int y, int per, unsigned char color)
 {
