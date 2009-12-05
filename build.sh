@@ -27,6 +27,10 @@ check_users()
 		CROSS_COMPILER=/opt/toolchains/arm-2008q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
+	if [ "$USER" = "jaehoon" ]; then
+		CROSS_COMPILER=/usr/local/arm/arm-2008q3/bin/arm-none-linux-gnueabi-
+		JOBS="-j 5"
+	fi
 }
 
 build_uboot()
