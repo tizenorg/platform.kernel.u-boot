@@ -386,16 +386,22 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
 	gpio_direction_input(bank, 4);
+	gpio_direction_input(bank, 6);
+	gpio_direction_input(bank, 7);
 
 	gpio_set_pull(bank, 1, GPIO_PULL_NONE);		/* HWREV_MODE3 */
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
 	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
+	gpio_set_pull(bank, 6, GPIO_PULL_NONE);		/* HWREV_MODE4 */
+	gpio_set_pull(bank, 7, GPIO_PULL_NONE);		/* HWREV_MODE5 */
 
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
+	rev |= (gpio_get_value(bank, 6) << 4);
+	rev |= (gpio_get_value(bank, 7) << 5);
 
 	return rev;
 }
@@ -472,7 +478,9 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
-		} else if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
+		}
+
+		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
 			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
