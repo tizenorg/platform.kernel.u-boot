@@ -72,7 +72,7 @@ static unsigned int allocate_ext2_buf(void)
 /* load onenand region into system memory. */
 void load_onenand_to_ram(void)
 {
-	unsigned int i, out_size, test = 0;
+	unsigned int i, out_size;
 	char *buf = NULL;
 
 	ext2_buf = (char *) allocate_ext2_buf();
@@ -81,7 +81,6 @@ void load_onenand_to_ram(void)
 
 	for (i = 0; i < IMAGE_SIZE ; i+=ONENAND_READ_SIZE) {
 		onenand_read(IMAGE_BASE + i, buf, &out_size);
-		test+=out_size;
 		memcpy(ext2_buf + i, buf, ONENAND_READ_SIZE);
 	}
 
