@@ -21,6 +21,7 @@
 #ifndef __ASM_ARCH_MMC_H_
 #define __ASM_ARCH_MMC_H_
 
+#define S5PC100_MMC_BASE	0xED800000
 #define S5PC110_MMC_BASE	0xEB000000
 
 #ifndef __ASSEMBLY__

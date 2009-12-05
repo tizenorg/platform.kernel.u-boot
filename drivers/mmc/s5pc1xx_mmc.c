@@ -35,7 +35,11 @@ struct mmc_host mmc_host[4];
 static inline struct s5pc1xx_mmc *s5pc1xx_get_base_mmc(int dev_index)
 {
 	unsigned long offset = dev_index * sizeof(struct s5pc1xx_mmc);
-	return (struct s5pc1xx_mmc *)(S5PC110_MMC_BASE + offset);
+
+	if (cpu_is_s5pc100())
+		return (struct s5pc1xx_mmc *)(S5PC100_MMC_BASE + offset);
+	else
+		return (struct s5pc1xx_mmc *)(S5PC110_MMC_BASE + offset);
 }
 
 static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
