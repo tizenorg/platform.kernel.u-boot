@@ -159,7 +159,7 @@ enum {
 	MACH_GEMINUS,
 };
 
-#define SCREEN_SPLIT_FEATURE	0x100
+#define SPLIT_SCREEN_FEATURE	0x100
 
 /* board is MACH_AQUILA and board is like below. */
 #define J1_B2_BOARD		0x200
@@ -333,8 +333,8 @@ static char *display_features(int board, int board_rev)
 	char *buf = feature_buffer;
 
 	if (board == MACH_AQUILA) {
-		if (board_rev & SCREEN_SPLIT_FEATURE)
-			count += sprintf(buf + count, " - ScreenSplit");
+		if (board_rev & SPLIT_SCREEN_FEATURE)
+			count += sprintf(buf + count, " - SplitScreen");
 		if (board_rev & J1_B2_BOARD)
 			count += sprintf(buf + count, " - J1 B2 board");
 		/* Limo Real or Universal */
@@ -386,22 +386,16 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
 	gpio_direction_input(bank, 4);
-	gpio_direction_input(bank, 6);
-	gpio_direction_input(bank, 7);
 
 	gpio_set_pull(bank, 1, GPIO_PULL_NONE);		/* HWREV_MODE3 */
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
 	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
-	gpio_set_pull(bank, 6, GPIO_PULL_NONE);		/* HWREV_MODE4 */
-	gpio_set_pull(bank, 7, GPIO_PULL_NONE);		/* HWREV_MODE5 */
 
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
-	rev |= (gpio_get_value(bank, 6) << 4);
-	rev |= (gpio_get_value(bank, 7) << 5);
 
 	return rev;
 }
@@ -409,6 +403,7 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
+	unsigned int j0_con, j0_pud;
 
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
@@ -429,7 +424,7 @@ static void check_hw_revision(void)
 		 * Note Check 'Aquila' board first
 		 *
 		 * TT: TickerTape
-		 * SS: ScreenSplit
+		 * SS: SplitScreen
 		 * LRA: Limo Real Aquila
 		 * LUA: Limo Universal Aquila
 		 * OA: Old Aquila
@@ -459,12 +454,12 @@ static void check_hw_revision(void)
 			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 #if 0
-			/* C110 Aquila ScreenSplit */
+			/* C110 Aquila SplitScreen */
 			if (gpio_get_value(&gpio->gpio_mp0_3, 5))
-				board_rev |= SCREEN_SPLIT_FEATURE;
+				board_rev |= SPLIT_SCREEN_FEATURE;
 			else {
 				if (gpio_get_value(&gpio->gpio_i, 3))
-					board_rev |= SCREEN_SPLIT_FEATURE;
+					board_rev |= SPLIT_SCREEN_FEATURE;
 			}
 #endif
 		}
@@ -480,6 +475,14 @@ static void check_hw_revision(void)
 			board_rev &= ~BOARD_MASK;
 		}
 
+		/* set gpio configuration for P1P2. */
+		gpio_direction_input(&gpio->gpio_j0, 6);
+		gpio_direction_input(&gpio->gpio_j0, 7);
+
+		/* do not change order below because it needs delay to get gpio value. */
+		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_NONE);	/* HWREV_MODE5 */
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);	/* HWREV_MODE4 */
+
 		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
@@ -488,6 +491,10 @@ static void check_hw_revision(void)
 			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)
 				board_rev |= P2_REAL_BOARD;
 		}
+
+		/* set gpio to default value. */
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);	/* HWREV_MODE4 */
+		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);	/* HWREV_MODE5 */
 
 		/* C110 Geminus */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
