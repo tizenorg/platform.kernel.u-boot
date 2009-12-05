@@ -39,6 +39,12 @@ check_users
 
 build_uboot $*
 
+size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
+if [ "$size" -eq "262144" ]; then
+	echo "u-boot-onenand.bin execced the 256KiB -> $size"
+	exit
+fi
+
 if [ "$USER" = "kmpark" ]; then
 	cp -f u-boot.bin u-boot-onenand.bin /tftpboot
 	ls -al u-boot.bin u-boot-onenand.bin
