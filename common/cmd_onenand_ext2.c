@@ -55,6 +55,9 @@ unsigned int root_inode, current_inode;
 unsigned int inode_block_size = 0;
 unsigned int inode_table_location;
 
+/* it is used to use temporal pointer. */
+unsigned int first_find = 1;
+
 /* set system memory region stored with onenand region. */
 static unsigned int allocate_ext2_buf(void)
 {
@@ -64,7 +67,7 @@ static unsigned int allocate_ext2_buf(void)
 	addr = (_bss_end + (PAGE_SIZE - 1)) & ~(PAGE_SIZE -1);
 	fb_size = panel_info.vl_col * panel_info.vl_row *
 		panel_info.vl_bpix / 8;
-	addr -= IMAGE_SIZE + fb_size;
+	addr -= IMAGE_SIZE + fb_size + 1024*1024;
 
 	return addr;
 }
@@ -326,9 +329,9 @@ static int next_dir_entry(unsigned int *in_inode)
 	struct ext2_dirent dirent;
 	static unsigned int first = 1, tmp_pt = NULL;
 
-	if (first) {
+	if (first_find) {
 		tmp_pt = *in_inode;
-		first = 0;
+		first_find = 0;
 	}
 
 	memcpy(&dirent, (char *) *in_inode, sizeof(struct ext2_dirent));
@@ -351,33 +354,36 @@ static int next_dir_entry(unsigned int *in_inode)
  *
  * @in_inode : the location of system memory to directory entry.
  * @filename : the file name for finding.
+ * @dirent : the pointer of directory entry structure found.
+ *
+ * return value : inode number of directory entry.
  */
-unsigned int find_file_ext2(unsigned int in_inode, const char *filename)
+unsigned int find_file_ext2(unsigned int in_inode, const char *filename,
+	struct ext2_dirent *dirent)
 {
-	struct ext2_dirent dirent;
 	int ret;
 
-	get_dir_entry(in_inode, &dirent);
+	get_dir_entry(in_inode, dirent);
 
-	if ((strcmp(dirent.name, filename)) == 0)
-		return dirent.inode;
+	if ((strcmp(dirent->name, filename)) == 0)
+		return dirent->inode;
 
 	next_dir_entry(&in_inode);
 
 	do {
-		get_dir_entry(&in_inode, &dirent);
+		get_dir_entry(in_inode, dirent);
 
 		dprint("soure file = %s, dst file = %s, len = %d\n", filename,
-			dirent.name, dirent.namelen);
+			dirent->name, dirent->namelen);
 
-		if ((strncmp(dirent.name, filename, dirent.namelen)) == 0)
-			return dirent.inode;
+		if ((strncmp(dirent->name, filename, dirent->namelen)) == 0)
+			return dirent->inode;
 
 		ret = next_dir_entry(&in_inode);
 
 	} while (ret == 0);
 
-	dprint("failed to find file.\n");
+	printf("failed to find file.\n");
 
 	return -1;
 }
@@ -525,6 +531,9 @@ void ls_ext2(unsigned int in_inode, const int cmd)
 	struct ext2_inode inode;
 	int ret;
 
+	/* first, first_find should be 1. */
+	first_find = 1;
+
 	switch (cmd) {
 	case EXT2_LS_ONLY_FILE:
 	case EXT2_LS_ALL_ENTRY:
@@ -542,16 +551,21 @@ void ls_ext2(unsigned int in_inode, const int cmd)
 			}
 
 			if (cmd == EXT2_LS_ONLY_FILE) {
-				if (dirent.filetype == EXT2_FT_REG_FILE)
-					printf("%s\n", dirent.name);
+				if (dirent.filetype == EXT2_FT_REG_FILE ||
+					dirent.filetype == EXT2_FT_DIR) {
+					if (dirent.filetype == EXT2_FT_DIR)
+						printf("[ %s ]\n", dirent.name);
+					else
+						printf("%s\n", dirent.name);
+				}
 			} else if (cmd == EXT2_LS_ALL_ENTRY) {
 				if (dirent.filetype == EXT2_FT_DIR)
-					printf("[%s]\n", dirent.name);
+					printf("[ %s ]\n", dirent.name);
 				else
 					printf("%s\n", dirent.name);
 			} else if (cmd == EXT2_LS_ALL) {
 				if (dirent.filetype == EXT2_FT_DIR)
-					printf("%x	%d	[%s]\n",
+					printf("%x	%d	[ %s ]\n",
 						inode.mode, inode.size, dirent.name);
 				else
 					printf("%x	%d	%s\n",
@@ -568,21 +582,58 @@ void ls_ext2(unsigned int in_inode, const int cmd)
 	};
 }
 
+void cd_ext2(unsigned int in_inode, const char *name)
+{
+	unsigned int d_inode, out_inode, cur_dir;
+	struct ext2_inode inode;
+	struct ext2_dirent dirent;
+
+	/* first, first_find should be 1. */
+	first_find = 1;
+
+	/* return inode of directory entry. */
+	out_inode = find_file_ext2(in_inode, name, &dirent);
+	if (out_inode < 0) {
+		printf("failed to find file.\n");
+		return;
+	}
+
+	/* check whether entry is director or not. */
+	if (dirent.filetype != EXT2_FT_DIR) {
+		printf("%s is not directory.\n");
+		return;
+	}
+
+	/* get the location of inode to file. */
+	d_inode = inode_table_location + (dirent.inode - 1) *
+		INODE_TABLE_ENTRY_SIZE;
+
+	/* get the location of system memory to inode. */
+	d_inode = ext2_buf + d_inode;
+
+	/* get inode entry to file. */
+	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
+
+	current_inode = (ext2_buf + inode.b.blocks.dir_blocks[0] * block_size_of_fs);
+}
+
 void init_onenand_ext2(void)
 {
+	struct ext2_dirent dirent;
 	unsigned int in_size, out_size;
 	char *data;
 
 	load_onenand_to_ram();
-
+#if 1
 	root_inode = (unsigned int) mount_ext2fs();
 
 	current_inode = root_inode;
+#endif
 
-	/*
+#if 0
 	inode = (unsigned int) mount_ext2fs();
 
-	inode = find_file_ext2(inode, "s3cfb.c");
+	inode = find_file_ext2(inode, "s3cfb.c", &dirent);
 	inode = open_file_ext2(inode);
 	in_size = get_filesize_ext2(inode);
 	dprint("in size = %d\n", in_size);
@@ -593,7 +644,7 @@ void init_onenand_ext2(void)
 	dprint("out size = %d, data address = 0x%8x\n", out_size, data);
 
 	free(data);
-	*/
+#endif
 }
 
 int do_ls_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -613,7 +664,20 @@ int do_ls_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
+int do_cd_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	if (argc == 2 && argv[1] != NULL)
+	    cd_ext2(current_inode, argv[1]);
+
+	return 0;
+}
+
 U_BOOT_CMD(ls_ext2, 3, 1, do_ls_ext2,
 	"list files from ext2 filesystem.\n",
 	"ls_ext2 [-al] [direct_name]\n"
+);
+
+U_BOOT_CMD(cd_ext2, 3, 1, do_cd_ext2,
+	"change directory.\n",
+	"cd_ext2 [direct_name]\n"
 );

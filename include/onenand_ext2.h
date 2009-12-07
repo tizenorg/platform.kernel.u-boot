@@ -123,13 +123,6 @@ struct ext2_inode {
 };
 
 /* The header of an ext2 directory entry.  */
-struct ext2_dirent2 {
-	uint32_t inode;
-	uint16_t direntlen;
-	uint16_t namelen;
-	char name[EXT2_NAME_LEN];
-};
-
 struct ext2_dirent {
 	uint32_t inode;
 	uint16_t direntlen;
