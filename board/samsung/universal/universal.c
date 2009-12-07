@@ -403,7 +403,6 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
-	unsigned int j0_con, j0_pud;
 
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
