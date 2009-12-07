@@ -174,6 +174,12 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
 	return buf_root_dir;
 }
 
+/* 
+ * get root directory entry.
+ *
+ * the location of system memory to root directory entry is returned.
+ */
+
 static char *get_root_dir_entry(struct ext2_dirent *dirent, struct ext2_inode *inode)
 {
 	char *buf_root_dir = NULL;
@@ -263,49 +269,111 @@ char *mount_ext2fs(void)
 	return buf;
 }
 
-static int get_dir_entry(unsigned int *inode, struct ext2_dirent *dirent)
+/* 
+ * get inode to file.
+ *
+ * @in_inode : the location of system memory to directory entry.
+ * @inode : inode structure for storing inode entry value.
+ */
+static int get_inode(unsigned int in_inode, struct ext2_inode *inode)
 {
-	static unsigned int tmp_pt = NULL;
-	static unsigned first = 1;
+	struct ext2_dirent dirent;
+	unsigned int d_inode;
 
-	if (first) {
-		tmp_pt = *inode;
-		first = 0;
+	if (in_inode < 0) {
+		dprint("inode number is less then 0.\n");
+		return -1;
 	}
 
-	if ((*inode - tmp_pt) >= inode_block_size)
-		return -1;
+	/* get directory entry. */
+	memcpy(&dirent, (char *) in_inode, sizeof(struct ext2_dirent));
 
-	memcpy(dirent, (char *) *inode, sizeof(struct ext2_dirent));
-	*inode += dirent->direntlen;
+	/* get the location of inode to file. */
+	d_inode = inode_table_location + (dirent.inode - 1) *
+		INODE_TABLE_ENTRY_SIZE;
+
+	/* get the location of system memory to inode. */
+	d_inode = ext2_buf + d_inode;
+
+	/* get inode entry to file. */
+	memcpy(inode, (char *) d_inode, sizeof(struct ext2_inode));
+
+	return 0;
+}
+
+/*
+ * get directory entry to file.
+ *
+ * @in_inode : the location of system memory to directory entry.
+ * @dirent : directory entry structure for storing directory entry value.
+ */
+static int get_dir_entry(unsigned int in_inode, struct ext2_dirent *dirent)
+{
+	memcpy(dirent, (char *) in_inode, sizeof(struct ext2_dirent));
 
 	dirent->name[dirent->namelen] = '\0';
 
 	return 0;
 }
 
-unsigned int find_file_ext2(unsigned int inode, const char *filename)
+/* 
+ * move in_inode which is directory entry pointer to next directory entry.
+ *
+ * @in_inode : the location of system memory to directory entry.
+ */
+static int next_dir_entry(unsigned int *in_inode)
+{
+	struct ext2_dirent dirent;
+	static unsigned int first = 1, tmp_pt = NULL;
+
+	if (first) {
+		tmp_pt = *in_inode;
+		first = 0;
+	}
+
+	memcpy(&dirent, (char *) *in_inode, sizeof(struct ext2_dirent));
+	*in_inode += dirent.direntlen;
+
+	/* 
+	 * it finds the end of directory entry.
+	 * 
+	 * directroy entries are stored in data block.
+	 * (inode_block_size = data block count * data block size.)
+	 */
+	if ((*in_inode - tmp_pt) >= inode_block_size)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * find file matched with filename.
+ *
+ * @in_inode : the location of system memory to directory entry.
+ * @filename : the file name for finding.
+ */
+unsigned int find_file_ext2(unsigned int in_inode, const char *filename)
 {
 	struct ext2_dirent dirent;
 	int ret;
 
-	ret = get_dir_entry(&inode, &dirent);
-	if (ret < 0) {
-		dprint("failed to get directory entry.\n");
-		return;
-	}
+	get_dir_entry(in_inode, &dirent);
 
 	if ((strcmp(dirent.name, filename)) == 0)
 		return dirent.inode;
 
+	next_dir_entry(&in_inode);
+
 	do {
-		ret = get_dir_entry(&inode, &dirent);
+		get_dir_entry(&in_inode, &dirent);
 
 		dprint("soure file = %s, dst file = %s, len = %d\n", filename,
 			dirent.name, dirent.namelen);
 
 		if ((strncmp(dirent.name, filename, dirent.namelen)) == 0)
 			return dirent.inode;
+
+		ret = next_dir_entry(&in_inode);
 
 	} while (ret == 0);
 
@@ -315,16 +383,20 @@ unsigned int find_file_ext2(unsigned int inode, const char *filename)
 }
 
 /*
- * open inode table for filename.
+ * get the location of inode to file.
  *
- * @f_inode : inode number for file.
+ * @f_inode : inode number to file.
  *
- * return value is inode number for data block.
+ * return value is inode number to file.
  */
 int open_file_ext2(unsigned int f_inode)
 {
 	unsigned int d_inode;
 
+	/* 
+	 * the location of inode to file =
+	 * inode table base + (inode number to file - 1) * inode table entry size.
+	 */
 	d_inode = inode_table_location + (f_inode - 1) *
 		INODE_TABLE_ENTRY_SIZE;
 
@@ -333,6 +405,11 @@ int open_file_ext2(unsigned int f_inode)
 	return d_inode;
 }
 
+/*
+ * get file size.
+ *
+ * @d_inode : offset of inode to file.
+ */
 int get_filesize_ext2(unsigned int d_inode)
 {
 	struct ext2_inode inode;
@@ -346,6 +423,12 @@ int get_filesize_ext2(unsigned int d_inode)
 	return inode.size;
 }
 
+/* read data block to file.
+ *
+ * @d_inode : offset of inode to file.
+ * @buf : memory buffer for storing contents of data block.
+ * @size : file size.
+ */
 int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 {
 	struct ext2_datablock d_block;
@@ -430,29 +513,52 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	return read_size;
 }
 
+/* 
+ * list files in directory.
+ *
+ * @in_inode : the location of system memory to directory entry.
+ * @cmd : command indicating file attributes for listing.
+ */
 void ls_ext2(unsigned int in_inode, const int cmd)
 {
 	struct ext2_dirent dirent;
-	int inode;
+	struct ext2_inode inode;
 	int ret;
 
 	switch (cmd) {
-	case EXT2_LS_FILE:
+	case EXT2_LS_ONLY_FILE:
+	case EXT2_LS_ALL_ENTRY:
 	case EXT2_LS_ALL:
-		ret = get_dir_entry(&in_inode, &dirent);
-		if (ret < 0) {
-			dprint("failed to get directory entry.\n");
-			return;
-		}
-
 		do {
-			if (cmd == EXT2_LS_FILE) {
+			ret = get_dir_entry(in_inode, &dirent);
+			if (ret < 0) {
+				dprint("failed to get directory entry.\n");
+				return;
+			}
+			ret = get_inode(in_inode, &inode);
+			if (ret < 0) {
+				dprint("failed to get inode entry.\n");
+				return;
+			}
+
+			if (cmd == EXT2_LS_ONLY_FILE) {
 				if (dirent.filetype == EXT2_FT_REG_FILE)
 					printf("%s\n", dirent.name);
-			} else
-				printf("%s\n", dirent.name);
+			} else if (cmd == EXT2_LS_ALL_ENTRY) {
+				if (dirent.filetype == EXT2_FT_DIR)
+					printf("[%s]\n", dirent.name);
+				else
+					printf("%s\n", dirent.name);
+			} else if (cmd == EXT2_LS_ALL) {
+				if (dirent.filetype == EXT2_FT_DIR)
+					printf("%x	%d	[%s]\n",
+						inode.mode, inode.size, dirent.name);
+				else
+					printf("%x	%d	%s\n",
+						inode.mode, inode.size, dirent.name);
+			}
 
-			ret = get_dir_entry(&in_inode, &dirent);
+			ret = next_dir_entry(&in_inode);
 		} while (ret == 0);
 
 		return;
@@ -495,8 +601,10 @@ int do_ls_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	int cmd = -1;
 
 	if (argc == 1 && argv[1] == NULL) {
-		cmd = EXT2_LS_FILE;
-	} else if (argc == 2 && (strncmp(argv[1], "-a", 2) == 0)) {
+		cmd = EXT2_LS_ONLY_FILE;
+	} else if (argc == 2 && (strcmp(argv[1], "-a") == 0)) {
+		cmd = EXT2_LS_ALL_ENTRY;
+	} else if (argc == 2 && (strcmp(argv[1], "-al") == 0)) {
 		cmd = EXT2_LS_ALL;
 	}
 

@@ -162,7 +162,8 @@ enum {
 };
 
 enum {
-	EXT2_LS_FILE,
+	EXT2_LS_ONLY_FILE,
+	EXT2_LS_ALL_ENTRY,
 	EXT2_LS_ALL
 };
 
