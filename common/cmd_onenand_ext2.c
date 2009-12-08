@@ -41,7 +41,6 @@
 #define DATA_BLOCK_UNIT		(512)
 #define INODE_TABLE_ENTRY_SIZE	(128)
 
-extern vidinfo_t panel_info;
 extern int onenand_read(ulong off, char *buf, unsigned int *out_size);
 
 static char *ext2_buf = NULL;
@@ -55,9 +54,6 @@ unsigned int root_inode, current_inode;
 unsigned int inode_block_size = 0;
 unsigned int inode_table_location;
 
-/* it is used to use temporal pointer. */
-unsigned int first_find = 1;
-
 /* set system memory region stored with onenand region. */
 static unsigned int allocate_ext2_buf(void)
 {
@@ -65,15 +61,16 @@ static unsigned int allocate_ext2_buf(void)
 	unsigned int fb_size = 0;
 
 	addr = (_bss_end + (PAGE_SIZE - 1)) & ~(PAGE_SIZE -1);
+	printf("_bss_end = %x\n", addr);
 	fb_size = panel_info.vl_col * panel_info.vl_row *
 		panel_info.vl_bpix / 8;
-	addr -= IMAGE_SIZE + fb_size + 1024*1024;
+	addr += IMAGE_SIZE + /*fb_size +*/ 1024;
 
 	return addr;
 }
 
 /* load onenand region into system memory. */
-void load_onenand_to_ram(void)
+static void load_onenand_to_ram(void)
 {
 	unsigned int i, out_size;
 	char *buf = NULL;
@@ -91,67 +88,98 @@ void load_onenand_to_ram(void)
 		free(buf);
 }
 
-static char *get_sblock(struct ext2_sblock *sblock)
+/*
+ * read a block from onenand.
+ *
+ * @offset : onenand offset for reading a block.
+ * @blk_count : block count to be read.
+ *
+ * return value is the size read from onenand.
+ */
+static unsigned int read_blk_from_onenand(unsigned int offset, unsigned int blk_count, char *buf)
+{
+	unsigned int size, i, out_size = 0;
+
+	for (i = 0; i < blk_count; i++) {
+		offset += (i * ONENAND_READ_SIZE);
+		onenand_read(IMAGE_BASE + offset, buf, &size);
+		out_size += size;
+		buf += size;
+	}
+
+	return out_size;
+}
+
+static int get_sblock(struct ext2_sblock *sblock)
 {
 	char *buf_sblock = NULL;
 
-	if (ext2_buf == NULL) {
-		dprint("ext2_buf is NULL.\n");
-		return NULL;
+	buf_sblock = malloc(ONENAND_READ_SIZE);
+	if (buf_sblock == NULL) {
+		dprint("failed to allocate memory.\n");
+		return -1;
 	}
 
-	/* first 1k is boot block. */
-	buf_sblock = ext2_buf + BOOT_BLOCK_SIZE;
+	/* first, read 4K block from onenand. */
+	read_blk_from_onenand(0, 1, buf_sblock);
 
-	/* get super block. */
-	memcpy(sblock, buf_sblock, sizeof(struct ext2_sblock));
+	/* sblock places in next to 1k, boot sector so read from there. */
+	memcpy(sblock, buf_sblock + BOOT_BLOCK_SIZE, sizeof(struct ext2_sblock));
 
 	dprint("total_inodes = %d, block_size = %d\n", sblock->total_inodes,
 		sblock->log2_block_size);
 
-	return buf_sblock;
+	free(buf_sblock);
+
+	return 0;
 }
 
-static char *get_group_dec(struct ext2_block_group *group)
+static int get_group_dec(struct ext2_block_group *group)
 {
 	char *buf_group = NULL;
+	unsigned int offset = 0;
 
-	if (ext2_buf == NULL) {
-		dprint("ext2_buf is NULL.\n");
-		return NULL;
+	buf_group = malloc(ONENAND_READ_SIZE);
+	if (buf_group == NULL) {
+		dprint("failed to allocate memory.\n");
+		return -1;
 	}
 
 	/* get group descriptor. */
 	if (block_size_of_fs == 1024)
 		/* boot block : 1k, super block : 1k. */
-		buf_group = ext2_buf + block_size_of_fs * 2;
+		offset = block_size_of_fs * 2;
 	else if (block_size_of_fs == 4096)
 		/* boot block : 1k, super block : 3k. */
-		buf_group = ext2_buf + block_size_of_fs;
+		offset = block_size_of_fs;
 
-	dprint("buf_group = 0x%8x\n", buf_group);
+	read_blk_from_onenand(offset, 1, buf_group);
 
 	memcpy(group, buf_group, sizeof(struct ext2_block_group));
 
 	dprint("block_id = %d, inode_id = %d, inode_table_id = %d\n",
 		group->block_id, group->inode_id, group->inode_table_id);
 
-	return buf_group;
+	free(buf_group);
+
+	return 0;
 }
 
-static char *get_root_inode_entry(struct ext2_inode *inode,
+static int get_root_inode_entry(struct ext2_inode *inode,
 	struct ext2_block_group *group)
 {
 	char *buf_root_dir = NULL;
+	unsigned int offset = 0;
 
-	if (ext2_buf == NULL) {
-		dprint("ext2_buf is NULL.\n");
-		return NULL;
+	buf_root_dir = malloc(ONENAND_READ_SIZE);
+	if (buf_root_dir == NULL) {
+		dprint("failed to allocate memory.\n");
+		return -1;
 	}
 
 	if (group == NULL) {
 		dprint("group is NULL.\n");
-		return NULL;
+		return -1;
 	}
 
 	/* get location of inode table. */
@@ -159,14 +187,17 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
 
 	dprint("inode table location = %d\n", inode_table_location);
 
+	 /* get inode entry of root directory. */
+	//offset = inode_table_location + INODE_TABLE_ENTRY_SIZE;
+
+	read_blk_from_onenand(inode_table_location, 1, buf_root_dir);
+
 	/* 
-	 * get inode entry of root directory.
-	 *
-	 * inode table has 128byte unit per entry and
-	 * root inode is placed in second entry.
+	 * inode table has 128byte per entry and
+	 * root inode places in second entry.
 	 */
-	buf_root_dir = ext2_buf + inode_table_location + INODE_TABLE_ENTRY_SIZE;
-	memcpy(inode, buf_root_dir, sizeof(struct ext2_inode));
+	memcpy(inode, buf_root_dir + INODE_TABLE_ENTRY_SIZE,
+		sizeof(struct ext2_inode));
 
 	/* get inode block size and used to find the end of directory entry. */
 	inode_block_size = inode->blockcnt * DATA_BLOCK_UNIT;
@@ -174,7 +205,9 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
 	dprint("dir_blocks = 0x%8x, size = %d, blockcnt = %d\n", inode->b.blocks.dir_blocks[0],
 		inode->size, inode->blockcnt);
 
-	return buf_root_dir;
+	free(buf_root_dir);
+
+	return 0;
 }
 
 /* 
@@ -183,43 +216,49 @@ static char *get_root_inode_entry(struct ext2_inode *inode,
  * the location of system memory to root directory entry is returned.
  */
 
-static char *get_root_dir_entry(struct ext2_dirent *dirent, struct ext2_inode *inode)
+static unsigned int get_root_dir_entry(struct ext2_dirent *dirent, struct ext2_inode *inode)
 {
 	char *buf_root_dir = NULL;
+	unsigned int offset = 0;
 
-	if (ext2_buf == NULL) {
-		dprint("ext2_buf is NULL.\n");
-		return NULL;
+	buf_root_dir = malloc(ONENAND_READ_SIZE);
+	if (buf_root_dir == NULL) {
+		dprint("failed to allocate memory.\n");
+		return 0;
 	}
 
 	if (inode == NULL) {
 		dprint("inode is NULL.\n");
-		return NULL;
+		return 0;
 	}
 
 	/* get block number stored with data of inode. */
-	buf_root_dir = ext2_buf + inode->b.blocks.dir_blocks[0] * block_size_of_fs;
+	offset = inode->b.blocks.dir_blocks[0] * block_size_of_fs;
+
+	read_blk_from_onenand(offset, 1, buf_root_dir);
+
 	memcpy(dirent, buf_root_dir, sizeof(struct ext2_dirent));
 
 	dprint("first entry name of root directory is name = %s\n",
 		dirent->name);
 
-	return buf_root_dir;
+	free(buf_root_dir);
+
+	return offset;
 }
 
 /* initialize ext2 filesystem and return pointer of root directory entry. */
-char *mount_ext2fs(void)
+unsigned int mount_ext2fs(void)
 {
 	struct ext2_sblock sblock;
 	struct ext2_block_group group;
 	struct ext2_inode inode;
 	struct ext2_dirent dirent;
 
-	unsigned int need_block = 0;
-	char *buf = NULL;
+	unsigned int need_block = 0, ret = 0, offset = 0;
 
-	buf = get_sblock(&sblock);
-	if (buf == NULL) {
+	ret = get_sblock(&sblock);
+	if (ret < 0) {
 		dprint("sblock is NULL.\n");
 		return NULL;
 	}
@@ -251,55 +290,68 @@ char *mount_ext2fs(void)
 
 	dprint("need_block for inode table = %d\n", need_block);
 
-	buf = get_group_dec(&group);
-	if (buf == NULL) {
+	ret = get_group_dec(&group);
+	if (ret < 0) {
 		dprint("group_dec is NULL.\n");
 		return NULL;
 	}
 
-	buf = get_root_inode_entry(&inode, &group);
-	if (buf == NULL) {
+	ret = get_root_inode_entry(&inode, &group);
+	if (ret < 0) {
 		dprint("root_inode_entry is NULL.\n");
 		return NULL;
 	}
 
-	buf = get_root_dir_entry(&dirent, &inode);
-	if (buf == NULL) {
+	offset = get_root_dir_entry(&dirent, &inode);
+	if (offset == 0) {
 		dprint("root_dir_entry is NULL.\n");
 		return NULL;
 	}
 
-	return buf;
+	return offset;
 }
 
 /* 
  * get inode to file.
  *
- * @in_inode : the location of system memory to directory entry.
+ * @in_buf : pointer of system memory to directory entry.
  * @inode : inode structure for storing inode entry value.
  */
-static int get_inode(unsigned int in_inode, struct ext2_inode *inode)
+static int get_inode(char *in_buf, struct ext2_inode *inode)
 {
 	struct ext2_dirent dirent;
-	unsigned int d_inode;
+	unsigned int d_inode, need_block = 0;
+	char *buf = NULL;
 
-	if (in_inode < 0) {
-		dprint("inode number is less then 0.\n");
+	if (in_buf == NULL) {
+		dprint("in_buf is NULL.\n");
 		return -1;
 	}
 
 	/* get directory entry. */
-	memcpy(&dirent, (char *) in_inode, sizeof(struct ext2_dirent));
+	memcpy(&dirent, (char *) in_buf, sizeof(struct ext2_dirent));
 
 	/* get the location of inode to file. */
-	d_inode = inode_table_location + (dirent.inode - 1) *
-		INODE_TABLE_ENTRY_SIZE;
+	d_inode = (dirent.inode - 1) * INODE_TABLE_ENTRY_SIZE;
 
-	/* get the location of system memory to inode. */
-	d_inode = ext2_buf + d_inode;
+	/* 
+	 * get block size for loading from onenand.
+	 * if d_inode is more then 4k then need_block should be more then 2.
+	 */
+	need_block = (d_inode / block_size_of_fs) + 1;
+
+	buf = malloc(ONENAND_READ_SIZE * need_block);
+	if (buf == NULL) {
+		dprint("failed to allocate memory.\n");
+		return -1;
+	}
+
+	read_blk_from_onenand(inode_table_location, need_block, buf);
 
 	/* get inode entry to file. */
-	memcpy(inode, (char *) d_inode, sizeof(struct ext2_inode));
+	memcpy(inode, (char *) buf + d_inode, sizeof(struct ext2_inode));
+
+	free(buf);
 
 	return 0;
 }
@@ -307,12 +359,12 @@ static int get_inode(unsigned int in_inode, struct ext2_inode *inode)
 /*
  * get directory entry to file.
  *
- * @in_inode : the location of system memory to directory entry.
+ * @in_buf : pointer of system memory to directory entry.
  * @dirent : directory entry structure for storing directory entry value.
  */
-static int get_dir_entry(unsigned int in_inode, struct ext2_dirent *dirent)
+static int get_dir_entry(char *in_buf, struct ext2_dirent *dirent)
 {
-	memcpy(dirent, (char *) in_inode, sizeof(struct ext2_dirent));
+	memcpy(dirent, (char *) in_buf, sizeof(struct ext2_dirent));
 
 	dirent->name[dirent->namelen] = '\0';
 
@@ -322,20 +374,11 @@ static int get_dir_entry(unsigned int in_inode, struct ext2_dirent *dirent)
 /* 
  * move in_inode which is directory entry pointer to next directory entry.
  *
- * @in_inode : the location of system memory to directory entry.
+ * @dirent : pointer of ext2_dirent structure.
  */
-static int next_dir_entry(unsigned int *in_inode)
+static unsigned int next_dir_entry(struct ext2_dirent *dirent)
 {
-	struct ext2_dirent dirent;
-	static unsigned int first = 1, tmp_pt = NULL;
-
-	if (first_find) {
-		tmp_pt = *in_inode;
-		first_find = 0;
-	}
-
-	memcpy(&dirent, (char *) *in_inode, sizeof(struct ext2_dirent));
-	*in_inode += dirent.direntlen;
+	static unsigned int sum_point = 0;
 
 	/* 
 	 * it finds the end of directory entry.
@@ -343,10 +386,14 @@ static int next_dir_entry(unsigned int *in_inode)
 	 * directroy entries are stored in data block.
 	 * (inode_block_size = data block count * data block size.)
 	 */
-	if ((*in_inode - tmp_pt) >= inode_block_size)
-		return -1;
+	sum_point += dirent->direntlen;
+	if ( sum_point >= inode_block_size) {
+		sum_point = 0;
 
-	return 0;
+		return 0;
+	}
+
+	return dirent->direntlen;
 }
 
 /*
@@ -361,29 +408,42 @@ static int next_dir_entry(unsigned int *in_inode)
 unsigned int find_file_ext2(unsigned int in_inode, const char *filename,
 	struct ext2_dirent *dirent)
 {
-	int ret;
+	unsigned int next_point = 0;
+	char *buf = NULL;
 
-	get_dir_entry(in_inode, dirent);
+	buf = malloc(ONENAND_READ_SIZE);
+	if (buf == NULL) {
+		dprint("failed to allocate memory.\n");
+		return;
+	}
 
-	if ((strcmp(dirent->name, filename)) == 0)
+	read_blk_from_onenand(in_inode, 1, buf);
+
+	get_dir_entry(buf, dirent);
+
+	if ((strcmp(dirent->name, filename)) == 0) {
 		return dirent->inode;
+	}
 
-	next_dir_entry(&in_inode);
+	next_point = next_dir_entry(dirent);
 
 	do {
-		get_dir_entry(in_inode, dirent);
+		get_dir_entry(buf, dirent);
 
 		dprint("soure file = %s, dst file = %s, len = %d\n", filename,
 			dirent->name, dirent->namelen);
 
-		if ((strncmp(dirent->name, filename, dirent->namelen)) == 0)
+		if ((strcmp(dirent->name, filename)) == 0) {
 			return dirent->inode;
+		}
 
-		ret = next_dir_entry(&in_inode);
+		next_point = next_dir_entry(dirent);
+		buf += next_point;
 
-	} while (ret == 0);
+	} while (next_point > 0);
 
 	printf("failed to find file.\n");
+	free(buf);
 
 	return -1;
 }
@@ -403,8 +463,7 @@ int open_file_ext2(unsigned int f_inode)
 	 * the location of inode to file =
 	 * inode table base + (inode number to file - 1) * inode table entry size.
 	 */
-	d_inode = inode_table_location + (f_inode - 1) *
-		INODE_TABLE_ENTRY_SIZE;
+	d_inode = (f_inode - 1) * INODE_TABLE_ENTRY_SIZE;
 
 	dprint("f_inode = %d, d_inode = %d\n", f_inode, d_inode);
 
@@ -419,12 +478,23 @@ int open_file_ext2(unsigned int f_inode)
 int get_filesize_ext2(unsigned int d_inode)
 {
 	struct ext2_inode inode;
+	unsigned int need_block = 0;
+	char *buf = NULL;
 
-	/* calculate location of system memory for data block inode. */
-	d_inode = ext2_buf + d_inode;
+	need_block = (d_inode / block_size_of_fs) + 1;
+
+	buf = malloc(ONENAND_READ_SIZE * need_block);
+	if (buf == NULL) {
+		printf("failed to allocate memory.\n");
+		return -1;
+	}
+
+	read_blk_from_onenand(inode_table_location, need_block, buf);
 
 	/* get inode table entry for file. */
-	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
+	memcpy(&inode, (char *) buf + d_inode, sizeof(struct ext2_inode));
+
+	free(buf);
 
 	return inode.size;
 }
@@ -432,21 +502,39 @@ int get_filesize_ext2(unsigned int d_inode)
 /* read data block to file.
  *
  * @d_inode : offset of inode to file.
- * @buf : memory buffer for storing contents of data block.
+ * @in_buf : memory buffer for storing contents of data block.
  * @size : file size.
  */
-int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
+int read_file_ext2(unsigned int d_inode, char *in_buf, unsigned int size)
 {
 	struct ext2_datablock d_block;
 	struct ext2_inode inode;
-	unsigned int d_block_addr, id_block_addr, read_size = 0, id_block_num;
+	unsigned int d_block_addr, id_block_addr, read_size = 0, id_block_num,
+		     need_block = 0;
+	char *buf = NULL, *table_buf = NULL;
 	int i;
 
-	/* calculate location of system memory for data block inode. */
-	d_inode = ext2_buf + d_inode;
+	need_block = (d_inode / block_size_of_fs) + 1;
+
+	buf = malloc(ONENAND_READ_SIZE * need_block);
+	if (buf == NULL) {
+		printf("failed to allocate memory.\n");
+		return;
+	}
+
+	table_buf = malloc(ONENAND_READ_SIZE);
+	if (table_buf == NULL) {
+		printf("failed to allocate memory.\n");
+		return;
+	}
+
+	read_blk_from_onenand(inode_table_location, need_block, buf);
 
 	/* get inode table entry for file. */
-	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
+	memcpy(&inode, (char *) buf + d_inode, sizeof(struct ext2_inode));
+
+	/* clear buffer for future use. */
+	memset(buf, 0x0, ONENAND_READ_SIZE * need_block);
 
 	/* get data block information for file. */
 	memcpy(&d_block, (char *) &inode.b.blocks, sizeof(struct ext2_datablock));
@@ -458,19 +546,28 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 			dprint("direct block[%d] num = %d\n", i, d_block.dir_blocks[i]);
 
 			/* calculate real data address. */
-			d_block_addr = (unsigned int) ext2_buf + d_block.dir_blocks[i] *
+			d_block_addr = (unsigned int) d_block.dir_blocks[i] *
 				block_size_of_fs;
 			if (size > block_size_of_fs) {
-				memcpy(buf, (char *) d_block_addr, block_size_of_fs);
+				read_blk_from_onenand(d_block_addr, 1, buf);
+				memcpy(in_buf, (char *) buf, block_size_of_fs);
 				size -= block_size_of_fs;
-				buf += block_size_of_fs;
+				in_buf += block_size_of_fs;
 				read_size += block_size_of_fs;
 
-				if (size <= 0)
+				if (size <= 0) {
+					free(table_buf);
+					free(buf);
+
 					return read_size;
+				}
 			} else {
-				memcpy(buf, (char *) d_block_addr, size);
+				read_blk_from_onenand(d_block_addr, 1, buf);
+				memcpy(in_buf, (char *) buf, size);
 				read_size += size;
+
+				free(table_buf);
+				free(buf);
 
 				return read_size;
 			}
@@ -482,39 +579,53 @@ int read_file_ext2(unsigned int d_inode, char *buf, unsigned int size)
 	 * 2-dim indirect block has no block num. 
 	 */
 	if (d_block.indir_block > 0 && d_block.double_indir_block <= 0) {
-		d_block_addr = (unsigned int) ext2_buf + d_block.indir_block *
+		d_block_addr = (unsigned int) d_block.indir_block *
 			block_size_of_fs;
-		dprint("1-dim indirect block address = 0x%8x\n",  d_block_addr);
+		dprint("1-dim indirect block address = 0x%x\n", d_block_addr);
+		read_blk_from_onenand(d_block_addr, 1, table_buf);
+
 		/* 1-dim indirect block has 1k block and the size per entry is 4byte. */
 		for (i = 0; i < block_size_of_fs; i+=4) {
 			/* get indirect block number. */
-			memcpy(&id_block_num, (char *) d_block_addr + i, 4);
+			memcpy(&id_block_num, (char *) table_buf + i, 4);
 
-			dprint("1-dim indirect block[%d] num = %d\n", i, id_block_num);
+			dprint("1-dim indirect block[%d] num = %d, %x\n", i, id_block_num, buf);
 
 			/* get real data from indirect block in case of hole. */
 			if (id_block_num > 0) {
 				/* calculate block number having real data. */
-				id_block_addr = (unsigned int) ext2_buf + id_block_num *
+				id_block_addr = (unsigned int) id_block_num *
 					block_size_of_fs;
 
 				if (size > block_size_of_fs) {
-					memcpy(buf, (char *) id_block_addr, block_size_of_fs);
+					read_blk_from_onenand(id_block_addr, 1, buf);
+					memcpy(in_buf, (char *) buf, block_size_of_fs);
 					size -= block_size_of_fs;
-					buf += block_size_of_fs;
+					in_buf += block_size_of_fs;
 					read_size += block_size_of_fs;
 
-					if (size <= 0)
+					if (size <= 0) {
+						free(table_buf);
+						free(buf);
+
 						return read_size;
+					}
 				} else {
-					memcpy(buf, id_block_addr, size);
+					read_blk_from_onenand(id_block_addr, 1, buf);
+					memcpy(in_buf, buf, size);
 					read_size += size;
+
+					free(table_buf);
+					free(buf);
 
 					return read_size;
 				}
 			}
 		}
 	}
+
+	free(table_buf);
+	free(buf);
 
 	return read_size;
 }
@@ -529,22 +640,29 @@ void ls_ext2(unsigned int in_inode, const int cmd)
 {
 	struct ext2_dirent dirent;
 	struct ext2_inode inode;
+	unsigned int next_point = 0, sum_point = 0;
 	int ret;
+	char *buf = NULL;
 
-	/* first, first_find should be 1. */
-	first_find = 1;
+	buf = malloc(ONENAND_READ_SIZE);
+	if (buf == NULL) {
+		dprint("failed to allocate memory.\n");
+		return;
+	}
+
+	read_blk_from_onenand(in_inode, 1, buf);
 
 	switch (cmd) {
 	case EXT2_LS_ONLY_FILE:
 	case EXT2_LS_ALL_ENTRY:
 	case EXT2_LS_ALL:
 		do {
-			ret = get_dir_entry(in_inode, &dirent);
+			ret = get_dir_entry(buf, &dirent);
 			if (ret < 0) {
 				dprint("failed to get directory entry.\n");
 				return;
 			}
-			ret = get_inode(in_inode, &inode);
+			ret = get_inode(buf, &inode);
 			if (ret < 0) {
 				dprint("failed to get inode entry.\n");
 				return;
@@ -572,24 +690,25 @@ void ls_ext2(unsigned int in_inode, const int cmd)
 						inode.mode, inode.size, dirent.name);
 			}
 
-			ret = next_dir_entry(&in_inode);
-		} while (ret == 0);
+			next_point = next_dir_entry(&dirent);
+			buf += next_point;
+		} while (next_point != 0);
 
 		return;
 	default:
 		printf("it's wrong command.\n");
 		return;
 	};
+
+	free(buf);
 }
 
 void cd_ext2(unsigned int in_inode, const char *name)
 {
-	unsigned int d_inode, out_inode, cur_dir;
+	unsigned int d_inode, out_inode, cur_dir, need_block = 0;
 	struct ext2_inode inode;
 	struct ext2_dirent dirent;
-
-	/* first, first_find should be 1. */
-	first_find = 1;
+	char *buf = NULL;
 
 	/* return inode of directory entry. */
 	out_inode = find_file_ext2(in_inode, name, &dirent);
@@ -604,47 +723,62 @@ void cd_ext2(unsigned int in_inode, const char *name)
 		return;
 	}
 
-	/* get the location of inode to file. */
-	d_inode = inode_table_location + (dirent.inode - 1) *
-		INODE_TABLE_ENTRY_SIZE;
+	d_inode = (dirent.inode - 1) * INODE_TABLE_ENTRY_SIZE;
 
-	/* get the location of system memory to inode. */
-	d_inode = ext2_buf + d_inode;
+	/* 
+	 * get block size for loading from onenand.
+	 * if d_inode is more then 4k then need_block should be more then 2.
+	 */
+	need_block = (d_inode / block_size_of_fs) + 1;
+
+	buf = malloc(ONENAND_READ_SIZE * need_block);
+	if (buf == NULL) {
+		printf("failed to allocate memory.\n");
+		return;
+	}
+
+	read_blk_from_onenand(inode_table_location, need_block, buf);
 
 	/* get inode entry to file. */
-	memcpy(&inode, (char *) d_inode, sizeof(struct ext2_inode));
+	memcpy(&inode, (char *) buf + d_inode, sizeof(struct ext2_inode));
 
-	current_inode = (ext2_buf + inode.b.blocks.dir_blocks[0] * block_size_of_fs);
+	current_inode = (inode.b.blocks.dir_blocks[0] * block_size_of_fs);
+
+	free(buf);
+}
+
+void fd_ext2(unsigned int in_inode, const char *name)
+{
+	struct ext2_dirent dirent;
+	unsigned int d_inode, in_size, out_size;
+	char *buf = NULL;
+
+	d_inode = find_file_ext2(in_inode, name, &dirent);
+	if (d_inode < 0) {
+		printf("file not found.\n");
+		return;
+	}
+
+	d_inode = open_file_ext2(d_inode);
+	in_size = get_filesize_ext2(d_inode);
+	if (in_size < 0) {
+		printf("failed to get file size.\n");
+		return;
+	}
+
+	dprint("name = %s, in size = %d\n", name, in_size);
+
+	buf = malloc(in_size);
+
+	out_size = read_file_ext2(d_inode, buf, in_size);
+	dprint("out size = %d, data address = 0x%8x\n", out_size, buf);
 }
 
 void init_onenand_ext2(void)
 {
-	struct ext2_dirent dirent;
-	unsigned int in_size, out_size;
-	char *data;
-
-	load_onenand_to_ram();
-#if 1
 	root_inode = (unsigned int) mount_ext2fs();
 
 	current_inode = root_inode;
-#endif
-
-#if 0
-	inode = (unsigned int) mount_ext2fs();
-
-	inode = find_file_ext2(inode, "s3cfb.c", &dirent);
-	inode = open_file_ext2(inode);
-	in_size = get_filesize_ext2(inode);
-	dprint("in size = %d\n", in_size);
-
-	data = malloc(in_size);
-
-	out_size = read_file_ext2(inode, data, in_size);
-	dprint("out size = %d, data address = 0x%8x\n", out_size, data);
-
-	free(data);
-#endif
 }
 
 int do_ls_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
@@ -672,6 +806,14 @@ int do_cd_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
+int do_fd_ext2(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	if (argc == 2 && argv[1] != NULL)
+	    fd_ext2(current_inode, argv[1]);
+
+	return 0;
+}
+
 U_BOOT_CMD(ls_ext2, 3, 1, do_ls_ext2,
 	"list files from ext2 filesystem.\n",
 	"ls_ext2 [-al] [direct_name]\n"
@@ -680,4 +822,9 @@ U_BOOT_CMD(ls_ext2, 3, 1, do_ls_ext2,
 U_BOOT_CMD(cd_ext2, 3, 1, do_cd_ext2,
 	"change directory.\n",
 	"cd_ext2 [direct_name]\n"
+);
+
+U_BOOT_CMD(fd_ext2, 3, 1, do_fd_ext2,
+	"dump file.\n",
+	"fd_ext2 [file_name]\n"
 );
