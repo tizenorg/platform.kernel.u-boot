@@ -1507,6 +1507,7 @@ void board_sleep_init(void)
 	printf("Turned off regulators. Preparing to sleep. [%s:%d]\n",
 			__FILE__, __LINE__);
 }
+
 void board_sleep_resume(void)
 {
 	unsigned int value;
@@ -1514,6 +1515,8 @@ void board_sleep_resume(void)
 	unsigned char val[2];
 	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	show_hw_revision();
 
 	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;

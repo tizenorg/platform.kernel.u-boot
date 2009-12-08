@@ -391,8 +391,6 @@ static int s5pc110_sleep(int mode)
 	printf("Wakeup Source: 0x%08x\n", value);
 	value = readl(S5PC110_WAKEUP_STAT);
 
-	show_hw_revision();
-
 	counter++;
 	board_sleep_resume();
 	return 0;
