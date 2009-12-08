@@ -104,6 +104,7 @@ struct stdio_dev* stdio_clone(struct stdio_dev *dev);
 int drv_arm_dcc_init(void);
 #endif
 #ifdef CONFIG_LCD
+int	drv_lcd_init_resume(void);
 int	drv_lcd_init (void);
 #endif
 #ifdef CONFIG_VFD
