@@ -55,4 +55,8 @@
 #define PSR_Z_BIT       0x40000000
 #define PSR_N_BIT       0x80000000
 
+#ifndef __ASSEMBLY__
+extern void board_sleep_resume(void);
+#endif
+
 #endif

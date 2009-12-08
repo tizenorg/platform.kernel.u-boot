@@ -12,17 +12,16 @@
 #include <common.h>
 #include <command.h>
 #include <i2c.h>
-
+#include <serial.h>
+#include <stdio_dev.h>
+#include <onenand_uboot.h>
 #include <asm/io.h>
-
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
 #include <asm/arch/sys_proto.h>
+#include "sleep.h"
 
 #define CONFIG_CPU_S5PC110_EVT0_ERRATA
-
-#include <common.h>
-#include "sleep.h"
 
 extern int s5pc110_cpu_save(unsigned long *saveblk);
 extern void s5pc110_cpu_resume(void);
