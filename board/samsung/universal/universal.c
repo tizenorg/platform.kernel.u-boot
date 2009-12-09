@@ -691,8 +691,52 @@ static void enable_touchkey(void)
 	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
 }
 
+#define KP_SEL(x)		(0xFFFF >> (16 - x))	/* 2^x-1 */
+#define INT_CFG			(1 << 4)
+#define OVR_FLOW_IEN		(1 << 3)
+#define KE_IEN			(1 << 0)
+#define KE_INT			(1 << 0)
+#define K_LCK_EN	(1 << 6)
+#define KEC		0xF
+/* Interrupt Status Register */
+#define CMP2_INT	(1 << 5)
+#define CMP1_INT	(1 << 4)
+#define OVR_FLOW_INT	(1 << 3)
+#define K_LCK_INT	(1 << 2)
+#define GPI_INT		(1 << 1)
 static void check_p2_keypad(void)
 {
+	unsigned int auto_download = 0;
+	unsigned char addr = 0x34, val[2];	/* adp5587 key controller */
+	int i, ret, status, ev_cnt;
+	struct s5pc110_gpio *gpio =
+			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	i2c_set_bus_num(I2C_2);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found adp5587 key controller\n");
+		return;
+	}
+	/* Row 8, Column 10 */
+	val[0] = 0xf;
+	ret = i2c_write(addr, 0x1D, 1, val, 1);			/* Set KP_GPIO1 */
+	val[0] = 0xf;
+	ret |= i2c_write(addr, 0x1E, 1, val, 1);		/* Set KP_GPIO2 */
+	val[0] = 0x3;
+	ret |= i2c_write(addr, 0x1F, 1, val, 1);		/* Set KP_GPIO3 */
+	val[0] = 0x3f;	/*CMP2_INT | CMP1_INT | OVR_FLOW_INT | K_LCK_INT | GPI_INT | KE_INT */
+	ret |= i2c_write(addr, 0x02, 1, val, 1); /* Status is W1C */
+	val[0] = 0x19;	/* INT_CFG | OVR_FLOW_IEN | KE_IEN */
+	ret |= i2c_write(addr, 0x01, 1, val, 1);
+	for (i = 0; i < 10; i++) {
+		udelay(1000);		/* FIXME */
+		i2c_read(addr, 0x04 + i, 1, val, 1);
+		if (val[0] == 0x94)
+			auto_download = 1;
+	}
+	
+	if (auto_download == 1)
+		setenv("bootcmd", "usbdown");
 }
 
 static void check_keypad(void)
@@ -771,7 +815,7 @@ static void check_keypad(void)
 
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
-		if (machine_is_p1p2()) {
+		if (machine_is_p1p2) {
 			if ((col_value[0] & 0xd) == 0xd)
 				auto_download = 1;
 		}
@@ -1328,6 +1372,8 @@ int misc_init_r(void)
 	*/
 	if (machine_is_geminus())
 		setenv("lcd", "lcd=lms480jc01");
+	if (machine_is_p1p2())
+		setenv("lcd", "lcd=ams701");
 #endif
 
 	show_hw_revision();
