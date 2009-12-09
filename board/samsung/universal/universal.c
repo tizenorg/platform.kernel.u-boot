@@ -695,9 +695,7 @@ static void check_p2_keypad(void)
 {
 	unsigned int auto_download = 0;
 	unsigned char addr = 0x34, val[2];	/* adp5587 key controller */
-	int i, ret, status, ev_cnt;
-	struct s5pc110_gpio *gpio =
-			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	int i, ret;
 	i2c_set_bus_num(I2C_2);
 
 	if (i2c_probe(addr)) {
@@ -802,7 +800,7 @@ static void check_keypad(void)
 
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
-		if (machine_is_p1p2) {
+		if (machine_is_p1p2()) {
 			if ((col_value[0] & 0xd) == 0xd)
 				auto_download = 1;
 		}
@@ -1359,7 +1357,7 @@ int misc_init_r(void)
 	*/
 	if (machine_is_geminus())
 		setenv("lcd", "lcd=lms480jc01");
-	if (machine_is_p1p2())
+	if (board_is_p2_real())
 		setenv("lcd", "lcd=ams701");
 #endif
 
