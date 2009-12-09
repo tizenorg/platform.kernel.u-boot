@@ -976,7 +976,7 @@ static void into_charge_mode(void)
 	exit_font();
 #endif
 
-	run_command("sleep", 0);
+	run_command("sleep 1", 0);
 }
 
 static void check_micro_usb(void)
