@@ -691,19 +691,6 @@ static void enable_touchkey(void)
 	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
 }
 
-#define KP_SEL(x)		(0xFFFF >> (16 - x))	/* 2^x-1 */
-#define INT_CFG			(1 << 4)
-#define OVR_FLOW_IEN		(1 << 3)
-#define KE_IEN			(1 << 0)
-#define KE_INT			(1 << 0)
-#define K_LCK_EN	(1 << 6)
-#define KEC		0xF
-/* Interrupt Status Register */
-#define CMP2_INT	(1 << 5)
-#define CMP1_INT	(1 << 4)
-#define OVR_FLOW_INT	(1 << 3)
-#define K_LCK_INT	(1 << 2)
-#define GPI_INT		(1 << 1)
 static void check_p2_keypad(void)
 {
 	unsigned int auto_download = 0;
