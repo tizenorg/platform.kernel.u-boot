@@ -32,8 +32,6 @@ static long tx_len = 4;
 static char rx_data[2048];
 static long rx_len = 64;
 
-struct usbd_ops *usbd_set_interface(struct usbd_ops *);
-
 extern int s5p_receive_done;
 extern int s5p_usb_connected;
 extern otg_dev_t otg;
@@ -98,7 +96,7 @@ static void usb_init(void)
 #endif
 }
 
-void usb_stop(void)
+static void usb_stop(void)
 {
 	s5p_usb_stop();
 #ifdef CONFIG_S5PC1XXFB
@@ -187,4 +185,3 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 
 	return usbd;
 }
-
