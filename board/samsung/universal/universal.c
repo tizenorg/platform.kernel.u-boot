@@ -157,6 +157,7 @@ enum {
 	MACH_AQUILA,
 	MACH_P1P2,
 	MACH_GEMINUS,
+	MACH_CYPRESS,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -317,6 +318,7 @@ static const char *board_name[] = {
 	"Aquila",
 	"P1P2",
 	"Geminus",
+	"Cypress",
 };
 
 enum {
@@ -371,6 +373,7 @@ static void check_board_revision(int board, int rev)
 		break;
 	case MACH_TICKERTAPE:
 	case MACH_GEMINUS:
+	case MACH_CYPRESS:
 		board_rev &= ~BOARD_MASK;
 		break;
 	default:
@@ -428,12 +431,13 @@ static void check_hw_revision(void)
 		 * LUA: Limo Universal Aquila
 		 * OA: Old Aquila
 		 * P1P2: Smart Book
+		 * CYP: Cypress
 		 *
 		 * ADDR = 0xE0200000 + OFF
 		 *
-		 * 	 OFF	Universal LRA  LUA  OA   TT   SS	P1P2
+		 * 	 OFF	Universal LRA  LUA  OA   TT   SS	P1P2 CYP
 		 *   J1: 0x0264	0x10      0x00 0x00 0x00 0x00 0x00	0x00
-		 *   H1: 0x0C24	    W      0x28 0xA8 0x1C		0x18
+		 *   H1: 0x0C24	   W      0x28 0xA8 0x1C		0x18 0x0F
 		 *   H3: 0x0C64	          0x03 0x07 0x0F		0xff
 		 *   D1: 0x00C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
 		 *    I: 0x0224	                    0x02 0x00 0x08
@@ -465,7 +469,7 @@ static void check_hw_revision(void)
 
 		/* C110 TickerTape */
 		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
-			gpio_get_value(&gpio->gpio_d1, 1) == 0)
+				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
 		/* C110 P1P2 */
@@ -502,6 +506,11 @@ static void check_hw_revision(void)
 			board = MACH_GEMINUS;
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
 		gpio_direction_output(&gpio->gpio_j1, 2, 0);
+
+		/* C110 Cypress */
+		if (gpio_get_value(&gpio->gpio_h1, 1) == 1 &&
+				gpio_get_value(&gpio->gpio_h1, 2) == 1)
+			board = MACH_CYPRESS;
 	}
 
 	/* Set machine id */
