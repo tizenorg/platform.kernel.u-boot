@@ -33,61 +33,46 @@ mem_ctrl_asm_init:
 	ldrne	r6, =S5PC110_DMC1_BASE			@ 0xF1400000
 
 	/* DLL parameter setting */
-	ldr	r1, =0x003b3b00
+	ldr	r1, =0x50101000
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
-	ldr	r1, =0x4
+	ldr	r1, =0xf4
 	str	r1, [r0, #0x01C]			@ PHYCONTROL1_OFFSET
 	strne	r1, [r6, #0x01C]			@ PHYCONTROL1_OFFSET
+	ldreq	r1, =0x0
+	streq	r1, [r0, #0x020]			@ PHYCONTROL2_OFFSET
+
 	/* DLL on */
-	ldreq	r1, =0x003b3b02
-	streq	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
-	streq	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
+	ldr	r1, =0x50101002
+	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
+	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
 	/* DLL start */
-	ldr	r1, =0x003b3b03
+	ldr	r1, =0x50101003
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
-
-	/* Wait */
-	mov	r2, #0x4000
-wait1:
-	subs	r2, r2, #0x1
-	cmp	r2, #0x0
-	bne	wait1
-
-	/* Restore the comparison result, which was screwed by bne wait1 */
-	cmp	r7, r8
 
 	/* Force value locking for DLL off */
-	ldr	r1, =0x6A3B3B01
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
-	/* Auto Refresh Off */
-	ldr	r1, =0x0FFF1010
-	str	r1, [r0, #0x0]				@ ConCONTROL
-	strne	r1, [r6, #0x0]				@ ConCONTROL
-
 	/* DLL off */
-	/* ldr	r1, =0x50101009 */
-	/* str	r1, [r0, #0x018] */			@ PHYCONTROL0_OFFSET
-	/* strne	r1, [r6, #0x018] */			@ PHYCONTROL0_OFFSET
-	ldr	r1, =0x00202100
-	str	r1, [r0, #0x4]				@ MemControl
-	strne	r1, [r6, #0x4]				@ MemControl
+	ldr	r1, =0x50101009
+	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
+	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
-	ldr	r1, =0x30F82222		@ MCP_B, DMC0_MEMCONFIG_0
-	str	r1, [r0, #0x008]			@ MEMCONFIG0
-	ldr	r1, =0x40F01322		@ MCP_B, DMC1_MEMCONFIG_0
-	strne	r1, [r6, #0x008]			@ MEMCONFIG0
+	/* auto refresh off */
+	ldr	r1, =0xff001010 | (1 << 7)
+	str	r1, [r0, #0x000]			@ CONCONTROL_OFFSET
+	strne	r1, [r6, #0x000]			@ CONCONTROL_OFFSET
 
-	ldr	r1, =0x40F82222		@ MCP_B, DMC0_MEMCONFIG_1
-	str	r1, [r0, #0x00C]			@ MEMCONFIG1
-	ldr	r1, =0x50F01322		@ MCP_B, DMC0_MEMCONFIG_1
-	strne	r1, [r6, #0x00C]			@ MEMCONFIG1
-
-	bne	skipswap	@ skip if PC110
+	/*
+	 * Burst Length 4, 2 chips, 32-bit, LPDDR
+	 * OFF: dynamic self refresh, force precharge, dynamic power down off
+	 */
+	ldr	r1, =0x00212100
+	str	r1, [r0, #0x004]			@ MEMCONTROL_OFFSET
+	strne	r1, [r6, #0x004]			@ MEMCONTROL_OFFSET
 
 	/*
 	 * Note:
@@ -104,7 +89,7 @@ wait1:
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r3, =0x30F82222		@ LSI Update
+	ldr	r3, =0x30f80222
 swap_memory:
 	str	r3, [r0, #0x008]			@ MEMCONFIG0_OFFSET
 
@@ -139,10 +124,8 @@ swap_memory:
 	 */
 	eoreq	r3, r3, #0x08000000
 	streq	r3, [r0, #MEMCONFIG1_OFFSET]
-skipswap:
 
-	/* ldr	r1, =0x20000000 */
-	ldr	r1, =0xF0000000		@ LSI Update
+	ldr	r1, =0x20000000
 	str	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 	strne	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET
 	strne	r1, [r6, #0x014]			@ PRECHCONFIG_OFFSET
@@ -165,22 +148,19 @@ skipswap:
 	ldrne	r1, =0x00000618
 	strne	r1, [r6, #0x030]			@ TIMINGAREF_OFFSET
 
-	/*ldr	r1, =0x0c233287*/
-	ldr	r1, =0x14233287
+	ldr	r1, =0x0c233287
 	str	r1, [r0, #0x034]			@ TIMINGROW_OFFSET
 	ldrne	r1, =0x11344309
 	strne	r1, [r6, #0x034]			@ TIMINGROW_OFFSET
 
 	/* twtr=3 twr=2 trtp=3 cl=3 wl=3 rl=3 */
-	/*ldr	r1, =0x32330303*/
-	ldr	r1, =0x12130005
+	ldr	r1, =0x32330303
 	str	r1, [r0, #0x038]			@ TIMINGDATA_OFFSET
 	ldrne	r1, =0x12130005
 	strne	r1, [r6, #0x038]			@ TIMINGDATA_OFFSET
 
 	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
-	/*ldr	r1, =0x04141433*/
-	ldr	r1, =0x0e140222
+	ldr	r1, =0x04141433
 	str	r1, [r0, #0x03C]			@ TIMINGPOWER_OFFSET
 	ldrne	r1, =0x0E190222
 	strne	r1, [r6, #0x03C]			@ TIMINGPOWER_OFFSET
@@ -232,8 +212,7 @@ skipswap:
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
 	/* auto refresh on */
-	/* ldr	r1, =0xff002030 | (1 << 7) */
-	ldr	r1, =0xFF001030		@ LSI Update
+	ldr	r1, =0xff002030 | (1 << 7)
 	str	r1, [r0, #0x000]			@ S5P_CONCONTROL
 	strne	r1, [r6, #0x000]			@ S5P_CONCONTROL
 
@@ -243,13 +222,12 @@ skipswap:
 	strne	r1, [r6, #0x028]			@ S5P_PWRDNCONFIG
 
 	/* BL%LE %LONG */
-	/*ldr	r1, =0xff212100*/
-	ldr	r1, =0x00212113
+	ldr	r1, =0xff212100
 	str	r1, [r0, #0x004]			@ S5P_MEMCONTROL
 	strne	r1, [r6, #0x004]			@ S5P_MEMCONTROL
 
 	/* Skip when S5PC110 */
-	bne	ret1f
+	bne	1f
 
 	/* Check OneDRAM access area at s5pc100 */
 	ldreq	r3, =0x38f80222
@@ -258,7 +236,7 @@ skipswap:
 	ldr	r2, [r1]
 	cmp	r2, r3
 	beq	swap_memory
-ret1f:
+1:
 	mov	pc, lr
 
 	.ltorg
