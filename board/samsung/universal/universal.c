@@ -1365,6 +1365,14 @@ int misc_init_r(void)
 	else
 		setenv("lcd", "lcd=tl2796-dual");
 	*/
+#endif
+
+	/* 
+	 * env values below should be added in case that lcd panel of geminus,
+	 * p1 and p2 are enabled at u-boot. 
+	 * setenv means that lcd panel has been turned on at u-boot.
+	 */
+#if 0
 	if (machine_is_geminus())
 		setenv("lcd", "lcd=lms480jc01");
 	if (board_is_p2_real())
