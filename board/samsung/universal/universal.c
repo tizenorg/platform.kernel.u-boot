@@ -508,8 +508,9 @@ static void check_hw_revision(void)
 		gpio_direction_output(&gpio->gpio_j1, 2, 0);
 
 		/* C110 Cypress */
-		if (gpio_get_value(&gpio->gpio_h1, 1) == 1 &&
-				gpio_get_value(&gpio->gpio_h1, 2) == 1)
+		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j2, 2);
+		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
 			board = MACH_CYPRESS;
 	}
 
