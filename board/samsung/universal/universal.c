@@ -172,100 +172,49 @@ enum {
 
 #define BOARD_MASK		0xF00
 
+static int c110_machine_id(void)
+{
+	return gd->bd->bi_arch_number - C110_MACH_START;
+}
+
 static int machine_is_aquila(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_AQUILA;
+	return c110_machine_id() == MACH_AQUILA;
 }
 
 static int machine_is_p1p2(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_P1P2;
+	return c110_machine_id() == MACH_P1P2;
 }
 
 static int machine_is_tickertape(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_TICKERTAPE;
+	return c110_machine_id() == MACH_TICKERTAPE;
 }
 
 static int machine_is_geminus(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_GEMINUS;
+	return c110_machine_id() == MACH_GEMINUS;
 }
 
 static int board_is_limo_universal(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_AQUILA && (board_rev & LIMO_UNIVERSAL_BOARD);
+	return machine_is_aquila() && (board_rev & LIMO_UNIVERSAL_BOARD);
 }
 
 static int board_is_limo_real(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_AQUILA && (board_rev & LIMO_REAL_BOARD);
+	return machine_is_aquila() && (board_rev & LIMO_REAL_BOARD);
 }
 
 static int board_is_j1b2(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_AQUILA && (board_rev & J1_B2_BOARD);
+	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
 }
 
 static int board_is_p2_real(void)
 {
-	int board;
-
-	if (cpu_is_s5pc100())
-		return 0;
-
-	board = gd->bd->bi_arch_number - C110_MACH_START;
-
-	return board == MACH_P1P2 && (board_rev & P2_REAL_BOARD);
+	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
 }
 
 #ifdef CONFIG_MISC_INIT_R
@@ -371,9 +320,12 @@ static void check_board_revision(int board, int rev)
 		break;
 	case MACH_P1P2:
 		break;
+	case MACH_CYPRESS:
+		/* There's no HWREV_MODE3 */
+		board_rev &= ~(1 << 3);
+		/* Fall through */
 	case MACH_TICKERTAPE:
 	case MACH_GEMINUS:
-	case MACH_CYPRESS:
 		board_rev &= ~BOARD_MASK;
 		break;
 	default:
@@ -512,6 +464,7 @@ static void check_hw_revision(void)
 		gpio_direction_input(&gpio->gpio_j2, 2);
 		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
 			board = MACH_CYPRESS;
+		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 	}
 
 	/* Set machine id */
@@ -529,7 +482,7 @@ static void check_hw_revision(void)
 	}
 }
 
-void show_hw_revision(void)
+static void show_hw_revision(void)
 {
 	int board;
 
@@ -633,9 +586,6 @@ static void enable_t_flash(void)
 	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
-	if (machine_is_p1p2())
-		return;
-
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
 	gpio_direction_output(&gpio->gpio_mp0_5, 4, 1);
 }
@@ -729,7 +679,7 @@ static void check_p2_keypad(void)
 		if (val[0] == 0x94)
 			auto_download = 1;
 	}
-	
+
 	if (auto_download == 1)
 		setenv("bootcmd", "usbdown");
 }
