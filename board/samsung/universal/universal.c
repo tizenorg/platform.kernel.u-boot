@@ -418,6 +418,11 @@ static void check_hw_revision(void)
 			}
 #endif
 		}
+		/* Workaround: C110 Aquila Rev0.6 */
+		if (board_rev == 6) {
+			board = MACH_AQUILA;
+			board_rev |= LIMO_REAL_BOARD;
+		}
 
 		/* C110 TickerTape */
 		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
