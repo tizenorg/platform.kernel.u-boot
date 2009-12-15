@@ -107,11 +107,17 @@ swap_memory:
 	 */
 	/* Default : 2GiB */
 	ldr	r4, =0x40f00322				@ 2Gib
+	ldr	r5, =0x50f00312
 	cmp	r9, #1
 	ldreq	r4, =0x40f80222				@ 1Gib
+	cmp	r9, #3
+	ldreq	r5, =0x50f80312				@ 2Gib + 1Gib
+	cmp	r9, #4
+	ldreq	r5, =0x50f00312				@ 2Gib + 2Gib
 
 	cmp	r7, r8
 	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
+	strne	r5, [r6, #0x00C]			@ MEMCONFIG1_OFFSET
 
 	/*
 	 * DMC0: CS1: S5PC100
