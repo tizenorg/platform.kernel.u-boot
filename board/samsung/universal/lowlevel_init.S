@@ -164,6 +164,16 @@ lowlevel_init:
 	ldr	r1, [r2, #0x44]
 	cmp	r1, #0x47
 	moveq	r9, #1
+	/* Aquila Rev 0.6 : 4G1G1G x32 for MSM6290 */
+	ldr	r2, =0xE0200200
+	ldr	r1, [r2, #0x48]
+	bic	r1, r1, #(0xFF << 2)	/* PULLUP_DISABLE: 4 * 2-bit */
+	str	r1, [r2, #0x48]
+	nop
+	ldr	r1, [r2, #0x44]
+	and	r1, r1, #(0x6 << 2)
+	cmp	r1, #(0x6 << 2)
+	moveq	r9, #1
 
 	bl	mem_ctrl_asm_init
 
