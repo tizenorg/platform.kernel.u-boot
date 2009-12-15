@@ -424,6 +424,13 @@ static void check_hw_revision(void)
 				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
+		/* C110 Cypress: Do first this than P1P2 */
+		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j2, 2);
+		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
+			board = MACH_CYPRESS;
+		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
+
 		/* C110 P1P2 */
 		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
 			board = MACH_P1P2;
@@ -458,13 +465,6 @@ static void check_hw_revision(void)
 			board = MACH_GEMINUS;
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
 		gpio_direction_output(&gpio->gpio_j1, 2, 0);
-
-		/* C110 Cypress */
-		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j2, 2);
-		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
-			board = MACH_CYPRESS;
-		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 	}
 
 	/* Set machine id */
