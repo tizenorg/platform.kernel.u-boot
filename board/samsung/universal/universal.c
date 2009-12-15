@@ -935,7 +935,7 @@ static void into_charge_mode(void)
 	run_command("sleep 1", 0);
 }
 
-static void check_micro_usb(void)
+static void check_micro_usb(int intr)
 {
 	unsigned char addr;
 	unsigned char val[2];
@@ -957,7 +957,8 @@ static void check_micro_usb(void)
 	}
 
 	/* Clear Interrupt */
-	i2c_read(addr, 0x03, 1, val, 2);
+	if (intr)
+		i2c_read(addr, 0x03, 1, val, 2);
 
 	/* Read Device Type 1 */
 	i2c_read(addr, 0x0a, 1, val, 1);
@@ -1364,7 +1365,7 @@ int misc_init_r(void)
 	setup_power_down_mode_registers();
 
 	/* check fsa9480 */
-	check_micro_usb();
+	check_micro_usb(0);
 
 	return 0;
 }
@@ -1545,7 +1546,7 @@ void board_sleep_resume(void)
 	check_battery();
 
 	/* check fsa9480 */
-	check_micro_usb();
+	check_micro_usb(1);
 }
 
 #ifdef CONFIG_CMD_USBDOWN
