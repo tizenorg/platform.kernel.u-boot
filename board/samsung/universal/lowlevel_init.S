@@ -173,7 +173,10 @@ lowlevel_init:
 	ldr	r4, [r2, #0x48]
 	bic	r1, r4, #(0xFF << 2)	/* PULLUP_DISABLE: 4 * 2-bit */
 	str	r1, [r2, #0x48]
+	/* For write completion */
 	nop
+	nop
+
 	ldr	r3, [r2, #0x44]
 	and	r1, r3, #(0x5 << 2)
 	cmp	r1, #(0x5 << 2)
