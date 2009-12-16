@@ -1490,14 +1490,13 @@ void board_sleep_init(void)
 	saved_val[2][0] = val[0];
 	saved_val[2][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
-	val[0] = 0x0;
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	/* Set ONOFF4 */
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	saved_val[3][0] = val[0];
 	saved_val[3][1] = val[1];
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
+	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
 	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	printf("Turned off regulators. Preparing to sleep. [%s:%d]\n",
