@@ -1412,6 +1412,22 @@ int dram_init(void)
 		 */
 		size = size << 4;
 
+		/* 
+		 * Aquila Rev0.5 4G3G1G
+		 * Aquila Rev0.7 4G3G1G
+		 */
+		if (machine_is_aquila() && (hwrevision(5) || hwrevision(7))) {
+			unsigned int memconfig1, sz;
+
+			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
+
+			sz = (memconfig1 >> 16) & 0xFF;
+			sz = ((unsigned char) ~sz) + 1;
+			sz = sz << 4;
+
+			size += sz;
+		}
+
 	}
 	gd->bd->bi_dram[1].size = size << 20;
 
