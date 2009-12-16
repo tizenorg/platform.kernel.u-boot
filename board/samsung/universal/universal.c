@@ -1425,7 +1425,8 @@ int dram_init(void)
 			sz = ((unsigned char) ~sz) + 1;
 			sz = sz << 4;
 
-			size += sz;
+			/* FIXME Disable at this time */
+			/* size += sz; */
 		}
 
 	}
