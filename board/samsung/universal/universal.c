@@ -959,8 +959,10 @@ static void check_micro_usb(int intr)
 	}
 
 	/* Clear Interrupt */
-	if (intr)
+	if (intr) {
 		i2c_read(addr, 0x03, 1, val, 2);
+		udelay(500 * 1000);
+	}
 
 	/* Read Device Type 1 */
 	i2c_read(addr, 0x0a, 1, val, 1);
