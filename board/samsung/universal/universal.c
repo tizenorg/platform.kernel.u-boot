@@ -1586,6 +1586,29 @@ void init_panel_info(vidinfo_t *vid)
 }
 #endif
 
+static void setup_meminfo(void)
+{
+	char meminfo[64] = {0, };
+	int count = 0, size, real;
+
+	size = gd->bd->bi_dram[0].size >> 20;
+	count += sprintf(meminfo + count, "mem=%dM", size);
+
+	/* Each Chip Select can't exceed the 256MiB */
+	size = gd->bd->bi_dram[1].size >> 20;
+	real = min(size, 256);
+	count += sprintf(meminfo + count, " mem=%dM@0x%x",
+		real, gd->bd->bi_dram[1].start);
+
+	size -= real;
+	if (size > 0) {
+		count += sprintf(meminfo + count, " mem=%dM@0x%x",
+			size, gd->bd->bi_dram[1].start + (real << 20));
+	}
+
+	setenv("meminfo", meminfo);
+}
+
 int misc_init_r(void)
 {
 #ifdef CONFIG_LCD
@@ -1613,6 +1636,8 @@ int misc_init_r(void)
 		setenv("lcdinfo", "lcd=ams701");
 	*/
 #endif
+	setup_meminfo();
+
 	show_hw_revision();
 
 	/* Set proper PMIC pins */
@@ -1671,10 +1696,8 @@ int board_init(void)
 
 int dram_init(void)
 {
-	char meminfo[64] = {0,};
 	unsigned int base, memconfig0, size;
 	unsigned int memconfig1, sz = 0;
-	int count = 0;
 
 	if (cpu_is_s5pc100()) {
 		/* In mem setup, we swap the bank. So below size is correct */
@@ -1718,18 +1741,6 @@ int dram_init(void)
 	 * bi_dram[1].size contains all DMC1 memory size
 	 */
 	gd->bd->bi_dram[1].size = (size + sz) << 20;
-
-	count += sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
-			(int)gd->bd->bi_dram[0].size >> 20,
-			size, (unsigned int)gd->bd->bi_dram[1].start);
-#if 0
-	if (sz) {
-		sprintf(meminfo + count, " mem=%dM@0x%x",
-			sz, memconfig1 & 0xFF000000);
-	}
-#endif
-
-	setenv("meminfo", meminfo);
 
 	return 0;
 }
