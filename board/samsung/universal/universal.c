@@ -94,11 +94,21 @@ static struct i2c_gpio_bus_data i2c_gpio5 = {
 /*
  * i2c gpio6
  * SDA: GPJ3[0]
- * SCL: GPJ3[0]
+ * SCL: GPJ3[1]
  */
 static struct i2c_gpio_bus_data i2c_gpio6 = {
 	.sda_pin	= 0,
 	.scl_pin	= 1,
+};
+
+/*
+ * i2c gpio6 - cypress
+ * SDA: GPJ3[4]
+ * SCL: GPJ3[5]
+ */
+static struct i2c_gpio_bus_data i2c_cypress_gpio6 = {
+	.sda_pin	= 4,
+	.scl_pin	= 5,
 };
 
 static struct i2c_gpio_bus i2c_gpio[] = {
@@ -114,32 +124,6 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 		.bus	= &i2c_gpio6,
 	},
 };
-
-static void enable_touchkey(void);
-static void enable_battery(void);
-
-void i2c_init_board(void)
-{
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
-	if (cpu_is_s5pc100())
-		return;
-
-	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
-	i2c_gpio[I2C_GPIO3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
-	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
-	i2c_gpio[I2C_GPIO5].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
-	i2c_gpio[I2C_GPIO6].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
-
-	i2c_gpio_init(i2c_gpio, ARRAY_SIZE(i2c_gpio), I2C_PMIC);
-
-	/* XXX Power on Touckey early (it requires 100 msec power up time) */
-	enable_touchkey();
-
-	/* Reset on max17040 early */
-	if (battery_soc == 0)
-		enable_battery();
-}
 
 u32 get_board_rev(void)
 {
@@ -197,6 +181,11 @@ static int machine_is_geminus(void)
 	return c110_machine_id() == MACH_GEMINUS;
 }
 
+static int machine_is_cypress(void)
+{
+	return c110_machine_id() == MACH_CYPRESS;
+}
+
 static int board_is_limo_universal(void)
 {
 	return machine_is_aquila() && (board_rev & LIMO_UNIVERSAL_BOARD);
@@ -215,6 +204,35 @@ static int board_is_j1b2(void)
 static int board_is_p2_real(void)
 {
 	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
+}
+
+static void enable_touchkey(void);
+static void enable_battery(void);
+
+void i2c_init_board(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	if (cpu_is_s5pc100())
+		return;
+
+	if (machine_is_cypress())
+		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
+
+	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
+	i2c_gpio[I2C_GPIO3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
+	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
+	i2c_gpio[I2C_GPIO5].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
+	i2c_gpio[I2C_GPIO6].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
+
+	i2c_gpio_init(i2c_gpio, ARRAY_SIZE(i2c_gpio), I2C_PMIC);
+
+	/* XXX Power on Touckey early (it requires 100 msec power up time) */
+	enable_touchkey();
+
+	/* Reset on max17040 early */
+	if (battery_soc == 0)
+		enable_battery();
 }
 
 #ifdef CONFIG_MISC_INIT_R
@@ -950,7 +968,10 @@ static void check_micro_usb(int intr)
 			return;
 	}
 
-	i2c_set_bus_num(I2C_PMIC);
+	if (machine_is_cypress())
+		i2c_set_bus_num(I2C_GPIO6);
+	else
+		i2c_set_bus_num(I2C_PMIC);
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
