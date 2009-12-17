@@ -1593,7 +1593,8 @@ int usb_board_init(void)
 	/* S5PC110 */
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check usb path */
-		check_mhl();
+		if (board_is_limo_real() && !hwrevision(6))
+			check_mhl();
 	}
 
 	if (machine_is_tickertape()) {
