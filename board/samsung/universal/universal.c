@@ -50,6 +50,7 @@ enum {
 	I2C_PMIC,
 	I2C_GPIO5,
 	I2C_GPIO6,
+	I2C_GPIO7,
 };
 
 /*
@@ -112,6 +113,16 @@ static struct i2c_gpio_bus_data i2c_cypress_gpio6 = {
 	.scl_pin	= 5,
 };
 
+/*
+ * i2c gpio7 - cypress
+ * SDA: MP05[6]
+ * SCL: MP05[4]
+ */
+static struct i2c_gpio_bus_data i2c_cypress_gpio7 = {
+	.sda_pin	= 6,
+	.scl_pin	= 4,
+};
+
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{
 		.bus	= &i2c_2,
@@ -123,7 +134,9 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 		.bus	= &i2c_gpio5,
 	}, {
 		.bus	= &i2c_gpio6,
-	},
+	}, {
+		.bus	= NULL,
+	}
 };
 
 u32 get_board_rev(void)
@@ -213,12 +226,21 @@ static void enable_battery(void);
 void i2c_init_board(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	int num_bus;
 
 	if (cpu_is_s5pc100())
 		return;
 
-	if (machine_is_cypress())
+	num_bus = ARRAY_SIZE(i2c_gpio);
+
+	if (machine_is_cypress()) {
 		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
+		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
+		i2c_gpio[I2C_GPIO7].bus->gpio_base =
+			(unsigned int)&gpio->gpio_mp0_5;
+	} else {
+		num_bus--;
+	}
 
 	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
 	i2c_gpio[I2C_GPIO3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
@@ -226,7 +248,7 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_GPIO5].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
 	i2c_gpio[I2C_GPIO6].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
 
-	i2c_gpio_init(i2c_gpio, ARRAY_SIZE(i2c_gpio), I2C_PMIC);
+	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
 
 	/* XXX Power on Touckey early (it requires 100 msec power up time) */
 	enable_touchkey();
@@ -814,11 +836,18 @@ static void enable_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real()
-			&& !machine_is_geminus())
+	if (machine_is_aquila()) {
+		if (board_is_j1b2())
+			return;
+	}
+
+	if (machine_is_tickertape())
 		return;
 
-	i2c_set_bus_num(I2C_GPIO3);
+	if (machine_is_cypress())
+		i2c_set_bus_num(I2C_GPIO7);
+	else
+		i2c_set_bus_num(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -835,11 +864,18 @@ static void check_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real()
-			&& !machine_is_geminus())
+	if (machine_is_aquila()) {
+		if (board_is_j1b2())
+			return;
+	}
+
+	if (machine_is_tickertape())
 		return;
 
-	i2c_set_bus_num(I2C_GPIO3);
+	if (machine_is_cypress())
+		i2c_set_bus_num(I2C_GPIO7);
+	else
+		i2c_set_bus_num(I2C_GPIO3);
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
