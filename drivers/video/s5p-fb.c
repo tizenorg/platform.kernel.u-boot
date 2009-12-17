@@ -117,20 +117,19 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	s5pc_fimd_lcd_init(vid);
 }
 
-static void lcd_test(void)
+static void lcd_test(unsigned int width, unsigned int height)
 {
+	unsigned int height_level = height / 3;
+
 	/* red */
-	read_image32((char *)lcd_base, 0, 0, 1024, 200,
+	read_image32((char *)lcd_base, 0, 0, width, height_level,
 			makepixel8888(0, 255, 0, 0));
 	/* green */
-	read_image32((char *)lcd_base, 0, 200, 1024, 400,
-			makepixel8888(0, 0, 255, 0));
+	read_image32((char *)lcd_base, 0, height_level, width,
+		height_level * 2, makepixel8888(0, 0, 255, 0));
 	/* blue */
-	read_image32((char *)lcd_base, 0, 400, 1024, 600,
+	read_image32((char *)lcd_base, 0, height_level * 2, width, height,
 			makepixel8888(0, 0, 0, 255));
-	/* write */
-	//read_image32((char *)lcd_base, 0, 600, 1024, 800,
-	//		makepixel8888(0, 255, 255, 255));
 }
 
 int conv_rgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
@@ -255,7 +254,7 @@ void lcd_ctrl_init(void *lcdbase)
 	/*
 	if (strcmp(option, "test") == 0) {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
-		lcd_test();
+		lcd_test(panel_width, panel_height);
 	} else if (strcmp(option, "image") == 0)
 		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 	else {
