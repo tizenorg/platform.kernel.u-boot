@@ -1419,6 +1419,19 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
 	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
 
+	if (machine_is_cypress()) {
+		/* FLCD_CS */
+		gpio_cfg_pin(&gpio->gpio_mp0_1, 0, GPIO_OUTPUT);
+		/* FLCD_CLK */
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 0, GPIO_OUTPUT);
+		/* FLCD_SDI */
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_OUTPUT);
+		/* FLCD_RST_S */
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 5, GPIO_OUTPUT);
+		/* FLCD_ON_S */
+		gpio_cfg_pin(&gpio->gpio_g2, 2, GPIO_OUTPUT);
+	}
+
 	return;
 }
 
@@ -1441,28 +1454,36 @@ void reset_lcd(void)
 
 	if (machine_is_aquila() || machine_is_geminus()/* || board_is_p2_real() */)
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+	if (machine_is_cypress())
+		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
 }
 
 void lcd_power_on(unsigned int onoff)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	if (machine_is_aquila() || machine_is_geminus()) {
-		if (onoff) {
+	if (onoff) {
+		if (machine_is_aquila() || machine_is_geminus())
 			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
-			/*
-			if (board_is_p2_real())
-			     gpio_direction_output(&gpio->gpio_j1, 4, 1);
-			*/
-		} else {
+		if (machine_is_cypress())
+			gpio_set_value(&gpio->gpio_g2, 2, 1);
+
+		/*
+		if (board_is_p2_real())
+			gpio_direction_output(&gpio->gpio_j1, 4, 1);
+		*/
+	} else {
+		if (machine_is_aquila() || machine_is_geminus())
 			gpio_set_value(&gpio->gpio_j1, 3, 0);
 
-			/*
-			if (board_is_p2_real())
-			     gpio_direction_output(&gpio->gpio_j1, 4, 0);
-			*/
-		}
+		if (machine_is_cypress())
+			gpio_set_value(&gpio->gpio_g2, 2, 0);
+
+		/*
+		if (board_is_p2_real())
+		     gpio_direction_output(&gpio->gpio_j1, 4, 0);
+		*/
 	}
 }
 
