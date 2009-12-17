@@ -795,7 +795,8 @@ static void enable_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real())
+	if (!board_is_limo_universal() && !board_is_limo_real()
+			&& !machine_is_geminus())
 		return;
 
 	i2c_set_bus_num(I2C_GPIO3);
@@ -815,7 +816,8 @@ static void check_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real())
+	if (!board_is_limo_universal() && !board_is_limo_real()
+			&& !machine_is_geminus())
 		return;
 
 	i2c_set_bus_num(I2C_GPIO3);
