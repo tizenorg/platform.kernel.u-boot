@@ -1674,6 +1674,8 @@ int dram_init(void)
 {
 	char meminfo[64] = {0,};
 	unsigned int base, memconfig0, size;
+	unsigned int memconfig1, sz = 0;
+	int count = 0;
 
 	if (cpu_is_s5pc100()) {
 		/* In mem setup, we swap the bank. So below size is correct */
@@ -1705,24 +1707,29 @@ int dram_init(void)
 		 * Aquila Rev0.7 4G3G1G
 		 */
 		if (machine_is_aquila() && (hwrevision(5) || hwrevision(7))) {
-			unsigned int memconfig1, sz;
-
 			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 			sz = (memconfig1 >> 16) & 0xFF;
 			sz = ((unsigned char) ~sz) + 1;
 			sz = sz << 4;
-
-			/* FIXME Disable at this time */
-			/* size += sz; */
 		}
 
 	}
-	gd->bd->bi_dram[1].size = size << 20;
+	/*
+	 * bi_dram[1].size contains all DMC1 memory size
+	 */
+	gd->bd->bi_dram[1].size = (size + sz) << 20;
 
-	sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
+	count += sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
 			(int)gd->bd->bi_dram[0].size >> 20,
 			size, (unsigned int)gd->bd->bi_dram[1].start);
+#if 0
+	if (sz) {
+		sprintf(meminfo + count, " mem=%dM@0x%x",
+			sz, memconfig1 & 0xFF000000);
+	}
+#endif
+
 	setenv("meminfo", meminfo);
 
 	return 0;
