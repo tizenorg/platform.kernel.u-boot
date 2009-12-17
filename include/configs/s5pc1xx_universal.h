@@ -142,7 +142,7 @@
 				",18m(modem)"\
 				",7m(fota)"\
 				",9m(log)"\
-				",-(UBI)"
+				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",256k(params)"\
@@ -150,7 +150,7 @@
 				",18m(modem)"\
 				",7m(fota)"\
 				",9m(log)"\
-				",-(UBI)"
+				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
@@ -182,9 +182,9 @@
 	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcd} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcd} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
@@ -194,10 +194,10 @@
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x33000000,8M ramdisk=8192\0" \
 	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcd} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
-	"mtdparts=" MTDPARTS_DEFAULT "\0" \
+	"mtdparts=" MTDPARTS_DEFAULT \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \

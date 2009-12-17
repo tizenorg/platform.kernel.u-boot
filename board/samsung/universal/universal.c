@@ -23,7 +23,6 @@
  */
 
 #include <common.h>
-#include <lcd.h>
 #include <i2c.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
@@ -1596,10 +1595,10 @@ int misc_init_r(void)
 	if (board_is_limo_real() ||
 		board_is_limo_universal() ||
 		board_is_j1b2())
-		setenv("lcd", "lcd=s6e63m0");
+		setenv("lcdinfo", "lcd=s6e63m0");
 	/* it can't classify tl2796 with single-lcd and dual-lcd.
 	else
-		setenv("lcd", "lcd=tl2796-dual");
+		setenv("lcdinfo", "lcd=tl2796-dual");
 	*/
 
 	/* 
@@ -1608,10 +1607,10 @@ int misc_init_r(void)
 	 * setenv means that lcd panel has been turned on at u-boot.
 	 */
 	if (machine_is_geminus())
-		setenv("lcd", "lcd=lms480jc01");
+		setenv("lcdinfo", "lcd=lms480jc01");
 	/*
 	if (board_is_p2_real())
-		setenv("lcd", "lcd=ams701");
+		setenv("lcdinfo", "lcd=ams701");
 	*/
 #endif
 	show_hw_revision();
