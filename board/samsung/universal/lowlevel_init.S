@@ -170,10 +170,13 @@ lowlevel_init:
 	 * Aquila Rev 0.7 : 4G3G1G x16 for Infineon ES3.1
 	 */
 	ldr	r2, =0xE0200200
-	ldr	r1, [r2, #0x48]
-	bic	r1, r1, #(0xFF << 2)	/* PULLUP_DISABLE: 4 * 2-bit */
+	ldr	r4, [r2, #0x48]
+	bic	r1, r4, #(0xFF << 2)	/* PULLUP_DISABLE: 4 * 2-bit */
 	str	r1, [r2, #0x48]
+	/* For write completion */
 	nop
+	nop
+
 	ldr	r3, [r2, #0x44]
 	and	r1, r3, #(0x5 << 2)
 	cmp	r1, #(0x5 << 2)
@@ -184,6 +187,7 @@ lowlevel_init:
 	and	r1, r3, #(0x7 << 2)
 	cmp	r1, #(0x7 << 2)
 	moveq	r9, #3
+	str	r4, [r2, #0x48]		/* Restore PULLUP configuration */
 
 	bl	mem_ctrl_asm_init
 

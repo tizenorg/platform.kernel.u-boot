@@ -795,7 +795,8 @@ static void enable_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real())
+	if (!board_is_limo_universal() && !board_is_limo_real()
+			&& !machine_is_geminus())
 		return;
 
 	i2c_set_bus_num(I2C_GPIO3);
@@ -815,7 +816,8 @@ static void check_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
-	if (!board_is_limo_universal() && !board_is_limo_real())
+	if (!board_is_limo_universal() && !board_is_limo_real()
+			&& !machine_is_geminus())
 		return;
 
 	i2c_set_bus_num(I2C_GPIO3);
@@ -957,8 +959,10 @@ static void check_micro_usb(int intr)
 	}
 
 	/* Clear Interrupt */
-	if (intr)
+	if (intr) {
 		i2c_read(addr, 0x03, 1, val, 2);
+		udelay(500 * 1000);
+	}
 
 	/* Read Device Type 1 */
 	i2c_read(addr, 0x0a, 1, val, 1);
@@ -1413,6 +1417,23 @@ int dram_init(void)
 		 */
 		size = size << 4;
 
+		/* 
+		 * Aquila Rev0.5 4G3G1G
+		 * Aquila Rev0.7 4G3G1G
+		 */
+		if (machine_is_aquila() && (hwrevision(5) || hwrevision(7))) {
+			unsigned int memconfig1, sz;
+
+			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
+
+			sz = (memconfig1 >> 16) & 0xFF;
+			sz = ((unsigned char) ~sz) + 1;
+			sz = sz << 4;
+
+			/* FIXME Disable at this time */
+			/* size += sz; */
+		}
+
 	}
 	gd->bd->bi_dram[1].size = size << 20;
 
@@ -1578,7 +1599,8 @@ int usb_board_init(void)
 	/* S5PC110 */
 	if (board_is_limo_universal() || board_is_limo_real()) {
 		/* check usb path */
-		check_mhl();
+		if (board_is_limo_real() && !hwrevision(6))
+			check_mhl();
 	}
 
 	if (machine_is_tickertape()) {
