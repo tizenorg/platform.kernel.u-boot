@@ -1021,6 +1021,7 @@ static void init_pmic(void)
 	 */
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
+	val[0] |= (1 << 7);
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* ONOFF3 */
@@ -1483,6 +1484,7 @@ void board_sleep_init(void)
 	saved_val[1][1] = val[1];
 	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
 			(1 << 2) | (1 << 1) | (1 << 0));
+	val[0] |= (1 << 7);
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* Set ONOFF3 */
