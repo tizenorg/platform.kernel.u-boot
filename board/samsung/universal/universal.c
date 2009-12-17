@@ -1361,6 +1361,7 @@ static void setup_power_down_mode_registers(void)
 	}
 }
 
+#ifdef CONFIG_LCD
 void lcd_cfg_gpio(void)
 {
 	unsigned int i;
@@ -1483,27 +1484,27 @@ void init_panel_info(vidinfo_t *vid)
 	vid->reset_delay = 0;
 	vid->power_on_delay = 0;
 
+	vid->vl_freq	= 60;
+	vid->vl_col	= 480;
+	vid->vl_row	= 800;
+	vid->vl_width	= 480;
+	vid->vl_height	= 800;
+	vid->vl_clkp	= CONFIG_SYS_HIGH;
+	vid->vl_hsp	= CONFIG_SYS_LOW;
+	vid->vl_vsp	= CONFIG_SYS_LOW;
+	vid->vl_dp	= CONFIG_SYS_HIGH;
+	vid->vl_bpix	= 32;
+
+	/* S6E63M0 LCD Panel */
+	vid->vl_hpw	= 2;	/* HLW */
+	vid->vl_blw	= 16;	/* HBP */
+	vid->vl_elw	= 16;	/* HFP */
+
+	vid->vl_vpw	= 2;	/* VLW */
+	vid->vl_bfw	= 3;	/* VBP */
+	vid->vl_efw	= 28;	/* VFP */
+
 	if (machine_is_aquila()) {
-		vid->vl_freq	= 60;
-		vid->vl_col	= 480,
-		vid->vl_row	= 800,
-		vid->vl_width	= 480,
-		vid->vl_height	= 800,
-		vid->vl_clkp	= CONFIG_SYS_HIGH,
-		vid->vl_hsp	= CONFIG_SYS_LOW,
-		vid->vl_vsp	= CONFIG_SYS_LOW,
-		vid->vl_dp	= CONFIG_SYS_HIGH,
-		vid->vl_bpix	= 32,
-
-		/* S6E63M0 LCD Panel */
-		vid->vl_hpw	= 2,	/* HLW */
-		vid->vl_blw	= 16,	/* HBP */
-		vid->vl_elw	= 16,	/* HFP */
-
-		vid->vl_vpw	= 2,	/* VLW */
-		vid->vl_bfw	= 3,	/* VBP */
-		vid->vl_efw	= 28,	/* VFP */
-
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
 		vid->backlight_on = backlight_on;
@@ -1514,8 +1515,9 @@ void init_panel_info(vidinfo_t *vid)
 
 		vid->init_delay = 25000;
 		vid->reset_delay = 120000;
+	}
 
-	} else if (machine_is_geminus()) {
+	if (machine_is_geminus()) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 1024,
 		vid->vl_row	= 600,
@@ -1583,6 +1585,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_efw	= 8,
 #endif
 }
+#endif
 
 int misc_init_r(void)
 {
