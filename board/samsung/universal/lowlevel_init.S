@@ -140,6 +140,8 @@ lowlevel_init:
 #ifdef CONFIG_ONENAND_IPL
 	/* init system clock */
 	bl	system_clock_init
+	/* Power gating control */
+	bl	power_gating_init
 
 	/* Board detection to set proper memory configuration */
 	cmp	r7, r8
@@ -414,12 +416,49 @@ system_clock_init:
 	orr	r1, r1, #(0x3 << 8)		@ CLKOUT[9:8] 3 XUSBXTI
 	str	r1, [r2]
 
+	/* CLK_IP0 */
+	ldr	r1, =0x8fefeeb			@ DMC[1:0] PDMA0[3] IMEM[5]
+	str	r1, [r0, #0x460]		@ S5PC110_CLK_IP0
+
+	/* CLK_IP1 */
+	ldr	r1, =0xedfdf0f9			@ FIMD[0] USBOTG[16]
+						@ NANDXL[24] SROMC[26]
+	str	r1, [r0, #0x464]		@ S5PC110_CLK_IP1
+
+	/* CLK_IP2 */
+	ldr	r1, =0xf75f7fc			@ CORESIGHT[8] MODEM[9]
+						@ HOSTIF[10] HSMMC0[16]
+						@ HSMMC2[18] VIC[27:24]
+	str	r1, [r0, #0x468]		@ S5PC110_CLK_IP2
+
+	/* CLK_IP3 */
+	ldr	r1, =0x8e5b000c			@ SYSTIMER[16] UART0[17]
+						@ UART2[19] UART3[20]
+						@ WDT[22] GPIO[26] SYSCON[27]
+	str	r1, [r0, #0x46c]		@ S5PC110_CLK_IP3
+
 200:
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
 
+	mov	pc, lr
+
+power_gating_init:
+	ldr	r0, =S5PC110_PWR_CFG		@ 0xE010C000
+
+	/* Check S5PC100 */
+	cmp	r7, r8
+	bne	110f
+100:
+	b	200f
+
+110:
+	ldr	r1, =0xffffff49			@ LCD[3] IROM[20]
+	str	r1, [r0, #0x10]			@ S5PC110_NORMAL_CFG
+
+200:
 	mov	pc, lr
 
 #ifndef CONFIG_ONENAND_IPL
