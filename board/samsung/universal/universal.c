@@ -1723,10 +1723,12 @@ int dram_init(void)
 	count += sprintf(meminfo, "mem=%dM mem=%dM@0x%x",
 			(int)gd->bd->bi_dram[0].size >> 20,
 			size, (unsigned int)gd->bd->bi_dram[1].start);
+#if 0
 	if (sz) {
 		sprintf(meminfo + count, " mem=%dM@0x%x",
-			sz, 0x50000000 /* memconfig1 & 0xFF000000 */);
+			sz, memconfig1 & 0xFF000000);
 	}
+#endif
 
 	setenv("meminfo", meminfo);
 
