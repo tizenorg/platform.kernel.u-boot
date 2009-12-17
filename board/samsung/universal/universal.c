@@ -34,6 +34,7 @@
 #include <asm/arch/power.h>
 #include <asm/arch/mem.h>
 #include <fbutils.h>
+#include <lcd.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1324,6 +1325,229 @@ static void setup_power_down_mode_registers(void)
 	}
 }
 
+void lcd_cfg_gpio(void)
+{
+	unsigned int i;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+	for (i = 0; i < 8; i++) {
+		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f2, i, GPIO_FUNC(2));
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f2, i, GPIO_PULL_NONE);
+
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio->gpio_f0, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f1, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f2, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f2, i, GPIO_DRV_SLOW);
+	}
+
+	for (i =0; i < 4; i++) {
+		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio->gpio_f3, i, GPIO_PULL_UP);
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio->gpio_f3, i, GPIO_PULL_NONE);
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio->gpio_f3, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio->gpio_f3, i, GPIO_DRV_SLOW);
+	}
+	/* display output path selection (only [1:0] valid) */
+	writel(0x2, 0xE0107008);
+
+	/* gpio pad configuration for LCD reset. */
+	gpio_cfg_pin(&gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
+
+	/* gpio pad configuration for LCD ON. */
+	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
+
+	/* MLCD_ON2 */
+	/*
+	if (board_is_p2_real())
+	     gpio_cfg_pin(&gpio->gpio_j1, 4, GPIO_OUTPUT);
+	*/
+
+	/* LCD_BACKLIGHT_EN */
+	if (machine_is_geminus())
+		gpio_cfg_pin(&gpio->gpio_mp0_5, 0, GPIO_OUTPUT);
+
+	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
+	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
+
+	return;
+}
+
+void backlight_on(unsigned int onoff)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+	if (onoff) {
+		if (machine_is_geminus())
+			gpio_set_value(&gpio->gpio_mp0_5, 0, 1);
+	} else {
+		if (machine_is_geminus())
+			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
+	}
+}
+
+void reset_lcd(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+	if (machine_is_aquila() || machine_is_geminus()/* || board_is_p2_real() */)
+		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+}
+
+void lcd_power_on(unsigned int onoff)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+	if (machine_is_aquila() || machine_is_geminus()) {
+		if (onoff) {
+			gpio_set_value(&gpio->gpio_j1, 3, 1);
+
+			/*
+			if (board_is_p2_real())
+			     gpio_direction_output(&gpio->gpio_j1, 4, 1);
+			*/
+		} else {
+			gpio_set_value(&gpio->gpio_j1, 3, 0);
+
+			/*
+			if (board_is_p2_real())
+			     gpio_direction_output(&gpio->gpio_j1, 4, 0);
+			*/
+		}
+	}
+}
+
+extern void s6e63m0_cfg_ldo(void);
+extern void s6e63m0_enable_ldo(unsigned int onoff);
+
+void init_panel_info(vidinfo_t *vid)
+{
+	vid->cfg_gpio = NULL;
+	vid->reset_lcd = NULL;
+	vid->backlight_on = NULL;
+	vid->lcd_power_on = NULL;
+
+	vid->cfg_ldo = NULL;
+	vid->enable_ldo = NULL;
+
+	vid->init_delay = 0;
+	vid->reset_delay = 0;
+	vid->power_on_delay = 0;
+
+	if (machine_is_aquila()) {
+		vid->vl_freq	= 60;
+		vid->vl_col	= 480,
+		vid->vl_row	= 800,
+		vid->vl_width	= 480,
+		vid->vl_height	= 800,
+		vid->vl_clkp	= CONFIG_SYS_HIGH,
+		vid->vl_hsp	= CONFIG_SYS_LOW,
+		vid->vl_vsp	= CONFIG_SYS_LOW,
+		vid->vl_dp	= CONFIG_SYS_HIGH,
+		vid->vl_bpix	= 32,
+
+		/* S6E63M0 LCD Panel */
+		vid->vl_hpw	= 2,	/* HLW */
+		vid->vl_blw	= 16,	/* HBP */
+		vid->vl_elw	= 16,	/* HFP */
+
+		vid->vl_vpw	= 2,	/* VLW */
+		vid->vl_bfw	= 3,	/* VBP */
+		vid->vl_efw	= 28,	/* VFP */
+
+		vid->cfg_gpio = lcd_cfg_gpio;
+		vid->reset_lcd = reset_lcd;
+		vid->backlight_on = backlight_on;
+		vid->lcd_power_on = lcd_power_on;
+
+		vid->cfg_ldo = s6e63m0_cfg_ldo;
+		vid->enable_ldo = s6e63m0_enable_ldo;
+
+		vid->init_delay = 25000;
+		vid->reset_delay = 120000;
+
+	} else if (machine_is_geminus()) {
+		vid->vl_freq	= 60;
+		vid->vl_col	= 1024,
+		vid->vl_row	= 600,
+		vid->vl_width	= 1024,
+		vid->vl_height	= 600,
+		vid->vl_clkp	= CONFIG_SYS_LOW,
+		vid->vl_hsp	= CONFIG_SYS_HIGH,
+		vid->vl_vsp	= CONFIG_SYS_HIGH,
+		vid->vl_dp	= CONFIG_SYS_LOW,
+		vid->vl_bpix	= 32,
+
+		vid->vl_hpw	= 32,
+		vid->vl_blw	= 80,
+		vid->vl_elw	= 48,
+
+		vid->vl_vpw	= 1,
+		vid->vl_bfw	= 4,
+		vid->vl_efw	= 3,
+
+		vid->cfg_gpio = lcd_cfg_gpio;
+		vid->reset_lcd = reset_lcd;
+		vid->backlight_on = backlight_on;
+		vid->lcd_power_on = lcd_power_on;
+	}
+#if 0
+	vid->vl_freq	= 60;
+	vid->vl_col	= 480,
+	vid->vl_row	= 800,
+	vid->vl_width	= 480,
+	vid->vl_height	= 800,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_LOW,
+	vid->vl_vsp	= CONFIG_SYS_LOW,
+	vid->vl_dp	= CONFIG_SYS_HIGH,
+	vid->vl_bpix	= 32,
+
+	/* tl2796 panel. */
+	vid->vl_hpw	= 4,
+	vid->vl_blw	= 8,
+	vid->vl_elw	= 8,
+
+	vid->vl_vpw	= 4,
+	vid->vl_bfw	= 8,
+	vid->vl_efw	= 8,
+#endif
+#if 0
+	vid->vl_freq	= 60;
+	vid->vl_col	= 1024,
+	vid->vl_row	= 600,
+	vid->vl_width	= 1024,
+	vid->vl_height	= 600,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_HIGH,
+	vid->vl_vsp	= CONFIG_SYS_HIGH,
+	vid->vl_dp	= CONFIG_SYS_LOW,
+	vid->vl_bpix	= 32,
+
+	/* AMS701KA AMOLED Panel. */
+	vid->vl_hpw	= 30,
+	vid->vl_blw	= 114,
+	vid->vl_elw	= 48,
+
+	vid->vl_vpw	= 2,
+	vid->vl_bfw	= 6,
+	vid->vl_efw	= 8,
+#endif
+}
+
 int misc_init_r(void)
 {
 #ifdef CONFIG_LCD
@@ -1338,20 +1562,19 @@ int misc_init_r(void)
 	else
 		setenv("lcd", "lcd=tl2796-dual");
 	*/
-#endif
 
 	/* 
 	 * env values below should be added in case that lcd panel of geminus,
 	 * p1 and p2 are enabled at u-boot. 
 	 * setenv means that lcd panel has been turned on at u-boot.
 	 */
-#if 0
 	if (machine_is_geminus())
 		setenv("lcd", "lcd=lms480jc01");
+	/*
 	if (board_is_p2_real())
 		setenv("lcd", "lcd=ams701");
+	*/
 #endif
-
 	show_hw_revision();
 
 	/* Set proper PMIC pins */

@@ -207,6 +207,17 @@ typedef struct vidinfo {
 	u_char	vl_vpw;		/* Vertical sync pulse width */
 	u_char	vl_bfw;		/* Wait before of frame */
 	u_char	vl_efw;		/* Wait end of frame */
+
+	void (*cfg_gpio)(void);
+	void (*backlight_on)(unsigned int onoff);
+	void (*reset_lcd)(void);
+	void (*lcd_power_on)(unsigned int onoff);
+	void (*cfg_ldo)(void);
+	void (*enable_ldo)(unsigned int onoff);
+
+	unsigned int init_delay;
+	unsigned int power_on_delay;
+	unsigned int reset_delay;
 } vidinfo_t;
 
 #else

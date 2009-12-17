@@ -44,7 +44,7 @@ struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 #define S5PCFB_C110_SDA_READ	gpio_get_value(&gpio->gpio_mp0_4, 3)
 
-const unsigned short SEQ_PANEL_CONDITION_SET[] = {
+static const unsigned short SEQ_PANEL_CONDITION_SET[] = {
 	0xF8, 0x01,
 	DATA_ONLY, 0x27,
 	DATA_ONLY, 0x27,
@@ -63,7 +63,7 @@ const unsigned short SEQ_PANEL_CONDITION_SET[] = {
 	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
+static const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
 	0xf2, 0x02,
 	DATA_ONLY, 0x03,
 	DATA_ONLY, 0x1c,
@@ -77,7 +77,7 @@ const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
 	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_GAMMA_SETTING[] = {
+static const unsigned short SEQ_GAMMA_SETTING[] = {
 	0xfa, 0x00,
 	DATA_ONLY, 0x17,
 	DATA_ONLY, 0x05,
@@ -105,7 +105,7 @@ const unsigned short SEQ_GAMMA_SETTING[] = {
 	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_ETC_CONDITION_SET[] = {
+static const unsigned short SEQ_ETC_CONDITION_SET[] = {
 	0xf6, 0x00,
 	DATA_ONLY, 0x8c,
 	DATA_ONLY, 0x07,
@@ -273,14 +273,20 @@ const unsigned short SEQ_ETC_CONDITION_SET[] = {
 };
 
 
-const unsigned short SEQ_STAND_BY_OFF[] = {
+static const unsigned short SEQ_STAND_BY_OFF[] = {
 	0x11, COMMAND_ONLY,
 
 	ENDDEF, 0x0000
 };
 
+static const unsigned short SEQ_STAND_BY_ON[] = {
+	0x10, COMMAND_ONLY,
+
+	ENDDEF, 0x0000
+};
+
 /* added */
-const unsigned short SEQ_DISPLAY_ON[] = {
+static const unsigned short SEQ_DISPLAY_ON[] = {
 	0x29, COMMAND_ONLY,
 
 	ENDDEF, 0x0000
@@ -406,51 +412,29 @@ static void s6e63m0_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-void s6e63m0_lcd_panel_power_on(void)
+void s6e63m0_lcd_panel_init(void);
+
+void s6e63m0_cfg_ldo(void)
 {
-	char data = 0;
-
-	udelay(25000);
-
-	/* set gpio data for MLCD_ON to HIGH */
-	gpio_set_value(&gpio->gpio_j1, 3, 1);
-
-	/* set gpio data for MLCD_RST to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-
-	udelay(120000);
-
+	s6e63m0_lcd_panel_init();
 	/*
 	data = s6e63m0_c110_spi_read_byte(0x0, 0xdd);
 	printf("data = %d, %x\n", data, &data);
 	*/
-
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
 	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET);
 }
 
-static inline void s6e63m0_c110_panel_hw_reset(void)
+void s6e63m0_enable_ldo(unsigned int onoff)
 {
-	/* set gpio pin for MLCD_RST to LOW */
-	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
-
-	/* Shorter than 5 usec */
-	udelay(1);
-
-	/* set gpio pin for MLCD_RST to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-}
-
-void s6e63m0_lcd_panel_enable(void)
-{
-	s6e63m0_panel_send_sequence(SEQ_STAND_BY_OFF);
-	s6e63m0_panel_send_sequence(SEQ_DISPLAY_ON);
-}
-
-static void s6e63m0_panel_disable(void)
-{
+	if (onoff) {
+		s6e63m0_panel_send_sequence(SEQ_STAND_BY_OFF);
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_ON);
+	} else {
+		s6e63m0_panel_send_sequence(SEQ_STAND_BY_ON);
+	}
 }
 
 void s6e63m0_lcd_panel_init(void)

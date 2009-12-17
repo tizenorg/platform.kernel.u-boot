@@ -32,9 +32,6 @@
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
-/* DISPLAY CONTROL REGISTER */
-#define DCR		0xE0107008
-
 /* CLOCK DIVIDER 0 */
 #define CLK_DIV0	0xE0100300
 #define CLK_DIV1	0xE0100304
@@ -54,64 +51,6 @@ void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_s
 	lcd_base_addr = (unsigned long *)screen_base;
 
 	udebug("lcd_base_addr(framebuffer memory) = %x\n", lcd_base_addr);
-
-	return;
-}
-
-void s5pc_c100_gpio_setup(void)
-{
-}
-
-void s5pc_c110_gpio_setup(void)
-{
-	unsigned int i;
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
-	for (i = 0; i < 8; i++) {
-		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio->gpio_f0, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio->gpio_f1, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio->gpio_f2, i, GPIO_FUNC(2));
-		/* pull-up/down disable */
-		gpio_set_pull(&gpio->gpio_f0, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio->gpio_f1, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio->gpio_f2, i, GPIO_PULL_NONE);
-
-		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio->gpio_f0, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio->gpio_f1, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio->gpio_f2, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f2, i, GPIO_DRV_SLOW);
-	}
-
-	for (i =0; i < 4; i++) {
-		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio->gpio_f3, i, GPIO_PULL_UP);
-		/* pull-up/down disable */
-		gpio_set_pull(&gpio->gpio_f3, i, GPIO_PULL_NONE);
-		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio->gpio_f3, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f3, i, GPIO_DRV_SLOW);
-	}
-	/* display output path selection (only [1:0] valid) */
-	writel(0x2, DCR);
-
-	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
-
-	/* gpio pad configuration for LCD ON. */
-	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
-	/* gpio_cfg_pin(&gpio->gpio_j1, 4, GPIO_OUTPUT);  P1P2: Real: MLCD_ON2 */
-
-	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
-	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
-
-	s5pc1xx_clock_init();
 
 	return;
 }
@@ -181,6 +120,8 @@ static void s5pc_fimd_set_clock(void)
 {
 	unsigned int cfg = 0, div = 0, mpll_ratio = 0;
 	unsigned long pixel_clock, src_clock, max_clock;
+
+	s5pc1xx_clock_init();
 
 	max_clock = 66 * 1000000;
 
@@ -257,7 +198,7 @@ void s5pc_fimc_lcd_off(unsigned int win_id)
 
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
-	unsigned int cfg = 0, rgb_mode, win_id = 1;
+	unsigned int cfg = 0, rgb_mode, win_id = 3;
 
 	/* store panel info to global variable */
 	pvid = vid;
