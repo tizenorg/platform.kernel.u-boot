@@ -210,6 +210,12 @@ static int board_is_limo_real(void)
 	return machine_is_aquila() && (board_rev & LIMO_REAL_BOARD);
 }
 
+static int board_is_media(void)
+{
+	return machine_is_aquila() && (board_rev &
+		(LIMO_REAL_BOARD | MEDIA_BOARD));
+}
+
 static int board_is_j1b2(void)
 {
 	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
