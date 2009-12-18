@@ -941,6 +941,8 @@ static void into_charge_mode(void)
 	unsigned int level;
 	int i, j;
 
+	i2c_set_bus_num(I2C_PMIC);
+
 	if (i2c_probe(addr)) {
 		printf("Can't found max8998\n");
 		return;
