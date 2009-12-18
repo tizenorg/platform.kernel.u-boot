@@ -364,4 +364,16 @@
 /* WxKEYCON1 (1~4) */
 #define S5P_KEYCON1_COLVAL(x)			(((x) & 0xffffff) << 0)
 
+/* DUALRGB */
+#define S5P_DUALRGB_BYPASS_SINGLE		(0x00 << 0)				
+#define S5P_DUALRGB_BYPASS_DUAL			(0x01 << 0)
+#define S5P_DUALRGB_MIE_DUAL			(0x10 << 0)
+#define S5P_DUALRGB_MIE_SINGLE			(0x11 << 0)
+#define S5P_DUALRGB_LINESPLIT			(0x0 << 2) 
+#define S5P_DUALRGB_FRAMESPLIT			(0x1 << 2) 
+#define S5P_DUALRGB_SUB_CNT(x)			((x & 0xfff) << 4)
+#define S5P_DUALRGB_VDEN_EN_DISABLE		(0x0 << 16)
+#define S5P_DUALRGB_VDEN_EN_ENABLE		(0x1 << 16)
+#define S5P_DUALRGB_MAIN_CNT(x)			((x & 0xfff) << 18)
+
 #endif /* _REGS_FB_H */
