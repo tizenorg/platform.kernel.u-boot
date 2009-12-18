@@ -199,14 +199,14 @@ typedef struct vidinfo {
 	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
 
 	/* Horizontal control register. Timing from data sheet */
-	ushort	vl_hpw;		/* Horz sync pulse width */
-	u_char	vl_blw;		/* Wait before of line */
-	u_char	vl_elw;		/* Wait end of line */
+	u_char	vl_hspw;	/* Horz sync pulse width */
+	u_char	vl_hfpd;	/* Wait before of line */
+	u_char	vl_hbpd;	/* Wait end of line */
 
 	/* Vertical control register. */
-	u_char	vl_vpw;		/* Vertical sync pulse width */
-	u_char	vl_bfw;		/* Wait before of frame */
-	u_char	vl_efw;		/* Wait end of frame */
+	u_char	vl_vspw;	/* Vertical sync pulse width */
+	u_char	vl_vfpd;	/* Wait before of frame */
+	u_char	vl_vbpd;	/* Wait end of frame */
 
 	void (*cfg_gpio)(void);
 	void (*backlight_on)(unsigned int onoff);

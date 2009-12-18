@@ -125,9 +125,9 @@ static void s5pc_fimd_set_clock(void)
 
 	max_clock = 66 * 1000000;
 
-	pixel_clock = pvid->vl_freq * (pvid->vl_hpw + pvid->vl_blw +
-		pvid->vl_elw + pvid->vl_width) * (pvid->vl_vpw +
-		    pvid->vl_bfw + pvid->vl_efw + pvid->vl_height);
+	pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
+		pvid->vl_hbpd + pvid->vl_width) * (pvid->vl_vspw +
+		    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_height);
 
 	if (get_pll_clk == NULL) {
 		printf("get_pll_clk is null.\n");
@@ -241,16 +241,16 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* set timing */
 	cfg = 0;
-	cfg |= S5P_VIDTCON0_VBPD(pvid->vl_bfw - 1);
-	cfg |= S5P_VIDTCON0_VFPD(pvid->vl_efw - 1);
-	cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vpw - 1);
+	cfg |= S5P_VIDTCON0_VFPD(pvid->vl_vfpd - 1);
+	cfg |= S5P_VIDTCON0_VBPD(pvid->vl_vbpd - 1);
+	cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vspw - 1);
 	writel(cfg, ctrl_base + S5P_VIDTCON0);
 	udebug("vidtcon0 = %x\n", cfg);
 
 	cfg = 0;
-	cfg |= S5P_VIDTCON1_HBPD(pvid->vl_blw - 1);
-	cfg |= S5P_VIDTCON1_HFPD(pvid->vl_elw - 1);
-	cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hpw - 1);
+	cfg |= S5P_VIDTCON1_HFPD(pvid->vl_hfpd - 1);
+	cfg |= S5P_VIDTCON1_HBPD(pvid->vl_hbpd - 1);
+	cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hspw - 1);
 
 	writel(cfg, ctrl_base + S5P_VIDTCON1);
 	udebug("vidtcon1 = %x\n", cfg);

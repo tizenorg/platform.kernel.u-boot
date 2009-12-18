@@ -25,8 +25,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 
-struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000
 #define	DEFMASK			0xFF00
@@ -35,14 +33,50 @@ struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 #define PACKET_LEN		8
 
-#define S5PCFB_C110_CS_LOW	gpio_set_value(&gpio->gpio_mp0_1, 1, 0)
-#define S5PCFB_C110_CS_HIGH	gpio_set_value(&gpio->gpio_mp0_1, 1, 1)
-#define S5PCFB_C110_CLK_LOW	gpio_set_value(&gpio->gpio_mp0_4, 1, 0)
-#define S5PCFB_C110_CLK_HIGH	gpio_set_value(&gpio->gpio_mp0_4, 1, 1)
-#define S5PCFB_C110_SDA_LOW	gpio_set_value(&gpio->gpio_mp0_4, 3, 0)
-#define S5PCFB_C110_SDA_HIGH	gpio_set_value(&gpio->gpio_mp0_4, 3, 1)
+struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-#define S5PCFB_C110_SDA_READ	gpio_get_value(&gpio->gpio_mp0_4, 3)
+struct s6e63m0_platform_data {
+	struct s5pc1xx_gpio_bank *bank;
+	unsigned int num;
+};
+
+/* these machine specific platform datas would be setting at universal.c */
+struct s6e63m0_platform_data *spi_cs, *spi_clk, *spi_si, *spi_so;
+
+void cs_low(void)
+{
+	gpio_set_value(spi_cs->bank, spi_cs->num, 0);
+}
+
+void cs_high(void)
+{
+	gpio_set_value(spi_cs->bank, spi_cs->num, 1);
+}
+
+void clk_low(void)
+{
+	gpio_set_value(spi_clk->bank, spi_clk->num, 0);
+}
+
+void clk_high(void)
+{
+	gpio_set_value(spi_clk->bank, spi_clk->num, 1);
+}
+
+void si_low(void)
+{
+	gpio_set_value(spi_si->bank, spi_si->num, 0);
+}
+
+void si_high(void)
+{
+	gpio_set_value(spi_si->bank, spi_si->num, 1);
+}
+
+char so_read(void)
+{
+	return gpio_get_value(spi_so->bank, spi_so->num);
+}
 
 static const unsigned short SEQ_PANEL_CONDITION_SET[] = {
 	0xF8, 0x01,
@@ -301,31 +335,31 @@ static void s6e63m0_c110_spi_write_byte(unsigned char address, unsigned char com
 
 	data = (address << 8) + command;
 
-	S5PCFB_C110_CS_HIGH;
-	S5PCFB_C110_SDA_HIGH;
-	S5PCFB_C110_CLK_HIGH;
+	cs_high();
+	si_high();
+	clk_high();
 	udelay(DELAY);
 
-	S5PCFB_C110_CS_LOW;
+	cs_low();
 	udelay(DELAY);
 
 	for (j = PACKET_LEN; j >= 0; j--)
 	{
-		S5PCFB_C110_CLK_LOW;
+		clk_low();
 
 		/* data high or low */
 		if ((data >> j) & 0x0001)
-			S5PCFB_C110_SDA_HIGH;
+			si_high();
 		else
-			S5PCFB_C110_SDA_LOW;
+			si_low();
 
 		udelay(DELAY);
 
-		S5PCFB_C110_CLK_HIGH;
+		clk_high();
 		udelay(DELAY);
 	}
 
-	S5PCFB_C110_CS_HIGH;
+	cs_high();
 	udelay(DELAY);
 }
 
@@ -340,52 +374,52 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 
 	data = (select << 8) + address;
 
-	S5PCFB_C110_CS_HIGH;
-	S5PCFB_C110_SDA_HIGH;
-	S5PCFB_C110_CLK_HIGH;
+	cs_high();
+	si_high();
+	clk_high();
 	udelay(DELAY);
 
-	S5PCFB_C110_CS_LOW;
+	clk_low();
 	udelay(DELAY);
 
 	for (j = PACKET_LEN + 8; j >= 0; j--)
 	{
 
 		if (j > 7) {
-			S5PCFB_C110_CLK_LOW;
+			clk_low();
 
 			/* data high or low */
 			if ((data >> (j - 8)) & 0x0001)
-				S5PCFB_C110_SDA_HIGH;
+				si_high();
 			else
-				S5PCFB_C110_SDA_LOW;
+				si_low();
 
 			udelay(DELAY);
-			S5PCFB_C110_CLK_HIGH;
+			clk_high();
 		} else {
 			if (first) {
-				gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_INPUT);
+				gpio_cfg_pin(spi_so->bank, spi_so->num, GPIO_INPUT);
 				first = 0;
 			}
 
-			S5PCFB_C110_CLK_LOW;
+			clk_low();
 
-			if (S5PCFB_C110_SDA_READ & 0x1)
+			if (so_read() & 0x1)
 				command |= 1 << j;
 			else
 				command |= 0 << j;
 
 			udelay(DELAY);
-			S5PCFB_C110_CLK_HIGH;
+			clk_high();
 		}
 
 		udelay(DELAY);
 	}
 
-	S5PCFB_C110_CS_HIGH;
+	cs_high();
 	udelay(DELAY);
 
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(spi_so->bank, spi_so->num, GPIO_OUTPUT);
 
 	return command;
 }
@@ -412,15 +446,13 @@ static void s6e63m0_panel_send_sequence(const unsigned short *wbuf)
 	}
 }
 
-void s6e63m0_lcd_panel_init(void);
-
 void s6e63m0_cfg_ldo(void)
 {
-	s6e63m0_lcd_panel_init();
 	/*
 	data = s6e63m0_c110_spi_read_byte(0x0, 0xdd);
 	printf("data = %d, %x\n", data, &data);
 	*/
+
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
@@ -437,12 +469,20 @@ void s6e63m0_enable_ldo(unsigned int onoff)
 	}
 }
 
-void s6e63m0_lcd_panel_init(void)
+/* this function would be called at universal.c */
+void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
+	struct s6e63m0_platform_data *clk, struct s6e63m0_platform_data *si,
+	struct s6e63m0_platform_data *so)
 {
-	/* set gpio pin for DISPLAY_CS to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_1, 1, 1);
-	/* set gpio pin for DISPLAY_CLK to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_4, 1, 1);
-	/* set gpio pin for DISPLAY_SI to HIGH */
-	gpio_set_value(&gpio->gpio_mp0_4, 3, 1);
+	if (cs == NULL || clk == NULL || si == NULL) {
+		printf("gpio bank is NULL.\n");
+		return;
+	}
+
+	spi_cs = cs;
+	spi_clk = clk;
+	spi_si = si;
+
+	/* so could be NULL. */
+	spi_so = so;
 }

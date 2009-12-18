@@ -1363,75 +1363,110 @@ static void setup_power_down_mode_registers(void)
 }
 
 #ifdef CONFIG_LCD
+struct s6e63m0_platform_data {
+	struct s5pc1xx_gpio_bank *bank;
+	unsigned int num;
+};
+
+extern void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
+	struct s6e63m0_platform_data *clk, struct s6e63m0_platform_data *si,
+	struct s6e63m0_platform_data *so);
+
+struct s6e63m0_platform_data pd_cs, pd_clk, pd_si, pd_so;
+struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
 void lcd_cfg_gpio(void)
 {
 	unsigned int i;
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio->gpio_f0, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio->gpio_f1, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio->gpio_f2, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio_base->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio_base->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio_base->gpio_f2, i, GPIO_FUNC(2));
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio->gpio_f0, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio->gpio_f1, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio->gpio_f2, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio_base->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio_base->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio_base->gpio_f2, i, GPIO_PULL_NONE);
 
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio->gpio_f0, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio->gpio_f1, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio->gpio_f2, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f2, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio_base->gpio_f0, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio_base->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio_base->gpio_f1, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio_base->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio_base->gpio_f2, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio_base->gpio_f2, i, GPIO_DRV_SLOW);
 	}
 
 	for (i =0; i < 4; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio->gpio_f3, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&gpio_base->gpio_f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio->gpio_f3, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio_base->gpio_f3, i, GPIO_PULL_NONE);
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio->gpio_f3, i, GPIO_DRV_4x);
-		gpio_set_rate(&gpio->gpio_f3, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio_base->gpio_f3, i, GPIO_DRV_4x);
+		gpio_set_rate(&gpio_base->gpio_f3, i, GPIO_DRV_SLOW);
 	}
 	/* display output path selection (only [1:0] valid) */
 	writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio_base->gpio_mp0_5, 5, GPIO_OUTPUT);
 
 	/* gpio pad configuration for LCD ON. */
-	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio_base->gpio_j1, 3, GPIO_OUTPUT);
 
 	/* MLCD_ON2 */
 	/*
 	if (board_is_p2_real())
-	     gpio_cfg_pin(&gpio->gpio_j1, 4, GPIO_OUTPUT);
+	     gpio_cfg_pin(&gpio_base->gpio_j1, 4, GPIO_OUTPUT);
 	*/
 
 	/* LCD_BACKLIGHT_EN */
 	if (machine_is_geminus())
-		gpio_cfg_pin(&gpio->gpio_mp0_5, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
 
 	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
-	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
-	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio_base->gpio_mp0_1, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_INPUT);
+	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
+
+	if (machine_is_aquila()) {
+		pd_cs.bank = &gpio_base->gpio_mp0_1;
+		pd_cs.num = 1;
+		pd_clk.bank = &gpio_base->gpio_mp0_4;
+		pd_clk.num = 1;
+		pd_si.bank = &gpio_base->gpio_mp0_4;
+		pd_si.num = 3;
+		pd_so.bank = &gpio_base->gpio_mp0_4;
+		pd_so.num = 2;
+
+		/* these data would be sent to s6e63m0 lcd panel driver. */
+		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, &pd_so);
+	}
 
 	if (machine_is_cypress()) {
 		/* FLCD_CS */
-		gpio_cfg_pin(&gpio->gpio_mp0_1, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_mp0_1, 0, GPIO_OUTPUT);
 		/* FLCD_CLK */
-		gpio_cfg_pin(&gpio->gpio_mp0_4, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 0, GPIO_OUTPUT);
 		/* FLCD_SDI */
-		gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_OUTPUT);
 		/* FLCD_RST_S */
-		gpio_cfg_pin(&gpio->gpio_mp0_4, 5, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 5, GPIO_OUTPUT);
 		/* FLCD_ON_S */
-		gpio_cfg_pin(&gpio->gpio_g2, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio_base->gpio_g2, 2, GPIO_OUTPUT);
+
+		pd_cs.bank = &gpio_base->gpio_mp0_1;
+		pd_cs.num = 0;
+		pd_clk.bank = &gpio_base->gpio_mp0_4;
+		pd_clk.num = 0;
+		pd_si.bank = &gpio_base->gpio_mp0_4;
+		pd_si.num = 2;
+
+		/* these data would be sent to s6e63m0 lcd panel driver. */
+		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, NULL);
 	}
 
 	return;
@@ -1518,15 +1553,15 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_bpix	= 32;
 
 	/* S6E63M0 LCD Panel */
-	vid->vl_hpw	= 2;	/* HLW */
-	vid->vl_blw	= 16;	/* HBP */
-	vid->vl_elw	= 16;	/* HFP */
+	vid->vl_hspw	= 2;
+	vid->vl_hbpd	= 16;
+	vid->vl_hfpd	= 16;
 
-	vid->vl_vpw	= 2;	/* VLW */
-	vid->vl_bfw	= 3;	/* VBP */
-	vid->vl_efw	= 28;	/* VFP */
+	vid->vl_vspw	= 2;
+	vid->vl_vbpd	= 3;
+	vid->vl_vfpd	= 28;
 
-	if (machine_is_aquila()) {
+	if (machine_is_aquila() || machine_is_cypress()) {
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
 		vid->backlight_on = backlight_on;
@@ -1551,13 +1586,13 @@ void init_panel_info(vidinfo_t *vid)
 		vid->vl_dp	= CONFIG_SYS_LOW,
 		vid->vl_bpix	= 32,
 
-		vid->vl_hpw	= 32,
-		vid->vl_blw	= 80,
-		vid->vl_elw	= 48,
+		vid->vl_hspw	= 32,
+		vid->vl_hfpd	= 48,
+		vid->vl_hbpd	= 80,
 
-		vid->vl_vpw	= 1,
-		vid->vl_bfw	= 4,
-		vid->vl_efw	= 3,
+		vid->vl_vspw	= 1,
+		vid->vl_vfpd	= 3,
+		vid->vl_vbpd	= 4,
 
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
