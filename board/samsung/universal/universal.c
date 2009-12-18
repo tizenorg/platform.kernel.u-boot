@@ -166,6 +166,7 @@ enum {
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
 #define P2_REAL_BOARD		0x400
+#define MEDIA_BOARD		0x1000
 
 #define BOARD_MASK		0xF00
 
@@ -333,6 +334,8 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Limo Real");
 		else if (board_rev & LIMO_UNIVERSAL_BOARD)
 			count += sprintf(buf + count, " - Limo Universal");
+		if (board_rev & MEDIA_BOARD)
+			count += sprintf(buf + count, " - Media");
 	} else if (board == MACH_P1P2) {
 		/* P1P2 */
 		if (board_rev & P1_REAL_BOARD)
@@ -442,12 +445,25 @@ static void check_hw_revision(void)
 			board = MACH_AQUILA;
 			board_rev |= J1_B2_BOARD;
 
+			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j2, 6);
+
 			/* Check board */
 			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
 			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
+
+			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j2, 6);
+
+			if (gpio_get_value(&gpio->gpio_j2, 6) == 1)
+				board_rev |= MEDIA_BOARD;
+
+			/* set gpio to default value. */
+			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
+			gpio_direction_output(&gpio->gpio_j2, 6, 0);
 #if 0
 			/* C110 Aquila SplitScreen */
 			if (gpio_get_value(&gpio->gpio_mp0_3, 5))
