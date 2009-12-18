@@ -212,8 +212,7 @@ static int board_is_limo_real(void)
 
 static int board_is_media(void)
 {
-	return machine_is_aquila() &&
-		(board_rev & MEDIA_BOARD);
+	return machine_is_aquila() && (board_rev & MEDIA_BOARD);
 }
 
 static int board_is_j1b2(void)
@@ -366,11 +365,9 @@ static void check_board_revision(int board, int rev)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		}
-		if (rev & MEDIA_BOARD) {
+		if (rev & MEDIA_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-			board_rev |= LIMO_REAL_BOARD;
-		}
 		break;
 	case MACH_P1P2:
 		break;
@@ -660,9 +657,8 @@ static void setup_limo_real_gpios(void)
 	/*
 	 * Note: Please write GPIO alphabet order
 	 */
-	if (!board_is_media())
-		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
-		gpio_direction_output(&gpio->gpio_f3, 4, 1);
+	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
+	gpio_direction_output(&gpio->gpio_f3, 4, 1);
 
 	if (hwrevision(0))
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
@@ -670,6 +666,24 @@ static void setup_limo_real_gpios(void)
 	else
 		/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
 		gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
+
+	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
+	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
+}
+
+static void setup_media_gpios(void)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	if (!board_is_media())
+		return;
+
+	/*
+	 * Note: Please write GPIO alphabet order
+	 */
+	/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
+	gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
 	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
@@ -1731,6 +1745,7 @@ int misc_init_r(void)
 	 */
 	if (machine_is_geminus())
 		setenv("lcdinfo", "lcd=lms480jc01");
+
 	/*
 	if (board_is_p2_real())
 		setenv("lcdinfo", "lcd=ams701");
@@ -1754,6 +1769,9 @@ int misc_init_r(void)
 
 	/* Setup Limo Real board GPIOs */
 	setup_limo_real_gpios();
+
+	/* Setup Media board GPIOs */
+	setup_media_gpios();
 
 	/* Setup P1P2 board GPIOS */
 	setup_p1p2_gpios();
@@ -1997,7 +2015,7 @@ int usb_board_init(void)
 	}
 
 	/* S5PC110 */
-	if (board_is_limo_universal() || board_is_limo_real()) {
+	if (board_is_limo_universal() || board_is_limo_real() || board_is_media()) {
 		/* check usb path */
 		if (board_is_limo_real() && !hwrevision(6))
 			check_mhl();
