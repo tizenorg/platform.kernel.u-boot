@@ -134,6 +134,7 @@
 #define S5P_BLENDEQ3		S5P_LCDREG(0x024C)	/* Window 3 blending equation control */
 #define S5P_BLENDEQ4		S5P_LCDREG(0x0250)	/* Window 4 blending equation control */
 #define S5P_BLENDCON		S5P_LCDREG(0x0260)	/* Blending control */
+#define S5P_DUALRGB			S5P_LCDREG(0x027C)	/* DUALRGB Interface Setting Register */
 
 /*
  * Bit Definitions

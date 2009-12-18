@@ -218,6 +218,8 @@ typedef struct vidinfo {
 	unsigned int init_delay;
 	unsigned int power_on_delay;
 	unsigned int reset_delay;
+
+	unsigned int dual_lcd_enabled;
 } vidinfo_t;
 
 #else

@@ -163,10 +163,10 @@ enum {
 #define J1_B2_BOARD		0x200
 #define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
+#define MEDIA_BOARD		0x1000
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
 #define P2_REAL_BOARD		0x400
-#define MEDIA_BOARD		0x1000
 
 #define BOARD_MASK		0xF00
 
@@ -212,8 +212,9 @@ static int board_is_limo_real(void)
 
 static int board_is_media(void)
 {
-	return machine_is_aquila() && (board_rev &
-		(LIMO_REAL_BOARD | MEDIA_BOARD));
+	return machine_is_aquila() &&
+		board_rev & J1_B2_BOARD &&
+		board_rev & MEDIA_BOARD;
 }
 
 static int board_is_j1b2(void)
@@ -1399,7 +1400,7 @@ struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 void lcd_cfg_gpio(void)
 {
-	unsigned int i;
+	unsigned int i, f3_end = 4;
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
@@ -1420,7 +1421,11 @@ void lcd_cfg_gpio(void)
 		gpio_set_rate(&gpio_base->gpio_f2, i, GPIO_DRV_SLOW);
 	}
 
-	for (i =0; i < 4; i++) {
+	/* set DISPLAY_DE_B pin for dual rgb mode. */
+	if (board_is_media())
+		f3_end = 5;
+
+	for (i =0; i < f3_end; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
 		gpio_cfg_pin(&gpio_base->gpio_f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
@@ -1568,6 +1573,19 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_row	= 800;
 	vid->vl_width	= 480;
 	vid->vl_height	= 800;
+
+	vid->dual_lcd_enabled = 0;
+
+	if (board_is_media()) {
+		vid->vl_col	= 960;
+		vid->vl_row	= 800;
+		vid->vl_width	= 960;
+		vid->vl_height	= 800;
+
+		/* enable dual lcd mode. */
+		vid->dual_lcd_enabled = 1;
+	}
+
 	vid->vl_clkp	= CONFIG_SYS_HIGH;
 	vid->vl_hsp	= CONFIG_SYS_LOW;
 	vid->vl_vsp	= CONFIG_SYS_LOW;

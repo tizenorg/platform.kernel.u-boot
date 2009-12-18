@@ -55,6 +55,22 @@ void s5pc_fimd_lcd_init_mem(u_long screen_base, u_long fb_size, u_long palette_s
 	return;
 }
 
+static void s5pc_fimd_set_dualrgb(unsigned int enabled)
+{
+	unsigned int cfg = 0;
+
+	if (enabled) {
+		cfg = S5P_DUALRGB_BYPASS_DUAL | S5P_DUALRGB_LINESPLIT |
+			S5P_DUALRGB_VDEN_EN_ENABLE;
+
+		/* in case of Line Split mode, MAIN_CNT doesn't neet to set. */
+		cfg |= S5P_DUALRGB_SUB_CNT(pvid->vl_col/2) | S5P_DUALRGB_MAIN_CNT(0);
+	} else
+		cfg = 0;
+
+	writel(cfg, ctrl_base + S5P_DUALRGB);
+}
+
 static void s5pc_fimd_set_par(unsigned int win_id)
 {
 	unsigned int cfg = 0;
@@ -123,11 +139,17 @@ static void s5pc_fimd_set_clock(void)
 
 	s5pc1xx_clock_init();
 
-	max_clock = 66 * 1000000;
+	max_clock = 86 * 1000000;
 
-	pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
-		pvid->vl_hbpd + pvid->vl_width) * (pvid->vl_vspw +
-		    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_height);
+	if (pvid->dual_lcd_enabled)
+		pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
+			pvid->vl_hbpd + pvid->vl_col / 2) * (pvid->vl_vspw +
+			    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_row);
+	else
+		pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
+			pvid->vl_hbpd + pvid->vl_col) * (pvid->vl_vspw +
+			    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_row);
+
 
 	if (get_pll_clk == NULL) {
 		printf("get_pll_clk is null.\n");
@@ -156,6 +178,11 @@ static void s5pc_fimd_set_clock(void)
 	 * mpll is a parent of hclk_dsys.
 	 */
 	div = (unsigned int)((src_clock / (mpll_ratio + 1)) / pixel_clock);
+
+	/* in case of dual lcd mode. */
+	if (pvid->dual_lcd_enabled)
+		div--;
+
 	cfg |= S5P_VIDCON0_CLKVAL_F(div - 1);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
@@ -276,6 +303,12 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* set clock */
 	s5pc_fimd_set_clock();
+
+	/* set rgb mode to dual lcd. */
+	if (pvid->dual_lcd_enabled)
+		s5pc_fimd_set_dualrgb(1);
+	else
+		s5pc_fimd_set_dualrgb(0);
 
 	/* display on */
 	s5pc_fimd_lcd_on(win_id);
