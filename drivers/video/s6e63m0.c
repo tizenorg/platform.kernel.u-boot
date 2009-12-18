@@ -33,14 +33,12 @@
 
 #define PACKET_LEN		8
 
-struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 struct s6e63m0_platform_data {
 	struct s5pc1xx_gpio_bank *bank;
 	unsigned int num;
 };
 
-/* these machine specific platform datas would be setting at universal.c */
+/* these machine specific platform data would be setting at universal.c */
 struct s6e63m0_platform_data *spi_cs, *spi_clk, *spi_si, *spi_so;
 
 void cs_low(void)
@@ -144,7 +142,7 @@ static const unsigned short SEQ_ETC_CONDITION_SET[] = {
 	DATA_ONLY, 0x8c,
 	DATA_ONLY, 0x07,
 
-	/* added */
+	/* added for panel rev 0.1*/
 	0xb3, 0xc,
 
 	0xb5, 0x2c,
@@ -319,7 +317,7 @@ static const unsigned short SEQ_STAND_BY_ON[] = {
 	ENDDEF, 0x0000
 };
 
-/* added */
+/* added for panel rev 0.1*/
 static const unsigned short SEQ_DISPLAY_ON[] = {
 	0x29, COMMAND_ONLY,
 

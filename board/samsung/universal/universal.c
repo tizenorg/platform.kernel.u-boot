@@ -1508,7 +1508,7 @@ void lcd_power_on(unsigned int onoff)
 
 		/*
 		if (board_is_p2_real())
-			gpio_direction_output(&gpio->gpio_j1, 4, 1);
+			gpio_set_value(&gpio->gpio_j1, 4, 1);
 		*/
 	} else {
 		if (machine_is_aquila() || machine_is_geminus())
@@ -1519,7 +1519,7 @@ void lcd_power_on(unsigned int onoff)
 
 		/*
 		if (board_is_p2_real())
-		     gpio_direction_output(&gpio->gpio_j1, 4, 0);
+		     gpio_set_value(&gpio->gpio_j1, 4, 0);
 		*/
 	}
 }
