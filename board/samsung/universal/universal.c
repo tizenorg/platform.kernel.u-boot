@@ -213,8 +213,7 @@ static int board_is_limo_real(void)
 static int board_is_media(void)
 {
 	return machine_is_aquila() &&
-		board_rev & J1_B2_BOARD &&
-		board_rev & MEDIA_BOARD;
+		(board_rev & MEDIA_BOARD);
 }
 
 static int board_is_j1b2(void)
@@ -367,6 +366,11 @@ static void check_board_revision(int board, int rev)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		}
+		if (rev & MEDIA_BOARD) {
+			board_rev &= ~(J1_B2_BOARD |
+					LIMO_UNIVERSAL_BOARD);
+			board_rev |= LIMO_REAL_BOARD;
+		}
 		break;
 	case MACH_P1P2:
 		break;
@@ -461,9 +465,6 @@ static void check_hw_revision(void)
 
 			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
-
-			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->gpio_j2, 6);
 
 			if (gpio_get_value(&gpio->gpio_j2, 6) == 1)
 				board_rev |= MEDIA_BOARD;
@@ -659,8 +660,9 @@ static void setup_limo_real_gpios(void)
 	/*
 	 * Note: Please write GPIO alphabet order
 	 */
-	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
-	gpio_direction_output(&gpio->gpio_f3, 4, 1);
+	if (!board_is_media())
+		/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
+		gpio_direction_output(&gpio->gpio_f3, 4, 1);
 
 	if (hwrevision(0))
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
