@@ -1678,12 +1678,12 @@ static void setup_meminfo(void)
 	size = gd->bd->bi_dram[1].size >> 20;
 	real = min(size, 256);
 	count += sprintf(meminfo + count, " mem=%dM@0x%x",
-		real, gd->bd->bi_dram[1].start);
+		real, (unsigned int)gd->bd->bi_dram[1].start);
 
 	size -= real;
 	if (size > 0) {
-		count += sprintf(meminfo + count, " mem=%dM@0x%x",
-			size, gd->bd->bi_dram[1].start + (real << 20));
+		count += sprintf(meminfo + count, " mem=%dM@0x%x", size,
+			(unsigned int)gd->bd->bi_dram[1].start + (real << 20));
 	}
 
 	setenv("meminfo", meminfo);
