@@ -140,8 +140,6 @@ lowlevel_init:
 #ifdef CONFIG_ONENAND_IPL
 	/* init system clock */
 	bl	system_clock_init
-	/* Power gating control */
-	bl	power_gating_init
 
 	/* Board detection to set proper memory configuration */
 	cmp	r7, r8
@@ -443,22 +441,6 @@ system_clock_init:
 1:	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
-
-power_gating_init:
-	ldr	r0, =S5PC110_PWR_CFG		@ 0xE010C000
-
-	/* Check S5PC100 */
-	cmp	r7, r8
-	bne	110f
-100:
-	b	200f
-
-110:
-	ldr	r1, =0xffffff49			@ LCD[3] IROM[20]
-	str	r1, [r0, #0x10]			@ S5PC110_NORMAL_CFG
-
-200:
 	mov	pc, lr
 
 #ifndef CONFIG_ONENAND_IPL
