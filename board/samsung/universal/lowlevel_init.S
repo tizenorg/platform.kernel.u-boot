@@ -435,6 +435,10 @@ system_clock_init:
 						@ WDT[22] GPIO[26] SYSCON[27]
 	str	r1, [r0, #0x46c]		@ S5PC110_CLK_IP3
 
+	/* CLK_IP4 */
+	ldr	r1, =0xfffffff1			@ CHIP_ID[0] TZPC[8:5]
+	str	r1, [r0, #0x470]		@ S5PC110_CLK_IP3
+
 200:
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
