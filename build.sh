@@ -61,4 +61,5 @@ elif [ "$USER" = "dofmind" ]; then
 	mv -f system_uboot.tar /home/work
 elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot.tar u-boot-onenand.bin
+	mv -f system_uboot.tar /home/share/Work/bin
 fi
