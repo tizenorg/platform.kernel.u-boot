@@ -415,7 +415,7 @@ system_clock_init:
 	str	r1, [r2]
 
 	/* CLK_IP0 */
-	ldr	r1, =0x8feffeb			@ DMC[1:0] PDMA0[3] IMEM[5]
+	ldr	r1, =0x8fefeeb			@ DMC[1:0] PDMA0[3] IMEM[5]
 	str	r1, [r0, #0x460]		@ S5PC110_CLK_IP0
 
 	/* CLK_IP1 */
