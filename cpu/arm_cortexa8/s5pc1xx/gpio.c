@@ -140,6 +140,7 @@ void gpio_set_rate(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 	writel(value, &bank->drv);
 }
 
+#ifdef CONFIG_CMD_GPIO
 static char *gpio_name[] = {
 	"GPA0", "GPA1", "GPB", "GPC0", "GPC1", "GPD0", "GPD1", "GPE0", "GPE1",
 	"GPF0", "GPF1", "GPF2", "GPF3", "GPG0", "GPG1", "GPG2", "GPG3", "GPI",
@@ -250,3 +251,4 @@ U_BOOT_CMD(
 	"show - show all banks\n"
 	"gpio set bank num value - set gpio value\n"
 );
+#endif
