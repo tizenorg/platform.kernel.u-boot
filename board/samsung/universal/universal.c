@@ -892,8 +892,8 @@ static void enable_battery(void)
 		return;
 	}
 
-	val[0] = 0x00;
-	val[1] = 0x54;
+	val[0] = 0x54;
+	val[1] = 0x00;
 	i2c_write(addr, 0xfe, 1, val, 2);
 }
 
@@ -1764,14 +1764,14 @@ int misc_init_r(void)
 	/* check max8998 */
 	init_pmic();
 
-	/* check max17040 */
-	check_battery();
-
 #ifdef CONFIG_S5PC1XXFB
 	display_device_info();
 #endif
 
 	setup_power_down_mode_registers();
+
+	/* check max17040 */
+	check_battery();
 
 	/* check fsa9480 */
 	check_micro_usb(0);
