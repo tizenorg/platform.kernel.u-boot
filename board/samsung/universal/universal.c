@@ -1107,6 +1107,7 @@ static void check_micro_usb(int intr)
 #define MAX8998_REG_ONOFF1	0x11
 #define MAX8998_REG_ONOFF2	0x12
 #define MAX8998_REG_ONOFF3	0x13
+#define MAX8998_LDO3		(1 << 2)
 #define MAX8998_LDO10		(1 << 3)
 #define MAX8998_LDO11		(1 << 2)
 #define MAX8998_LDO12		(1 << 1)
@@ -1133,6 +1134,10 @@ static void init_pmic(void)
 	}
 
 	/* ONOFF1 */
+	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+	val[0] &= ~MAX8998_LDO3;
+	i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+
 	/* ONOFF2 */
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/*
@@ -1993,6 +1998,10 @@ void board_sleep_resume(void)
 #ifdef CONFIG_CMD_USBDOWN
 int usb_board_init(void)
 {
+#ifdef CONFIG_CMD_PMIC
+	run_command("pmic ldo 3 on", 0);
+#endif
+
 	if (cpu_is_s5pc100()) {
 #ifdef CONFIG_HARD_I2C
 		uchar val[2] = {0,};
