@@ -2083,6 +2083,7 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
+#ifdef CONFIG_CMD_PMIC
 static int pmic_status(void)
 {
 	unsigned char addr, val[2];
@@ -2209,3 +2210,4 @@ U_BOOT_CMD(
 	"pmic ldo num on/off - Turn on/off the LDO\n"
 	"pmic buck num on/off - Turn on/off the BUCK\n"
 );
+#endif
