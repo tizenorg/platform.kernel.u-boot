@@ -32,7 +32,7 @@
 #define PULL_MODE(x, v)		((v) << ((x) << 1))
 
 #define DRV_MASK(x)		(0x3 << (x))
-#define DRV_SET(x,m)		((m) << (x))
+#define DRV_SET(x, m)		((m) << (x))
 #define RATE_MASK(x)		(0x1 << (x + 16))
 #define RATE_SET(x)		(0x1 << (x + 16))
 
@@ -89,6 +89,7 @@ void gpio_set_pull(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 
 	value = readl(&bank->pull);
 	value &= ~PULL_MASK(gpio);
+
 	switch (mode) {
 	case GPIO_PULL_DOWN:
 	case GPIO_PULL_UP:
@@ -97,6 +98,7 @@ void gpio_set_pull(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 	default:
 		break;
 	}
+
 	writel(value, &bank->pull);
 }
 
