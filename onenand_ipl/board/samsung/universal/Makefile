@@ -21,6 +21,7 @@ TEXT_BASE    = 0xD0034000
 TEXT_BASE2K  = 0xD0034800
 TEXT_BASE4K  = 0xD0035000
 TEXT_BASE16K = 0xD0038000
+TEXT_BASE16K1= 0xD0037ff0
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -46,8 +47,11 @@ ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand
 all:	$(obj).depend $(ALL)
 
 $(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl checksum
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K1) -O binary $< $@
+	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin 1
+	cat $(onenandobj)/board/$(BOARDDIR)/header.bin $(onenandobj)onenand-ipl-16k.bin > $(onenandobj)onenand-ipl-16k-1.bin
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K) -O binary $< $@
-	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin
+	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin 0
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@

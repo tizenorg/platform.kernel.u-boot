@@ -38,10 +38,17 @@ build_uboot()
 	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $*
 }
 
+make_evt1_image()
+{
+	cat onenand_ipl/onenand-ipl-16k-1.bin u-boot.bin > u-boot-onenand1.bin
+}
+
 check_ccache
 check_users
 
 build_uboot $*
+
+make_evt1_image
 
 size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
 if [ "$size" -ge "262144" ]; then
