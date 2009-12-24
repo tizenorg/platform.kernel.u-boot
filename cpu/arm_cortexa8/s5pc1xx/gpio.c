@@ -173,7 +173,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			for (j = 0; j < 8; j++) {
 				printf("[%d] %s", j,
 					gpio_get_value(&gpio->gpio_a0 + i, j) ?
-					"hi" : "low");
+					"hi" : "lo");
 				if ((j + 1) % 4)
 					printf("\t");
 				else
@@ -192,7 +192,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			for (j = 0; j < 8; j++) {
 				printf("[%d] %s", j,
 					gpio_get_value(&gpio->gpio_h0 + i, j) ?
-					"hi" : "low");
+					"hi" : "lo");
 				if ((j + 1) % 4)
 					printf("\t");
 				else
@@ -236,7 +236,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		gpio_set_value(&gpio->gpio_a0 + i, num, value);
 
 		printf("%s[%d] set to %s\n", argv[2], num,
-				value ? "hi" : "low");
+				value ? "hi" : "lo");
 
 		return 1;
 	}
