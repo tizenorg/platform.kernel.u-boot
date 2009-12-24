@@ -775,8 +775,7 @@ static void check_keypad(void)
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int col_value[4], i;
-	unsigned char val[2];
-	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
+
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
@@ -854,30 +853,38 @@ static void check_keypad(void)
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
+}
 
-	if (machine_is_aquila()) {
-		/* 3 touchkey */
-		i2c_set_bus_num(I2C_GPIO6);
+static void check_touchkey(void)
+{
+	unsigned int reg;
+	unsigned char val[2];
+	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
 
-		if (i2c_probe(addr)) {
-			printf("Can't found 3 touchkey\n");
-			return;
-		}
+	if (!machine_is_aquila())
+		return;
+
+	/* 3 touchkey */
+	i2c_set_bus_num(I2C_GPIO6);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found 3 touchkey\n");
+		return;
+	}
 
 #define MCS5000_TK_HW_VERSION  0x06
 #define MCS5000_TK_FW_VERSION  0x0A
 #define MCS5000_TK_MI_VERSION  0x0B
 
-		reg = MCS5000_TK_MI_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		dprintf("3-touchkey M/I 0x%x, ", val[0]);
-		reg = MCS5000_TK_HW_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		dprintf("H/W 0x%x, ", val[0]);
-		reg = MCS5000_TK_FW_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		dprintf("F/W 0x%x\n", val[0]);
-	}
+	reg = MCS5000_TK_MI_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	dprintf("3-touchkey:\tM/I 0x%x, ", val[0]);
+	reg = MCS5000_TK_HW_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	dprintf("H/W 0x%x, ", val[0]);
+	reg = MCS5000_TK_FW_VERSION;
+	i2c_read(addr, reg, 1, val, 1);
+	dprintf("F/W 0x%x\n", val[0]);
 }
 
 static void enable_battery(void)
@@ -1783,6 +1790,9 @@ int misc_init_r(void)
 #endif
 
 	setup_power_down_mode_registers();
+
+	/* check mcs5000 3-touch key */
+	check_touchkey();
 
 	/* check max17040 */
 	check_battery();
