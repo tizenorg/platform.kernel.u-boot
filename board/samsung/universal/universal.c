@@ -266,7 +266,7 @@ void i2c_init_board(void)
 #ifdef CONFIG_MISC_INIT_R
 #define DEV_INFO_LEN		512
 static char device_info[DEV_INFO_LEN];
-static int display_info = 0;
+static int display_info;
 
 static void dprintf(const char *fmt, ...)
 {
@@ -507,9 +507,14 @@ static void check_hw_revision(void)
 		gpio_direction_input(&gpio->gpio_j0, 6);
 		gpio_direction_input(&gpio->gpio_j0, 7);
 
-		/* do not change order below because it needs delay to get gpio value. */
-		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_NONE);	/* HWREV_MODE5 */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);	/* HWREV_MODE4 */
+		/*
+		 * do not change order below
+		 * because it needs delay to get gpio value.
+		 */
+		/* HWREV_MODE4 */
+		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_NONE);
+		/* HWREV_MODE5 */
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
 
 		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
 			board = MACH_P1P2;
@@ -521,8 +526,10 @@ static void check_hw_revision(void)
 		}
 
 		/* set gpio to default value. */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);	/* HWREV_MODE4 */
-		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);	/* HWREV_MODE5 */
+		/* HWREV_MODE4 */
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+		/* HWREV_MODE5 */
+		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);
 
 		/* C110 Geminus */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
@@ -543,8 +550,10 @@ static void check_hw_revision(void)
 	if (cpu_is_s5pc110()) {
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
 	} else {
-		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; bootm 0x30007FC0");
-		setenv("updatek", "onenand erase 0x60000 0x300000; onenand write 0x31008000 0x60000 0x300000");
+		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; "
+				"bootm 0x30007FC0");
+		setenv("updatek", "onenand erase 0x60000 0x300000; "
+				  "onenand write 0x31008000 0x60000 0x300000");
 	}
 }
 
@@ -739,14 +748,15 @@ static void check_p2_keypad(void)
 	}
 	/* Row 8, Column 10 */
 	val[0] = 0xf;
-	ret = i2c_write(addr, 0x1D, 1, val, 1);			/* Set KP_GPIO1 */
+	ret = i2c_write(addr, 0x1D, 1, val, 1);		/* Set KP_GPIO1 */
 	val[0] = 0xf;
-	ret |= i2c_write(addr, 0x1E, 1, val, 1);		/* Set KP_GPIO2 */
+	ret |= i2c_write(addr, 0x1E, 1, val, 1);	/* Set KP_GPIO2 */
 	val[0] = 0x3;
-	ret |= i2c_write(addr, 0x1F, 1, val, 1);		/* Set KP_GPIO3 */
-	val[0] = 0x3f;	/*CMP2_INT | CMP1_INT | OVR_FLOW_INT | K_LCK_INT | GPI_INT | KE_INT */
-	ret |= i2c_write(addr, 0x02, 1, val, 1); /* Status is W1C */
-	val[0] = 0x19;	/* INT_CFG | OVR_FLOW_IEN | KE_IEN */
+	ret |= i2c_write(addr, 0x1F, 1, val, 1);	/* Set KP_GPIO3 */
+	val[0] = 0x3f;		/* CMP2_INT | CMP1_INT | OVR_FLOW_INT |
+				   K_LCK_INT | GPI_INT | KE_INT */
+	ret |= i2c_write(addr, 0x02, 1, val, 1);	/* Status is W1C */
+	val[0] = 0x19;		/* INT_CFG | OVR_FLOW_IEN | KE_IEN */
 	ret |= i2c_write(addr, 0x01, 1, val, 1);
 	for (i = 0; i < 10; i++) {
 		udelay(1000);		/* FIXME */
@@ -799,7 +809,8 @@ static void check_keypad(void)
 			if (row_mask & (0xF << (i << 2))) {
 				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
 				if (!machine_is_p1p2())
-					gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
+					gpio_set_pull(&gpio->gpio_h3,
+							i, GPIO_PULL_UP);
 			}
 
 			/* Set GPH2[3:0] to KP_COL[3:0] */
@@ -828,7 +839,7 @@ static void check_keypad(void)
 		}
 		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-		/* expected value is  row_value[0] = 0x00  row_value[1] = 0x01 */
+		/* expected value is row_value[0] = 0x00 row_value[1] = 0x01 */
 		/* workaround */
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
 			auto_download = 1;
@@ -1420,7 +1431,7 @@ void lcd_cfg_gpio(void)
 	if (board_is_media())
 		f3_end = 5;
 
-	for (i =0; i < f3_end; i++) {
+	for (i = 0; i < f3_end; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
 		gpio_cfg_pin(&gpio_base->gpio_f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
@@ -1448,7 +1459,10 @@ void lcd_cfg_gpio(void)
 	if (machine_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
 
-	/* gpio pad configuration for DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI. */
+	/*
+	 * gpio pad configuration for
+	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
+	 */
 	gpio_cfg_pin(&gpio_base->gpio_mp0_1, 1, GPIO_OUTPUT);
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 1, GPIO_OUTPUT);
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_INPUT);
@@ -1511,7 +1525,7 @@ void reset_lcd(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	if (machine_is_aquila() || machine_is_geminus()/* || board_is_p2_real() */)
+	if (machine_is_aquila() || machine_is_geminus())
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	if (machine_is_cypress())
 		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
@@ -1717,9 +1731,9 @@ int misc_init_r(void)
 		setenv("lcdinfo", "lcd=tl2796-dual");
 	*/
 
-	/* 
+	/*
 	 * env values below should be added in case that lcd panel of geminus,
-	 * p1 and p2 are enabled at u-boot. 
+	 * p1 and p2 are enabled at u-boot.
 	 * setenv means that lcd panel has been turned on at u-boot.
 	 */
 	if (machine_is_geminus())
@@ -1821,7 +1835,7 @@ int dram_init(void)
 		 */
 		size = size << 4;
 
-		/* 
+		/*
 		 * Aquila Rev0.5 4G3G1G
 		 * Aquila Rev0.7 4G3G1G
 		 */
@@ -1882,10 +1896,8 @@ void board_sleep_init(void)
 	gpio_set_value(&gpio->gpio_mp0_5, 4, 0);
 	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
 	/* MHL off */
-#define HDMI_EN1	&gpio->gpio_j2, 2
-#define MHL_RST		&gpio->gpio_mp0_4, 7
-	gpio_set_value(HDMI_EN1, 0);
-	gpio_set_value(MHL_RST, 0);
+	gpio_set_value(&gpio->gpio_j2, 2, 0);
+	gpio_set_value(&gpio->gpio_mp0_4, 7, 0);
 	gpio_set_value(&gpio->gpio_j2, 3, 0); /* MHL_ON for REV02 or higher */
 
 	/* Set ONOFF1 */
@@ -1994,7 +2006,9 @@ int usb_board_init(void)
 	}
 
 	/* S5PC110 */
-	if (board_is_limo_universal() || board_is_limo_real() || board_is_media()) {
+	if (board_is_limo_universal() ||
+		board_is_limo_real() ||
+		board_is_media()) {
 		/* check usb path */
 		if (board_is_limo_real() && !hwrevision(6))
 			check_mhl();
@@ -2074,17 +2088,21 @@ static int pmic_status(void)
 	reg = 0x11;
 	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
-		printf("BUCK%d %s\n", 7 - i + 1, val[0] & (1 << i) ? "on" : "off");
+		printf("BUCK%d %s\n", 7 - i + 1,
+			val[0] & (1 << i) ? "on" : "off");
 	for (; i >= 0; i--)
-		printf("LDO%d %s\n", 5 - i, val[0] & (1 << i) ? "on" : "off");
+		printf("LDO%d %s\n", 5 - i,
+			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x12;
 	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 0; i--)
-		printf("LDO%d %s\n", 7 - i + 6, val[0] & (1 << i) ? "on" : "off");
+		printf("LDO%d %s\n", 7 - i + 6,
+			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x13;
 	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
-		printf("LDO%d %s\n", 7 - i + 14, val[0] & (1 << i) ? "on" : "off");
+		printf("LDO%d %s\n", 7 - i + 14,
+			val[0] & (1 << i) ? "on" : "off");
 	return 0;
 }
 
