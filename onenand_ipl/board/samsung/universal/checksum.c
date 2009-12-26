@@ -127,9 +127,9 @@ int main(int argc, char *argv[])
 		}
 
 		if (size == CHECKSUM_16K)
-			header[0] = 0x10000;
+			header[0] = 0x4000;
 		else
-			header[0] = 0x1000;
+			header[0] = 0x2000;
 		header[1] = 0;
 		header[2] = sum;
 		header[3] = 0;
