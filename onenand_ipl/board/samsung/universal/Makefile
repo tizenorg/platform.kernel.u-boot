@@ -18,6 +18,7 @@ include $(TOPDIR)/config.mk
 # Now it uses the S5PC100 as default
 # If you use the S5PC110, the load address is relocated at start.S
 # XXX Never set it S5PC110 it don't relocate it
+# FIXME Use the TEXT_BASE 0xD0020010 at S5PC110 EVT1
 TEXT_BASE		= 0xD0034000
 TEXT_BASE16K_EVT0	= 0xD0038000
 TEXT_BASE_EVT1		= 0xD0020010
@@ -47,10 +48,10 @@ ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand
 all:	$(obj).depend $(ALL)
 
 $(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl checksum
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K1) -O binary $< $@
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT1) -O binary $< $@
 	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin 1
 	cat $(onenandobj)/board/$(BOARDDIR)/header.bin $(onenandobj)onenand-ipl-16k.bin > $(onenandobj)onenand-ipl-16k-1.bin
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K) -O binary $< $@
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT0) -O binary $< $@
 	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-16k.bin 0
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
