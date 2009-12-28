@@ -531,13 +531,23 @@ static void check_hw_revision(void)
 		/* HWREV_MODE5 */
 		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);
 
-		/* C110 Geminus */
+		/* C110 Geminus for rev0.0 */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
 		gpio_direction_input(&gpio->gpio_j1, 2);
-		if (gpio_get_value(&gpio->gpio_j1, 2) == 1)
+		if (gpio_get_value(&gpio->gpio_j1, 2) == 1) {
 			board = MACH_GEMINUS;
+			if ((board_rev & ~BOARD_MASK) == 3)
+				board_rev &= ~0xff;
+		}
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
 		gpio_direction_output(&gpio->gpio_j1, 2, 0);
+
+		/* C110 Geminus for rev0.1 ~ */
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j0, 6);
+		if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
+			board = MACH_GEMINUS;
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 	}
 
 	/* Set machine id */
