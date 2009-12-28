@@ -18,11 +18,10 @@ include $(TOPDIR)/config.mk
 # Now it uses the S5PC100 as default
 # If you use the S5PC110, the load address is relocated at start.S
 # XXX Never set it S5PC110 it don't relocate it
-# FIXME Use the TEXT_BASE 0xD0020010 at S5PC110 EVT1
+# FIXME BL1 header uses 16 bytes at S5PC110 EVT1
 TEXT_BASE		= 0xD0034000
 TEXT_BASE16K_EVT0	= 0xD0038000
-TEXT_BASE_EVT1		= 0xD0020010
-TEXT_BASE16K_EVT1	= 0xD0024000
+TEXT_BASE16K_EVT1	= 0xD0037ff0
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
