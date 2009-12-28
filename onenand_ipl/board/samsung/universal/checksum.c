@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
 
 				res = i / PAGE_SIZE;
 				if (res % 2) {
+					if (evt == 0)
+						i += PAGE_SIZE;
 					/*
 					 * if 1st page's reverved area,
 					 * copy the data to 2nd page
