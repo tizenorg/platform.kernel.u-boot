@@ -66,25 +66,29 @@ int main(int argc, char *argv[])
 		size = CHECKSUM_8K;
 
 	for (i = 0; i < size; i++) {
-		/* if reserved area, skip the checksum */
-		if (stat.st_size > SZ_8K) {
-			if (i % PAGE_SIZE == 0) {
-				int res;
-				char tbuf[PAGE_SIZE];
+		/* evt1 doesn't have reserved area */
+		if (evt == 0) {
+			/* if reserved area, skip the checksum */
+			if (stat.st_size > SZ_8K) {
+				if (i % PAGE_SIZE == 0) {
+					int res;
+					char tbuf[PAGE_SIZE];
 
-				res = i / PAGE_SIZE;
-				if (res % 2) {
-					if (evt == 0)
-						i += PAGE_SIZE;
-					/*
-					 * if 1st page's reverved area,
-					 * copy the data to 2nd page
-					 */
-					if (res == 1) {
-						ret = read(fd, &tbuf, PAGE_SIZE);
-						ret = write(fd, tbuf, PAGE_SIZE);
+					res = i / PAGE_SIZE;
+					if (res % 2) {
+							i += PAGE_SIZE;
+						/*
+						 * if 1st page's reverved area,
+						 * copy the data to 2nd page
+						 */
+						if (res == 1) {
+							ret = read(fd, &tbuf,
+								PAGE_SIZE);
+							ret = write(fd, tbuf,
+								PAGE_SIZE);
+						}
+						lseek(fd, i, SEEK_SET);
 					}
-					lseek(fd, i, SEEK_SET);
 				}
 			}
 		}
