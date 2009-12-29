@@ -101,7 +101,10 @@ static void usb_stop(void)
 	s5p_usb_stop();
 #ifdef CONFIG_S5PC1XXFB
 	exit_font();
-	s5pc_fimc_lcd_off(1);
+
+	/* it uses fb3 as default window. */
+	s5pc_fimd_lcd_off(3);
+	s5pc_fimd_window_off(3);
 #endif
 }
 

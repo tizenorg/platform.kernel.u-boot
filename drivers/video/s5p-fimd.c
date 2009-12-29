@@ -201,27 +201,46 @@ static void s5pc_fimd_lcd_on(unsigned int win_id)
 	cfg |= (S5P_VIDCON0_ENVID_ENABLE | S5P_VIDCON0_ENVID_F_ENABLE);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 	udebug("vidcon0 = %x\n", cfg);
+}
+
+static void s5pc_fimd_window_on(unsigned int win_id)
+{
+	unsigned int cfg = 0;
 
 	/* enable window */
 	cfg = readl(ctrl_base + S5P_WINCON(win_id));
 	cfg |= S5P_WINCON_ENWIN_ENABLE;
 	writel(cfg, ctrl_base + S5P_WINCON(win_id));
 	udebug("wincon%d=%x\n", win_id, cfg);
+
+	/* evt1 */
+	cfg = readl(ctrl_base + S5P_WINSHMAP);
+	cfg |= S5P_WINSHMAP_CH_ENABLE(win_id);
+	writel(cfg, ctrl_base + S5P_WINSHMAP);
 }
 
-void s5pc_fimc_lcd_off(unsigned int win_id)
+void s5pc_fimd_lcd_off(unsigned int win_id)
 {
 	unsigned int cfg = 0;
 
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= (S5P_VIDCON0_ENVID_DISABLE | S5P_VIDCON0_ENVID_F_DISABLE);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
+}
+
+void s5pc_fimd_window_off(unsigned int win_id)
+{
+	unsigned int cfg = 0;
 
 	cfg = readl(ctrl_base + S5P_WINCON(win_id));
 	cfg &= S5P_WINCON_ENWIN_DISABLE;
 	writel(cfg, ctrl_base + S5P_WINCON(win_id));
-}
 
+	/* evt1 */
+	cfg = readl(ctrl_base + S5P_WINSHMAP);
+	cfg &= ~S5P_WINSHMAP_CH_DISABLE(win_id);
+	writel(cfg, ctrl_base + S5P_WINSHMAP);
+}
 
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
@@ -312,6 +331,9 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 	/* display on */
 	s5pc_fimd_lcd_on(win_id);
+
+	/* window on */
+	s5pc_fimd_window_on(win_id);
 
 	udebug("lcd controller init completed.\n");
 
