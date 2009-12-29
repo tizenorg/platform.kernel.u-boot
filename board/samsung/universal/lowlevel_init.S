@@ -431,7 +431,8 @@ system_clock_init:
 	str	r1, [r0, #0x468]		@ S5PC110_CLK_IP2
 
 	/* CLK_IP3 */
-	ldr	r1, =0x8edb000c			@ SYSTIMER[16] UART0[17]
+	ldr	r1, =0x8edb038c			@ I2C[8:6]
+						@ SYSTIMER[16] UART0[17]
 						@ UART2[19] UART3[20] WDT[22]
 						@ PWM[23] GPIO[26] SYSCON[27]
 	str	r1, [r0, #0x46c]		@ S5PC110_CLK_IP3
