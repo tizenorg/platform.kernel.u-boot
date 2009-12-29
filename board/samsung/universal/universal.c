@@ -1862,11 +1862,9 @@ int dram_init(void)
 
 		/*
 		 * Aquila Rev0.5 4G3G1G
-		 * Aquila Rev0.7 4G3G1G
 		 * Aquila Rev0.8 4G3G1G
 		 */
-		if (machine_is_aquila() &&
-			(hwrevision(5) || hwrevision(7) || hwrevision(8))) {
+		if (machine_is_aquila() && (hwrevision(5) || hwrevision(8))) {
 			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 			sz = (memconfig1 >> 16) & 0xFF;
