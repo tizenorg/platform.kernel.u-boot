@@ -176,7 +176,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				printf("[%d] %s", j,
 					gpio_get_value(&gpio->gpio_a0 + i, j) ?
 					"hi" : "lo");
-				if ((j + 1) % 4)
+				if ((j + 1) & (8 - 1))
 					printf("\t");
 				else
 					printf("\n");
@@ -195,7 +195,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				printf("[%d] %s", j,
 					gpio_get_value(&gpio->gpio_h0 + i, j) ?
 					"hi" : "lo");
-				if ((j + 1) % 4)
+				if ((j + 1) & (8 - 1))
 					printf("\t");
 				else
 					printf("\n");
