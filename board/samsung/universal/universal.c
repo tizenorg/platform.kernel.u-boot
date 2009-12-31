@@ -1971,13 +1971,9 @@ int usb_board_init(void)
 			check_mhl();
 	}
 
-	if (machine_is_tickertape()) {
-		struct s5pc110_gpio *gpio =
-			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
+	if (machine_is_tickertape())
 		/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
-		gpio_direction_output(&gpio->gpio_mp0_4, 0, 0);
-	}
+		gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 0, 0);
 
 	return 0;
 }
@@ -1989,7 +1985,6 @@ int board_mmc_init(bd_t *bis)
 	unsigned int reg;
 	unsigned int clock;
 	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 	int i;
 
 	/* MMC0 Clock source = SCLKMPLL */
@@ -2016,14 +2011,16 @@ int board_mmc_init(bd_t *bis)
 	 * MMC0 GPIO
 	 * GPG0[0]	SD_0_CLK
 	 * GPG0[1]	SD_0_CMD
-	 * GPG0[2]	SD_0_CDn
+	 * GPG0[2]	SD_0_CDn	-> Not used
 	 * GPG0[3:6]	SD_0_DATA[0:3]
 	 */
 	for (i = 0; i < 7; i++) {
+		if (i == 2)
+			continue;
 		/* GPG0[0:6] special function 2 */
-		gpio_cfg_pin(&gpio->gpio_g0, i, 0x2);
-		/* GPG0[0:6] pull up */
-		gpio_set_pull(&gpio->gpio_g0, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_g0, i, 0x2);
+		/* GPG0[0:6] pull disable */
+		gpio_set_pull(&s5pc110_gpio->gpio_g0, i, GPIO_PULL_NONE);
 	}
 
 	return s5pc1xx_mmc_init(0);
@@ -2313,6 +2310,18 @@ static int power_control(int device, int on)
 	return 0;
 }
 
+static int power_on(int on)
+{
+	power_touch(on);
+	power_3_touchkey(on);
+	power_lcd(on);
+	power_haptic(on);
+	power_audio_codec(on);
+	power_fm_radio(on);
+	power_bt_wifi(on);
+	power_hdmi(on);
+}
+
 static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int device, on;
@@ -2322,6 +2331,10 @@ static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	switch (argc) {
 	case 2:
+		if (strncmp(argv[1], "on", 2) == 0)
+			return power_on(1);
+		if (strncmp(argv[1], "off", 3) == 0)
+			return power_on(0);
 		break;
 	case 3:
 		device = simple_strtoul(argv[1], NULL, 10);
