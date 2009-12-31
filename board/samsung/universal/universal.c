@@ -2190,6 +2190,10 @@ enum {
 	POWER_3_TOUCHKEY,
 	POWER_LCD,
 	POWER_HAPTIC,
+	POWER_AUDIO_CODEC,
+	POWER_FM_RADIO,
+	POWER_BT_WIFI,
+	POWER_HDMI,
 };
 
 static void power_display_devices(void)
@@ -2199,6 +2203,43 @@ static void power_display_devices(void)
 	printf("\t%d - 3 touchkey\n", POWER_3_TOUCHKEY);
 	printf("\t%d - LCD\n", POWER_LCD);
 	printf("\t%d - Haptic\n", POWER_HAPTIC);
+	printf("\t%d - Audio Codec\n", POWER_AUDIO_CODEC);
+	printf("\t%d - FM Radio\n", POWER_FM_RADIO);
+	printf("\t%d - BT/WiFi\n", POWER_BT_WIFI);
+	printf("\t%d - HDMI\n", POWER_HDMI);
+}
+
+static int power_hdmi(int on)
+{
+	/* HDMI_EN1: GPJ2[2] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, on);
+	/* MHL_ON: GPJ2[3] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 3, on);
+	return 0;
+}
+
+static int power_bt_wifi(int on)
+{
+	/* WLAN_BT_EN: GPB[5] */
+	gpio_direction_output(&s5pc110_gpio->gpio_b, 5, on);
+	return 0;
+
+}
+
+static int power_fm_radio(int on)
+{
+	/* FM_BUS_nRST: GPJ2[5] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 5, !on);
+	return 0;
+}
+
+static int power_audio_codec(int on)
+{
+	/* CODEC_LDO_EN: GPF3[4] */
+	gpio_direction_output(&s5pc110_gpio->gpio_f3, 4, on);
+	/* CODEC_XTAL_EN: GPH3[2] */
+	gpio_direction_output(&s5pc110_gpio->gpio_h3, 2, on);
+	return 0;
 }
 
 static int power_haptic(int on)
@@ -2281,6 +2322,14 @@ static int power_control(int device, int on)
 		return power_lcd(on);
 	case POWER_HAPTIC:
 		return power_haptic(on);
+	case POWER_AUDIO_CODEC:
+		return power_audio_codec(on);
+	case POWER_FM_RADIO:
+		return power_fm_radio(on);
+	case POWER_BT_WIFI:
+		return power_bt_wifi(on);
+	case POWER_HDMI:
+		return power_hdmi(on);
 	default:
 		printf("I don't know device %d\n", device);
 		break;
