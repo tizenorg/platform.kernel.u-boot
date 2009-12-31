@@ -225,7 +225,6 @@ static int board_is_p2_real(void)
 	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
 }
 
-static void enable_touchkey(void);
 static void enable_battery(void);
 
 void i2c_init_board(void)
@@ -254,9 +253,6 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_GPIO6].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
-
-	/* XXX Power on Touckey early (it requires 100 msec power up time) */
-	enable_touchkey();
 
 	/* Reset on max17040 early */
 	if (battery_soc == 0)
@@ -730,21 +726,6 @@ static void setup_p1p2_gpios(void)
 #define KBR1		(1 << 1)
 #define KBR0		(1 << 0)
 
-static void enable_touchkey(void)
-{
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
-	/* TOUCH_EN - GPIO_J3(0) : (J1B2) */
-	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
-	if (board_rev & J1_B2_BOARD)
-		gpio_direction_output(&gpio->gpio_j3, 0, 1);
-	else
-		gpio_direction_output(&gpio->gpio_j3, 5, 1);
-
-	/* TOUCH_CE - GPIO_J2(6) */
-	gpio_direction_output(&gpio->gpio_j2, 6, 1);	/* TOUCH_CE */
-}
-
 static void check_p2_keypad(void)
 {
 	unsigned int auto_download = 0;
@@ -863,38 +844,6 @@ static void check_keypad(void)
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
-}
-
-static void check_touchkey(void)
-{
-	unsigned int reg;
-	unsigned char val[2];
-	unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
-
-	if (!machine_is_aquila())
-		return;
-
-	/* 3 touchkey */
-	i2c_set_bus_num(I2C_GPIO6);
-
-	if (i2c_probe(addr)) {
-		printf("Can't found 3 touchkey\n");
-		return;
-	}
-
-#define MCS5000_TK_HW_VERSION  0x06
-#define MCS5000_TK_FW_VERSION  0x0A
-#define MCS5000_TK_MI_VERSION  0x0B
-
-	reg = MCS5000_TK_MI_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("3-touchkey:\tM/I 0x%x, ", val[0]);
-	reg = MCS5000_TK_HW_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("H/W 0x%x, ", val[0]);
-	reg = MCS5000_TK_FW_VERSION;
-	i2c_read(addr, reg, 1, val, 1);
-	dprintf("F/W 0x%x\n", val[0]);
 }
 
 static void enable_battery(void)
@@ -1806,9 +1755,6 @@ int misc_init_r(void)
 
 	setup_power_down_mode_registers();
 
-	/* check mcs5000 3-touch key */
-	check_touchkey();
-
 	/* check max17040 */
 	check_battery();
 
@@ -2228,5 +2174,112 @@ U_BOOT_CMD(
 	"status - Display PMIC LDO & BUCK status\n"
 	"pmic ldo num on/off - Turn on/off the LDO\n"
 	"pmic buck num on/off - Turn on/off the BUCK\n"
+);
+#endif
+
+#ifdef CONFIG_CMD_DEVICE_POWER
+enum {
+	POWER_NONE,
+	POWER_3_TOUCHKEY,
+};
+
+static void power_3_touchkey(int on)
+{
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+
+	/* TOUCH_EN - GPIO_J3(0) : (J1B2) */
+	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
+	if (board_rev & J1_B2_BOARD)
+		gpio_direction_output(&gpio->gpio_j3, 0, on);
+	else
+		gpio_direction_output(&gpio->gpio_j3, 5, on);
+
+	/* TOUCH_CE - GPIO_J2(6) */
+	gpio_direction_output(&gpio->gpio_j2, 6, on);	/* TOUCH_CE */
+
+	if (on) {
+		unsigned int reg;
+		unsigned char val[2];
+		unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
+
+		if (!machine_is_aquila())
+			return;
+
+		/* Require 100ms */
+		udelay(80 * 1000);
+
+		/* 3 touchkey */
+		i2c_set_bus_num(I2C_GPIO6);
+
+		/* Workaround to probe */
+		if (i2c_probe(addr)) {
+			if (i2c_probe(addr)) {
+				printf("Can't found 3 touchkey\n");
+				return;
+			}
+		}
+
+#define MCS5000_TK_HW_VERSION  0x06
+#define MCS5000_TK_FW_VERSION  0x0A
+#define MCS5000_TK_MI_VERSION  0x0B
+
+		reg = MCS5000_TK_MI_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		printf("3-touchkey:\tM/I 0x%x, ", val[0]);
+		reg = MCS5000_TK_HW_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		printf("H/W 0x%x, ", val[0]);
+		reg = MCS5000_TK_FW_VERSION;
+		i2c_read(addr, reg, 1, val, 1);
+		printf("F/W 0x%x\n", val[0]);
+	}
+}
+
+static int power_control(int device, int on)
+{
+	switch (device) {
+	case POWER_3_TOUCHKEY:
+		power_3_touchkey(on);
+		break;
+	default:
+		printf("I don't know device %d\n", device);
+		break;
+	}
+	return 0;
+}
+
+static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int device, on;
+
+	switch (argc) {
+	case 2:
+		break;
+	case 3:
+		device = simple_strtoul(argv[1], NULL, 10);
+		if (device < 0)
+			break;
+
+		if (strncmp(argv[2], "on", 2) == 0)
+			on = 1;
+		else if (strncmp(argv[2], "off", 3) == 0)
+			on = 0;
+		else
+			break;
+		return power_control(device, on);
+	default:
+		break;
+	}
+
+	cmd_usage(cmdtp);
+	return 1;
+}
+
+U_BOOT_CMD(
+	power,		CONFIG_SYS_MAXARGS,	1, do_power,
+	"Device Power Management control",
+	"device on/off - Turn on/off the device\n"
+	"devices:\n"
+	"	1 - 3 touchkey\n"
 );
 #endif
