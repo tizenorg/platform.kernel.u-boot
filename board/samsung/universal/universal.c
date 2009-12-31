@@ -318,6 +318,7 @@ enum {
 	MEM_4G1G1G,
 	MEM_4G2G1G,
 	MEM_4G3G1G,
+	MEM_4G4G1G,
 };
 
 static char feature_buffer[32];
@@ -467,15 +468,6 @@ static void check_hw_revision(void)
 			/* set gpio to default value. */
 			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
 			gpio_direction_output(&gpio->gpio_j2, 6, 0);
-#if 0
-			/* C110 Aquila SplitScreen */
-			if (gpio_get_value(&gpio->gpio_mp0_3, 5))
-				board_rev |= SPLIT_SCREEN_FEATURE;
-			else {
-				if (gpio_get_value(&gpio->gpio_i, 3))
-					board_rev |= SPLIT_SCREEN_FEATURE;
-			}
-#endif
 		}
 		/* Workaround: C110 Aquila Rev0.6 */
 		if (board_rev == 6) {
@@ -619,7 +611,6 @@ static void check_auto_burn(void)
 static void pmic_pin_init(void)
 {
 	unsigned int reg, value;
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	if (cpu_is_s5pc100())
 		return;
@@ -635,14 +626,12 @@ static void pmic_pin_init(void)
 	writel(value, reg);
 
 	/* nPOWER: XEINT_22: GPH2[6] interrupt mode */
-	gpio_cfg_pin(&gpio->gpio_h2, 6, GPIO_IRQ);
-	gpio_set_pull(&gpio->gpio_h2, 6, GPIO_PULL_UP);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_h2, 6, GPIO_IRQ);
+	gpio_set_pull(&s5pc110_gpio->gpio_h2, 6, GPIO_PULL_UP);
 }
 
 static void enable_ldos(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
 	if (cpu_is_s5pc100())
 		return;
 
@@ -650,24 +639,20 @@ static void enable_ldos(void)
 		return;
 
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
-	gpio_direction_output(&gpio->gpio_g3, 6, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_g3, 6, 1);
 }
 
 static void enable_t_flash(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
 	if (!(board_is_limo_universal() || board_is_limo_real()))
 		return;
 
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
-	gpio_direction_output(&gpio->gpio_mp0_5, 4, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 4, 1);
 }
 
 static void setup_limo_real_gpios(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
 	if (!board_is_limo_real())
 		return;
 
@@ -675,24 +660,22 @@ static void setup_limo_real_gpios(void)
 	 * Note: Please write GPIO alphabet order
 	 */
 	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
-	gpio_direction_output(&gpio->gpio_f3, 4, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_f3, 4, 1);
 
 	if (hwrevision(0))
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
-		gpio_direction_output(&gpio->gpio_mp0_2, 1, 1);
+		gpio_direction_output(&s5pc110_gpio->gpio_mp0_2, 1, 1);
 	else
 		/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
-		gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
+		gpio_direction_output(&s5pc110_gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
-	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&s5pc110_gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
 static void setup_media_gpios(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
 	if (!board_is_media())
 		return;
 
@@ -700,17 +683,15 @@ static void setup_media_gpios(void)
 	 * Note: Please write GPIO alphabet order
 	 */
 	/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
-	gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
-	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&s5pc110_gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
 static void setup_p1p2_gpios(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 	if (!machine_is_p1p2())
 		return;
 
@@ -718,9 +699,9 @@ static void setup_p1p2_gpios(void)
 	 * Note: Please write GPIO alphabet order
 	 */
 	/* RESET_REQ_N: XM0FRnB[1]: MP0_3[5] output high */
-	gpio_direction_output(&gpio->gpio_mp0_3, 5, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_3, 5, 1);
 	/* CODEC_LDO_EN: XM0FRnB[2]: MP0_3[6] output high */
-	gpio_direction_output(&gpio->gpio_mp0_3, 6, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_3, 6, 1);
 }
 
 #define KBR3		(1 << 3)
@@ -785,9 +766,6 @@ static void check_keypad(void)
 
 		reg = S5PC100_KEYPAD_BASE;
 	} else {
-		struct s5pc110_gpio *gpio =
-			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-
 		if (board_is_limo_real() || board_is_limo_universal()) {
 			row_mask = 0x00FF;
 			col_mask = 0x0FFF;
@@ -799,17 +777,17 @@ static void check_keypad(void)
 		for (i = 0; i < 4; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
-				gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
+				gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
 				if (!machine_is_p1p2())
-					gpio_set_pull(&gpio->gpio_h3,
+					gpio_set_pull(&s5pc110_gpio->gpio_h3,
 							i, GPIO_PULL_UP);
 			}
 
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
-				gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
+				gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
 			if (machine_is_p1p2())
-				gpio_set_pull(&gpio->gpio_h2, i, GPIO_PULL_UP);
+				gpio_set_pull(&s5pc110_gpio->gpio_h2, i, GPIO_PULL_UP);
 		}
 
 		reg = S5PC110_KEYPAD_BASE;
@@ -910,20 +888,19 @@ static void check_mhl(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x39;	/* SIL9230 */
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	/* MHL Power enable */
 	/* HDMI_EN : GPJ2[2] XMSMDATA_2 output mode */
-	gpio_direction_output(&gpio->gpio_j2, 2, 1);
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, 1);
 
 	/* MHL_RST : MP0_4[7] XM0ADDR_7 output mode */
-	gpio_direction_output(&gpio->gpio_mp0_4, 7, 0);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 7, 0);
 
 	/* 10ms required after reset */
 	udelay(10000);
 
 	/* output enable */
-	gpio_set_value(&gpio->gpio_mp0_4, 7, 1);
+	gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 7, 1);
 
 	i2c_set_bus_num(I2C_GPIO5);
 
@@ -2223,7 +2200,6 @@ static int power_bt_wifi(int on)
 	/* WLAN_BT_EN: GPB[5] */
 	gpio_direction_output(&s5pc110_gpio->gpio_b, 5, on);
 	return 0;
-
 }
 
 static int power_fm_radio(int on)
