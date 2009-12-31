@@ -32,6 +32,7 @@
 #include <asm/arch/mmc.h>
 #include <asm/arch/power.h>
 #include <asm/arch/mem.h>
+#include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
 
@@ -42,6 +43,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static unsigned int board_rev;
 static unsigned int battery_soc;
+static struct s5pc110_gpio *s5pc110_gpio;
 
 enum {
 	I2C_2,
@@ -1767,6 +1769,9 @@ int misc_init_r(void)
 
 int board_init(void)
 {
+	/* Set Initial global variables */
+	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
@@ -2178,32 +2183,61 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_CMD_DEVICE_POWER
+
 enum {
 	POWER_NONE,
+	POWER_TOUCH,
 	POWER_3_TOUCHKEY,
+	POWER_LCD,
+	POWER_HAPTIC,
 };
 
-static void power_3_touchkey(int on)
+static void power_display_devices(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	printf("devices:\n");
+	printf("\t%d - touch\n", POWER_TOUCH);
+	printf("\t%d - 3 touchkey\n", POWER_3_TOUCHKEY);
+	printf("\t%d - LCD\n", POWER_LCD);
+	printf("\t%d - Haptic\n", POWER_HAPTIC);
+}
 
-	/* TOUCH_EN - GPIO_J3(0) : (J1B2) */
-	/* TOUCH_EN - GPIO_J3(5) : (not J1B2) */
+static int power_haptic(int on)
+{
+	/* HAPTIC_ON: GPJ1[1] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j1, 1, on);
+	return 0;
+}
+
+static int power_lcd(int on)
+{
+	/* MLCD_ON: GPJ1[3] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j1, 3, on);
+	return 0;
+}
+
+static int power_touch(int on)
+{
+	/* TOUCH_EN: GPG3[6] */
+	gpio_direction_output(&s5pc110_gpio->gpio_g3, 6, on);
+	return 0;
+}
+
+static int power_3_touchkey(int on)
+{
+	/* 3_TOUCH_EN - GPJ3[0] : (J1B2) */
+	/* 3_TOUCH_EN - GPJ3[5] : (not J1B2) */
 	if (board_rev & J1_B2_BOARD)
-		gpio_direction_output(&gpio->gpio_j3, 0, on);
+		gpio_direction_output(&s5pc110_gpio->gpio_j3, 0, on);
 	else
-		gpio_direction_output(&gpio->gpio_j3, 5, on);
+		gpio_direction_output(&s5pc110_gpio->gpio_j3, 5, on);
 
-	/* TOUCH_CE - GPIO_J2(6) */
-	gpio_direction_output(&gpio->gpio_j2, 6, on);	/* TOUCH_CE */
+	/* 3_TOUCH_CE - GPJ2[6] */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
 
 	if (on) {
 		unsigned int reg;
 		unsigned char val[2];
 		unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
-
-		if (!machine_is_aquila())
-			return;
 
 		/* Require 100ms */
 		udelay(80 * 1000);
@@ -2215,7 +2249,7 @@ static void power_3_touchkey(int on)
 		if (i2c_probe(addr)) {
 			if (i2c_probe(addr)) {
 				printf("Can't found 3 touchkey\n");
-				return;
+				return -ENODEV;
 			}
 		}
 
@@ -2233,14 +2267,20 @@ static void power_3_touchkey(int on)
 		i2c_read(addr, reg, 1, val, 1);
 		printf("F/W 0x%x\n", val[0]);
 	}
+	return 0;
 }
 
 static int power_control(int device, int on)
 {
 	switch (device) {
+	case POWER_TOUCH:
+		return power_touch(on);
 	case POWER_3_TOUCHKEY:
-		power_3_touchkey(on);
-		break;
+		return power_3_touchkey(on);
+	case POWER_LCD:
+		return power_lcd(on);
+	case POWER_HAPTIC:
+		return power_haptic(on);
 	default:
 		printf("I don't know device %d\n", device);
 		break;
@@ -2251,6 +2291,9 @@ static int power_control(int device, int on)
 static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int device, on;
+
+	if (!machine_is_aquila())
+		goto out;
 
 	switch (argc) {
 	case 2:
@@ -2270,8 +2313,9 @@ static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	default:
 		break;
 	}
-
+out:
 	cmd_usage(cmdtp);
+	power_display_devices();
 	return 1;
 }
 
@@ -2279,7 +2323,5 @@ U_BOOT_CMD(
 	power,		CONFIG_SYS_MAXARGS,	1, do_power,
 	"Device Power Management control",
 	"device on/off - Turn on/off the device\n"
-	"devices:\n"
-	"	1 - 3 touchkey\n"
 );
 #endif
