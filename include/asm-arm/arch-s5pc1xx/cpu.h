@@ -67,6 +67,18 @@ static inline int cpu_is_##type(void)			\
 
 IS_SAMSUNG_TYPE(s5pc100, 0xc100)
 IS_SAMSUNG_TYPE(s5pc110, 0xc110)
+
+extern unsigned int s5pc1xx_cpu_rev;
+
+static inline int s5pc1xx_get_cpu_rev(void)
+{
+	return s5pc1xx_cpu_rev;
+}
+
+static inline void s5pc1xx_set_cpu_rev(unsigned int rev)
+{
+	s5pc1xx_cpu_rev = rev;
+}
 #endif
 
 #endif	/* _S5PC1XX_CPU_H */

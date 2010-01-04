@@ -579,6 +579,15 @@ static void show_hw_revision(void)
 		board = gd->bd->bi_arch_number - C100_MACH_START;
 
 	check_board_revision(board, board_rev);
+
+	/* Set CPU Revision */
+	if (board_is_limo_real()) {
+		if ((board_rev & 0xf) < 8)
+			s5pc1xx_set_cpu_rev(0);
+	} else {
+		s5pc1xx_set_cpu_rev(0);
+	}
+
 	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
 		display_features(board, board_rev));
 }
