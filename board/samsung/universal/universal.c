@@ -2329,6 +2329,8 @@ static int power_on(int on)
 	power_fm_radio(on);
 	power_bt_wifi(on);
 	power_hdmi(on);
+
+	return 0;
 }
 
 static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
