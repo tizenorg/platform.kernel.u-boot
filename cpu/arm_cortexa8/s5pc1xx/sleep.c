@@ -105,6 +105,9 @@ static struct regs_to_save gpio_save[] = {
 	{ .start_address = 0xE02005A0, .size = 6 },
 	{ .start_address = 0xE02005C0, .size = 6 },
 	{ .start_address = 0xE02005E0, .size = 6 },
+	{ .start_address = 0xE0200608, .size = 2 },
+	{ .start_address = 0xE0200628, .size = 2 },
+	{ .start_address = 0xE0200648, .size = 2 },
 	{ .start_address = 0xE0200700, .size = 22 },
 	{ .start_address = 0xE0200900, .size = 22 },
 	{ .start_address = 0xE0200A00, .size = 22 },
@@ -232,7 +235,10 @@ void s5pc110_wakeup(void)
 
 	s5pc110_restore_regs();
 
-	reg_others |= (1 << 28);
+	reg_others |= (1 << 31); /* GPIO */
+	reg_others |= (1 << 30); /* CF I/O */
+	reg_others |= (1 << 29); /* MMC */
+	reg_others |= (1 << 28); /* UART */
 	writel(reg_others, S5PC110_OTHERS);
 
 	printf("%s: Waking up...\n", __func__);
