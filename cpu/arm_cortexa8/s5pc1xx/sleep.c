@@ -21,8 +21,6 @@
 #include <asm/arch/sys_proto.h>
 #include "sleep.h"
 
-#define CONFIG_CPU_S5PC110_EVT0_ERRATA
-
 extern int s5pc110_cpu_save(unsigned long *saveblk);
 extern void s5pc110_cpu_resume(void);
 extern unsigned int s5pc110_sleep_return_addr;
