@@ -18,6 +18,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/sys_proto.h>
 #include "sleep.h"
 
@@ -52,9 +53,16 @@ static struct regs_to_save core_save[] = {
 	{ .start_address = 0xE0100480, .size = 3 },
 	{ .start_address = 0xE0100500, .size = 1 },
 	{ .start_address = 0xE0107008, .size = 1 },
+	{ .start_address = 0xE0103000, .size = 3 }, /* DCGIDC_MAP* */
+	{ .start_address = 0xE0103020, .size = 2 }, /* DCGPREF_MAP* */
+	{ .start_address = 0xE0103040, .size = 1 }, /* DVCIDX_MAP */
+	{ .start_address = 0xE0103060, .size = 2 }, /* FREQ_CPU/DPM */
+	{ .start_address = 0xE0103080, .size = 1 }, /* DVSEMCLK_EN */
+	{ .start_address = 0xE0103084, .size = 1 }, /* MAXPERF */
 };
 
-static unsigned int buf_core_save[7 + 2 + 8 + 5 + 3 + 1 + 1];
+static unsigned int buf_core_save[7 + 2 + 8 + 5 + 3 + 1 + 1 +
+				3 + 2 + 1 + 2 + 1 + 1];
 
 static struct regs_to_save gpio_save[] = {
 	{ .start_address = 0xE0200000, .size = 6 },
@@ -113,7 +121,7 @@ static struct regs_to_save gpio_save[] = {
 	{ .start_address = 0xE0200A00, .size = 22 },
 };
 
-static unsigned int buf_gpio_save[6 * 8 * 6 + 22 * 3];
+static unsigned int buf_gpio_save[6 * 8 * 6 + 2 * 3 + 22 * 3];
 
 static struct regs_to_save irq_save[] = {
 	{ .start_address = 0xF200000C, .size = 2 },
@@ -150,6 +158,35 @@ static struct regs_to_save uart_save[] = {
 };
 static unsigned int buf_uart_save[(4 + 2 + 1) * 4];
 
+static struct regs_to_save power_setting_save[] = {
+	{ .start_address = S5PC110_OSC_CON, .size = 1}, /* OSC_CON */
+	{ .start_address = S5PC110_PWR_CFG, .size = 5}, /* PWR_CFG ~ NORMAL_CFG */
+	{ .start_address = S5PC110_IDLE_CFG, .size = 1},
+	{ .start_address = S5PC110_STOP_CFG, .size = 2}, /* ~ STOP_MEM_CFG */
+	{ .start_address = S5PC110_SLEEP_CFG, .size = 1},
+
+	{ .start_address = S5PC110_OSC_FREQ, .size = 3}, /* ~ PWR_STABLE */
+	{ .start_address = S5PC110_MTC_STABLE, .size = 2}, /* ~ CLAMP_STABLE */
+	{ .start_address = S5PC110_OTHERS, .size = 1},
+	{ .start_address = S5PC110_MIE_CONTROL, .size = 2}, /* ~ HDMI_CONTROL */
+	{ .start_address = S5PC110_USB_PHY_CON, .size = 5}, /* ~ PS_HOLD_CONTROL */
+	{ .start_address = S5PC110_INFORM0, .size = 8}, /* ~ INFORM7 */
+};
+static unsigned int buf_power_setting_save[1 + 5 + 1 + 2 + 1 +
+					3 + 2 + 1 + 2 + 5 + 8];
+
+static struct regs_to_save clock_setting_save[] = {
+	{ .start_address = S5PC110_APLL_LOCK, .size = 1},
+	{ .start_address = S5PC110_MPLL_LOCK, .size = 1},
+	{ .start_address = S5PC110_EPLL_LOCK, .size = 1},
+	{ .start_address = S5PC110_VPLL_LOCK, .size = 1},
+	{ .start_address = S5PC110_APLL_CON, .size = 1},
+	{ .start_address = S5PC110_MPLL_CON, .size = 1},
+	{ .start_address = S5PC110_EPLL_CON, .size = 1},
+	{ .start_address = S5PC110_VPLL_CON, .size = 1},
+};
+static unsigned int buf_clock_setting_save[8];
+
 static unsigned int reg_others;
 
 void s5pc110_save_reg(struct regs_to_save *list,
@@ -177,6 +214,11 @@ void s5pc110_save_regs(void)
 	s5pc110_save_reg(core_save, buf_core_save, ARRAY_SIZE(core_save));
 	s5pc110_save_reg(sromc_save, buf_sromc_save, ARRAY_SIZE(sromc_save));
 	s5pc110_save_reg(uart_save, buf_uart_save, ARRAY_SIZE(uart_save));
+
+	s5pc110_save_reg(power_setting_save, buf_power_setting_save,
+			ARRAY_SIZE(power_setting_save));
+	s5pc110_save_reg(clock_setting_save, buf_clock_setting_save,
+			ARRAY_SIZE(clock_setting_save));
 }
 
 void s5pc110_restore_reg(struct regs_to_save *list,
@@ -209,6 +251,11 @@ void s5pc110_restore_regs(void)
 	s5pc110_restore_reg(core_save, buf_core_save, ARRAY_SIZE(core_save));
 	s5pc110_restore_reg(irq_save, buf_irq_save, ARRAY_SIZE(irq_save));
 	s5pc110_restore_reg(gpio_save, buf_gpio_save, ARRAY_SIZE(gpio_save));
+
+	s5pc110_restore_reg(power_setting_save, buf_power_setting_save,
+			ARRAY_SIZE(power_setting_save));
+	s5pc110_restore_reg(clock_setting_save, buf_clock_setting_save,
+			ARRAY_SIZE(clock_setting_save));
 }
 
 void s5pc110_wakeup(void)
