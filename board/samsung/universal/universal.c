@@ -2260,15 +2260,20 @@ static int power_touch(int on)
 
 static int power_3_touchkey(int on)
 {
-	/* 3_TOUCH_EN - GPJ3[0] : (J1B2) */
-	/* 3_TOUCH_EN - GPJ3[5] : (not J1B2) */
-	if (board_rev & J1_B2_BOARD)
-		gpio_direction_output(&s5pc110_gpio->gpio_j3, 0, on);
-	else
-		gpio_direction_output(&s5pc110_gpio->gpio_j3, 5, on);
+	if (on) {
+		/* 3_TOUCH_EN - GPJ3[0] : (J1B2) */
+		/* 3_TOUCH_EN - GPJ3[5] : (not J1B2) */
+		if (board_rev & J1_B2_BOARD)
+			gpio_direction_output(&s5pc110_gpio->gpio_j3, 0, on);
+		else
+			gpio_direction_output(&s5pc110_gpio->gpio_j3, 5, on);
 
-	/* 3_TOUCH_CE - GPJ2[6] */
-	gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
+		/* 3_TOUCH_CE - GPJ2[6] */
+		gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
+	} else {
+		/* 3_TOUCH_CE - GPJ2[6] */
+		gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
+	}
 
 	if (on) {
 		unsigned int reg;
