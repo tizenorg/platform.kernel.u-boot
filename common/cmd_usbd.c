@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.3"
+#define APP_VERSION	"1.3.5"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -530,9 +530,9 @@ static int process_data(struct usbd_ops *usbd)
 					(int)recvlen, (int)len);
 
 			/* Retry this commad */
-			*((ulong *) usbd->tx_data) = 1;
+			*((ulong *) usbd->tx_data) = STATUS_RETRY;
 		} else
-			*((ulong *) usbd->tx_data) = 0;
+			*((ulong *) usbd->tx_data) = STATUS_DONE;
 
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
@@ -692,7 +692,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		usbd_phone_down();
 
-		*((ulong *) usbd->tx_data) = 0;
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
 
@@ -720,6 +720,23 @@ static int process_data(struct usbd_ops *usbd)
 	/* Erase and Write to NAND */
 	switch (part_id) {
 	case BOOT_PART_ID:
+#ifdef CONFIG_S5PC1XX
+		/* Workaround: for prevent revision mismatch */
+		if (cpu_is_s5pc110()) {
+			int img_rev = 1;
+			long *img_header = down_ram_addr;
+
+			if (*img_header == 0xea000012)
+				img_rev = 0;
+
+			if (img_rev != s5pc1xx_get_cpu_rev()) {
+				printf("CPU revision mismatch!\n");
+				*((ulong *) usbd->tx_data) = STATUS_ERROR;
+				usbd->send_data(usbd->tx_data, usbd->tx_len);
+				return 0;
+			}
+		}
+#endif
 #if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
 		/* Erase the environment also when write bootloader */
 		{
@@ -783,11 +800,11 @@ static int process_data(struct usbd_ops *usbd)
 
 	if (ret) {
 		/* Retry this commad */
-		*((ulong *) usbd->tx_data) = 1;
+		*((ulong *) usbd->tx_data) = STATUS_RETRY;
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
 	} else
-		*((ulong *) usbd->tx_data) = 0;
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
 
 	/* Write image success -> Report status */
 	usbd->send_data(usbd->tx_data, usbd->tx_len);
