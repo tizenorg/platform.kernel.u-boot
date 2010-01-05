@@ -172,16 +172,16 @@ void s5pc110_save_regs(void)
 void s5pc110_restore_reg(struct regs_to_save * list, unsigned int * buf, int length)
 {
 	int i;
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-	unsigned int tmp;
-#endif
+
 	for (i=0; i<length; i++) {
 		int j;
 		for (j=0; j<list[i].size; j++) {
 			writel(*buf, (unsigned int *)(list[i].start_address+j*4));
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-			tmp = readl((unsigned int *)(list[i].start_address+j*4));
-#endif
+			if (s5pc1xx_get_cpu_rev() == 0) {
+				unsigned int tmp;
+				tmp = readl((unsigned int *)
+					(list[i].start_address+j*4));
+			}
 			buf++;
 		}
 	}
@@ -277,35 +277,36 @@ static int s5pc110_sleep(int mode)
 	value &= ~(1 << 25);      /* KBR(1) */
 	/*      value &= ~(1 << 28);*/    /* T-Flash */
 	writel(value, S5PC110_EINT_WAKEUP_MASK);
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-	value = readl(S5PC110_EINT_WAKEUP_MASK);
-        for (i = 0; i < 4; i++)
-		value = readl(0xE0200F40+i*4);
-#endif
+
+	if (s5pc1xx_get_cpu_rev() == 0) {
+		value = readl(S5PC110_EINT_WAKEUP_MASK);
+		for (i = 0; i < 4; i++)
+			value = readl(0xE0200F40+i*4);
+	}
 
 	s5pc110_save_regs();
 	writel((unsigned long) s5pc110_cpu_resume, S5PC110_INFORM0);
 
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-	value = readl(S5PC110_SLEEP_CFG);
-	value &= ~(1 << 0); /* OSC_EN off */
-	value &= ~(1 << 1); /* USBOSC_EN off */
-	writel(value, S5PC110_SLEEP_CFG);
-#endif
+	if (s5pc1xx_get_cpu_rev() == 0) {
+		value = readl(S5PC110_SLEEP_CFG);
+		value &= ~(1 << 0); /* OSC_EN off */
+		value &= ~(1 << 1); /* USBOSC_EN off */
+		writel(value, S5PC110_SLEEP_CFG);
+	}
 
 	value = readl(S5PC110_PWR_CFG);
 	value &= ~S5PC110_CFG_STANDBYWFI_MASK;
-	if (mode == SLEEP_WFI)
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-	{
-		printf("ERRATA MODE\n");
+	if (mode == SLEEP_WFI) {
+		if (s5pc1xx_get_cpu_rev() == 0) {
+			printf("ERRATA MODE\n");
+			value |= S5PC110_CFG_STANDBYWFI_IGNORE;
+		} else {
+			value |= S5PC110_CFG_STANDBYWFI_SLEEP;
+		}
+	} else {
 		value |= S5PC110_CFG_STANDBYWFI_IGNORE;
 	}
-#else
-		value |= S5PC110_CFG_STANDBYWFI_SLEEP;
-#endif
-	else
-		value |= S5PC110_CFG_STANDBYWFI_IGNORE;
+
 	writel(value, S5PC110_PWR_CFG);
 
 	/* F2000000: VICIRQSTATUS-irq0 */
@@ -354,10 +355,12 @@ static int s5pc110_sleep(int mode)
 		invalidate_dcache(get_device_type());
 
 		if (mode == SLEEP_WFI) {
-#ifdef CONFIG_CPU_S5PC110_EVT0_ERRATA
-			printf("Warn: Entering SLEEP_WFI mode with EVT0_ERRATA. \n");
-			printf("Warn: This sleep will probably fail. \n");
-#endif
+			if (s5pc1xx_get_cpu_rev() == 0) {
+				printf("Warn: Entering SLEEP_WFI mode with"
+					"EVT0_ERRATA. \n");
+				printf("Warn: This sleep will probably fail\n");
+			}
+
 			value = readl(S5PC110_PWR_CFG);
 			value &= ~S5PC110_CFG_STANDBYWFI_MASK;
 			value |= S5PC110_CFG_STANDBYWFI_SLEEP;
