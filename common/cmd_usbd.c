@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.3"
+#define APP_VERSION	"1.3.4"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -720,6 +720,21 @@ static int process_data(struct usbd_ops *usbd)
 	/* Erase and Write to NAND */
 	switch (part_id) {
 	case BOOT_PART_ID:
+#ifdef CONFIG_S5PC1XX
+		/* Workaround: for prevent revision mismatch */
+		if (cpu_is_s5pc110()) {
+			int img_rev = 1;
+			long *img_header = down_ram_addr;
+
+			if (*img_header == 0xea000012)
+				img_rev = 0;
+
+			if (img_rev != s5pc1xx_get_cpu_rev()) {
+				printf("CPU revision mismatch!\n");
+				return 0;
+			}
+		}
+#endif
 #if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
 		/* Erase the environment also when write bootloader */
 		{
