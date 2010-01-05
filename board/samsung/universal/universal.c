@@ -1258,6 +1258,39 @@ static struct gpio_powermode powerdown_modes[] = {
 		OUTPUT0(4),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4),
+	}, {	/* S5PC110_GPIO_MP0_1_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT1(4) | OUTPUT0(5) | OUTPUT1(6) | OUTPUT1(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_MP0_2_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
+	}, {	/* S5PC110_GPIO_MP0_3_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
+		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_MP0_4_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
+		INPUT(4) | OUTPUT0(5) | INPUT(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DOWN(3) |
+		PULL_DOWN(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_MP0_5_OFFSET */
+		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DOWN(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_MP0_6_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+	}, {	/* S5PC110_GPIO_MP0_7_OFFSET */
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	},
 };
 
@@ -1314,30 +1347,6 @@ static void setup_power_down_mode_registers(void)
 		writel(p->conpdn, &bank->pdn_con);
 		writel(p->pudpdn, &bank->pdn_pull);
 	}
-	bank = &gpio->gpio_i;
-	writel(0x0008, &bank->dat);
-	bank = &gpio->gpio_mp0_1;
-	writel(0x5100, &bank->pdn_con);
-	writel(0x0000, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_2;
-	writel(0x0020, &bank->pdn_con);
-	writel(0x0000, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_3;
-	writel(0x0210, &bank->pdn_con);
-	writel(0x0000, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_4;
-	writel(0x2280, &bank->pdn_con);
-	writel(0x1140, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_5;
-	writel(0x00a2, &bank->pdn_con);
-	writel(0x0001, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_6;
-	writel(0x0000, &bank->pdn_con);
-	writel(0x0000, &bank->pdn_pull);
-	bank = &gpio->gpio_mp0_7;
-	writel(0x0000, &bank->pdn_con);
-	writel(0x0000, &bank->pdn_pull);
-
 	/* M299 */
 	writel(0xff0022b0, (unsigned int *)0xF0000000);
 	writel(0xff0022b0, (unsigned int *)0xF1400000);
