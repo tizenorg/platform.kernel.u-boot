@@ -724,7 +724,7 @@ static int process_data(struct usbd_ops *usbd)
 		/* Workaround: for prevent revision mismatch */
 		if (cpu_is_s5pc110()) {
 			int img_rev = 1;
-			long *img_header = down_ram_addr;
+			long *img_header = (long *)down_ram_addr;
 
 			if (*img_header == 0xea000012)
 				img_rev = 0;
