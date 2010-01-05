@@ -530,9 +530,9 @@ static int process_data(struct usbd_ops *usbd)
 					(int)recvlen, (int)len);
 
 			/* Retry this commad */
-			*((ulong *) usbd->tx_data) = 1;
+			*((ulong *) usbd->tx_data) = STATUS_RETRY;
 		} else
-			*((ulong *) usbd->tx_data) = 0;
+			*((ulong *) usbd->tx_data) = STATUS_DONE;
 
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
@@ -692,7 +692,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		usbd_phone_down();
 
-		*((ulong *) usbd->tx_data) = 0;
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
 
@@ -798,11 +798,11 @@ static int process_data(struct usbd_ops *usbd)
 
 	if (ret) {
 		/* Retry this commad */
-		*((ulong *) usbd->tx_data) = 1;
+		*((ulong *) usbd->tx_data) = STATUS_RETRY;
 		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
 	} else
-		*((ulong *) usbd->tx_data) = 0;
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
 
 	/* Write image success -> Report status */
 	usbd->send_data(usbd->tx_data, usbd->tx_len);

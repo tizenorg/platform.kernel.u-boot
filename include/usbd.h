@@ -54,6 +54,13 @@ enum {
 #endif
 #define COMMAND_PROGRESS	230
 
+/* status definition */
+enum {
+	STATUS_DONE = 0,
+	STATUS_RETRY,
+	STATUS_ERROR,
+};
+
 /*
  * USB Downloader Operations
  * All functions and valuable are mandatory
