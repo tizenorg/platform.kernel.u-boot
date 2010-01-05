@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.4"
+#define APP_VERSION	"1.3.5"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -731,6 +731,8 @@ static int process_data(struct usbd_ops *usbd)
 
 			if (img_rev != s5pc1xx_get_cpu_rev()) {
 				printf("CPU revision mismatch!\n");
+				*((ulong *) usbd->tx_data) = STATUS_ERROR;
+				usbd->send_data(usbd->tx_data, usbd->tx_len);
 				return 0;
 			}
 		}
