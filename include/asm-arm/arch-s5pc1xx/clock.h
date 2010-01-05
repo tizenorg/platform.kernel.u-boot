@@ -29,6 +29,15 @@
 #define HPLL	3
 #define VPLL	4
 
+#define S5PC110_APLL_LOCK		0xE0100000
+#define S5PC110_MPLL_LOCK		0xE0100008
+#define S5PC110_EPLL_LOCK		0xE0100010
+#define S5PC110_VPLL_LOCK		0xE0100020
+#define S5PC110_APLL_CON		0xE0100100
+#define S5PC110_MPLL_CON		0xE0100108
+#define S5PC110_EPLL_CON		0xE0100110
+#define S5PC110_VPLL_CON		0xE0100120
+
 #ifndef __ASSEMBLY__
 struct s5pc100_clock {
 	unsigned int	apll_lock;
