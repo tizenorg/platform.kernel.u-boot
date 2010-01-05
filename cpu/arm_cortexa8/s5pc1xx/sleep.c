@@ -308,7 +308,6 @@ void s5pc110_wakeup(void)
 
 static int s5pc110_sleep(int mode)
 {
-	static int counter;
 	unsigned long regs_save[16];
 	unsigned int value;
 	int i;
@@ -350,6 +349,9 @@ static int s5pc110_sleep(int mode)
 	}
 
 	s5pc110_save_regs();
+
+	board_sleep_init_late();
+
 	writel((unsigned long) s5pc110_cpu_resume, S5PC110_INFORM0);
 
 	if (s5pc1xx_get_cpu_rev() == 0) {
@@ -462,7 +464,6 @@ static int s5pc110_sleep(int mode)
 	printf("Wakeup Source: 0x%08x\n", value);
 	value = readl(S5PC110_WAKEUP_STAT);
 
-	counter++;
 	board_sleep_resume();
 	return 0;
 }

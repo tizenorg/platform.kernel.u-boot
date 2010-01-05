@@ -1835,7 +1835,22 @@ int dram_init(void)
 
 /* Used for sleep test */
 static unsigned char saved_val[4][2];
-static unsigned int gpio_CP, gpio_T_FLASH, gpio_XTAL;
+void board_sleep_init_late(void)
+{
+	/* CODEC_LDO_EN: GPF3[4] */
+	gpio_direction_output(&s5pc110_gpio->gpio_f3, 4, 0);
+	/* CODEC_XTAL_EN: GPH3[2] */
+	gpio_direction_output(&s5pc110_gpio->gpio_h3, 2, 0);
+
+	/* MMC T_FLASH off */
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 4, 0);
+	/* MHL off */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, 0);
+	gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 7, 0);
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 3, 0); /* MHL_ON for REV02 or higher */
+
+
+}
 void board_sleep_init(void)
 {
 	unsigned int value;
@@ -1844,42 +1859,12 @@ void board_sleep_init(void)
 	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
-	/* Set wakeup mask register */
-	value = 0xFFFF;
-	value &= ~(1 << 4);     /* Keypad */
-	value &= ~(1 << 3);     /* RTC */
-	value &= ~(1 << 2);     /* RTC Alarm */
-	writel(value, S5PC110_WAKEUP_MASK);
-
-	/* Set external wakeup mask register */
-	value = 0xFFFFFFFF;
-	value &= ~(1 << 18);    /* T-Flash */
-	writel(value, S5PC110_EINT_WAKEUP_MASK);
-
 	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
 	if (i2c_probe(addr)) {
 		printf("Can't find max8998\n");
 		return;
 	}
-
-	/* TOUCH SCREEN ? */
-	/* CODEC_XTAL_EN */
-	gpio_XTAL = gpio_get_value(&gpio->gpio_h3, 2);
-	gpio_set_value(&gpio->gpio_h3, 2, 0);
-	value = gpio_get_value(&gpio->gpio_h3, 2);
-	/* CP off */
-	gpio_CP = gpio_get_value(&gpio->gpio_h3, 7);
-	gpio_set_value(&gpio->gpio_h3, 7, 0);
-	value = gpio_get_value(&gpio->gpio_h3, 7);
-	/* MMC T_FLASH off */
-	gpio_T_FLASH = gpio_get_value(&gpio->gpio_mp0_5, 4);
-	gpio_set_value(&gpio->gpio_mp0_5, 4, 0);
-	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
-	/* MHL off */
-	gpio_set_value(&gpio->gpio_j2, 2, 0);
-	gpio_set_value(&gpio->gpio_mp0_4, 7, 0);
-	gpio_set_value(&gpio->gpio_j2, 3, 0); /* MHL_ON for REV02 or higher */
 
 	/* Set ONOFF1 */
 	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
@@ -1946,16 +1931,6 @@ void board_sleep_resume(void)
 	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, saved_val[3], 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 	printf("Waked up.\n");
-
-	/* CP */
-	gpio_set_value(&gpio->gpio_h3, 7, gpio_CP);
-	value = gpio_get_value(&gpio->gpio_h3, 7);
-	/* MMC T_FLASH */
-	gpio_set_value(&gpio->gpio_mp0_5, 4, gpio_T_FLASH);
-	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
-	/* CODEC_XTAL_EN */
-	gpio_set_value(&gpio->gpio_h3, 2, gpio_XTAL);
-	value = gpio_get_value(&gpio->gpio_h3, 2);
 
 	/* check max17040 */
 	check_battery();
