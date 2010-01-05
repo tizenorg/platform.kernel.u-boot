@@ -985,6 +985,7 @@ static void into_charge_mode(void)
 	exit_font();
 #endif
 
+	/* EVT0: sleep 1, EVT1: sleep */
 	run_command("sleep 1", 0);
 }
 
@@ -1199,10 +1200,10 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
 	}, {	/* S5PC110_GPIO_G1_OFFSET */
-		OUTPUT0(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
+		INPUT(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
 		INPUT(4) | INPUT(5) | INPUT(6),
-		PULL_DIS(0) | PULL_UP(1) | PULL_DIS(2) | PULL_UP(3) |
-		PULL_UP(4) | PULL_UP(5) | PULL_UP(6),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
 	}, {	/* S5PC110_GPIO_G2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
@@ -1811,8 +1812,7 @@ int dram_init(void)
 
 /* Used for sleep test */
 static unsigned char saved_val[4][2];
-static unsigned int gpio_CP;
-static unsigned int gpio_T_FLASH;
+static unsigned int gpio_CP, gpio_T_FLASH, gpio_XTAL;
 void board_sleep_init(void)
 {
 	unsigned int value;
@@ -1840,6 +1840,11 @@ void board_sleep_init(void)
 		return;
 	}
 
+	/* TOUCH SCREEN ? */
+	/* CODEC_XTAL_EN */
+	gpio_XTAL = gpio_get_value(&gpio->gpio_h3, 2);
+	gpio_set_value(&gpio->gpio_h3, 2, 0);
+	value = gpio_get_value(&gpio->gpio_h3, 2);
 	/* CP off */
 	gpio_CP = gpio_get_value(&gpio->gpio_h3, 7);
 	gpio_set_value(&gpio->gpio_h3, 7, 0);
@@ -1925,6 +1930,9 @@ void board_sleep_resume(void)
 	/* MMC T_FLASH */
 	gpio_set_value(&gpio->gpio_mp0_5, 4, gpio_T_FLASH);
 	value = gpio_get_value(&gpio->gpio_mp0_5, 4);
+	/* CODEC_XTAL_EN */
+	gpio_set_value(&gpio->gpio_h3, 2, gpio_XTAL);
+	value = gpio_get_value(&gpio->gpio_h3, 2);
 
 	/* check max17040 */
 	check_battery();
