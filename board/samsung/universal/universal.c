@@ -995,7 +995,12 @@ static void into_charge_mode(void)
 #endif
 
 	/* EVT0: sleep 1, EVT1: sleep */
-	run_command("sleep 1", 0);
+	if (s5pc1xx_get_cpu_rev() == 0) {
+		run_command("sleep 1", 0);
+		return;
+	}
+
+	run_command("sleep", 0);
 }
 
 static void check_micro_usb(int intr)
