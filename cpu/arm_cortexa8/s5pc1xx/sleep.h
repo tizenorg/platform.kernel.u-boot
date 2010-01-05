@@ -57,6 +57,11 @@
 
 #ifndef __ASSEMBLY__
 extern void board_sleep_resume(void);
+extern int s5pc110_cpu_save(unsigned long *saveblk);
+extern void s5pc110_cpu_resume(void);
+extern unsigned int s5pc110_sleep_return_addr;
+extern unsigned int s5pc110_sleep_save_phys;
+
 #endif
 
 #endif
