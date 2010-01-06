@@ -23,7 +23,7 @@ static const char pszMe[] = "usbd: ";
 
 static struct usbd_ops usbd_ops;
 
-static unsigned int part_id = BOOT_PART_ID;
+static unsigned int part_id;
 static unsigned int write_part = 0;
 static unsigned long fs_offset = 0x0;
 
@@ -120,7 +120,7 @@ static int get_part_info(void)
 	return 0;
 }
 
-static int get_part_id(char *name, int id)
+static int get_part_id(char *name)
 {
 	int nparts = count_mtdparts();
 	int i;
@@ -130,7 +130,7 @@ static int get_part_id(char *name, int id)
 			return i;
 	}
 
-	printf("Error: Unknown partition -> %s(%d)\n", name, id);
+	printf("Error: Unknown partition -> %s\n", name);
 	return -1;
 }
 #else
@@ -140,9 +140,9 @@ static int get_part_info(void)
 	return -EINVAL;
 }
 
-static int get_part_id(char *name, int id)
+static int get_part_id(char *name)
 {
-	return id;
+	return 0;
 }
 #endif
 
@@ -495,6 +495,7 @@ static int process_data(struct usbd_ops *usbd)
 	int ret = 0;
 	int ubi_update = 0;
 	int ubi_mode = 0;
+	int img_type;
 
 	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
 
@@ -560,9 +561,9 @@ static int process_data(struct usbd_ops *usbd)
 #endif
 
 		if (part_id == FILESYSTEM3_PART_ID)
-			part_id = get_part_id("UBI", FILESYSTEM_PART_ID);
+			part_id = get_part_id("UBI");
 		else if (part_id == MODEM_PART_ID)
-			part_id = get_part_id("modem", MODEM_PART_ID);
+			part_id = get_part_id("modem");
 #ifdef CONFIG_MIRAGE
 		if (part_id)
 			part_id--;
@@ -584,7 +585,8 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_PART_1:
 		printf("COMMAND_WRITE_PART_BOOT\n");
-		part_id = get_part_id("bootloader", BOOT_PART_ID);
+		part_id = get_part_id("bootloader");
+		img_type = IMG_BOOT;
 		break;
 
 	case COMMAND_WRITE_PART_2:
@@ -594,30 +596,35 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_PART_3:
 		printf("COMMAND_WRITE_KERNEL\n");
-		part_id = get_part_id("kernel", KERNEL_PART_ID);
+		part_id = get_part_id("kernel");
+		img_type = IMG_KERNEL;
 		break;
 
 	case COMMAND_WRITE_PART_4:
 		printf("COMMAND_WRITE_ROOTFS\n");
-		part_id = get_part_id("Root", RAMDISK_PART_ID);
+		part_id = get_part_id("Root");
+		img_type = IMG_FILESYSTEM;
 		ubi_update = arg;
 		break;
 
 	case COMMAND_WRITE_PART_5:
 		printf("COMMAND_WRITE_FACTORYFS\n");
-		part_id = get_part_id("Fact", FILESYSTEM_PART_ID);
+		part_id = get_part_id("Fact");
+		img_type = IMG_FILESYSTEM;
 		ubi_update = arg;
 		break;
 
 	case COMMAND_WRITE_PART_6:
 		printf("COMMAND_WRITE_DATAFS\n");
-		part_id = get_part_id("Data", FILESYSTEM2_PART_ID);
+		part_id = get_part_id("Data");
+		img_type = IMG_FILESYSTEM;
 		ubi_update = arg;
 		break;
 
 	case COMMAND_WRITE_PART_7:
 		printf("COMMAND_WRITE_UBI\n");
-		part_id = get_part_id("UBI", FILESYSTEM3_PART_ID);
+		part_id = get_part_id("UBI");
+		img_type = IMG_FILESYSTEM;
 		ubi_update = 0;
 		/* someday, it will be deleted */
 		get_part_info();
@@ -625,12 +632,13 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_PART_8:
 		printf("COMMAND_WRITE_MODEM\n");
-		part_id = MODEM_PART_ID;
+		part_id = get_part_id("modem");
+		img_type = IMG_MODEM;
 		break;
 
 	case COMMAND_WRITE_PART_9:
 		printf("COMMAND_WRITE_MMC\n");
-		part_id = MMC_PART_ID;
+		img_type = IMG_MMC;
 		break;
 
 	case COMMAND_WRITE_UBI_INFO:
@@ -720,8 +728,8 @@ static int process_data(struct usbd_ops *usbd)
 	}
 
 	/* Erase and Write to NAND */
-	switch (part_id) {
-	case BOOT_PART_ID:
+	switch (img_type) {
+	case IMG_BOOT:
 #ifdef CONFIG_S5PC1XX
 		/* Workaround: for prevent revision mismatch */
 		if (cpu_is_s5pc110() && (down_mode != MODE_FORCE)) {
@@ -743,7 +751,7 @@ static int process_data(struct usbd_ops *usbd)
 		/* Erase the environment also when write bootloader */
 		{
 			int param_id;
-			param_id = get_part_id("params", 1);
+			param_id = get_part_id("params");
 
 			if (param_id == -1) {
 				sprintf(offset, "%x", CONFIG_ENV_OFFSET);
@@ -756,7 +764,7 @@ static int process_data(struct usbd_ops *usbd)
 		}
 #endif
 		/* Fall through for write bootloader */
-	case KERNEL_PART_ID:
+	case IMG_KERNEL:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
 
@@ -767,18 +775,13 @@ static int process_data(struct usbd_ops *usbd)
 		ret = nand_cmd(1, ramaddr, offset, length);
 		break;
 
-	/* File System */
-	case RAMDISK_PART_ID:		/* rootfs */
-	case FILESYSTEM_PART_ID:	/* factoryfs */
-	case FILESYSTEM2_PART_ID:	/* datafs */
-	case FILESYSTEM3_PART_ID:	/* ubifs */
+	/* File Systems */
+	case IMG_FILESYSTEM:
 		ret = write_file_system(ramaddr, len, offset, length,
 				part_id, ubi_update);
 		break;
 
-	case MODEM_PART_ID:
-		part_id = get_part_id("modem", MODEM_PART_ID);
-
+	case IMG_MODEM:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
 
@@ -790,7 +793,7 @@ static int process_data(struct usbd_ops *usbd)
 		break;
 
 #ifdef CONFIG_CMD_MMC
-	case MMC_PART_ID:
+	case IMG_MMC:
 		write_file_mmc(usbd, ramaddr, len, offset, length);
 		break;
 #endif

@@ -15,7 +15,7 @@
 #define PRINTF(fmt, args...)
 #endif
 
-/* partition info */
+/* partition info for partition sync - typically not use */
 enum {
 	BOOT_PART_ID	= 0,
 	PARAMS_PART_ID,
@@ -27,6 +27,15 @@ enum {
 	MODEM_PART_ID,
 	MMC_PART_ID,
 	NUM_PARTITION,
+};
+
+/* image type definition */
+enum {
+	IMG_BOOT = 0,
+	IMG_KERNEL,
+	IMG_FILESYSTEM,
+	IMG_MODEM,
+	IMG_MMC,
 };
 
 /* Download command definition */
