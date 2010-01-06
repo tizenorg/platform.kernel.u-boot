@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.3.5"
+#define APP_VERSION	"1.4.0"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
