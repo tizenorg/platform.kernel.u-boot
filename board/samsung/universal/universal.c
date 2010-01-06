@@ -1853,11 +1853,8 @@ void board_sleep_init_late(void)
 }
 void board_sleep_init(void)
 {
-	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
-	struct s5pc110_gpio *gpio =
-		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
@@ -1903,11 +1900,8 @@ void board_sleep_init(void)
 
 void board_sleep_resume(void)
 {
-	unsigned int value;
 	unsigned char addr;
 	unsigned char val[2];
-	struct s5pc110_gpio *gpio =
-		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 
 	show_hw_revision();
 
