@@ -20,6 +20,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#include <common.h>
 #include <linux/types.h>
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
