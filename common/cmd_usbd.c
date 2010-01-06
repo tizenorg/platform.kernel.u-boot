@@ -37,6 +37,8 @@ static unsigned char yaffs_data[2112];
 
 static unsigned long down_ram_addr;
 
+static int down_mode;
+
 /* cpu/${CPU} dependent */
 extern void do_reset(void);
 
@@ -722,7 +724,7 @@ static int process_data(struct usbd_ops *usbd)
 	case BOOT_PART_ID:
 #ifdef CONFIG_S5PC1XX
 		/* Workaround: for prevent revision mismatch */
-		if (cpu_is_s5pc110()) {
+		if (cpu_is_s5pc110() && (down_mode != MODE_FORCE)) {
 			int img_rev = 1;
 			long *img_header = (long *)down_ram_addr;
 
@@ -831,7 +833,12 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	struct usbd_ops *usbd;
 	int err;
 
-	printf("USB Downloader v%s\n", APP_VERSION);
+	if (argc > 1)
+		down_mode = simple_strtoul(argv[1], NULL, 10);
+	else
+		down_mode = MODE_NORMAL;
+
+	printf("USB Downloader v%s (%d)\n", APP_VERSION, down_mode);
 
 	/* get partition info */
 	err = get_part_info();
@@ -880,8 +887,8 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
-U_BOOT_CMD(usbdown, 3, 0, do_usbd_down,
-	"initialize USB device and ready to receive"
-		" for Windows server (specific)\n",
-	"[download address]\n"
+U_BOOT_CMD(usbdown, CONFIG_SYS_MAXARGS, 1, do_usbd_down,
+	"Initialize USB device and Run USB Downloader (specific)",
+	"- normal mode\n"
+	"usbdown mode - specific mode (0: NORAML, 1: FORCE)\n"
 );

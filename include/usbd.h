@@ -61,6 +61,12 @@ enum {
 	STATUS_ERROR,
 };
 
+/* download mode definition */
+enum {
+	MODE_NORMAL = 0,
+	MODE_FORCE,
+};
+
 /*
  * USB Downloader Operations
  * All functions and valuable are mandatory
