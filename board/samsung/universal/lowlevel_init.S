@@ -379,8 +379,8 @@ system_clock_init:
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r0, #0x000]		@ S5PC110_APLL_LOCK
-	str	r1, [r0, #0x010]		@ S5PC110_MPLL_LOCK
-	str	r1, [r0, #0x018]		@ S5PC110_EPLL_LOCK
+	str	r1, [r0, #0x008]		@ S5PC110_MPLL_LOCK
+	str	r1, [r0, #0x010]		@ S5PC110_EPLL_LOCK
 	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
 
 	/* S5PC110_APLL_CON */
