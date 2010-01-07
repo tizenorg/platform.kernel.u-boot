@@ -24,16 +24,7 @@
 #ifndef __ASM_ARM_ARCH_MEM_H_
 #define __ASM_ARM_ARCH_MEM_H_
 
-/*
- * SROMC Controller
- */
 /* DRAM Memory Controller */
-
-#define S5PC100_DMC_BASE	0xE6000000
-#define S5PC110_DMC0_BASE	0xF0000000
-#define S5PC110_DMC1_BASE	0xF1400000
-
-/* DMC offset */
 #define CONCONTROL_OFFSET	0x00
 #define MEMCONTROL_OFFSET	0x04
 #define MEMCONFIG0_OFFSET	0x08

@@ -23,7 +23,6 @@
  */
 
 #include <config.h>
-#include <asm/arch/mem.h>
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
@@ -129,7 +128,7 @@ swap_memory:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	eoreq	r3, r3, #0x08000000
-	streq	r3, [r0, #MEMCONFIG1_OFFSET]
+	streq	r3, [r0, #0xc]				@ MEMCONFIG1_OFFSET
 
 	ldr	r1, =0x20000000
 	str	r1, [r0, #0x014]			@ PRECHCONFIG_OFFSET

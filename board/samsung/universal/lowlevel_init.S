@@ -26,11 +26,8 @@
 #include <config.h>
 #include <version.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/mem.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/power.h>
-#include <asm/arch/watchdog.h>
-#include <asm/arch/interrupt.h>
 
 #define DEBUG_PM_C110
 #undef DEBUG_PM_C110
@@ -114,20 +111,20 @@ lowlevel_init:
 
 	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
-	str	r3, [r0, #VIC_INTENCLEAR_OFFSET]
-	str	r3, [r1, #VIC_INTENCLEAR_OFFSET]
-	str	r3, [r2, #VIC_INTENCLEAR_OFFSET]
+	str	r3, [r0, #0x14]				@INTENCLEAR
+	str	r3, [r1, #0x14]				@INTENCLEAR
+	str	r3, [r2, #0x14]				@INTENCLEAR
 
 #ifndef CONFIG_ONENAND_IPL
 	/* Set all interrupts as IRQ */
-	str	r5, [r0, #VIC_INTSELECT_OFFSET]
-	str	r5, [r1, #VIC_INTSELECT_OFFSET]
-	str	r5, [r2, #VIC_INTSELECT_OFFSET]
+	str	r5, [r0, #0xc]				@INTSELECT
+	str	r5, [r1, #0xc]				@INTSELECT
+	str	r5, [r2, #0xc]				@INTSELECT
 
 	/* Pending Interrupt Clear */
-	str	r5, [r0, #VIC_INTADDRESS_OFFSET]
-	str	r5, [r1, #VIC_INTADDRESS_OFFSET]
-	str	r5, [r2, #VIC_INTADDRESS_OFFSET]
+	str	r5, [r0, #0xf00]			@INTADDRESS
+	str	r5, [r1, #0xf00]			@INTADDRESS
+	str	r5, [r2, #0xf00]			@INTADDRESS
 #endif
 
 #ifndef CONFIG_ONENAND_IPL

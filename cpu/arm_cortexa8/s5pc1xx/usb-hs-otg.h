@@ -24,7 +24,6 @@
 
 #include <asm/io.h>
 #include <asm/byteorder.h>
-#include <asm/arch/hardware.h>
 #include <asm/arch/usb-hs-otg.h>
 
 #define make_word_c(w) __constant_cpu_to_le16(w)
