@@ -166,7 +166,6 @@ enum {
 #define LIMO_UNIVERSAL_BOARD	0x400
 #define LIMO_REAL_BOARD		0x800
 #define MEDIA_BOARD		0x1000
-#define BAMBOO_BOARD		0x2000
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
 #define P2_REAL_BOARD		0x400
@@ -216,11 +215,6 @@ static int board_is_limo_real(void)
 static int board_is_media(void)
 {
 	return machine_is_aquila() && (board_rev & MEDIA_BOARD);
-}
-
-static int board_is_bamboo(void)
-{
-	return machine_is_aquila() && (board_rev & BAMBOO_BOARD);
 }
 
 static int board_is_j1b2(void)
@@ -346,8 +340,6 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Limo Universal");
 		if (board_rev & MEDIA_BOARD)
 			count += sprintf(buf + count, " - Media");
-		if (board_rev & BAMBOO_BOARD)
-			count += sprintf(buf + count, " - Bamboo");
 	} else if (board == MACH_P1P2) {
 		/* P1P2 */
 		if (board_rev & P1_REAL_BOARD)
@@ -375,11 +367,6 @@ static void check_board_revision(int board, int rev)
 		if (rev & MEDIA_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & BAMBOO_BOARD)
-			board_rev &= ~(J1_B2_BOARD |
-					LIMO_UNIVERSAL_BOARD |
-					LIMO_REAL_BOARD |
-					MEDIA_BOARD);
 		break;
 	case MACH_P1P2:
 		break;
@@ -447,18 +434,17 @@ static void check_hw_revision(void)
 		 * OA: Old Aquila
 		 * P1P2: Smart Book
 		 * CYP: Cypress
-		 * BB : Bamboo
 		 *
 		 * ADDR = 0xE0200000 + OFF
 		 *
-		 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	P1P2 CYP
-		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00	0x00
-		 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		0x18 0x0F
-		 *   H3: 0x0C64	               0x03 0x07 0x0F		0xff
-		 *   D1: 0x00C4	0x0F	  0x3F 0x3F 0x3F 0x0F 0xXC 0x3F
-		 *    I: 0x0224	                         0x02 0x00 0x08
-		 * MP03: 0x0324	                         0x9x      0xbx 0x9x
-		 * MP05: 0x0364	                         0x80      0x88
+		 * 	 OFF	Universal LRA  LUA  OA   TT   SS	P1P2 CYP
+		 *   J1: 0x0264	0x10      0x00 0x00 0x00 0x00 0x00	0x00
+		 *   H1: 0x0C24	   W      0x28 0xA8 0x1C		0x18 0x0F
+		 *   H3: 0x0C64	          0x03 0x07 0x0F		0xff
+		 *   D1: 0x00C4	0x0F	  0x3F 0x3F 0x0F 0xXC 0x3F
+		 *    I: 0x0224	                    0x02 0x00 0x08
+		 * MP03: 0x0324	                    0x9x      0xbx 0x9x
+		 * MP05: 0x0364	                    0x80      0x88
 		 */
 
 		/* C110 Aquila */
@@ -487,13 +473,6 @@ static void check_hw_revision(void)
 		if (board_rev == 6) {
 			board = MACH_AQUILA;
 			board_rev |= LIMO_REAL_BOARD;
-		}
-		/* C110 Aquila Bamboo */
-		if (gpio_get_value(&gpio->gpio_j1, 4) == 1) {
-			if (gpio_get_value(&gpio->gpio_d1, 4) == 1) {
-				board = MACH_AQUILA;
-				board_rev |= BAMBOO_BOARD;
-			}
 		}
 
 		/* C110 TickerTape */
