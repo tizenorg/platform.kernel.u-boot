@@ -144,7 +144,8 @@
 				",3m(kernel)"\
 				",18m(modem)"\
 				",7m(fota)"\
-				",9m(log)"\
+				",8m(csa)"\
+				",1m(log)"\
 				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
@@ -152,7 +153,8 @@
 				",3m(kernel)"\
 				",18m(modem)"\
 				",7m(fota)"\
-				",9m(log)"\
+				",8m(csa)"\
+				",1m(log)"\
 				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
@@ -167,7 +169,7 @@
 		" ${meminfo}" \
 		" ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock7 ubi.mtd=6" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
@@ -204,8 +206,8 @@
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=7\0" \
-	"ubiblock=6\0" \
+	"bootblock=8\0" \
+	"ubiblock=7\0" \
 	"ubi=enabled"
 
 /*
