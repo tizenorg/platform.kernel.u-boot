@@ -169,11 +169,13 @@
 		" ${meminfo}" \
 		" ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7 ubi.mtd=5" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x32008000 0x0 0x40000\0"
+
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=5"
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
@@ -187,19 +189,19 @@
 	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
-	"android=set bootargs root=ubi0!ramdisk ubi.mtd=${ubiblock}" \
+	"android=set bootargs root=ubi0!ramdisk " CONFIG_UBI_MTD \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"nfsboot=set bootargs root=/dev/nfs rw ubi.mtd=${ubiblock}" \
+	"nfsboot=set bootargs root=/dev/nfs rw " CONFIG_UBI_MTD \
 	 " nfsroot=${nfsroot},nolock,tcp ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x33000000,8M ramdisk=8192\0" \
 	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
-	 " ubi.mtd=${ubiblock} ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT \
