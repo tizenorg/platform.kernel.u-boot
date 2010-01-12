@@ -16,7 +16,7 @@
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
-static struct part_info *parts[8];
+static struct part_info *parts[16];
 #endif
 
 static const char pszMe[] = "usbd: ";
