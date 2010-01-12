@@ -25,8 +25,10 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS-y	:= universal.o onenand.o modem_boot.o
+COBJS-y	:= universal.o onenand.o
 SOBJS	:= lowlevel_init.o
+
+COBJS-$(CONFIG_S5PC110_MODEM)	+= modem_boot.o
 
 SRCS    := $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
