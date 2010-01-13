@@ -65,7 +65,7 @@
  * select serial console configuration
  */
 #define CONFIG_SERIAL_MULTI	1
-#define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
+#define CONFIG_SERIAL1          1	/* we use SERIAL 1 on S5P6442 */
 
 #if 0
 /* MMC */
@@ -103,7 +103,9 @@
 #undef CONFIG_CMD_NET
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
+#if 0
 #define CONFIG_CMD_ONENAND
+#endif
 #define CONFIG_CMD_MTDPARTS
 #if 0
 #define CONFIG_CMD_I2C
@@ -268,7 +270,11 @@
 /* OneNAND IPL uses 8KiB */
 #define CONFIG_ONENAND_START_PAGE	4
 
+#if 0
 #define CONFIG_ENV_IS_IN_ONENAND	1
+#else
+#define	CONFIG_ENV_IS_NOWHERE		1
+#endif
 #define CONFIG_ENV_SIZE			(256 << 10)	/* 256 KiB, 0x40000 */
 #define CONFIG_ENV_ADDR			(256 << 10)	/* 256 KiB, 0x40000 */
 #define CONFIG_ENV_OFFSET		(256 << 10)	/* 256 KiB, 0x40000 */

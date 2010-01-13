@@ -192,10 +192,12 @@ mmu_disable:
 #endif
 
 mmu_disable_phys:
+#if 0
 	/* Peri port setup */
 	ldr	r0, =0x70000000
 	orr	r0, r0, #0x13
 	mcr	p15,0,r0,c15,c2,4       @ 256M (0x70000000 - 0x7fffffff)
+#endif
 
 	/*
 	 * Go setup Memory and board specific bits prior to relocation.
