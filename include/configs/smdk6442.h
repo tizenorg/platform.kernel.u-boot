@@ -222,6 +222,7 @@
 
 /* base address for uboot */
 #define CONFIG_SYS_PHY_UBOOT_BASE	(CONFIG_SYS_SDRAM_BASE + 0x04800000)
+#define CONFIG_SYS_UBOOT_BASE		(CONFIG_SYS_SDRAM_BASE + 0x04800000)
 
 /*-----------------------------------------------------------------------
  * Stack sizes
