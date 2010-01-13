@@ -52,7 +52,8 @@ static int s5pc100_onenand_read_page(ulong block, ulong page,
 
 int onenand_board_init(int *page_is_4KiB, int *page)
 {
-	if ((readl(0xE0000000) & 0x00FFF000) == 0x00110000)
+	if (((readl(0xE0000000) & 0x00FFF000) == 0x00110000) ||
+			((readl(0xE0000000) & 0xFFFFF000) == 0x36442000))
 		return ONENAND_USE_GENERIC;
 
 	onenand_read_page = s5pc100_onenand_read_page;

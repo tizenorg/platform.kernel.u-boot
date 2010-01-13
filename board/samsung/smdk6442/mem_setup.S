@@ -28,7 +28,7 @@
 
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
-	ldr	r6, =S5P5442_DMC_BASE			@ 0xE6000000
+	ldr	r6, =S5P6442_DMC_BASE			@ 0xE6000000
 
 	/* DLL parameter setting */
 	ldr	r1, =0x00141408
