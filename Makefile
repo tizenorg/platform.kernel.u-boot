@@ -3295,6 +3295,9 @@ smdk6400_config	:	unconfig
 	fi
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
+smdk6442_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm1176 smdk6442 samsung s5p64xx
+
 #========================================================================
 # i386
 #========================================================================

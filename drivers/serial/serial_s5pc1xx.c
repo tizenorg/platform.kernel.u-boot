@@ -31,10 +31,15 @@ static inline struct s5pc1xx_uart *s5pc1xx_get_base_uart(int dev_index)
 {
 	u32 offset = dev_index * sizeof(struct s5pc1xx_uart);
 
+#ifdef CONFIG_S5PC1XX
 	if (cpu_is_s5pc100())
 		return (struct s5pc1xx_uart *)(S5PC100_UART_BASE + offset);
 	else
 		return (struct s5pc1xx_uart *)(S5PC110_UART_BASE + offset);
+#elif CONFIG_S5P64XX
+	if (cpu_is_s5p6442())
+		return (struct s5pc1xx_uart *)(S5P6442_UART_BASE + offset);
+#endif
 }
 
 /*

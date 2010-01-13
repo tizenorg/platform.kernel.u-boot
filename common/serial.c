@@ -69,7 +69,7 @@ struct serial_device *__default_serial_console (void)
 #else
 #error "CONFIG_SERIAL? missing."
 #endif
-#elif defined(CONFIG_S5PC1XX)
+#elif defined(CONFIG_S5PC1XX) || defined(CONFIG_S5P64XX)
 #if defined(CONFIG_SERIAL0)
 	return &s5pc1xx_serial0_device;
 #elif defined(CONFIG_SERIAL1)

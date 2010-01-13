@@ -43,7 +43,7 @@ extern struct serial_device s3c24xx_serial1_device;
 extern struct serial_device s3c24xx_serial2_device;
 #endif
 
-#if defined(CONFIG_S5PC1XX)
+#if defined(CONFIG_S5PC1XX) || defined(CONFIG_S5P64XX)
 extern struct serial_device s5pc1xx_serial0_device;
 extern struct serial_device s5pc1xx_serial1_device;
 extern struct serial_device s5pc1xx_serial2_device;
