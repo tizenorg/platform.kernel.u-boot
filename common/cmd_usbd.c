@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.4.0"
+#define APP_VERSION	"1.4.1"
 
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
@@ -717,6 +717,12 @@ static int process_data(struct usbd_ops *usbd)
 		do_reset();
 		return 0;
 #endif
+	case COMMAND_CSA_CLEAR:
+		printf("COMMAND_CSA_CLEAR\n");
+		part_id = get_part_id("csa");
+		img_type = IMG_MODEM;
+		break;
+
 	case COMMAND_PROGRESS:
 		if (usbd->set_progress)
 			usbd->set_progress(arg);
@@ -787,9 +793,12 @@ static int process_data(struct usbd_ops *usbd)
 
 		/* Erase */
 		nand_cmd(0, offset, length, NULL);
-		/* Write */
-		sprintf(length, "%x", (unsigned int) len);
-		ret = nand_cmd(1, ramaddr, offset, length);
+
+		/* Write : arg (0 Modem) / (1 CSA) */
+		if (!arg) {
+			sprintf(length, "%x", (unsigned int) len);
+			ret = nand_cmd(1, ramaddr, offset, length);
+		}
 		break;
 
 #ifdef CONFIG_CMD_MMC

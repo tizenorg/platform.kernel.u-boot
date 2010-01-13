@@ -61,6 +61,7 @@ enum {
 #define COMMAND_DOWN_PHONE	220
 #define COMMAND_CHANGE_USB	221
 #endif
+#define COMMAND_CSA_CLEAR	222
 #define COMMAND_PROGRESS	230
 
 /* status definition */
