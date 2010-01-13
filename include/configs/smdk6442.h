@@ -103,9 +103,7 @@
 #undef CONFIG_CMD_NET
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
-#if 0
 #define CONFIG_CMD_ONENAND
-#endif
 #define CONFIG_CMD_MTDPARTS
 #if 0
 #define CONFIG_CMD_I2C
@@ -254,10 +252,10 @@
 /*#define CONFIG_CLK_467_117_59*/
 /*#define CONFIG_CLK_400_100_50*/
 
-/* Universal has 2 banks of DRAM, but swap the bank */
+/* S5P6442 has 1 banks of DRAM */
 #define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
-#define PHYS_SDRAM_1_SIZE	(80 << 20)		/* 80 MB in Bank #0 */
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
+#define PHYS_SDRAM_1_SIZE	(128 << 20)		/* 128 MB in Bank #1 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -270,11 +268,7 @@
 /* OneNAND IPL uses 8KiB */
 #define CONFIG_ONENAND_START_PAGE	4
 
-#if 0
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#else
-#define	CONFIG_ENV_IS_NOWHERE		1
-#endif
 #define CONFIG_ENV_SIZE			(256 << 10)	/* 256 KiB, 0x40000 */
 #define CONFIG_ENV_ADDR			(256 << 10)	/* 256 KiB, 0x40000 */
 #define CONFIG_ENV_OFFSET		(256 << 10)	/* 256 KiB, 0x40000 */

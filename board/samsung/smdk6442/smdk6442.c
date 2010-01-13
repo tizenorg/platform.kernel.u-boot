@@ -27,7 +27,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int board_init(void)
 {
-	gd->bd->bi_arch_number = MACH_TYPE_SMDKC100;
+	gd->bd->bi_arch_number = MACH_TYPE_SMDK6442;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
