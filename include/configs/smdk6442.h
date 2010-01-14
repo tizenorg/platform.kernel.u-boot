@@ -276,6 +276,7 @@
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_SYS_MAX_I2C_BUS	6
 #endif
+#endif
 
 /* USB Downloader */
 #define CONFIG_CMD_USBDOWN
@@ -285,7 +286,7 @@
 #define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
-#if 1		/* For LCD test */
+#if 0		/* For LCD test */
 #define CONFIG_LCD		1
 #define CONFIG_S5PC1XXFB	1
 #endif
@@ -293,7 +294,6 @@
 #if 0
 #define CONFIG_CMD_EXT2			1
 #define CONFIG_CMD_ONENAND_EXT2		1
-#endif
 #endif
 
 #endif	/* __CONFIG_H */
