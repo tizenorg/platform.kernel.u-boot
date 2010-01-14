@@ -35,8 +35,6 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x018]			@ PHYCONTROL0
 	ldr	r1, =0x00008044
 	str	r1, [r6, #0x01C]			@ PHYCONTROL1
-	ldr	r1, =0x0
-	str	r1, [r6, #0x020]			@ PHYCONTROL2
 
 	/* DLL on */
 	ldr	r1, =0x0014140a
@@ -46,15 +44,8 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x0014140b
 	str	r1, [r6, #0x018]			@ PHYCONTROL0
 
-	/* Force value locking for DLL off */
-	str	r1, [r6, #0x018]			@ PHYCONTROL0
-
-	/* DLL off */
-	ldr	r1, =0x00141409
-	str	r1, [r6, #0x018]			@ PHYCONTROL0
-
 	/* auto refresh off */
-	ldr	r1, =0x0f0010d0
+	ldr	r1, =0x0f001090
 	str	r1, [r6, #0x000]			@ CONCONTROL
 
 	/*
@@ -65,47 +56,31 @@ mem_ctrl_asm_init:
 	str	r1, [r6, #0x004]			@ MEMCONTROL
 
 	/*
-	 * Note:
-	 * If Bank0 has OneDRAM we place it at 0x2800'0000
-	 * So finally Bank1 should address start at at 0x2000'0000
-	 */
-	mov	r4, #0x0
-
-#if 0
-swap_memory:
-	/*
 	 * Bank0
-	 * 0x30 -> 0x30000000
-	 * 0xf8 -> 0x37FFFFFF
+	 * 0x20 -> 0x20000000
+	 * 0xf0 -> 0x2FFFFFFF
 	 * [15:12] 0: Linear
-	 * [11:8 ] 2: 9 bits
-	 * [ 7:4 ] 2: 14 bits
+	 * [11:8 ] 3: 10 bits
+	 * [ 7:4 ] 1: 13 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x30f80222
-	/* if r4 is 1, swap the bank */
-	cmp	r4, #0x1
-	orreq	r1, r1, #0x08000000
+	ldr	r1, =0x20f00312
 	str	r1, [r6, #0x008]			@ MEMCONFIG0
 
 	/*
 	 * Bank1
-	 * 0x38 -> 0x38000000
-	 * 0xf8 -> 0x3fFFFFFF
+	 * 0x30 -> 0x30000000
+	 * 0xf0 -> 0x3FFFFFFF
 	 * [15:12] 0: Linear
 	 * [11:8 ] 2: 9 bits
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
 	 */
-	ldr	r1, =0x38f80222
-	/* if r4 is 1, swap the bank */
-	cmp	r4, #0x1
-	biceq	r1, r1, #0x08000000
+	ldr	r1, =0x30f00222
 	str	r1, [r6, #0x00c]			@ MEMCONFIG1
 
-	ldr	r1, =0x20000000
+	ldr	r1, =0xf0000000
 	str	r1, [r6, #0x014]			@ PRECHCONFIG
-#endif
 
 	/*
 	 * FIXME: Please verify these values
@@ -118,16 +93,16 @@ swap_memory:
 	ldr	r1, =0x0000040e
 	str	r1, [r6, #0x030]			@ TIMINGAREF
 
-	/* 166 MHz */
+	/* 133 MHz */
 	ldr	r1, =0x0c233286
 	str	r1, [r6, #0x034]			@ TIMINGROW
 
-	/* twtr=3 twr=2 trtp=3 cl=3 wl=3 rl=3 */
+	/* t_wtr=1 t_wr=2 t_rtp=1 cl=3 wl=0 rl=5 */
 	ldr	r1, =0x12130005
 	str	r1, [r6, #0x038]			@ TIMINGDATA
 
-	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
-	ldr	r1, =0x0e120222
+	/* t_faw=0xe t_xsr=0x10 t_xp=2 t_cke=2 t_mrd=2 */
+	ldr	r1, =0x0e100222
 	str	r1, [r6, #0x03C]			@ TIMINGPOWER
 
 	/* chip0 Deselect */
@@ -148,26 +123,8 @@ swap_memory:
 	ldr	r1, =0x00000032
 	str	r1, [r6, #0x010]			@ DIRECTCMD
 
-	/* chip1 Deselect */
-	ldr	r1, =0x07100000
-	str	r1, [r6, #0x010]			@ DIRECTCMD
-
-	/* chip1 PALL */
-	ldr	r1, =0x01100000
-	str	r1, [r6, #0x010]			@ DIRECTCMD
-
-	/* chip1 REFA */
-	ldr	r1, =0x05100000
-	str	r1, [r6, #0x010]			@ DIRECTCMD
-	/* chip1 REFA */
-	str	r1, [r6, #0x010]			@ DIRECTCMD
-
-	/* chip1 MRS, CL%LE %LONG3, BL%LE %LONG4 */
-	ldr	r1, =0x00100032
-	str	r1, [r6, #0x010]			@ DIRECTCMD
-
 	/* auto refresh on */
-	ldr	r1, =0x0f0010f0
+	ldr	r1, =0x0f0010b0
 	str	r1, [r6, #0x000]			@ CONCONTROL
 
 	/* PwrdnConfig */
@@ -175,24 +132,9 @@ swap_memory:
 	str	r1, [r6, #0x028]			@ PWRDNCONFIG
 
 	/* BL%LE %LONG */
-	ldr	r1, =0x00212100
+	ldr	r1, =0x00202100
 	str	r1, [r6, #0x004]			@ MEMCONTROL
 
-#if 0
-	/* Try to test memory area */
-	cmp	r4, #0x1
-	beq	1f
-
-	mov	r4, #0x1
-	ldr	r1, =0x37ffff00
-	str	r4, [r1]
-	str	r4, [r1, #0x4]				@ dummy write
-	ldr	r0, [r1]
-	cmp	r0, r4
-	bne	swap_memory
-#endif
-
-1:
 	mov	pc, lr
 
 	.ltorg

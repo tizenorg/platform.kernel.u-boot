@@ -43,13 +43,12 @@ lowlevel_init:
 	/* r5 has always zero */
 	mov	r5, #0
 
-	ldr	r8, =S5P6442_GPIO_BASE
+	ldr	r8, =S5P6442_GPIO_BASE			@0xE0200000
 
 	/* IO retension release */
 	ldr	r0, =S5P6442_OTHERS			@0xE010E000
 	ldr	r1, [r0]
-	ldreq	r2, =(1 << 31)				@IO_RET_REL
-	ldrne	r2, =((1 << 31) | (1 << 29) | (1 << 28))	@ GPIO, UART_IO
+	ldr	r2, =(1 << 31)				@IO_RET_REL
 	orr	r1, r1, r2
 	str	r1, [r0]
 
@@ -60,15 +59,15 @@ lowlevel_init:
 	str	r5, [r0]
 
 	/* setting SRAM */
-	ldr	r0, =S5P6442_SROMC_BASE
+	ldr	r0, =S5P6442_SROMC_BASE			@0xE7000000
 	ldr	r1, =0x9
 	str	r1, [r0]
 #endif
 
 	/* S5P6442 has 3 groups of interrupt sources */
 	ldr	r0, =S5P6442_VIC0_BASE			@0xE4000000
-	ldr	r1, =S5P6442_VIC1_BASE			@0xE4000000
-	ldr	r2, =S5P6442_VIC2_BASE			@0xE4000000
+	add	r1, r0, #0x00100000
+	add	r2, r0, #0x00200000
 
 	/* Disable all interrupts (VIC0, VIC1 and VIC2) */
 	mvn	r3, #0x0
@@ -138,10 +137,6 @@ wakeup_reset:
 system_clock_init:
 	ldr	r8, =S5P64XX_CLOCK_BASE		@ 0xE0100000
 
-	/* Set Clock divider */
-	ldr	r1, =0x10100000
-	str	r1, [r8, #0x300]
-
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r8, #0x000]		@ APLL_LOCK
@@ -166,6 +161,10 @@ system_clock_init:
 	ldr	r1, =0x1111			@ A, M, E, VPLL Muxing
 	str	r1, [r8, #0x200]		@ CLK_SRC0
 
+	/* Set Clock divider */
+	ldr	r1, =0x10100000
+	str	r1, [r8, #0x300]
+
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
@@ -181,7 +180,7 @@ uart_asm_init:
 	mov	r0, r8
 	ldr	r1, =0x22222222
 	str	r1, [r0, #0x0]			@ GPA0_CON
-	ldr	r1, =0x00022222
+	ldr	r1, =0x00000022
 	str	r1, [r0, #0x20]			@ GPA1_CON
 
 	mov	pc, lr
