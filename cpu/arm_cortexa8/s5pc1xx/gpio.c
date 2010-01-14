@@ -31,8 +31,8 @@
 #define PULL_MASK(x)		(0x3 << ((x) << 1))
 #define PULL_MODE(x, v)		((v) << ((x) << 1))
 
-#define DRV_MASK(x)		(0x3 << (x))
-#define DRV_SET(x, m)		((m) << (x))
+#define DRV_MASK(x)		(0x3 << ((x) << 1))
+#define DRV_SET(x, m)		((m) << ((x) << 1))
 #define RATE_MASK(x)		(0x1 << (x + 16))
 #define RATE_SET(x)		(0x1 << (x + 16))
 
