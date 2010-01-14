@@ -3299,7 +3299,7 @@ smdk6442_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm1176 smdk6442 samsung s5p64xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
-	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
+	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-8k.bin" >> $(obj)include/config.mk
 
 #========================================================================
 # i386

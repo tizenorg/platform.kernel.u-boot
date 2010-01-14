@@ -12,7 +12,7 @@
 
 include $(TOPDIR)/config.mk
 TEXT_BASE = 0xD0021800
-TEXT_BASE16K = 0xD0025800
+TEXT_BASE8K = 0xD0023800
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -22,7 +22,7 @@ OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o mem_setup.o
 SOBJS	+= start.o
-COBJS	+= onenand_read.o samsung_read.o
+COBJS	+= onenand_read.o
 COBJS	+= onenand_boot.o
 
 SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
@@ -32,12 +32,12 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k.bin
+ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-8k.bin
 
 all:	$(obj).depend $(ALL)
 
-$(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K) -O binary $< $@
+$(onenandobj)onenand-ipl-8k.bin:	$(onenandobj)onenand-ipl
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE8K) -O binary $< $@
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
