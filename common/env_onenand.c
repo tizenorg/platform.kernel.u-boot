@@ -53,13 +53,6 @@ env_t *env_ptr = (env_t *) onenand_env;
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifndef CONFIG_ENV_ADDR_FLEX
-#define CONFIG_ENV_ADDR_FLEX CONFIG_ENV_ADDR
-#endif
-#ifndef CONFIG_ENV_SIZE_FLEX
-#define CONFIG_ENV_SIZE_FLEX CONFIG_ENV_SIZE
-#endif
-
 uchar env_get_char_spec(int index)
 {
 	return (*((uchar *) (gd->env_addr + index)));
@@ -68,15 +61,18 @@ uchar env_get_char_spec(int index)
 void env_relocate_spec(void)
 {
 	struct mtd_info *mtd = &onenand_mtd;
+#ifdef CONFIG_ENV_ADDR_FLEX
 	struct onenand_chip *this = &onenand_chip;
+#endif
 	loff_t env_addr;
 	int use_default = 0;
 	size_t retlen;
 
 	env_addr = CONFIG_ENV_ADDR;
+#ifdef CONFIG_ENV_ADDR_FLEX
 	if (FLEXONENAND(this))
 		env_addr = CONFIG_ENV_ADDR_FLEX;
-
+#endif
 	/* Check OneNAND exist */
 	if (mtd->writesize)
 		/* Ignore read fail */
@@ -102,7 +98,9 @@ void env_relocate_spec(void)
 int saveenv(void)
 {
 	struct mtd_info *mtd = &onenand_mtd;
+#ifdef CONFIG_ENV_ADDR_FLEX
 	struct onenand_chip *this = &onenand_chip;
+#endif
 	loff_t env_addr = CONFIG_ENV_ADDR;
 	struct erase_info instr = {
 		.callback	= NULL,
@@ -115,12 +113,14 @@ int saveenv(void)
 		len = ALIGN(len, mtd->erasesize);
 
 	instr.len = len;
+#ifdef CONFIG_ENV_ADDR_FLEX
 	if (FLEXONENAND(this)) {
 		env_addr = CONFIG_ENV_ADDR_FLEX;
 		instr.len = CONFIG_ENV_SIZE_FLEX;
 		instr.len <<= onenand_mtd.eraseregions[0].numblocks == 1 ?
 				1 : 0;
 	}
+#endif
 	instr.addr = env_addr;
 	instr.mtd = mtd;
 	if (mtd->erase(mtd, &instr)) {
