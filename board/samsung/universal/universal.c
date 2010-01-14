@@ -1280,7 +1280,7 @@ static struct gpio_powermode powerdown_modes[] = {
 		PULL_DIS(4),
 	}, {	/* S5PC110_MP0_1_OFFSET */
 		/* XM0CSN[4]: MP0_1[4] -> output high */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
 		OUTPUT1(4) | OUTPUT0(5) | OUTPUT1(6) | OUTPUT1(7),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
