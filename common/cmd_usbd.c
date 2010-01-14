@@ -247,31 +247,68 @@ static int mmc_cmd(char *p1, char *p2, char *p3)
 	return ret;
 }
 
-static unsigned int org_blk_offset;
-static unsigned int org_root_blk;
-static unsigned int org_data_blk;
-
 static unsigned int cur_blk_offset;
-static unsigned int cur_root_blk;
-static unsigned int cur_data_blk;
+static unsigned int cur_part_size;
+static unsigned int cur_partition;
 
-static int erase_mmc_block(struct usbd_ops *usbd,
-		unsigned int blocks, unsigned int start)
+static unsigned int mmc_parts;
+
+struct partition_info {
+	u32 size;
+	u32 checksum;
+	u32 res;
+} __attribute__((packed));
+
+struct partition_header {
+	u8			fat32head[16];	/* RFSHEAD identifier */
+	struct partition_info	partition[4];
+	u8			res[448];	/* reserved */
+} __attribute__((packed));
+
+struct partition_table {
+	u8	boot_flag;
+	u8	chs_begin[3];
+	u8	type_code;
+	u8	chs_end[3];
+	u32	lba_begin;
+	u32	num_sectors;
+} __attribute__((packed));
+
+struct mbr_table {
+	u8			boot_code[446];
+	struct partition_table	partition[4];
+	u16			signature;
+} __attribute__((packed));
+
+#define MBR_OFFSET	0x10
+
+struct partition_header part_info;
+struct mbr_table mbr_info;
+
+static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 {
-	char *data;
+	unsigned int blocks;
 	char offset[12], length[12], ramaddr[12];
 	int i;
 	int loop;
 	u32 cnt;
-	int ret = 0;
+	int ret;
+
+	if (cur_part_size > len) {
+		blocks = len / usbd->mmc_blk;
+		ret = -1;
+	} else {
+		blocks = cur_part_size / usbd->mmc_blk;
+		ret = len - cur_part_size;
+	}
+
+	if (len % usbd->mmc_blk)
+		blocks++;
 
 	loop = blocks / usbd->mmc_max;
 	if (blocks % usbd->mmc_max)
 		loop++;
 
-	data = malloc(usbd->mmc_max);
-	memset(data, 0, usbd->mmc_max);
-
 	for (i = 0; i < loop; i++) {
 		if (i == 0) {
 			cnt = blocks % usbd->mmc_max;
@@ -282,142 +319,114 @@ static int erase_mmc_block(struct usbd_ops *usbd,
 		}
 
 		sprintf(length, "%x", cnt);
-		sprintf(offset, "%x", start);
-		sprintf(ramaddr, "0x%x", (u32)data);
-		ret = mmc_cmd(ramaddr, offset, length);
+		sprintf(offset, "%x", cur_blk_offset);
+		sprintf(ramaddr, "0x%x", *ram_addr);
+		mmc_cmd(ramaddr, offset, length);
 
-		start += cnt;
+		cur_blk_offset += cnt;
+
+		*ram_addr += (cnt * usbd->mmc_blk);
 	}
-
-	free(data);
 
 	return ret;
 }
 
-static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
+static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		char *offset, char *length)
 {
-	uint blocks;
-	uint cnt;
-	uint ram_addr;
+	u32 ram_addr;
 	int i;
-	int loop;
 	int ret;
+
+	ram_addr = (u32)down_ram_addr;
 
 	if (cur_blk_offset == 0) {
 		boot_sector *bs;
-		u16 cluster_size;
-		u32 fat32_length;
-		u32 total_sect;
+		struct mbr_table *mbr;
 
-		/* boot block */
-		bs = (boot_sector *)down_ram_addr;
+		memcpy(&part_info, (void *)ram_addr,
+				sizeof(struct partition_header));
 
-		org_root_blk = bs->fat32_length + bs->reserved;
-		org_data_blk = bs->fat32_length * 2 + bs->reserved;
+		ram_addr += sizeof(struct partition_header);
+		len -= sizeof(struct partition_header);
+		mbr = (struct mbr_table*)ram_addr;
 
-		cluster_size = bs->cluster_size;
-		fat32_length = bs->fat32_length;
-		total_sect = bs->total_sect;
+		/* modify sectors of p1 */
+		mbr->partition[0].num_sectors = usbd->mmc_total -
+				(MBR_OFFSET +
+				mbr->partition[1].num_sectors +
+				mbr->partition[2].num_sectors +
+				mbr->partition[3].num_sectors);
 
-		if (cluster_size != 0x8) {
-			printf("Cluster size must be 0x8\n");
-			return 1;
+		/* modify lba_begin of p2 and p3 */
+		for (i = 1; i < 4; i++) {
+			mmc_parts++;
+			if (part_info.partition[i].size == 0)
+				break;
+
+			mbr->partition[i].lba_begin =
+				mbr->partition[i - 1].lba_begin +
+				mbr->partition[i - 1].num_sectors;
 		}
 
-		bs->total_sect = usbd->mmc_total;
-		bs->fat32_length = usbd->mmc_total / usbd->mmc_blk / 2;
+		/* copy MBR */
+		memcpy(&mbr_info, mbr, sizeof(struct mbr_table));
 
-		cur_root_blk = bs->fat32_length + bs->reserved;
-		cur_data_blk = (bs->fat32_length + 0x10) * 2;
+		printf("Total Size: 0x%08x #parts %d\n",
+				usbd->mmc_total, mmc_parts);
+		for (i = 0; i < mmc_parts; i++) {
+			printf("p%d\t0x%08x\t0x%08x\n", i + 1,
+				mbr_info.partition[i].lba_begin,
+				mbr_info.partition[i].num_sectors);
+		}
 
-		/* backup boot block */
-		bs = (boot_sector *)(down_ram_addr +
-				usbd->mmc_blk * bs->backup_boot);
-		bs->total_sect = usbd->mmc_total;
-		bs->fat32_length = usbd->mmc_total / usbd->mmc_blk / 2;
-
-		/* write reserved blocks */
-		sprintf(length, "%x", bs->reserved);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", (uint)down_ram_addr);
+		/* write MBR */
+		sprintf(length, "%x", MBR_OFFSET);
+		sprintf(offset, "%x", 0);
+		sprintf(ramaddr, "0x%x", (u32)ram_addr);
 		ret = mmc_cmd(ramaddr, offset, length);
 
-		cur_blk_offset = bs->reserved;
+		ram_addr += (MBR_OFFSET * usbd->mmc_blk);
+		len -= (MBR_OFFSET * usbd->mmc_blk);
 
-		/* write root blocks */
-		erase_mmc_block(usbd, bs->fat32_length, cur_blk_offset);
-		sprintf(length, "%x", fat32_length);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
-				cur_blk_offset * usbd->mmc_blk));
-		ret = mmc_cmd(ramaddr, offset, length);
+		cur_blk_offset = MBR_OFFSET;
+		cur_partition = 0;
+		cur_part_size = part_info.partition[0].size;
 
-		org_blk_offset = org_root_blk;
-		cur_blk_offset = cur_root_blk;
+		/* modify p1's total sector */
+		bs = (boot_sector *)ram_addr;
+		bs->total_sect = mbr_info.partition[0].num_sectors;
 
-		erase_mmc_block(usbd, bs->fat32_length, cur_blk_offset);
-		sprintf(length, "%x", fat32_length);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
-				org_blk_offset * usbd->mmc_blk));
-		ret = mmc_cmd(ramaddr, offset, length);
-
-		org_blk_offset = org_data_blk;
-		cur_blk_offset = cur_data_blk;
-
-		/* write file list */
-		sprintf(length, "%x", cluster_size);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", (uint)(down_ram_addr +
-				org_blk_offset * usbd->mmc_blk));
-		ret = mmc_cmd(ramaddr, offset, length);
-
-		org_blk_offset += cluster_size;
-		cur_blk_offset += cluster_size;
-
-		ram_addr = down_ram_addr + org_blk_offset * usbd->mmc_blk;
-		blocks = len / usbd->mmc_blk - org_blk_offset;
-
-		if (len % usbd->mmc_blk)
-			blocks++;
-
-		loop = blocks / usbd->mmc_max;
-		if (blocks % usbd->mmc_max)
-			loop++;
-	} else {
-		blocks = len / usbd->mmc_blk;
-		if (len % usbd->mmc_blk)
-			blocks++;
-
-		loop = blocks / usbd->mmc_max;
-		if (blocks % usbd->mmc_max)
-			loop++;
-
-		ram_addr = down_ram_addr;
+		printf("\nWrite Partition %d.. %d blocks\n",
+			cur_partition + 1,
+			part_info.partition[cur_partition].size /
+			usbd->mmc_blk);
 	}
 
-	for (i = 0; i < loop; i++) {
-		if (i == 0) {
-			cnt = blocks % usbd->mmc_max;
-			if (cnt == 0)
-				cnt = usbd->mmc_max;
+	for (i = cur_partition; i < mmc_parts; i++) {
+		ret = write_mmc_partition(usbd, &ram_addr, len);
+
+		if (ret < 0) {
+			cur_part_size -= len;
+			break;
 		} else {
-			cnt = usbd->mmc_max;
+			cur_partition++;
+			cur_part_size =
+				part_info.partition[cur_partition].size;
+			cur_blk_offset =
+				mbr_info.partition[cur_partition].lba_begin;
+
+			if (ret == 0)
+				break;
+			else
+				len = ret;
+
+			printf("\nWrite Partition %d.. %d blocks\n",
+				cur_partition + 1,
+				part_info.partition[cur_partition].size /
+				usbd->mmc_blk);
 		}
-
-		sprintf(length, "%x", cnt);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", ram_addr);
-		ret = mmc_cmd(ramaddr, offset, length);
-
-		org_blk_offset += cnt;
-		cur_blk_offset += cnt;
-
-		ram_addr += cnt * usbd->mmc_blk;
 	}
-
-	return ret;
 }
 #endif
 
