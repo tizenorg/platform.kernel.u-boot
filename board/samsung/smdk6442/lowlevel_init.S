@@ -145,7 +145,7 @@ system_clock_init:
 	str	r1, [r8, #0x020]		@ VPLL_LOCK
 
 	/* APLL_CON */
-	ldr	r1, =0x82150c01		@ SDIV 1, PDIV 0xc, MDIV 0x215
+	ldr	r1, =0x829b0c01		@ SDIV 1, PDIV 0xc, MDIV 0x29b
 	str	r1, [r8, #0x100]
 	/* MPLL_CON */
 	ldr	r1, =0x810a0303		@ SDIV 3, PDIV 3, MDIV 0x10a
