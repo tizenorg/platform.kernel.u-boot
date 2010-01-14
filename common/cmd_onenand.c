@@ -147,7 +147,8 @@ static int onenand_block_write(loff_t to, ssize_t len,
 			goto next;
 		}
 
-
+		/* FIXME why memory barrier is needed here */
+		__asm__ __volatile__ ("": : :"memory");
 		ops.datbuf = (u_char *) buf;
 		ops.len = thislen;
 		ops.retlen = 0;
