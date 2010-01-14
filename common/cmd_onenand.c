@@ -85,7 +85,9 @@ static int onenand_block_read(loff_t from, ssize_t len,
 		if (ret) {
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
-			ofs += thislen;
+			ofs += blocksize;
+			/* FIXME need to check how to handle the 'len' */
+			len -= blocksize;
 			continue;
 		}
 
@@ -143,12 +145,10 @@ static int onenand_block_write(loff_t to, ssize_t len,
 		if (ret) {
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
-			skip_ofs += thislen;
+			skip_ofs += blocksize;
 			goto next;
 		}
 
-		/* FIXME why memory barrier is needed here */
-		__asm__ __volatile__ ("": : :"memory");
 		ops.datbuf = (u_char *) buf;
 		ops.len = thislen;
 		ops.retlen = 0;
@@ -163,7 +163,7 @@ static int onenand_block_write(loff_t to, ssize_t len,
 		len -= thislen;
 		*retlen += ops.retlen;
 next:
-		ofs += thislen;
+		ofs += blocksize;
 	}
 
 	return 0;
