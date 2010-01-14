@@ -2043,6 +2043,8 @@ int board_mmc_init(bd_t *bis)
 		gpio_cfg_pin(&s5pc110_gpio->gpio_g0, i, 0x2);
 		/* GPG0[0:6] pull disable */
 		gpio_set_pull(&s5pc110_gpio->gpio_g0, i, GPIO_PULL_NONE);
+		/* GPG0[0:6] drv 4x */
+		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4x);
 	}
 
 	return s5pc1xx_mmc_init(0);
