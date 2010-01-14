@@ -40,7 +40,7 @@
 
 #define CONFIG_SYS_SDRAM_BASE	0x20000000
 
-/* input clock of PLL: Universal has 12MHz/24MHz input clock at S5PC100/C110 */
+/* input clock of PLL: SMDK6442 has 12MHz input clock */
 #define CONFIG_SYS_CLK_FREQ_6442	12000000
 
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -204,7 +204,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
-#define CONFIG_SYS_PROMPT	"6442 # "	/* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT	"SMDK6442 # "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -230,27 +230,6 @@
  * The stack sizes are set up in start.S using the settings below
  */
 #define CONFIG_STACKSIZE	(256 << 10)	/* regular stack 256KB */
-
-/*******************************
- Support Clock Settings(APLL)
- *******************************
- ARMCLK		HCLKD0		PCLKD0
- -------------------------------
- 667		166			83
- 600		150			75
- 533		133			66
- 500		166			66
- 467		117			59
- 400		100			50
- *******************************/
-
-#define CONFIG_CLK_667_166_83
-/*#define CONFIG_CLK_666_166_66*/
-/*#define CONFIG_CLK_600_150_75*/
-/*#define CONFIG_CLK_533_133_66*/
-/*#define CONFIG_CLK_500_166_66*/
-/*#define CONFIG_CLK_467_117_59*/
-/*#define CONFIG_CLK_400_100_50*/
 
 /* S5P6442 has 1 banks of DRAM */
 #define CONFIG_NR_DRAM_BANKS	1
