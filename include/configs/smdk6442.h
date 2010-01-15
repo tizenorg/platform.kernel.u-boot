@@ -33,6 +33,7 @@
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5P64XX		1	/* which is in a S5P64XX Family */
 #define CONFIG_S5P6442		1	/* which is in a S5P6442 */
+#define CONFIG_S5P6442_EVT1	1	/* which is in a S5P6442 EVT1 */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -245,7 +246,11 @@
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
 /* OneNAND IPL uses 8KiB */
+#ifdef CONFIG_S5P6442_EVT1
+#define CONFIG_ONENAND_START_PAGE	2
+#else
 #define CONFIG_ONENAND_START_PAGE	4
+#endif
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
 #define CONFIG_ENV_SIZE			(256 << 10)	/* 256 KiB, 0x40000 */

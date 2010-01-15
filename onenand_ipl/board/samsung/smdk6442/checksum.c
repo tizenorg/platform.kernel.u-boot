@@ -9,25 +9,21 @@
 #ifndef SZ_8K
 #define SZ_8K		0x2000
 #endif
-#ifndef SZ_14K
-#define SZ_14K		0x3800
-#endif
 
-#define PAGE_SIZE	0x800
 /*
  * For 2KiB page OneNAND
  * +------+------+------+------+
  * | 2KiB | 2KiB | 2KiB | 2KiB |
  * +------+------+------+------+
  */
-#define CHECKSUM_8K	(SZ_8K - 0x4)
+
 /*
  * For 4KiB page OneNAND
- * +----------------+----------------+----------------+----------------+
- * | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved |
- * +----------------+----------------+----------------+----------------+
+ * +------+------+
+ * | 4KiB | 4KiB |
+ * +------+------+
  */
-#define CHECKSUM_16K	(SZ_14K - 0x4)
+#define CHECKSUM_8K	(SZ_8K - 0x4)
 
 int main(int argc, char *argv[])
 {
@@ -60,39 +56,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (stat.st_size > SZ_8K)
-		size = CHECKSUM_16K;
-	else
-		size = CHECKSUM_8K;
+	size = CHECKSUM_8K;
 
 	for (i = 0; i < size; i++) {
-		/* evt1 doesn't have reserved area */
-		if (evt == 0) {
-			/* if reserved area, skip the checksum */
-			if (stat.st_size > SZ_8K) {
-				if (i % PAGE_SIZE == 0) {
-					int res;
-					char tbuf[PAGE_SIZE];
-
-					res = i / PAGE_SIZE;
-					if (res % 2) {
-							i += PAGE_SIZE;
-						/*
-						 * if 1st page's reverved area,
-						 * copy the data to 2nd page
-						 */
-						if (res == 1) {
-							ret = read(fd, &tbuf,
-								PAGE_SIZE);
-							ret = write(fd, tbuf,
-								PAGE_SIZE);
-						}
-						lseek(fd, i, SEEK_SET);
-					}
-				}
-			}
-		}
-
 		ret = read(fd, &buf, 1);
 
 		if (ret < 0) {
@@ -111,8 +77,7 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-	if (evt == 0)
-		ret = write(fd, &sum, 4);
+	ret = write(fd, &sum, 4);
 
 	if (ret < 0)
 		printf("read err: %s\n", ret);
@@ -120,27 +85,6 @@ int main(int argc, char *argv[])
 	close(fd);
 
 	printf("checksum = %x\n", sum);
-
-	if (evt == 1) {
-		fd0 = open("header.bin", O_RDWR | O_CREAT | O_TRUNC,
-					S_IRUSR | S_IWUSR);
-
-		if (fd0 < 0) {
-			printf("open err: header.bin\n");
-			return 1;
-		}
-
-		if (size == CHECKSUM_16K)
-			header[0] = 0x4000;
-		else
-			header[0] = 0x2000;
-		header[1] = 0;
-		header[2] = sum;
-		header[3] = 0;
-
-		ret = write(fd0, header, 16);
-		close(fd0);
-	}
 
 	return 0;
 }

@@ -355,11 +355,21 @@ static void mmc_set_ios(struct mmc *mmc)
 
 	val =	(1 << 31) |	/* write status clear async mode enable */
 		(1 << 30) |	/* command conflict mask enable */
+		(1 << 14) |	/* Feedback Clock Enable for Rx Clock */
 		(1 << 8);	/* SDCLK hold enable */
 
 	writel(val, &host->reg->control2);
 
-	writel(0, &host->reg->control3);
+	/*
+	 * FCSEL1[15] FCSEL0[7]
+	 * FCSel[1:0] : Rx Feedback Clock Delay Control
+	 * 		Inverter delay means10ns delay if SDCLK 50MHz setting
+	 *         	'01' = Delay1 (basic delay)
+	 *         	'11' = Delay2 (basic delay + 2ns)
+	 *         	'00' = Delay3 (inverter delay)
+	 *         	'10' = Delay4 (inverter delay + 2ns)
+	 */
+	writel(0x8080, &host->reg->control3);
 
 	mmc_change_clock(host, mmc->clock);
 
