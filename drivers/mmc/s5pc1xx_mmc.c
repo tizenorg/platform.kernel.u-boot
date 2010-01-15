@@ -45,8 +45,20 @@ static inline struct s5pc1xx_mmc *s5pc1xx_get_base_mmc(int dev_index)
 static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 {
 	unsigned char ctrl;
+	unsigned int mask;
 
 	writeb(0xe, &host->reg->timeoutcon);	/* TMCLK * 2^27 */
+
+	mask = readl(&host->reg->norintstsen);
+	mask &= ~(0xffff);
+	mask |= (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0);
+	writel(mask, &host->reg->norintstsen);
+
+
+	mask = readl(&host->reg->norintsigen);
+	mask &= ~(0xffff);
+	mask |= (1 << 1);
+	writel(mask, &host->reg->norintsigen);
 
 	dbg("data->dest: %08x\n", (u32)data->dest);
 	writel((u32)data->dest, &host->reg->sysad);
@@ -82,7 +94,7 @@ static void mmc_set_transfer_mode(struct mmc_host *host, struct mmc_data *data)
 	 */
 	mode = (1 << 1) | (1 << 0);
 	if (data->blocks > 1)
-		mode |= ((1 << 5) | (1 << 2));
+		mode |= (1 << 5);
 	if (data->flags & MMC_DATA_READ)
 		mode |= (1 << 4);
 
