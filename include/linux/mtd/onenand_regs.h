@@ -119,6 +119,7 @@
  * Command Register F220h (R/W)
  */
 #define ONENAND_CMD_READ		(0x00)
+#define ONENAND_CMD_SUPERLOAD		(0x03)
 #define ONENAND_CMD_READOOB		(0x13)
 #define ONENAND_CMD_PROG		(0x80)
 #define ONENAND_CMD_PROGOOB		(0x1A)

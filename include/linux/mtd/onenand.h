@@ -154,9 +154,13 @@ struct onenand_chip {
 #define ONENAND_RUNTIME_BADBLOCK_CHECK	(0x0200)
 #define ONENAND_PAGEBUF_ALLOC		(0x1000)
 #define ONENAND_OOBBUF_ALLOC		(0x2000)
+#define ONENAND_SYNC_MODE		(0x4000)
 
 #define ONENAND_IS_4KB_PAGE(this)					\
 	(this->options & ONENAND_HAS_4KB_PAGE)
+
+#define ONENAND_IS_SYNC_MODE(this)					\
+	(this->options & ONENAND_SYNC_MODE)
 
 /*
  * OneNAND Flash Manufacturer ID Codes
