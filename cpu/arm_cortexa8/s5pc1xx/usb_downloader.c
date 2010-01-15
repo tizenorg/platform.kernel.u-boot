@@ -145,8 +145,8 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	struct mmc *mmc;
 
 	usbd->mmc_dev = 0;
-	/* FIX 0x400 */
-	usbd->mmc_max = 0x400;
+	/* FIXME */
+	usbd->mmc_max = 0x8000;
 	/* get from mmc->capacity?? */
 	usbd->mmc_total = 0xf50000;	/* 8GB / 0x200  */
 
