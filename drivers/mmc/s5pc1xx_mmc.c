@@ -49,12 +49,22 @@ static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 
 	writeb(0xe, &host->reg->timeoutcon);	/* TMCLK * 2^27 */
 
+	/*
+	 * NORMAL Interrupt Status Enable Register init
+	 * [5] ENSTABUFRDRDY : Buffer Read Ready Status Enable
+	 * [4] ENSTABUFWTRDY : Buffer write Ready Status Enable
+	 * [1] ENSTASTANSCMPLT : Transfre Complete Status Enable
+	 * [0] ENSTACMDCMPLT : Command Complete Status Enable
+	*/
 	mask = readl(&host->reg->norintstsen);
 	mask &= ~(0xffff);
 	mask |= (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0);
 	writel(mask, &host->reg->norintstsen);
 
-
+	/*
+	 * NORMAL Interrupt Signal Enable Register init
+	 * [1] ENSTACMDCMPLT : Transfer Complete Signal Enable
+	 */
 	mask = readl(&host->reg->norintsigen);
 	mask &= ~(0xffff);
 	mask |= (1 << 1);
