@@ -44,39 +44,46 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x0014140b
 	str	r1, [r6, #0x018]			@ PHYCONTROL0
 
-	/* auto refresh off */
-	ldr	r1, =0x0f001090
+	/*
+	 * auto refresh off
+	 * LPDDR: 0xf001090, MCP_C_TYPE: 0xf0010d0
+	 */
+	ldr	r1, =0x0f0010d0
 	str	r1, [r6, #0x000]			@ CONCONTROL
 
 	/*
-	 * Burst Length 4, 2 chips, 32-bit, LPDDR
-	 * OFF: dynamic self refresh, force precharge, dynamic power down off
+	 * Burst Length 4, 2 chips, 32-bit
+	 * OFF: dynamic self refresh, force precharge, dynamic power down
+	 * ON: clock stop
+	 * LPDDR: 0x00202100, MCP_C_TYPE: 0x00212101
 	 */
-	ldr	r1, =0x00202100
+	ldr	r1, =0x00212101
 	str	r1, [r6, #0x004]			@ MEMCONTROL
 
 	/*
 	 * Bank0
-	 * 0x20 -> 0x20000000
-	 * 0xf0 -> 0x2FFFFFFF
-	 * [15:12] 0: Linear
-	 * [11:8 ] 3: 10 bits
-	 * [ 7:4 ] 1: 13 bits
-	 * [ 3:0 ] 2: 4 banks
-	 */
-	ldr	r1, =0x20f00312
-	str	r1, [r6, #0x008]			@ MEMCONFIG0
-
-	/*
-	 * Bank1
 	 * 0x30 -> 0x30000000
-	 * 0xf0 -> 0x3FFFFFFF
+	 * 0xf8 -> 0x37FFFFFF
 	 * [15:12] 0: Linear
 	 * [11:8 ] 2: 9 bits
 	 * [ 7:4 ] 2: 14 bits
 	 * [ 3:0 ] 2: 4 banks
+	 * LPDDR: 0x30f80312, MCP_C_TYPE: 0x30f80222
 	 */
-	ldr	r1, =0x30f00222
+	ldr	r1, =0x30f80222
+	str	r1, [r6, #0x008]			@ MEMCONFIG0
+
+	/*
+	 * Bank1
+	 * 0x40 -> 0x40000000
+	 * 0xf0 -> 0x4FFFFFFF
+	 * [15:12] 0: Linear
+	 * [11:8 ] 2: 9 bits
+	 * [ 7:4 ] 2: 14 bits
+	 * [ 3:0 ] 2: 4 banks
+	 * LPDDR: 0x40f00222, MCP_C_TYPE: 0x40f00222
+	 */
+	ldr	r1, =0x40f00222
 	str	r1, [r6, #0x00c]			@ MEMCONFIG1
 
 	ldr	r1, =0xf0000000
@@ -101,10 +108,14 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x12130005
 	str	r1, [r6, #0x038]			@ TIMINGDATA
 
-	/* t_faw=0xe t_xsr=0x10 t_xp=2 t_cke=2 t_mrd=2 */
-	ldr	r1, =0x0e100222
+	/*
+	 * t_faw=0xe t_xsr=0x12 t_xp=2 t_cke=2 t_mrd=2
+	 * LPDDR: 0x0e100222, MCP_C_TYPE: 0x0e120222
+	 */
+	ldr	r1, =0x0e120222
 	str	r1, [r6, #0x03C]			@ TIMINGPOWER
 
+	/* LPDDR: chip0, MCP_C_TYPE: chip0, chip1 */
 	/* chip0 Deselect */
 	ldr	r1, =0x07000000
 	str	r1, [r6, #0x010]			@ DIRECTCMD
@@ -123,16 +134,42 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x00000032
 	str	r1, [r6, #0x010]			@ DIRECTCMD
 
-	/* auto refresh on */
-	ldr	r1, =0x0f0010b0
+	/* chip1 Deselect */
+	ldr	r1, =0x07100000
+	str	r1, [r6, #0x010]			@ DIRECTCMD
+
+	/* chip1 PALL */
+	ldr	r1, =0x01100000
+	str	r1, [r6, #0x010]			@ DIRECTCMD
+
+	/* chip1 REFA */
+	ldr	r1, =0x05100000
+	str	r1, [r6, #0x010]			@ DIRECTCMD
+	/* chip1 REFA */
+	str	r1, [r6, #0x010]			@ DIRECTCMD
+
+	/* chip1 MRS, CL%LE %LONG3, BL%LE %LONG4 */
+	ldr	r1, =0x00100032
+	str	r1, [r6, #0x010]			@ DIRECTCMD
+
+	/*
+	 * auto refresh on
+	 * LPDDR: 0x0f0010b0, MCP_C_TYPE: 0x0f0010f0
+	 */
+	ldr	r1, =0x0f0010f0
 	str	r1, [r6, #0x000]			@ CONCONTROL
 
 	/* PwrdnConfig */
 	ldr	r1, =0x00100002
 	str	r1, [r6, #0x028]			@ PWRDNCONFIG
 
-	/* BL%LE %LONG */
-	ldr	r1, =0x00202100
+	/*
+	 * Burst Length 4, 2 chips, 32-bit
+	 * OFF: dynamic self refresh, force precharge, dynamic power down
+	 * ON: clock stop
+	 * LPDDR: 0x00202100, MCP_C_TYPE: 0x00212101
+	 */
+	ldr	r1, =0x00212101
 	str	r1, [r6, #0x004]			@ MEMCONTROL
 
 	mov	pc, lr

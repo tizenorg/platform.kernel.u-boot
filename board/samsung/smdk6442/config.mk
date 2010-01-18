@@ -3,4 +3,4 @@
 # Minkyu Kang <mk7.kang@samsung.com>
 #
 
-TEXT_BASE = 0x24800000
+TEXT_BASE = 0x34800000
