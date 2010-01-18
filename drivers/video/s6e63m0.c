@@ -103,7 +103,10 @@ static const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
 	DATA_ONLY, 0x10,
 	DATA_ONLY, 0x10,
 
+#if 0
 	0xf7, 0x03,
+#endif
+	0xf7, 0x00,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
 

@@ -1465,7 +1465,10 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (machine_is_aquila()) {
+#if 0		/* universal cypress */
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
+#endif
+		pd_cs.bank = &gpio_base->gpio_mp0_5;
 		pd_cs.num = 1;
 		pd_clk.bank = &gpio_base->gpio_mp0_4;
 		pd_clk.num = 1;
@@ -1479,8 +1482,12 @@ void lcd_cfg_gpio(void)
 	}
 
 	if (machine_is_cypress()) {
+#if 0		/* universal cypress */
 		/* FLCD_CS */
 		gpio_cfg_pin(&gpio_base->gpio_mp0_1, 0, GPIO_OUTPUT);
+#endif
+		/* FLCD_CS_S */
+		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 1, GPIO_OUTPUT);
 		/* FLCD_CLK */
 		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 0, GPIO_OUTPUT);
 		/* FLCD_SDI */
@@ -1489,9 +1496,12 @@ void lcd_cfg_gpio(void)
 		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 5, GPIO_OUTPUT);
 		/* FLCD_ON_S */
 		gpio_cfg_pin(&gpio_base->gpio_g2, 2, GPIO_OUTPUT);
-
+#if 0		/* universal cypress */
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
+#endif
+		pd_cs.bank = &gpio_base->gpio_mp0_5;
+		pd_cs.num = 1;
 		pd_clk.bank = &gpio_base->gpio_mp0_4;
 		pd_clk.num = 0;
 		pd_si.bank = &gpio_base->gpio_mp0_4;
@@ -1734,7 +1744,8 @@ int misc_init_r(void)
 	 */
 	if (machine_is_geminus())
 		setenv("lcdinfo", "lcd=lms480jc01");
-
+	if (board_is_media())
+		setenv("lcdinfo", "lcd=media");
 	/*
 	if (board_is_p2_real())
 		setenv("lcdinfo", "lcd=ams701");
