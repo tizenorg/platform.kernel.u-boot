@@ -177,6 +177,8 @@
 
 #define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=5"
 
+#define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
+
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
@@ -190,8 +192,9 @@
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs" \
-	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
+	 CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
+	 CONFIG_COMMON_BOOT "; run bootk\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk " CONFIG_UBI_MTD \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
