@@ -472,8 +472,17 @@ int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int mode = SLEEP_WFI;
 
-	if (argc >= 2)
-		mode = SLEEP_REGISTER;
+	if (argc >= 2) {
+		int arg = argv[1][0]-'0';
+
+		switch(arg) {
+		case 0:
+			break;
+		case 1:
+			mode = SLEEP_REGISTER;
+			break;
+		}
+	}
 
 	if (cpu_is_s5pc110())
 		return s5pc110_sleep(mode);
@@ -485,6 +494,6 @@ int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(
 	sleep,		CONFIG_SYS_MAXARGS,	1, do_sleep,
 	"S5PC110 sleep",
-	"- Sleep with SLEEP_WFI mode\n"
+	"sleep 0 - Sleep with SLEEP_WFI mode\n"
 	"sleep 1 - Sleep with SLEEP_REGISTER mode\n"
 );

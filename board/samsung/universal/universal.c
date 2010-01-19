@@ -1027,6 +1027,7 @@ static void check_micro_usb(int intr)
 {
 	unsigned char addr;
 	unsigned char val[2];
+	static int started_charging_once = 0;
 
 	if (cpu_is_s5pc100())
 		return;
@@ -1064,8 +1065,10 @@ static void check_micro_usb(int intr)
 	 * If USB, use default 475mA
 	 * If Charger, use 600mA and go to charge mode
 	 */
-	if (val[0] & FSA_DEDICATED_CHARGER)
+	if ((val[0] & FSA_DEDICATED_CHARGER) && !started_charging_once) {
+		started_charging_once = 1;
 		into_charge_mode();
+	}
 
 	/* If Factory Mode is Boot ON-USB, go to download mode */
 	i2c_read(addr, 0x07, 1, val, 1);
