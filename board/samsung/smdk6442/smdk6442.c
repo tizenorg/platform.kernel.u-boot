@@ -41,6 +41,8 @@ int dram_init(void)
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
 
+	setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
+
 	return 0;
 }
 
