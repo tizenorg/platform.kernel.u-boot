@@ -216,30 +216,17 @@ swap_memory:
 	ldrne	r1, =0x00000618
 	strne	r1, [r6, #0x030]			@ TIMINGAREF_OFFSET
 
-#ifdef NEW_MEMORY_TIMING
 	ldr	r1, =0x14233287
-#else
-	ldr	r1, =0x0c233287
-#endif
 	str	r1, [r0, #0x034]			@ TIMINGROW_OFFSET
 	ldrne	r1, =0x11344309
 	strne	r1, [r6, #0x034]			@ TIMINGROW_OFFSET
 
-#ifdef NEW_MEMORY_TIMING
 	ldr	r1, =0x12130005
-#else
-	ldr	r1, =0x32330303
-#endif
 	str	r1, [r0, #0x038]			@ TIMINGDATA_OFFSET
 	ldrne	r1, =0x12130005
 	strne	r1, [r6, #0x038]			@ TIMINGDATA_OFFSET
 
-	/* tfaw=4 sxsr=0x14 txp=0x14 tcke=3 tmrd=3 */
-#ifdef NEW_MEMORY_TIMING
 	ldr	r1, =0x0E140222
-#else
-	ldr	r1, =0x04141433
-#endif
 	str	r1, [r0, #0x03C]			@ TIMINGPOWER_OFFSET
 	ldrne	r1, =0x0E190222
 	strne	r1, [r6, #0x03C]			@ TIMINGPOWER_OFFSET
