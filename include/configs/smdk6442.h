@@ -153,10 +153,10 @@
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
-		" console=ttySAC2,115200n8" \
+		" console=ttySAC1,115200n8" \
 		" ${meminfo}"
 
-#define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
+#define CONFIG_COMMON_BOOT	"console=ttySAC1,115200n8" \
 		" ${meminfo}" \
 		" ${mtdparts}"
 
@@ -194,7 +194,7 @@
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"mtdparts=" MTDPARTS_DEFAULT \
-	"meminfo=mem=80M mem=128M@0x40000000\0" \
+	"meminfo=mem=80M mem=256M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=7\0" \
