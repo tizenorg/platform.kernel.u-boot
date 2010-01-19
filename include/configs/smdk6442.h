@@ -232,10 +232,16 @@
  */
 #define CONFIG_STACKSIZE	(256 << 10)	/* regular stack 256KB */
 
-/* S5P6442 has 1 banks of DRAM */
-#define CONFIG_NR_DRAM_BANKS	1
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* SDRAM Bank #1 */
-#define PHYS_SDRAM_1_SIZE	(128 << 20)		/* 128 MB in Bank #1 */
+/* S5P6442 has 2 banks of DRAM */
+#define CONFIG_NR_DRAM_BANKS	2
+
+/* SDRAM Bank #1 */
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE
+#define PHYS_SDRAM_1_SIZE	(80 << 20)		/* 80 MB in Bank #1 */
+
+/* SDRAM Bank #2 */
+#define PHYS_SDRAM_2		CONFIG_SYS_SDRAM_BASE + 0x10000000
+#define PHYS_SDRAM_2_SIZE	(256 << 20)		/* 256 MB in Bank #2 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
