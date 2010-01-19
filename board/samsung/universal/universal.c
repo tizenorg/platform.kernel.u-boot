@@ -1465,10 +1465,7 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (machine_is_aquila()) {
-#if 0		/* universal cypress */
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
-#endif
-		pd_cs.bank = &gpio_base->gpio_mp0_5;
 		pd_cs.num = 1;
 		pd_clk.bank = &gpio_base->gpio_mp0_4;
 		pd_clk.num = 1;
