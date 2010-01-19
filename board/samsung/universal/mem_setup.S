@@ -100,16 +100,18 @@ wait:	subs	r2, r2, #0x1
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
 
-#ifndef NEW_MEMORY_TIMING
 	/* DLL off */
+#ifdef NEW_MEMORY_TIMING
+	ldr	r1, =0x6A3B3B09
+#else
 	ldr	r1, =0x50101009
+#endif
 	str	r1, [r0, #0x018]			@ PHYCONTROL0_OFFSET
 	strne	r1, [r6, #0x018]			@ PHYCONTROL0_OFFSET
-#endif
 
 	/* auto refresh off */
 #ifdef NEW_MEMORY_TIMING
-	ldr	r1, =0x0FFF1010
+	ldr	r1, =0x0FFF10B0
 	ldr	r2, =0x0FFF10B0
 #else
 	ldr	r1, =0xff001010 | (1 << 7)
@@ -148,8 +150,10 @@ wait:	subs	r2, r2, #0x1
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	ldr	r3, =0x30f80222
+	ldr	r4, =0x40f00222
 swap_memory:
 	str	r3, [r0, #0x008]			@ MEMCONFIG0_OFFSET
+	str	r4, [r0, #0x00C]			@ dummy write
 
 	/*
 	 * DMC1: CS0 : S5PC110
@@ -164,14 +168,14 @@ swap_memory:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	/* Default : 2GiB */
-	ldr	r4, =0x40f00322				@ 2Gib
-	ldr	r5, =0x50f80222
+	ldr	r4, =0x40f01322				@ 2Gib
+	ldr	r5, =0x50f81222
 	cmp	r9, #1
-	ldreq	r4, =0x40f80222				@ 1Gib
+	ldreq	r4, =0x40f81222				@ 1Gib
 	cmp	r9, #3
-	ldreq	r5, =0x50f80222				@ 2Gib + 1Gib
+	ldreq	r5, =0x50f81222				@ 2Gib + 1Gib
 	cmp	r9, #4
-	ldreq	r5, =0x50f00322				@ 2Gib + 2Gib
+	ldreq	r5, =0x50f01322				@ 2Gib + 2Gib
 
 	cmp	r7, r8
 	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
