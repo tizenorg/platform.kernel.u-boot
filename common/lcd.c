@@ -323,7 +323,7 @@ int drv_lcd_init_resume (void)
 {
 	lcd_base = (void *)(gd->fb_base);
 
-	lcd_line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+	lcd_line_length = (panel_info.vl_col * (panel_info.vl_bpix)) / 8;
 
 	lcd_init (lcd_base);		/* LCD initialization */
 
@@ -337,7 +337,7 @@ int drv_lcd_init (void)
 
 	lcd_base = (void *)(gd->fb_base);
 
-	lcd_line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+	lcd_line_length = (panel_info.vl_col * (panel_info.vl_bpix / 8));
 
 	lcd_init (lcd_base);		/* LCD initialization */
 
@@ -444,10 +444,10 @@ static int lcd_init (void *lcdbase)
 ulong lcd_setmem (ulong addr)
 {
 	ulong size;
-	int line_length = (panel_info.vl_col * NBITS (panel_info.vl_bpix)) / 8;
+	int line_length = (panel_info.vl_col * (panel_info.vl_bpix)) / 8;
 
 	debug ("LCD panel info: %d x %d, %d bit/pix\n",
-		panel_info.vl_col, panel_info.vl_row, NBITS (panel_info.vl_bpix) );
+		panel_info.vl_col, panel_info.vl_row, (panel_info.vl_bpix) );
 
 	size = line_length * panel_info.vl_row;
 
@@ -531,7 +531,7 @@ void bitmap_plot (int x, int y)
 	bmap = &bmp_logo_bitmap[0];
 	fb   = (uchar *)(lcd_base + y * lcd_line_length + x);
 
-	if (NBITS(panel_info.vl_bpix) < 12) {
+	if ((panel_info.vl_bpix) < 12) {
 		/* Leave room for default color map */
 #if defined(CONFIG_PXA250)
 		cmap = (ushort *)fbi->palette;
@@ -601,7 +601,14 @@ void bitmap_plot (int x, int y)
 #ifdef CONFIG_SPLASH_SCREEN_ALIGN
 #define BMP_ALIGN_CENTER	0x7FFF
 #endif
+void lcd_display_clear(void)
+{
+	unsigned int *fb = lcd_base;
+	int i, j, k;
+	printf("Clean the display\n");
 
+	memset(fb, 0, panel_info.vl_row * panel_info.vl_col * panel_info.vl_bpix / 8);
+}
 int lcd_display_bitmap(ulong bmp_image, int x, int y)
 {
 #if !defined(CONFIG_MCC200)
@@ -636,9 +643,11 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	colors = 1 << bmp_bpix;
 	compression = le32_to_cpu (bmp->header.compression);
 
-	bpix = NBITS(panel_info.vl_bpix);
+	bpix = (panel_info.vl_bpix);
+	/* Circumsbenting the error in panel_info. 
+	 * TODO: correct panel_info */
 
-	if ((bpix != 1) && (bpix != 8) && (bpix != 16)) {
+	if ((bpix != 1) && (bpix != 8) && (bpix != 16) && (bpix != 32)) {
 		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix, bmp_bpix);
 		return 1;
@@ -663,7 +672,8 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 #elif defined(CONFIG_MPC823)
 		cmap = (ushort *)&(cp->lcd_cmap[255*sizeof(ushort)]);
 #elif !defined(CONFIG_ATMEL_LCD)
-		cmap = panel_info.cmap;
+		/* cmap = panel_info.cmap; */
+		cmap = (ushort *) malloc(1024);
 #endif
 
 		cmap_base = cmap;
@@ -783,6 +793,25 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		}
 		break;
 #endif /* CONFIG_BMP_16BPP */
+	case 32:
+		lcd_line_length = (panel_info.vl_col * (panel_info.vl_bpix / 8));
+		fb = (uchar *) lcd_base;
+		fb += lcd_line_length * (y + height) + x * 4;
+
+		printf("Drawing the 32bit bmp.. @ (%d,%d) of [%ldx%ld] in %d\n",
+				x, y, width, height, lcd_line_length);
+		for (i = 0; i < height; ++i) {
+			WATCHDOG_RESET();
+			for (j = 0; j < width; j++) {
+				*(fb++) = *(bmap++);
+				*(fb++) = *(bmap++);
+				*(fb++) = *(bmap++);
+				*(fb++) = *(bmap++);
+			}
+			//bmap += (padded_line - width) * 4;
+			fb   -= (lcd_line_length + width * 4);
+		}
+		break;
 
 	default:
 		break;

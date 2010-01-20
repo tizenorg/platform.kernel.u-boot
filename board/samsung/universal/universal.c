@@ -35,6 +35,9 @@
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
+#include <bmp_layout.h>
+
+#include "animation_kessler.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1023,12 +1026,32 @@ static void check_mhl(void)
 	i2c_read((0x72 >> 1), 0xa0, 1, val, 1);
 }
 
+#define CHARGER_ANIMATION_FRAME		6
+static int max8998_power_key(void)
+{
+	unsigned char addr, val[2];
+	i2c_set_bus_num(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return 0;
+	}
+
+	/* Accessing IRQ1 register */
+	i2c_read(addr, 0x00, 1, val, 1);
+	printf("MAX8998 IRQ1 = 0x%x\n", val[0]);
+	if (val[0] & (1 << 6))
+		return 1;
+}
 static void into_charge_mode(void)
 {
 	unsigned char addr = 0xCC >> 1;	/* max8998 */;
 	unsigned char val[2];
 	unsigned int level;
 	int i, j;
+	bmp_image_t *bmp[CHARGER_ANIMATION_FRAME];
+	unsigned long len[CHARGER_ANIMATION_FRAME];
+	ulong bmp_addr[CHARGER_ANIMATION_FRAME];
 
 	i2c_set_bus_num(I2C_PMIC);
 
@@ -1045,37 +1068,28 @@ static void into_charge_mode(void)
 	i2c_write(addr, 0x0C, 1, val, 1);
 
 #ifdef CONFIG_S5PC1XXFB
-	/* TODO: change to Image animation */
 	init_font();
-	set_font_xy(0, 0);
-	set_font_color(FONT_WHITE);
-	fb_printf("charging");
 
-	level = battery_soc / 25;
+	/* TODO: write the image-text for the charger */
 
+	level = battery_soc * CHARGER_ANIMATION_FRAME / 100;
+	if (level >= CHARGER_ANIMATION_FRAME)
+		level = CHARGER_ANIMATION_FRAME - 1;
+
+	for (i = 0; i < CHARGER_ANIMATION_FRAME; i++)
+		bmp_addr[i] = battery_charging_animation[i];
+
+	lcd_display_clear();
 	for (i = 0; i < 3; i++) {
-		if (level == 0)
+		for (j = level; j < CHARGER_ANIMATION_FRAME; j++) {
+			bmp[j] = gunzip_bmp(bmp_addr[j], &len[j]);
+			lcd_display_bitmap((ulong) bmp[j], 140, 202);
+			free(bmp[j]);
+			if (max8998_power_key())
+				return;
 			udelay(1 * 1000 * 1000);
-
-		for (j = 0; j < 4; j++) {
-			fb_printf("..");
-
-			if (j >= level)
-				udelay(1 * 1000 * 1000);
 		}
-
-		if (level <= 4)
-			udelay(1 * 1000 * 1000);
-
-		set_font_xy(0, 0);
-		set_font_color(FONT_XOR);
-		fb_printf("charging........");
-
-		set_font_xy(0, 0);
-		set_font_color(FONT_WHITE);
-		fb_printf("charging");
 	}
-
 	exit_font();
 #endif
 

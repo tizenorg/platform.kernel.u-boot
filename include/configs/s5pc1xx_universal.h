@@ -330,4 +330,11 @@
 #define CONFIG_CMD_ONENAND_EXT2		1
 #endif
 
+/* Insert bmp animation compressed */
+#define CONFIG_VIDEO_BMP_GZIP
+#define CONFIG_CMD_BMP
+#ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
+#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)
+#endif
+
 #endif	/* __CONFIG_H */
