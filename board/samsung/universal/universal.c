@@ -441,7 +441,24 @@ static void check_board_revision(int board, int rev)
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
-#ifndef KESSLER_REV09
+#ifdef KESSLER_REV09
+	gpio_direction_input(bank, 2);
+	gpio_direction_input(bank, 3);
+	gpio_direction_input(bank, 4);
+	gpio_direction_input(bank, 7);
+
+	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
+	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
+	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
+	gpio_set_pull(bank, 7, GPIO_PULL_NONE);		/* HWREV_MODE3 */
+
+	rev = gpio_get_value(bank, 2);
+	rev |= (gpio_get_value(bank, 3) << 1);
+	rev |= (gpio_get_value(bank, 4) << 2);
+	rev |= (gpio_get_value(bank, 7) << 3);
+	/* test */
+	rev = 9;
+#else
 	gpio_direction_input(bank, 1);
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
@@ -456,21 +473,6 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
-#else
-	gpio_direction_input(bank, 2);
-	gpio_direction_input(bank, 3);
-	gpio_direction_input(bank, 4);
-	gpio_direction_input(bank, 7);
-
-	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE3 */
-	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE0 */
-	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE1 */
-	gpio_set_pull(bank, 7, GPIO_PULL_NONE);		/* HWREV_MODE2 */
-
-	rev = gpio_get_value(bank, 2);
-	rev |= (gpio_get_value(bank, 3) << 1);
-	rev |= (gpio_get_value(bank, 4) << 2);
-	rev |= (gpio_get_value(bank, 7) << 3);
 #endif /* KESSLER_REV09 */
 
 	return rev;
