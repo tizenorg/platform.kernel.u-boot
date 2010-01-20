@@ -38,7 +38,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-//#define KESSLER_REV09 1
+//#define ARIES 1
 
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
@@ -131,7 +131,7 @@ static struct i2c_gpio_bus_data i2c_cypress_gpio7 = {
  * SDA: MP05[1]
  * SCL: MP05[0]
  */
-static struct i2c_gpio_bus_data i2c_kessler09_gpio7 = {
+static struct i2c_gpio_bus_data i2c_aries_gpio7 = {
 	.sda_pin	= 1,
 	.scl_pin	= 0,
 };
@@ -181,9 +181,9 @@ enum {
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
 
-#ifdef KESSLER_REV09
-#define KESSLERREV09_BOARD	0x4000
-#endif /* KESSLER_REV09 */
+#ifdef ARIES
+#define ARIES_BOARD	0x4000
+#endif /* ARIES */
 
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
@@ -246,10 +246,10 @@ static int board_is_j1b2(void)
 	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
 }
 
-#ifdef KESSLER_REV09
-static int board_is_kessler09(void)
+#ifdef ARIES
+static int board_is_aries(void)
 {
-	return machine_is_aquila() && (board_rev & KESSLERREV09_BOARD);
+	return machine_is_aquila() && (board_rev & ARIES_BOARD);
 }
 #endif
 
@@ -276,14 +276,14 @@ void i2c_init_board(void)
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	}
-#ifdef KESSLER_REV09
-	else if (board_is_kessler09()) {
+#ifdef ARIES
+	else if (board_is_aries()) {
 		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
-		i2c_gpio[I2C_GPIO7].bus = &i2c_kessler09_gpio7;
+		i2c_gpio[I2C_GPIO7].bus = &i2c_aries_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	}
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 	else {
 		num_bus--;
 	}
@@ -382,10 +382,10 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Media");
 		if (board_rev & BAMBOO_BOARD)
 			count += sprintf(buf + count, " - Bamboo");
-#ifdef KESSLER_REV09
-		if (board_rev & KESSLERREV09_BOARD)
-			count += sprintf(buf + count, " - KesslerRev09");
-#endif /* KESSLER_REV09 */
+#ifdef ARIES
+		if (board_rev & ARIES_BOARD)
+			count += sprintf(buf + count, " - Aries");
+#endif /* ARIES */
 	} else if (board == MACH_P1P2) {
 		/* P1P2 */
 		if (board_rev & P1_REAL_BOARD)
@@ -410,10 +410,10 @@ static void check_board_revision(int board, int rev)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		}
-#ifdef KESSLER_REV09
-		if (rev & KESSLERREV09_BOARD)
+#ifdef ARIES
+		if (rev & ARIES_BOARD)
 			board_rev &= ~(J1_B2_BOARD);
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 		if (rev & MEDIA_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -441,7 +441,7 @@ static void check_board_revision(int board, int rev)
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
-#ifdef KESSLER_REV09
+#ifdef ARIES
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
 	gpio_direction_input(bank, 4);
@@ -473,7 +473,7 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
 	rev |= (gpio_get_value(bank, 1) << 3);
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 
 	return rev;
 }
@@ -531,13 +531,13 @@ static void check_hw_revision(void)
 			gpio_direction_input(&gpio->gpio_j2, 6);
 
 			/* Check board */
-#ifndef KESSLER_REV09
+#ifndef ARIES
 			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 #else
 			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
-				board_rev |= KESSLERREV09_BOARD;
-#endif /* KESSLER_REV09 */
+				board_rev |= ARIES_BOARD;
+#endif /* ARIES */
 
 			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
@@ -1104,10 +1104,10 @@ static void check_micro_usb(int intr)
 
 	if (machine_is_cypress())
 		i2c_set_bus_num(I2C_GPIO6);
-#ifdef KESSLER_REV09
-	if (board_is_kessler09())
+#ifdef ARIES
+	if (board_is_aries())
 		i2c_set_bus_num(I2C_GPIO6);
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 	else
 		i2c_set_bus_num(I2C_PMIC);
 
@@ -1162,18 +1162,18 @@ static void check_micro_usb(int intr)
 #define MAX8998_LDO16		(1 << 5)
 #define MAX8998_LDO17		(1 << 4)
 
-#ifdef KESSLER_REV09
+#ifdef ARIES
 #define MAX8998_REG_LDO7	0x21
 #define MAX8998_REG_LDO17	0x29
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 
 static void init_pmic(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
-#ifdef KESSLER_REV09
+#ifdef ARIES
 	unsigned char val2[2];
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 
 	if (cpu_is_s5pc100())
 		return;
@@ -1199,19 +1199,19 @@ static void init_pmic(void)
 	 */
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
-#ifndef KESSLER_REV09
+#ifndef ARIES
 	val[0] |= (1 << 7);
 #else
 	val[0] |= ((1 << 7)|(1 << 6));
 	val2[0] = 0x2;
 	i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
 	i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* ONOFF3 */
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-#ifndef KESSLER_REV09
+#ifndef ARIES
 	/*
 	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
 	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
@@ -1231,7 +1231,7 @@ static void init_pmic(void)
 	val2[0] = 0xE;
 	i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
 	i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 }
@@ -1652,8 +1652,8 @@ void lcd_power_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_j1, 4, 1);
 		*/
 
-#ifdef KESSLER_REV09
-		if (board_is_kessler09())
+#ifdef ARIES
+		if (board_is_aries())
 		{
 			unsigned char addr;
 			unsigned char val[2];
@@ -1682,7 +1682,7 @@ void lcd_power_on(unsigned int onoff)
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		}
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 
 
 	} else {
@@ -1697,8 +1697,8 @@ void lcd_power_on(unsigned int onoff)
 		     gpio_set_value(&gpio->gpio_j1, 4, 0);
 		*/
 
-#ifdef KESSLER_REV09
-		if (board_is_kessler09())
+#ifdef ARIES
+		if (board_is_aries())
 		{
 			unsigned char addr;
 			unsigned char val[2];
@@ -1720,7 +1720,7 @@ void lcd_power_on(unsigned int onoff)
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		}
-#endif /* KESSLER_REV09 */
+#endif /* ARIES */
 
 	}
 }
