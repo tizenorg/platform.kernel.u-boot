@@ -129,6 +129,25 @@ _bss_end:
  */
 
 reset:
+#ifdef CONFIG_S5P6442_EVT1
+	ldr	r0, =0xD0021800
+	mcr	p15, 0, r0, c12, c0, 0		@;Change Exception Vector Base Address
+
+	mrs	r0, cpsr
+	bic	r0, r0, #0x100
+	msr	cpsr_x, r0			@;Enable Imprecise Abort Exception
+
+	nop					@;Data Abort Exception will occurred
+	nop
+
+	mrs	r0, cpsr			@;Disable Imprecise Abort Exception
+	orr	r0, r0, #0x100
+	msr	cpsr_x, r0
+
+	ldr	r0, =0x0
+	mcr	p15, 0, r0, c12, c0, 0		@;Restore Exception Vector Base Address
+#endif
+
 	/*
 	 * set the cpu to SVC32 mode
 	 */
@@ -449,6 +468,9 @@ prefetch_abort:
 
 	.align	5
 data_abort:
+#ifdef CONFIG_S5P6442_EVT1
+	subs	pc, lr, #4
+#endif
 	get_bad_stack
 	bad_save_user_regs
 	bl	do_data_abort
