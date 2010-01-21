@@ -1082,12 +1082,19 @@ static void into_charge_mode(void)
 	lcd_display_clear();
 	for (i = 0; i < 3; i++) {
 		for (j = level; j < CHARGER_ANIMATION_FRAME; j++) {
+			int k;
+
 			bmp[j] = gunzip_bmp(bmp_addr[j], &len[j]);
 			lcd_display_bitmap((ulong) bmp[j], 140, 202);
 			free(bmp[j]);
+
+			for (k = 0; k < 10; k++)
+				if (max8998_power_key())
+					return;
+				else
+					udelay(100 * 1000);
 			if (max8998_power_key())
 				return;
-			udelay(1 * 1000 * 1000);
 		}
 	}
 	exit_font();
