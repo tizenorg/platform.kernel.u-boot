@@ -37,7 +37,7 @@
 #include <lcd.h>
 #include <bmp_layout.h>
 
-#include "animation_kessler.h"
+#include "animation_frames.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
