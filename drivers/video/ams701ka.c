@@ -60,18 +60,15 @@ const unsigned short SEQ_MANUAL_DISPLAY_ON[] = {
 	SLEEPMSEC, 1,
 	0x12, 0x0007,
 	SLEEPMSEC, 1,
-	0x2e, 0x0605,
-	SLEEPMSEC, 1,
-	0x30, 0x2307,
-	0x31, 0x161E,
-	SLEEPMSEC, 5,
 	0x12, 0x000f,
-	SLEEPMSEC, 10,
+	SLEEPMSEC, 1,
+	0x2e, 0x0607,
+	SLEEPMSEC, 1,
+	0x30, 0x090d,
+	0x31, 0x0105,
+	SLEEPMSEC, 5,
 	0x12, 0x001f,
-	SLEEPMSEC, 10,
-
-	0xf4, 0x0003,
-
+	
 	ENDDEF, 0x0000
 };
 
@@ -122,22 +119,22 @@ const unsigned short GAMMA_SETTING[] = {
 #endif
 #if 1	/* 1.0 */
 	/* High Red Gamma */
-	0x40, 0x0720,
-	0x41, 0xCBA7,
-	0x42, 0xAB92,
-	0x43, 0x0088,
+	0x40, 0xc609,
+	0x41, 0xdad6,
+	0x42, 0xc3b8,
+	0x43, 0x009f,
 
 	/* High Green Gamma */
-	0x44, 0x7804,
-	0x45, 0xCEBE,
-	0x46, 0xB39E,
-	0x47, 0x00A4,
+	0x44, 0xbc04,
+	0x45, 0xdad4,
+	0x46, 0xc1b5,
+	0x47, 0x00bb,
 
 	/* High Blue Gamma */
-	0x48, 0x0009,
-	0x49, 0xC6B9,
-	0x4a, 0xA996,
-	0x4b, 0x00C7,
+	0x48, 0xc009,
+	0x49, 0xd4d4,
+	0x4a, 0xbbb0,
+	0x4b, 0x00dc,
 
 #endif
 
@@ -149,7 +146,7 @@ const unsigned short MANUAL_POWER_ON_SETTING[] = {
 	SLEEPMSEC, 30,
 	0x06, 0x0001,
 	SLEEPMSEC, 30,
-	0x06, 0x0005,
+	0x06, 0x0003,
 	SLEEPMSEC, 30,
 	0x06, 0x0007,
 	SLEEPMSEC, 30,
@@ -168,14 +165,18 @@ const unsigned short MANUAL_POWER_ON_SETTING[] = {
 
 	0x03, 0x134A,	/* ETC Register setting */
 	0x04, 0x86a4,	/* LTPS Power on setting VCIR=2.7V Display is not clean */
-
+	0x13, 0x9610,
 	0x14, 0x0808,	/* VFP, VBP Register setting */
 	0x15, 0x3090,	/* HSW,HFP,HBP Register setting */
+	0x32, 0x0002,
+	0x3f, 0x0004,
 	ENDDEF, 0x0000
 
 };
 
 const unsigned short SEQ_SLEEP_OUT[] = {
+	0x06, 0x4000,
+	0x12, 0x0040,
 	0x02, 0x2300,	/* Sleep Out */
 	SLEEPMSEC, 1,
 	ENDDEF, 0x0000
@@ -183,7 +184,7 @@ const unsigned short SEQ_SLEEP_OUT[] = {
 
 const unsigned short ACL_ON_DISPLAY_SETTING[] = {
 	0x5b, 0x0013,
-	0x5c, 0x0000,
+	0x5c, 0x0200,
 	0x5d, 0x03ff,
 	0x5e, 0x0000,
 	0x5f, 0x0257,
@@ -316,16 +317,16 @@ static void ams701ka_panel_send_sequence(const unsigned short *wbuf)
 
 void ams701ka_lcd_panel_power_on(void)
 {
+	/* set gpio data for MLCD_ON to HIGH */
+	gpio_set_value(&gpio->gpio_j1, 3, 1);
+	gpio_set_value(&gpio->gpio_j2, 6, 1);
+	udelay(100000);
+
 	/* set gpio data for MLCD_RST to HIGH */
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 	udelay(100000);
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-
-	/* set gpio data for MLCD_ON to HIGH */
-	gpio_set_value(&gpio->gpio_j1, 3, 1);
-	gpio_set_value(&gpio->gpio_j1, 4, 1);
-	udelay(100000);
 
 	ams701ka_panel_send_sequence(GAMMA_SETTING);
 	ams701ka_panel_send_sequence(SEQ_SLEEP_OUT);
@@ -334,6 +335,23 @@ void ams701ka_lcd_panel_power_on(void)
 	ams701ka_panel_send_sequence(ACL_ON_DISPLAY_SETTING);
 }
 
+void ams701ka_cfg_ldo(void)
+{
+	ams701ka_panel_send_sequence(GAMMA_SETTING);
+	ams701ka_panel_send_sequence(SEQ_SLEEP_OUT);
+	ams701ka_panel_send_sequence(MANUAL_POWER_ON_SETTING);
+	ams701ka_panel_send_sequence(SEQ_DISPLAY_ON);
+	ams701ka_panel_send_sequence(ACL_ON_DISPLAY_SETTING);
+}
+
+void ams701ka_enable_ldo(unsigned int onoff)
+{
+	if(onoff)	{
+		ams701ka_panel_send_sequence(SEQ_DISPLAY_ON);
+	}	else	{
+		ams701ka_panel_send_sequence(SEQ_DISPLAY_OFF);
+	}
+}
 
 static inline void ams701ka_c110_panel_hw_reset(void)
 {

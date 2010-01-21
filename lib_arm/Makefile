@@ -38,7 +38,11 @@ GLCOBJS	+= div0.o
 
 SOBJS-y	+= _memcpy32.o
 
+ifneq ("$(BOARD)", "p1p2")
 COBJS-y	+= board.o
+else
+COBJS-y	+= board_p1p2.o
+endif
 COBJS-y	+= bootm.o
 COBJS-y	+= cache.o
 ifndef CONFIG_SYS_NO_CP15_CACHE

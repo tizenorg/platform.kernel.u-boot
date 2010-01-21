@@ -35,13 +35,8 @@
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
-#include <bmp_layout.h>
-
-#include "animation_kessler.h"
 
 DECLARE_GLOBAL_DATA_PTR;
-
-//#define ARIES 1
 
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
@@ -163,7 +158,6 @@ enum {
 	MACH_GEMINUS,
 	MACH_CYPRESS,
 };
-
 #ifdef CONFIG_LCD
 typedef enum {
 	LCD_NONE,
@@ -182,7 +176,6 @@ static lcd_type_t lcd_type;
 #define LIMO_REAL_BOARD		0x800
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
-
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
 #define P2_REAL_BOARD		0x400
@@ -248,19 +241,17 @@ static int board_is_p2_real(void)
 {
 	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
 }
-
 #ifdef CONFIG_LCD
 static int lcd_is_amoled(void)
 {
 	return lcd_type == LCD_AMOLED;
 }
- 
+
 static int lcd_is_tft(void)
 {
 	return lcd_type == LCD_TFT;
 }
 #endif
-
 static void enable_battery(void);
 
 void i2c_init_board(void)
@@ -427,7 +418,7 @@ static void check_board_revision(int board, int rev)
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 {
 	unsigned int rev;
-	
+
 	gpio_direction_input(bank, 1);
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
@@ -449,7 +440,7 @@ static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
-
+		
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
@@ -557,11 +548,22 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
-			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)	{
 				board_rev |= P1_REAL_BOARD;
+		#ifdef CONFIG_LCD
+				lcd_type = LCD_TFT;
+		#endif
+			}
 			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)
 				board_rev |= P2_REAL_BOARD;
 		}
+		#ifdef CONFIG_LCD
+		else	{
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)	{
+				lcd_type = LCD_AMOLED;
+			}
+		}
+		#endif
 
 		/* set gpio to default value. */
 		/* HWREV_MODE4 */
@@ -569,8 +571,9 @@ static void check_hw_revision(void)
 		/* HWREV_MODE5 */
 		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);
 
-		/* C110 Geminus for rev0.0 */
-		if (board != MACH_P1P2) {
+		if(board != MACH_P1P2)
+		{
+			/* C110 Geminus for rev0.0 */
 			gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
 			gpio_direction_input(&gpio->gpio_j1, 2);
 			if (gpio_get_value(&gpio->gpio_j1, 2) == 1) {
@@ -580,16 +583,17 @@ static void check_hw_revision(void)
 			}
 			gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
 			gpio_direction_output(&gpio->gpio_j1, 2, 0);
+
+			/* C110 Geminus for rev0.1 ~ */
+			gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j0, 6);
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
+				board = MACH_GEMINUS;
+			gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+		#ifdef CONFIG_LCD
+			lcd_type = LCD_NONE;	/* TODO: if the board is not p1p2, this code should be modified */
+		#endif
 		}
-		/* C110 Geminus for rev0.1 ~ */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j0, 6);
-		if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
-			board = MACH_GEMINUS;
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
-#ifdef CONFIG_LCD
-		lcd_type = LCD_NONE;	/* TODO: if the board is not p1p2, this code should be modified */
-#endif
 	}
 
 	/* Set machine id */
@@ -669,7 +673,7 @@ static void check_auto_burn(void)
 	writel(0xa5a55a5a, magic_base + 0x4);
 }
 
-void pmic_pin_init(void)
+static void pmic_pin_init(void)
 {
 	unsigned int reg, value;
 
@@ -905,6 +909,11 @@ static void enable_battery(void)
 	else
 		i2c_set_bus_num(I2C_GPIO3);
 
+	if(machine_is_p1p2())
+	{
+		return;
+	}
+
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
 		return;
@@ -921,7 +930,9 @@ static void check_battery(void)
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
 	if(machine_is_p1p2())
+	{
 		return;
+	}
 
 	if (machine_is_aquila()) {
 		if (board_is_j1b2())
@@ -935,9 +946,6 @@ static void check_battery(void)
 		i2c_set_bus_num(I2C_GPIO7);
 	else
 		i2c_set_bus_num(I2C_GPIO3);
-
-	if(machine_is_p1p2())
-		return;
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -1484,10 +1492,11 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_j1, 3, GPIO_OUTPUT);
 
 	/* MLCD_ON2 */
-	/*
+	
 	if (board_is_p2_real())
 	     gpio_cfg_pin(&gpio_base->gpio_j1, 4, GPIO_OUTPUT);
-	*/
+	else
+	     gpio_cfg_pin(&gpio_base->gpio_j2, 6, GPIO_OUTPUT);
 
 	/* LCD_BACKLIGHT_EN */
 	if (machine_is_geminus())
@@ -1513,7 +1522,7 @@ void lcd_cfg_gpio(void)
 		pd_so.num = 2;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, &pd_so);
+		//s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, &pd_so);
 	}
 
 	if (machine_is_cypress()) {
@@ -1530,14 +1539,13 @@ void lcd_cfg_gpio(void)
 
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
-		
 		pd_clk.bank = &gpio_base->gpio_mp0_4;
 		pd_clk.num = 0;
 		pd_si.bank = &gpio_base->gpio_mp0_4;
 		pd_si.num = 2;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, NULL);
+		//s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, NULL);
 	}
 
 	return;
@@ -1577,11 +1585,11 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
-		/*
 		if (board_is_p2_real())
 			gpio_set_value(&gpio->gpio_j1, 4, 1);
-		*/
-
+		else
+			gpio_set_value(&gpio->gpio_j2, 6, 1);
+	
 	} else {
 		if (machine_is_aquila() || machine_is_geminus())
 			gpio_set_value(&gpio->gpio_j1, 3, 0);
@@ -1589,16 +1597,15 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 0);
 
-		/*
 		if (board_is_p2_real())
 		     gpio_set_value(&gpio->gpio_j1, 4, 0);
-		*/
-
+		else
+		     gpio_set_value(&gpio->gpio_j2, 6, 0);
 	}
 }
 
-extern void s6e63m0_cfg_ldo(void);
-extern void s6e63m0_enable_ldo(unsigned int onoff);
+extern void ams701ka_cfg_ldo(void);
+extern void ams701ka_enable_ldo(unsigned int onoff);
 
 void init_panel_info(vidinfo_t *vid)
 {
@@ -1614,77 +1621,39 @@ void init_panel_info(vidinfo_t *vid)
 	vid->reset_delay = 0;
 	vid->power_on_delay = 0;
 
-	vid->vl_freq	= 60;
-	vid->vl_col	= 480;
-	vid->vl_row	= 800;
-	vid->vl_width	= 480;
-	vid->vl_height	= 800;
-
 	vid->dual_lcd_enabled = 0;
 
-	if (board_is_media()) {
-		vid->vl_col	= 960;
-		vid->vl_row	= 800;
-		vid->vl_width	= 960;
-		vid->vl_height	= 800;
+	vid->vl_freq	= 60;
+	vid->vl_col	= 1024,
+	vid->vl_row	= 600,
+	vid->vl_width	= 1024,
+	vid->vl_height	= 600,
+	vid->vl_clkp	= CONFIG_SYS_HIGH,
+	vid->vl_hsp	= CONFIG_SYS_HIGH,
+	vid->vl_vsp	= CONFIG_SYS_HIGH,
+	vid->vl_dp	= CONFIG_SYS_LOW,
+	vid->vl_bpix	= 32,
 
-		/* enable dual lcd mode. */
-		vid->dual_lcd_enabled = 1;
-	}
+	/* AMS701KA AMOLED Panel. */
+	vid->vl_hspw	= 30,
+	vid->vl_hbpd	= 114,
+	vid->vl_hfpd	= 48,
 
-	vid->vl_clkp	= CONFIG_SYS_HIGH;
-	vid->vl_hsp	= CONFIG_SYS_LOW;
-	vid->vl_vsp	= CONFIG_SYS_LOW;
-	vid->vl_dp	= CONFIG_SYS_HIGH;
-	vid->vl_bpix	= 32;
+	vid->vl_vspw	= 2,
+	vid->vl_vbpd	= 6,
+	vid->vl_vfpd	= 8,
 
-	/* S6E63M0 LCD Panel */
-	vid->vl_hspw	= 2;
-	vid->vl_hbpd	= 16;
-	vid->vl_hfpd	= 16;
+	vid->cfg_gpio = lcd_cfg_gpio;
+	vid->reset_lcd = reset_lcd;
+	vid->backlight_on = backlight_on;
+	vid->lcd_power_on = lcd_power_on;
 
-	vid->vl_vspw	= 2;
-	vid->vl_vbpd	= 3;
-	vid->vl_vfpd	= 28;
+	vid->cfg_ldo = ams701ka_cfg_ldo;
+	vid->enable_ldo = ams701ka_enable_ldo;
 
-	if (machine_is_aquila() || machine_is_cypress()) {
-		vid->cfg_gpio = lcd_cfg_gpio;
-		vid->reset_lcd = reset_lcd;
-		vid->backlight_on = backlight_on;
-		vid->lcd_power_on = lcd_power_on;
+	vid->init_delay = 25000;
+	vid->reset_delay = 120000;
 
-		vid->cfg_ldo = s6e63m0_cfg_ldo;
-		vid->enable_ldo = s6e63m0_enable_ldo;
-
-		vid->init_delay = 25000;
-		vid->reset_delay = 120000;
-	}
-
-	if (machine_is_geminus()) {
-		vid->vl_freq	= 60;
-		vid->vl_col	= 1024,
-		vid->vl_row	= 600,
-		vid->vl_width	= 1024,
-		vid->vl_height	= 600,
-		vid->vl_clkp	= CONFIG_SYS_LOW,
-		vid->vl_hsp	= CONFIG_SYS_HIGH,
-		vid->vl_vsp	= CONFIG_SYS_HIGH,
-		vid->vl_dp	= CONFIG_SYS_LOW,
-		vid->vl_bpix	= 32,
-
-		vid->vl_hspw	= 32,
-		vid->vl_hfpd	= 48,
-		vid->vl_hbpd	= 80,
-
-		vid->vl_vspw	= 1,
-		vid->vl_vfpd	= 3,
-		vid->vl_vbpd	= 4,
-
-		vid->cfg_gpio = lcd_cfg_gpio;
-		vid->reset_lcd = reset_lcd;
-		vid->backlight_on = backlight_on;
-		vid->lcd_power_on = lcd_power_on;
-	}
 #if 0
 	vid->vl_freq	= 60;
 	vid->vl_col	= 480,
@@ -1775,10 +1744,13 @@ int misc_init_r(void)
 	 */
 	if (machine_is_geminus())
 		setenv("lcdinfo", "lcd=lms480jc01");
-	/*
-	if (board_is_p2_real())
+
+	if (board_is_p2_real())	{
 		setenv("lcdinfo", "lcd=ams701");
-	*/
+	}	else if(lcd_is_amoled())	{
+		setenv("lcdinfo", "lcd=ams701");
+	}
+
 #endif
 	setup_meminfo();
 
