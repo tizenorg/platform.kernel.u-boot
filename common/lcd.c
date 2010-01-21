@@ -648,14 +648,14 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	 * TODO: correct panel_info */
 
 	if ((bpix != 1) && (bpix != 8) && (bpix != 16) && (bpix != 32)) {
-		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
+		printf ("Error0: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix, bmp_bpix);
 		return 1;
 	}
 
 	/* We support displaying 8bpp BMPs on 16bpp LCDs */
-	if (bpix != bmp_bpix && (bmp_bpix != 8 || bpix != 16)) {
-		printf ("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
+	if (bpix != bmp_bpix && (bmp_bpix != 8 || bpix != 16) && !(bpix == 32 && bmp_bpix ==4) ) {
+		printf ("Error1: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix,
 			le16_to_cpu(bmp->header.bit_count));
 		return 1;
@@ -746,6 +746,48 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		(y + height - 1) * lcd_line_length + x);
 
 	switch (bmp_bpix) {
+	case 4: /* Display 4b bmp at 32b lcd */
+		if (bpix == 32) {
+			/* 1. Get the color map */
+			unsigned int cmap_32[16];
+			unsigned int effective_width;
+
+			for (i=0; i<colors; ++i) {
+				bmp_color_table_entry_t cte = bmp->color_table[i];
+				cmap_32[i] = (cte.red << 0) | (cte.green << 8) |
+					(cte.blue << 16) | (cte.reserved << 24);
+			}
+
+			/* 2. Put'em on the screen */
+			lcd_line_length = (panel_info.vl_col * (panel_info.vl_bpix / 8));
+			fb = (uchar *) lcd_base;
+			fb += lcd_line_length * (y + height) + x * 4;
+
+			printf("Drawing the 32bit bmp.. @ 4b (%d,%d) of [%ldx%ld] in %d (%d color)\n",
+					x, y, width, height, lcd_line_length, colors);
+			effective_width = (width % 2) ? (width + 1) : width;
+			for (i = 0; i < height; ++i) {
+				WATCHDOG_RESET();
+				for (j = 0; j < width; j++) {
+					/* TODO: read from the color map */
+					int color_v;
+					color_v = bmap[(j + i * effective_width) / 2];
+					if ((j + i * effective_width) % 2)
+						color_v = color_v & 0xf;
+					else
+						color_v = (color_v >> 4) & 0xf;
+
+					memcpy(fb, cmap_32 + color_v, 4);
+					fb += 4;
+				}
+				fb   -= (lcd_line_length + width * 4);
+				if ((i % 10) == 9) printf("+");
+				if ((i % 100) == 99) printf("\n");
+			}
+
+			printf("...\n");
+		}
+		break;
 	case 1: /* pass through */
 	case 8:
 		if (bpix != 16)
