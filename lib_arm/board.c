@@ -334,7 +334,6 @@ void start_armboot (void)
 	puts ("NAND:  ");
 	nand_init();		/* go init the NAND */
 #endif
-	pmic_pin_init();	/* for PS_HOLD_CONTROL activation */
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
