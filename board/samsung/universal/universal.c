@@ -1170,6 +1170,38 @@ static void check_micro_usb(int intr)
 		setenv("bootcmd", "usbdown");
 }
 
+static void micro_usb_switch(int path)
+{
+	unsigned char addr;
+	unsigned char val[2];
+
+	if (machine_is_cypress())
+		i2c_set_bus_num(I2C_GPIO6);
+#ifdef ARIES
+	if (board_is_aries())
+		i2c_set_bus_num(I2C_GPIO6);
+#endif /* ARIES */
+	else
+		i2c_set_bus_num(I2C_PMIC);
+
+	addr = 0x25;		/* fsa9480 */
+	if (i2c_probe(addr)) {
+		printf("Can't found fsa9480\n");
+		return;
+	}
+
+	if (path)
+		val[0] = 0x90;	/* VAUDIO */
+	else
+		val[0] = 0x24;	/* DHOST */
+
+	i2c_write(addr, 0x13, 1, val, 1);	/* MANSW1 */
+
+	i2c_read(addr, 0x2, 1, val, 1);
+	val[0] &= ~(1 << 2);
+	i2c_write(addr, 0x2, 1, val, 1);
+}
+
 #define MAX8998_REG_ONOFF1	0x11
 #define MAX8998_REG_ONOFF2	0x12
 #define MAX8998_REG_ONOFF3	0x13
@@ -2276,7 +2308,7 @@ static int pmic_status(void)
 	return 0;
 }
 
-static int pmic_ldo_control(int buck, int ldo, int on)
+static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 {
 	unsigned char addr, val[2];
 	unsigned int reg, shift;
@@ -2300,6 +2332,11 @@ static int pmic_ldo_control(int buck, int ldo, int on)
 			return -1;
 		reg = 0x11;
 		shift = 4 - buck + 4;
+	} else if (safeout) {
+		if (safeout > 3)
+			return -1;
+		reg = 0xd;
+		shift = 8 - safeout;
 	} else
 		return -1;
 
@@ -2317,15 +2354,23 @@ static int pmic_ldo_control(int buck, int ldo, int on)
 		val[0] &= ~(1 << shift);
 	i2c_write(addr, reg, 1, val, 1);
 	i2c_read(addr, reg, 1, val, 1);
-	printf("%s %d value 0x%x, %s\n", buck ? "buck" : "ldo", buck ? : ldo,
-		val[0], val[0] & (1 << shift) ? "on" : "off");
+
+	if (ldo)
+		printf("ldo %d value 0x%x, %s\n", ldo, val[0],
+			val[0] & (1 << shift) ? "on" : "off");
+	else if (buck)
+		printf("buck %d value 0x%x, %s\n", buck, val[0],
+			val[0] & (1 << shift) ? "on" : "off");
+	else if (safeout)
+		printf("safeout %d value 0x%x, %s\n", safeout, val[0],
+			val[0] & (1 << shift) ? "on" : "off");
 
 	return 0;
 }
 
 static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	int buck = 0, ldo = 0, on = -1;
+	int buck = 0, ldo = 0, safeout = 0, on = -1;
 
 	switch (argc) {
 	case 2:
@@ -2341,7 +2386,7 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				on = 0;
 			else
 				break;
-			return pmic_ldo_control(buck, ldo, on);
+			return pmic_ldo_control(buck, ldo, safeout, on);
 		}
 		if (strncmp(argv[1], "buck", 4) == 0) {
 			buck = simple_strtoul(argv[2], NULL, 10);
@@ -2351,7 +2396,7 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 				on = 0;
 			else
 				break;
-			return pmic_ldo_control(buck, ldo, on);
+			return pmic_ldo_control(buck, ldo, safeout, on);
 		}
 
 	default:
@@ -2583,5 +2628,34 @@ U_BOOT_CMD(
 	power,		CONFIG_SYS_MAXARGS,	1, do_power,
 	"Device Power Management control",
 	"device on/off - Turn on/off the device\n"
+);
+
+static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	switch (argc) {
+	case 2:
+		if (strncmp(argv[1], "cp", 2) == 0) {
+			micro_usb_switch(1);
+			pmic_ldo_control(0, 0, 2, 1);
+			return 0;
+		} else if (strncmp(argv[1], "ap", 2) == 0) {
+			micro_usb_switch(0);
+			pmic_ldo_control(0, 0, 2, 0);
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	cmd_usage(cmdtp);
+	return 1;
+}
+
+U_BOOT_CMD(
+	microusb,		CONFIG_SYS_MAXARGS,	1, do_microusb,
+	"Micro USB Switch",
+	"cp - switch to CP\n"
+	"microusb ap - switch to AP\n"
 );
 #endif
