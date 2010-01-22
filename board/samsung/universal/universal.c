@@ -24,6 +24,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <malloc.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/clock.h>
@@ -1042,7 +1043,10 @@ static int max8998_power_key(void)
 	printf("MAX8998 IRQ1 = 0x%x\n", val[0]);
 	if (val[0] & (1 << 6))
 		return 1;
+
+	return 0;
 }
+
 static void into_charge_mode(void)
 {
 	unsigned char addr = 0xCC >> 1;	/* max8998 */;
@@ -1077,7 +1081,7 @@ static void into_charge_mode(void)
 		level = CHARGER_ANIMATION_FRAME - 1;
 
 	for (i = 0; i < CHARGER_ANIMATION_FRAME; i++)
-		bmp_addr[i] = battery_charging_animation[i];
+		bmp_addr[i] = (ulong)battery_charging_animation[i];
 
 	lcd_display_clear();
 	for (i = 0; i < 3; i++) {
