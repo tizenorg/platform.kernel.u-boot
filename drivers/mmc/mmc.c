@@ -396,8 +396,8 @@ int mmc_change_freq(struct mmc *mmc)
 		mmc->high_capacity = 1;
 
 	if (mmc->high_capacity)
-		mmc->capacity = (((ext_csd[215] << 24) | (ext_csd[214] << 16) |
-			(ext_csd[213] << 8) | (ext_csd[21])) / (2 * 1024));
+		mmc->capacity = ((ext_csd[215] << 24) | (ext_csd[214] << 16) |
+			(ext_csd[213] << 8) | (ext_csd[21]));
 
 	cardtype = ext_csd[196] & 0xf;
 
