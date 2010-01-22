@@ -147,13 +147,16 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	usbd->mmc_dev = 0;
 	/* FIXME */
 	usbd->mmc_max = 0x8000;
-	/* get from mmc->capacity?? */
-	usbd->mmc_total = 0xf50000;	/* 8GB / 0x200  */
 
 	mmc = find_mmc_device(usbd->mmc_dev);
 	mmc_init(mmc);
 
 	usbd->mmc_blk = mmc->read_bl_len;
+
+	if (mmc->high_capacity)
+		usbd->mmc_total = mmc->capacity;
+	else
+		usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
 }
 #endif
 
