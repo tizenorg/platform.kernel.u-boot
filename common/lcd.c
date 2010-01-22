@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <linux/types.h>
 #include <stdio_dev.h>
+#include <malloc.h>
 #if defined(CONFIG_POST)
 #include <post.h>
 #endif
@@ -604,11 +605,11 @@ void bitmap_plot (int x, int y)
 void lcd_display_clear(void)
 {
 	unsigned int *fb = lcd_base;
-	int i, j, k;
 	printf("Clean the display\n");
 
 	memset(fb, 0, panel_info.vl_row * panel_info.vl_col * panel_info.vl_bpix / 8);
 }
+
 int lcd_display_bitmap(ulong bmp_image, int x, int y)
 {
 #if !defined(CONFIG_MCC200)
