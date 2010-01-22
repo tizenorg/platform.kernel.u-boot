@@ -1548,15 +1548,22 @@ static void setup_power_down_mode_registers(void)
 
 #ifdef CONFIG_LCD
 struct s6e63m0_platform_data {
-	struct s5pc1xx_gpio_bank *bank;
-	unsigned int num;
+	struct s5pc1xx_gpio_bank *cs_bank;
+	struct s5pc1xx_gpio_bank *clk_bank;
+	struct s5pc1xx_gpio_bank *si_bank;
+	struct s5pc1xx_gpio_bank *so_bank;
+
+	unsigned int cs_num;
+	unsigned int clk_num;
+	unsigned int si_num;
+	unsigned int so_num;
+
+	unsigned int board_is_media;
 };
 
-extern void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
-	struct s6e63m0_platform_data *clk, struct s6e63m0_platform_data *si,
-	struct s6e63m0_platform_data *so);
+extern void s6e63m0_set_platform_data(struct s6e63m0_platform_data *pd);
 
-struct s6e63m0_platform_data pd_cs, pd_clk, pd_si, pd_so;
+struct s6e63m0_platform_data s6e63m0_pd;
 struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 void lcd_cfg_gpio(void)
@@ -1624,17 +1631,20 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (machine_is_aquila()) {
-		pd_cs.bank = &gpio_base->gpio_mp0_1;
-		pd_cs.num = 1;
-		pd_clk.bank = &gpio_base->gpio_mp0_4;
-		pd_clk.num = 1;
-		pd_si.bank = &gpio_base->gpio_mp0_4;
-		pd_si.num = 3;
-		pd_so.bank = &gpio_base->gpio_mp0_4;
-		pd_so.num = 2;
+		s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_1;
+		s6e63m0_pd.cs_num = 1;
+		s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		s6e63m0_pd.clk_num = 1;
+		s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
+		s6e63m0_pd.si_num = 3;
+		s6e63m0_pd.so_bank = &gpio_base->gpio_mp0_4;
+		s6e63m0_pd.so_num = 2;
+
+		if (board_is_media())
+			s6e63m0_pd.board_is_media = 1;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, &pd_so);
+		s6e63m0_set_platform_data(&s6e63m0_pd);
 	}
 
 	if (machine_is_cypress()) {
@@ -1656,15 +1666,15 @@ void lcd_cfg_gpio(void)
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
 #endif
-		pd_cs.bank = &gpio_base->gpio_mp0_5;
-		pd_cs.num = 1;
-		pd_clk.bank = &gpio_base->gpio_mp0_4;
-		pd_clk.num = 0;
-		pd_si.bank = &gpio_base->gpio_mp0_4;
-		pd_si.num = 2;
+		s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_5;
+		s6e63m0_pd.cs_num = 1;
+		s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		s6e63m0_pd.clk_num = 0;
+		s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
+		s6e63m0_pd.si_num = 2;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_spi_interface(&pd_cs, &pd_clk, &pd_si, NULL);
+		s6e63m0_set_platform_data(&s6e63m0_pd);
 	}
 
 	return;

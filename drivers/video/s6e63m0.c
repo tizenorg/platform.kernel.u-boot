@@ -35,46 +35,55 @@
 #define PACKET_LEN		8
 
 struct s6e63m0_platform_data {
-	struct s5pc1xx_gpio_bank *bank;
-	unsigned int num;
+	struct s5pc1xx_gpio_bank *cs_bank;
+	struct s5pc1xx_gpio_bank *clk_bank;
+	struct s5pc1xx_gpio_bank *si_bank;
+	struct s5pc1xx_gpio_bank *so_bank;
+
+	unsigned int cs_num;
+	unsigned int clk_num;
+	unsigned int si_num;
+	unsigned int so_num;
+
+	unsigned int board_is_media;
 };
 
 /* these machine specific platform data would be setting at universal.c */
-struct s6e63m0_platform_data *spi_cs, *spi_clk, *spi_si, *spi_so;
+struct s6e63m0_platform_data *s6e63m0;
 
 void cs_low(void)
 {
-	gpio_set_value(spi_cs->bank, spi_cs->num, 0);
+	gpio_set_value(s6e63m0->cs_bank, s6e63m0->cs_num, 0);
 }
 
 void cs_high(void)
 {
-	gpio_set_value(spi_cs->bank, spi_cs->num, 1);
+	gpio_set_value(s6e63m0->cs_bank, s6e63m0->cs_num, 1);
 }
 
 void clk_low(void)
 {
-	gpio_set_value(spi_clk->bank, spi_clk->num, 0);
+	gpio_set_value(s6e63m0->clk_bank, s6e63m0->clk_num, 0);
 }
 
 void clk_high(void)
 {
-	gpio_set_value(spi_clk->bank, spi_clk->num, 1);
+	gpio_set_value(s6e63m0->clk_bank, s6e63m0->clk_num, 1);
 }
 
 void si_low(void)
 {
-	gpio_set_value(spi_si->bank, spi_si->num, 0);
+	gpio_set_value(s6e63m0->si_bank, s6e63m0->si_num, 0);
 }
 
 void si_high(void)
 {
-	gpio_set_value(spi_si->bank, spi_si->num, 1);
+	gpio_set_value(s6e63m0->si_bank, s6e63m0->si_num, 1);
 }
 
 char so_read(void)
 {
-	return gpio_get_value(spi_so->bank, spi_so->num);
+	return gpio_get_value(s6e63m0->so_bank, s6e63m0->so_num);
 }
 
 static const unsigned short SEQ_PANEL_CONDITION_SET[] = {
@@ -104,6 +113,20 @@ static const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
 	DATA_ONLY, 0x10,
 
 	0xf7, 0x03,
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0x00,
+
+	ENDDEF, 0x0000
+};
+
+static const unsigned short SEQ_DISPLAY_CONDITION_SET_REV[] = {
+	0xf2, 0x02,
+	DATA_ONLY, 0x03,
+	DATA_ONLY, 0x1c,
+	DATA_ONLY, 0x10,
+	DATA_ONLY, 0x10,
+
+	0xf7, 0x00,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
 
@@ -397,7 +420,7 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 			clk_high();
 		} else {
 			if (first) {
-				gpio_cfg_pin(spi_so->bank, spi_so->num, GPIO_INPUT);
+				gpio_cfg_pin(s6e63m0->so_bank, s6e63m0->so_num, GPIO_INPUT);
 				first = 0;
 			}
 
@@ -418,7 +441,7 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 	cs_high();
 	udelay(DELAY);
 
-	gpio_cfg_pin(spi_so->bank, spi_so->num, GPIO_OUTPUT);
+	gpio_cfg_pin(s6e63m0->so_bank, s6e63m0->so_num, GPIO_OUTPUT);
 
 	return command;
 }
@@ -453,7 +476,12 @@ void s6e63m0_cfg_ldo(void)
 	*/
 
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
-	s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
+
+	if (s6e63m0->board_is_media)
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET_REV);
+	else
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
+
 	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
 	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET);
 }
@@ -469,19 +497,12 @@ void s6e63m0_enable_ldo(unsigned int onoff)
 }
 
 /* this function would be called at universal.c */
-void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
-	struct s6e63m0_platform_data *clk, struct s6e63m0_platform_data *si,
-	struct s6e63m0_platform_data *so)
+void s6e63m0_set_platform_data(struct s6e63m0_platform_data *pd)
 {
-	if (cs == NULL || clk == NULL || si == NULL) {
-		printf("gpio bank is NULL.\n");
+	if (pd == NULL) {
+		printf("pd is NULL.\n");
 		return;
 	}
 
-	spi_cs = cs;
-	spi_clk = clk;
-	spi_si = si;
-
-	/* so could be NULL. */
-	spi_so = so;
+	s6e63m0 = pd;
 }
