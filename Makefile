@@ -308,7 +308,7 @@ $(obj)u-boot.bin:	$(obj)u-boot
 		$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
 
 $(obj)u-boot.ldr:	$(obj)u-boot
-		$(obj)tools/envcrc --binary > $(obj)env-ldr.o
+		$(CREATE_LDR_ENV)
 		$(LDR) -T $(CONFIG_BFIN_CPU) -c $@ $< $(LDR_FLAGS)
 
 $(obj)u-boot.ldr.hex:	$(obj)u-boot.ldr
@@ -398,8 +398,11 @@ updater:
 env:
 		$(MAKE) -C tools/env all MTD_VERSION=${MTD_VERSION} || exit 1
 
+# Explicitly make _depend in subdirs containing multiple targets to prevent
+# parallel sub-makes creating .depend files simultaneously.
 depend dep:	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
-		for dir in $(SUBDIRS) ; do $(MAKE) -C $$dir _depend ; done
+		for dir in $(SUBDIRS) cpu/$(CPU) $(dir $(LDSCRIPT)) ; do \
+			$(MAKE) -C $$dir _depend ; done
 
 TAG_SUBDIRS = $(SUBDIRS)
 TAG_SUBDIRS += $(dir $(__LIBS))
@@ -448,10 +451,15 @@ $(obj)include/autoconf.mk: $(obj)include/config.h
 else	# !config.mk
 all $(obj)u-boot.hex $(obj)u-boot.srec $(obj)u-boot.bin \
 $(obj)u-boot.img $(obj)u-boot.dis $(obj)u-boot \
-$(SUBDIRS) $(TIMESTAMP_FILE) $(VERSION_FILE) gdbtools updater env depend \
-dep tags ctags etags cscope $(obj)System.map:
+$(filter-out tools,$(SUBDIRS)) $(TIMESTAMP_FILE) $(VERSION_FILE) gdbtools \
+updater env depend dep tags ctags etags cscope $(obj)System.map:
 	@echo "System not configured - see README" >&2
 	@ exit 1
+
+tools:
+	$(MAKE) -C tools
+tools-all:
+	$(MAKE) -C tools HOST_TOOLS_ALL=y
 endif	# config.mk
 
 .PHONY : CHANGELOG
@@ -2703,7 +2711,7 @@ mp2usb_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t mp2usb NULL at91rm9200
 
 #########################################################################
-## Atmel ARM926EJ-S Systems
+## ARM926EJ-S Systems
 #########################################################################
 
 afeb9260_config:	unconfig
@@ -3549,16 +3557,21 @@ BFIN_BOARDS = bf518f-ezbrd bf526-ezbrd bf527-ezkit bf533-ezkit bf533-stamp \
 	bf537-pnav bf537-stamp bf538f-ezkit bf548-ezkit bf561-ezkit
 
 # Bluetechnix tinyboards
-BFIN_BOARDS += cm-bf527 cm-bf533 cm-bf537e cm-bf537u cm-bf548 cm-bf561 tcm-bf537
+BFIN_BOARDS += cm-bf527 cm-bf533 cm-bf537e cm-bf537u cm-bf548 cm-bf561 \
+	tcm-bf518 tcm-bf537
 
 # Misc third party boards
-BFIN_BOARDS += bf537-minotaur bf537-srv1 blackstamp
+BFIN_BOARDS += bf537-minotaur bf537-srv1 bf561-acvilon blackstamp
 
 # I-SYST Micromodule
 BFIN_BOARDS += ibf-dsp561
 
 $(BFIN_BOARDS:%=%_config)	: unconfig
 	@$(MKCONFIG) $(@:_config=) blackfin blackfin $(@:_config=)
+
+bf527-ezkit-v2_config	: unconfig
+	@$(MKCONFIG) -t BF527_EZKIT_REV_2_1 \
+		bf527-ezkit blackfin blackfin bf527-ezkit
 
 #========================================================================
 # AVR32
