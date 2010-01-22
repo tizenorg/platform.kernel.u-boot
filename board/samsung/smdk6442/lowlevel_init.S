@@ -98,6 +98,21 @@ lowlevel_init:
 
 	bl	mem_ctrl_asm_init
 
+	/* OneNAND Sync Read Support at S5PC110 only
+	 * RM[15]       : Sync Read
+	 * BRWL[14:12]  : 7 CLK
+	 * BL[11:9]     : Continuous
+	 * VHF[3]       : Very High Frequency Enable (Over 83MHz)
+	 * HF[2]        : High Frequency Enable (Over 66MHz)
+	 */
+	ldr	r1, =0xE00C
+
+	ldr	r0, =0xB001E442
+	strh	r1, [r0]
+
+	ldr	r0, =0xB0600000
+	str	r1, [r0, #0x100]			@ ONENAND_IF_CTRL
+
 	/* Wakeup support. Don't know if it's going to be used, untested. */
 	ldr	r0, =S5P6442_RST_STAT
 	ldr	r1, [r0]
