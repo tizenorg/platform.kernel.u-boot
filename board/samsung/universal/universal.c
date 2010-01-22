@@ -2305,6 +2305,12 @@ static int pmic_status(void)
 	for (i = 7; i >= 4; i--)
 		printf("LDO%d %s\n", 7 - i + 14,
 			val[0] & (1 << i) ? "on" : "off");
+
+	reg = 0xd;
+	i2c_read(addr, reg, 1, val, 1);
+	for (i = 7; i >= 6; i--)
+		printf("SAFEOUT%d %s\n", 7 - i + 1,
+			val[0] & (1 << i) ? "on" : "off");
 	return 0;
 }
 
@@ -2378,26 +2384,23 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			return pmic_status();
 		break;
 	case 4:
-		if (strncmp(argv[1], "ldo", 3) == 0) {
+		if (strncmp(argv[1], "ldo", 3) == 0)
 			ldo = simple_strtoul(argv[2], NULL, 10);
-			if (strncmp(argv[3], "on", 2) == 0)
-				on = 1;
-			else if (strncmp(argv[3], "off", 3) == 0)
-				on = 0;
-			else
-				break;
-			return pmic_ldo_control(buck, ldo, safeout, on);
-		}
-		if (strncmp(argv[1], "buck", 4) == 0) {
+		else if (strncmp(argv[1], "buck", 4) == 0)
 			buck = simple_strtoul(argv[2], NULL, 10);
-			if (strncmp(argv[3], "on", 2) == 0)
-				on = 1;
-			else if (strncmp(argv[3], "off", 3) == 0)
-				on = 0;
-			else
-				break;
-			return pmic_ldo_control(buck, ldo, safeout, on);
-		}
+		else if (strncmp(argv[1], "safeout", 7) == 0)
+			safeout = simple_strtoul(argv[2], NULL, 10);
+		else
+			break;
+
+		if (strncmp(argv[3], "on", 2) == 0)
+			on = 1;
+		else if (strncmp(argv[3], "off", 3) == 0)
+			on = 0;
+		else
+			break;
+
+		return pmic_ldo_control(buck, ldo, safeout, on);
 
 	default:
 		break;
@@ -2413,6 +2416,7 @@ U_BOOT_CMD(
 	"status - Display PMIC LDO & BUCK status\n"
 	"pmic ldo num on/off - Turn on/off the LDO\n"
 	"pmic buck num on/off - Turn on/off the BUCK\n"
+	"pmic safeout num on/off - Turn on/off the SAFEOUT\n"
 );
 #endif
 
