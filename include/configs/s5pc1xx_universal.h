@@ -323,6 +323,7 @@
 #if 1		/* For LCD test */
 #define CONFIG_LCD		1
 #define CONFIG_S5PC1XXFB	1
+#define CONFIG_S6E63M0		1
 #endif
 
 #if 0
