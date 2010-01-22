@@ -3161,6 +3161,12 @@ s5pc1xx_universal_config:	unconfig
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
+s5pc1xx_p1p2_config:	unconfig
+	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 p1p2 samsung s5pc1xx
+	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
+
 #########################################################################
 ## XScale Systems
 #########################################################################
