@@ -195,11 +195,28 @@ void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned shor
 static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
+	unsigned int in_len,out_len, width, height;
+	void *dst = NULL;
 
-	x = ((panel_width - 298) >> 1);
-	y = ((panel_height - 78) >> 1) - 5;
+	width = 298;
+	height = 78;
+	x = ((panel_width - width) >> 1);
+	y = ((panel_height - height) >> 1) - 5;
 
-	_draw_samsung_logo(lcdbase, x, y, 298, 78, (unsigned short *) logo);
+	in_len = width * height * 4;
+	dst = malloc(in_len);
+	if (dst == NULL) {
+		printf("Error: malloc in gunzip failed!\n");
+		return NULL;
+	}
+	if (gunzip(dst, in_len, (uchar *)logo, &out_len) != 0) {
+		free(dst);
+		return NULL;
+	}
+	if (out_len == CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
+		printf("Image could be truncated"
+				" (increase CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)!\n");
+	_draw_samsung_logo(lcdbase, x, y, width, height, (unsigned short *) dst);
 }
 
 static void lcd_panel_on(vidinfo_t *vid)
