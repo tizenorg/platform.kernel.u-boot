@@ -373,7 +373,7 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		memcpy(&mbr_info, mbr, sizeof(struct mbr_table));
 
 		printf("Total Size: 0x%08x #parts %d\n",
-				usbd->mmc_total, mmc_parts);
+				(unsigned int)usbd->mmc_total, mmc_parts);
 		for (i = 0; i < mmc_parts; i++) {
 			printf("p%d\t0x%08x\t0x%08x\n", i + 1,
 				mbr_info.partition[i].lba_begin,
@@ -400,7 +400,7 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		printf("\nWrite Partition %d.. %d blocks\n",
 			cur_partition + 1,
 			part_info.partition[cur_partition].size /
-			usbd->mmc_blk);
+			(int)usbd->mmc_blk);
 	}
 
 	for (i = cur_partition; i < mmc_parts; i++) {
@@ -424,7 +424,7 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 			printf("\nWrite Partition %d.. %d blocks\n",
 				cur_partition + 1,
 				part_info.partition[cur_partition].size /
-				usbd->mmc_blk);
+				(int)usbd->mmc_blk);
 		}
 	}
 }
