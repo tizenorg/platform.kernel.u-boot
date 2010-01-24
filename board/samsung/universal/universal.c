@@ -1040,7 +1040,6 @@ static int max8998_power_key(void)
 
 	/* Accessing IRQ1 register */
 	i2c_read(addr, 0x00, 1, val, 1);
-	printf("MAX8998 IRQ1 = 0x%x\n", val[0]);
 	if (val[0] & (1 << 6))
 		return 1;
 
@@ -1093,12 +1092,13 @@ static void into_charge_mode(void)
 			free(bmp[j]);
 
 			for (k = 0; k < 10; k++)
-				if (max8998_power_key())
+				if (max8998_power_key()) {
+					lcd_display_clear();
+					draw_samsung_logo(lcd_base);
 					return;
+				}
 				else
 					udelay(100 * 1000);
-			if (max8998_power_key())
-				return;
 		}
 	}
 	exit_font();

@@ -645,8 +645,6 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 	compression = le32_to_cpu (bmp->header.compression);
 
 	bpix = (panel_info.vl_bpix);
-	/* Circumsbenting the error in panel_info. 
-	 * TODO: correct panel_info */
 
 	if ((bpix != 1) && (bpix != 8) && (bpix != 16) && (bpix != 32)) {
 		printf ("Error0: %d bit/pixel mode, but BMP has %d bit/pixel\n",
@@ -654,8 +652,8 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 		return 1;
 	}
 
-	/* We support displaying 8bpp BMPs on 16bpp LCDs */
-	if (bpix != bmp_bpix && (bmp_bpix != 8 || bpix != 16) && !(bpix == 32 && bmp_bpix ==4) ) {
+	/* We support displaying 8bpp BMPs on 16bpp LCDs and 4bpp BMPs on 32bpp LCDs */
+	if (bpix != bmp_bpix && (bmp_bpix != 8 || bpix != 16) && !(bpix == 32 && bmp_bpix == 4) ) {
 		printf ("Error1: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 			bpix,
 			le16_to_cpu(bmp->header.bit_count));
@@ -770,7 +768,6 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 			for (i = 0; i < height; ++i) {
 				WATCHDOG_RESET();
 				for (j = 0; j < width; j++) {
-					/* TODO: read from the color map */
 					int color_v;
 					color_v = bmap[(j + i * effective_width) / 2];
 					if ((j + i * effective_width) % 2)
@@ -782,11 +779,7 @@ int lcd_display_bitmap(ulong bmp_image, int x, int y)
 					fb += 4;
 				}
 				fb   -= (lcd_line_length + width * 4);
-				if ((i % 10) == 9) printf("+");
-				if ((i % 100) == 99) printf("\n");
 			}
-
-			printf("...\n");
 		}
 		break;
 	case 1: /* pass through */
