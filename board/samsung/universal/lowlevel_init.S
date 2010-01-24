@@ -48,6 +48,80 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r11, lr
 
+	/*
+	 * Initialize Async Register Setting for EVT1
+	 * Because we are setting EVT1 as the default value of EVT0,
+	 * setting EVT0 as well does not make things worse.
+	 * Thus, for the simplicity, we set for EVT0, too
+	 *
+	 * The "Async Registers" are:
+	 *	0xE0F0_0000
+	 *	0xE1F0_0000
+	 *	0xF180_0000
+	 *	0xF190_0000
+	 *	0xF1A0_0000
+	 *	0xF1B0_0000
+	 *	0xF1C0_0000
+	 *	0xF1D0_0000
+	 *	0xF1E0_0000
+	 *	0xF1F0_0000
+	 *	0xFAF0_0000
+	 */
+	ldr     r0, =0xe0f00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xe1f00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1800000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1900000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1a00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1b00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1c00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1d00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1e00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xf1f00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
+	ldr     r0, =0xfaf00000
+	ldr     r1, [r0]
+	bic     r1, r1, #0x1
+	str     r1, [r0]
+
 	/* r5 has always zero */
 	mov	r5, #0
 
