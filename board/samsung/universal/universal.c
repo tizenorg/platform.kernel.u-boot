@@ -1094,10 +1094,10 @@ static void into_charge_mode(void)
 			for (k = 0; k < 10; k++)
 				if (max8998_power_key()) {
 					lcd_display_clear();
-					draw_samsung_logo(lcd_base);
+					/* FIXME don't use static function */
+					/* draw_samsung_logo(lcd_base); */
 					return;
-				}
-				else
+				} else
 					udelay(100 * 1000);
 		}
 	}

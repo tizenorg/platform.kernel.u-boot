@@ -189,7 +189,7 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 	}
 }
 
-void draw_samsung_logo(void* lcdbase)
+static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 

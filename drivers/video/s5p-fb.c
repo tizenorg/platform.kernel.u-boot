@@ -192,7 +192,7 @@ void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned shor
 	}
 }
 
-void draw_samsung_logo(void* lcdbase)
+static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 	unsigned int in_len,out_len, width, height;
