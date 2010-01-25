@@ -309,7 +309,7 @@
 #define CONFIG_SYS_I2C_INIT_BOARD
 #define CONFIG_SYS_I2C_SPEED	50000
 #define CONFIG_I2C_MULTI_BUS
-#define CONFIG_SYS_MAX_I2C_BUS	6
+#define CONFIG_SYS_MAX_I2C_BUS	7
 #endif
 
 /* USB Downloader */

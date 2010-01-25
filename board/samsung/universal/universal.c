@@ -56,6 +56,7 @@ enum {
 	I2C_GPIO5,
 	I2C_GPIO6,
 	I2C_GPIO7,
+	I2C_GPIO8,
 };
 
 /*
@@ -110,34 +111,33 @@ static struct i2c_gpio_bus_data i2c_gpio6 = {
 
 /*
  * i2c gpio6 - cypress
- * SDA: GPJ3[4]
- * SCL: GPJ3[5]
- */
-static struct i2c_gpio_bus_data i2c_cypress_gpio6 = {
-	.sda_pin	= 4,
-	.scl_pin	= 5,
-};
-
-/*
- * i2c gpio7 - cypress
  * SDA: MP05[6]
  * SCL: MP05[4]
  */
-static struct i2c_gpio_bus_data i2c_cypress_gpio7 = {
+static struct i2c_gpio_bus_data i2c_cypress_gpio6 = {
 	.sda_pin	= 6,
 	.scl_pin	= 4,
 };
 
 /*
- * i2c gpio7 - kessler rev 09
+ * i2c gpio7
+ * SDA: GPJ3[4]
+ * SCL: GPJ3[5]
+ */
+static struct i2c_gpio_bus_data i2c_gpio7 = {
+	.sda_pin	= 4,
+	.scl_pin	= 5,
+};
+
+/*
+ * i2c gpio8 - aries
  * SDA: MP05[1]
  * SCL: MP05[0]
  */
-static struct i2c_gpio_bus_data i2c_aries_gpio7 = {
+static struct i2c_gpio_bus_data i2c_gpio8 = {
 	.sda_pin	= 1,
 	.scl_pin	= 0,
 };
-
 
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{
@@ -151,8 +151,10 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 	}, {
 		.bus	= &i2c_gpio6,
 	}, {
+		.bus	= &i2c_gpio7,
+	}, {
 		.bus	= NULL,
-	}
+	},
 };
 
 u32 get_board_rev(void)
@@ -269,16 +271,20 @@ void i2c_init_board(void)
 
 	if (machine_is_cypress()) {
 		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
-		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
-		i2c_gpio[I2C_GPIO7].bus->gpio_base =
+		i2c_gpio[I2C_GPIO6].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
-	} else if (board_is_aries()) {
-		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
-		i2c_gpio[I2C_GPIO7].bus = &i2c_aries_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
+			(unsigned int)&gpio->gpio_j3;
+		num_bus -= 1;
+	} else if (board_is_aries()) {
+		i2c_gpio[I2C_GPIO7].bus->gpio_base =
+			(unsigned int)&gpio->gpio_j3;
+		i2c_gpio[I2C_GPIO8].bus = &i2c_gpio8;
+		i2c_gpio[I2C_GPIO8].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	} else {
-		num_bus--;
+		i2c_gpio[I2C_GPIO7].bus->gpio_base = NULL;
+		num_bus -= 2;
 	}
 
 	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
@@ -652,6 +658,8 @@ static void show_hw_revision(void)
 	if (board_is_limo_real()) {
 		if ((board_rev & 0xf) < 8)
 			s5pc1xx_set_cpu_rev(0);
+	} else if (board_is_aries()) {
+		s5pc1xx_set_cpu_rev(1);
 	} else {
 		s5pc1xx_set_cpu_rev(0);
 	}
@@ -908,18 +916,18 @@ static void enable_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
+	i2c_set_bus_num(I2C_GPIO3);
+
 	if (machine_is_aquila()) {
-		if (board_is_j1b2())
+		if (board_is_aries())
+			i2c_set_bus_num(I2C_GPIO8);
+		else if (board_is_j1b2())
 			return;
-	}
-
-	if (machine_is_tickertape())
+	} else if (machine_is_tickertape()) {
 		return;
-
-	if (machine_is_cypress())
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
-	else
-		i2c_set_bus_num(I2C_GPIO3);
+	}
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -936,18 +944,18 @@ static void check_battery(void)
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
 
+	i2c_set_bus_num(I2C_GPIO3);
+
 	if (machine_is_aquila()) {
-		if (board_is_j1b2())
+		if (board_is_aries())
+			i2c_set_bus_num(I2C_GPIO8);
+		else if (board_is_j1b2())
 			return;
-	}
-
-	if (machine_is_tickertape())
+	} else if (machine_is_tickertape()) {
 		return;
-
-	if (machine_is_cypress())
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
-	else
-		i2c_set_bus_num(I2C_GPIO3);
+	}
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -1106,12 +1114,14 @@ static void check_micro_usb(int intr)
 			return;
 	}
 
-	if (machine_is_cypress())
+	i2c_set_bus_num(I2C_PMIC);
+
+	if (machine_is_aquila()) {
+		if (board_is_aries())
+			i2c_set_bus_num(I2C_GPIO7);
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
-	else if (board_is_aries())
-		i2c_set_bus_num(I2C_GPIO6);
-	else
-		i2c_set_bus_num(I2C_PMIC);
+	}
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
@@ -1156,12 +1166,14 @@ static void micro_usb_switch(int path)
 	unsigned char addr;
 	unsigned char val[2];
 
-	if (machine_is_cypress())
+	i2c_set_bus_num(I2C_PMIC);
+
+	if (machine_is_aquila()) {
+		if (board_is_aries())
+			i2c_set_bus_num(I2C_GPIO7);
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
-	else if (board_is_aries())
-		i2c_set_bus_num(I2C_GPIO6);
-	else
-		i2c_set_bus_num(I2C_PMIC);
+	}
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
