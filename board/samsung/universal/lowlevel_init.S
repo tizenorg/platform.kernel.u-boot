@@ -166,7 +166,8 @@ lowlevel_init:
 	ldreq	r2, =(1 << 31)				@IO_RET_REL
 	ldrne	r2, =((1 << 31) | (1 << 30) | (1 << 29) | (1 << 28))	@ GPIO, UART_IO
 	orr	r1, r1, r2
-	str	r1, [r0]
+	/* Do not release retention here for S5PC110 */
+	strne	r1, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
 	/* Disable Watchdog */
@@ -387,6 +388,16 @@ wakeup:
 	ldrne	r0, =S5PC110_WAKEUP_STAT
 	ldr	r1, [r0]
 	str	r1, [r0]
+
+	/* IO retension release */
+	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
+	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
+	ldr	r1, [r0]
+	ldreq	r2, =(1 << 31)				@IO_RET_REL
+	ldrne	r2, =((1 << 31) | (1 << 30) | (1 << 29) | (1 << 28))
+	orr	r1, r1, r2
+	str	r1, [r0]
+
 #endif
 1:
 	mov	lr, r11
