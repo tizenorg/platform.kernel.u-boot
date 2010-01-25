@@ -40,6 +40,9 @@ void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 	for (i = 0; i < len; i++) {
 		bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[i].bus->gpio_base;
 
+		if (!bank)
+			continue;
+
 		/* SDA */
 		gpio_direction_output(bank,
 				i2c_gpio[i].bus->sda_pin, 1);
@@ -61,6 +64,8 @@ void i2c_gpio_set(int line, int value)
 	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
+	if (!bank)
+		return;
 
 	if (line)
 		line = i2c_gpio[bus_index].bus->sda_pin;
@@ -78,6 +83,8 @@ int i2c_gpio_get(void)
 	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
+	if (!bank)
+		return;
 
 	return gpio_get_value(bank, i2c_gpio[bus_index].bus->sda_pin);
 }
@@ -90,6 +97,8 @@ void i2c_gpio_dir(int dir)
 	bus_index = i2c_get_bus_num();
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
+	if (!bank)
+		return;
 
 	if (dir) {
 		gpio_direction_output(bank,
