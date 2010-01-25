@@ -56,7 +56,7 @@ enum {
 	I2C_GPIO5,
 	I2C_GPIO6,
 	I2C_GPIO7,
-	I2C_GPIO8,
+	I2C_GPIO10,
 };
 
 /*
@@ -101,43 +101,44 @@ static struct i2c_gpio_bus_data i2c_gpio5 = {
 
 /*
  * i2c gpio6
- * SDA: GPJ3[0]
- * SCL: GPJ3[1]
- */
-static struct i2c_gpio_bus_data i2c_gpio6 = {
-	.sda_pin	= 0,
-	.scl_pin	= 1,
-};
-
-/*
- * i2c gpio6 - cypress
- * SDA: MP05[6]
- * SCL: MP05[4]
- */
-static struct i2c_gpio_bus_data i2c_cypress_gpio6 = {
-	.sda_pin	= 6,
-	.scl_pin	= 4,
-};
-
-/*
- * i2c gpio7
  * SDA: GPJ3[4]
  * SCL: GPJ3[5]
  */
-static struct i2c_gpio_bus_data i2c_gpio7 = {
+static struct i2c_gpio_bus_data i2c_gpio6 = {
 	.sda_pin	= 4,
 	.scl_pin	= 5,
 };
 
 /*
- * i2c gpio8 - aries
+ * i2c gpio7 - aries
  * SDA: MP05[1]
  * SCL: MP05[0]
  */
-static struct i2c_gpio_bus_data i2c_gpio8 = {
+static struct i2c_gpio_bus_data i2c_gpio7 = {
 	.sda_pin	= 1,
 	.scl_pin	= 0,
 };
+
+/*
+ * i2c gpio7 - cypress
+ * SDA: MP05[6]
+ * SCL: MP05[4]
+ */
+static struct i2c_gpio_bus_data i2c_cypress_gpio7 = {
+	.sda_pin	= 6,
+	.scl_pin	= 4,
+};
+
+/*
+ * i2c gpio10
+ * SDA: GPJ3[0]
+ * SCL: GPJ3[1]
+ */
+static struct i2c_gpio_bus_data i2c_gpio10 = {
+	.sda_pin	= 0,
+	.scl_pin	= 1,
+};
+
 
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{
@@ -153,7 +154,7 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 	}, {
 		.bus	= &i2c_gpio7,
 	}, {
-		.bus	= NULL,
+		.bus	= &i2c_gpio10,
 	},
 };
 
@@ -269,22 +270,20 @@ void i2c_init_board(void)
 
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
-	if (machine_is_cypress()) {
-		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
-		i2c_gpio[I2C_GPIO6].bus->gpio_base =
-			(unsigned int)&gpio->gpio_mp0_5;
+	if (machine_is_aquila()) {
+		if (board_is_aries()) {
+			i2c_gpio[I2C_GPIO7].bus->gpio_base =
+				(unsigned int)&gpio->gpio_mp0_5;
+		} else {
+			i2c_gpio[I2C_GPIO6].bus->gpio_base = NULL;
+			i2c_gpio[I2C_GPIO7].bus->gpio_base = NULL;
+		}
+	} else if (machine_is_cypress()) {
+		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&gpio->gpio_j3;
-		num_bus -= 1;
-	} else if (board_is_aries()) {
-		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&gpio->gpio_j3;
-		i2c_gpio[I2C_GPIO8].bus = &i2c_gpio8;
-		i2c_gpio[I2C_GPIO8].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	} else {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = NULL;
-		num_bus -= 2;
 	}
 
 	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
@@ -920,7 +919,7 @@ static void enable_battery(void)
 
 	if (machine_is_aquila()) {
 		if (board_is_aries())
-			i2c_set_bus_num(I2C_GPIO8);
+			i2c_set_bus_num(I2C_GPIO7);
 		else if (board_is_j1b2())
 			return;
 	} else if (machine_is_tickertape()) {
@@ -948,7 +947,7 @@ static void check_battery(void)
 
 	if (machine_is_aquila()) {
 		if (board_is_aries())
-			i2c_set_bus_num(I2C_GPIO8);
+			i2c_set_bus_num(I2C_GPIO7);
 		else if (board_is_j1b2())
 			return;
 	} else if (machine_is_tickertape()) {
@@ -1118,7 +1117,7 @@ static void check_micro_usb(int intr)
 
 	if (machine_is_aquila()) {
 		if (board_is_aries())
-			i2c_set_bus_num(I2C_GPIO7);
+			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	}
@@ -1170,7 +1169,7 @@ static void micro_usb_switch(int path)
 
 	if (machine_is_aquila()) {
 		if (board_is_aries())
-			i2c_set_bus_num(I2C_GPIO7);
+			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	}
@@ -2507,7 +2506,7 @@ static int power_3_touchkey(int on)
 		udelay(80 * 1000);
 
 		/* 3 touchkey */
-		i2c_set_bus_num(I2C_GPIO6);
+		i2c_set_bus_num(I2C_GPIO10);
 
 		/* Workaround to probe */
 		if (i2c_probe(addr)) {
