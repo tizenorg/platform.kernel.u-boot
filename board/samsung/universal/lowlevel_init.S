@@ -48,6 +48,42 @@ _TEXT_BASE:
 lowlevel_init:
 	mov	r11, lr
 
+	/* r5 has always zero */
+	mov	r5, #0
+
+	ldr	r7, =S5PC100_GPIO_BASE
+	ldr	r8, =S5PC100_GPIO_BASE
+	/* Read CPU ID */
+	ldr	r2, =S5PC1XX_PRO_ID
+	ldr	r0, [r2]
+	mov	r1, #0x00010000
+	and	r0, r0, r1
+	cmp	r0, r5
+	beq	100f
+	ldr	r8, =S5PC110_GPIO_BASE
+100:
+	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
+	cmp	r7, r8
+#ifndef DEBUG_PM_C110
+	addeq	r0, r8, #0x280				@S5PC100_GPIO_J4_OFFSET
+	addne	r0, r8, #0x2C0				@S5PC110_GPIO_J4_OFFSET
+	ldr	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
+	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
+	orr	r1, r1, #(0x1 << 4)
+	str	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
+
+	ldr	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
+#ifdef CONFIG_ONENAND_IPL
+	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
+#else
+	bic	r1, r1, #(1 << 1)
+#endif
+	str	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
+#endif
+
+	/* Don't setup at s5pc100 */
+	beq	100f
+
 	/*
 	 * Initialize Async Register Setting for EVT1
 	 * Because we are setting EVT1 as the default value of EVT0,
@@ -122,39 +158,7 @@ lowlevel_init:
 	bic     r1, r1, #0x1
 	str     r1, [r0]
 
-	/* r5 has always zero */
-	mov	r5, #0
-
-	ldr	r7, =S5PC100_GPIO_BASE
-	ldr	r8, =S5PC100_GPIO_BASE
-	/* Read CPU ID */
-	ldr	r2, =S5PC1XX_PRO_ID
-	ldr	r0, [r2]
-	mov	r1, #0x00010000
-	and	r0, r0, r1
-	cmp	r0, r5
-	beq	100f
-	ldr	r8, =S5PC110_GPIO_BASE
 100:
-	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
-	cmp	r7, r8
-#ifndef DEBUG_PM_C110
-	addeq	r0, r8, #0x280				@S5PC100_GPIO_J4_OFFSET
-	addne	r0, r8, #0x2C0				@S5PC110_GPIO_J4_OFFSET
-	ldr	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
-	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
-	orr	r1, r1, #(0x1 << 4)
-	str	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
-
-	ldr	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
-#ifdef CONFIG_ONENAND_IPL
-	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
-#else
-	bic	r1, r1, #(1 << 1)
-#endif
-	str	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
-#endif
-
 	/* IO retension release */
 	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
 	ldrne	r0, =S5PC110_OTHERS			@0xE010E000
