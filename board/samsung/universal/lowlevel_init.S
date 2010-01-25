@@ -167,7 +167,7 @@ lowlevel_init:
 	ldrne	r2, =((1 << 31) | (1 << 30) | (1 << 29) | (1 << 28))	@ GPIO, UART_IO
 	orr	r1, r1, r2
 	/* Do not release retention here for S5PC110 */
-	strne	r1, [r0]
+	streq	r1, [r0]
 
 #ifndef CONFIG_ONENAND_IPL
 	/* Disable Watchdog */
