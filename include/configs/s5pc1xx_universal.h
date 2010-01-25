@@ -324,6 +324,7 @@
 #define CONFIG_LCD		1
 #define CONFIG_S5PC1XXFB	1
 #define CONFIG_S6E63M0		1
+#define CONFIG_CMD_BMP
 #endif
 
 #if 0
@@ -333,7 +334,6 @@
 
 /* Insert bmp animation compressed */
 #define CONFIG_VIDEO_BMP_GZIP
-#define CONFIG_CMD_BMP
 #ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)
 #endif
