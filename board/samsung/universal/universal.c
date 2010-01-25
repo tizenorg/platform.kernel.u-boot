@@ -1198,11 +1198,18 @@ static void micro_usb_switch(int path)
 #define MAX8998_REG_ONOFF3	0x13
 #define MAX8998_REG_LDO7	0x21
 #define MAX8998_REG_LDO17	0x29
+/* ONOFF1 */
 #define MAX8998_LDO3		(1 << 2)
+/* ONOFF2 */
+#define MAX8998_LDO6		(1 << 7)
+#define MAX8998_LDO7		(1 << 6)
+#define MAX8998_LDO8		(1 << 5)
+#define MAX8998_LDO9		(1 << 4)
 #define MAX8998_LDO10		(1 << 3)
 #define MAX8998_LDO11		(1 << 2)
 #define MAX8998_LDO12		(1 << 1)
 #define MAX8998_LDO13		(1 << 0)
+/* ONOFF3 */
 #define MAX8998_LDO14		(1 << 7)
 #define MAX8998_LDO15		(1 << 6)
 #define MAX8998_LDO16		(1 << 5)
@@ -1213,9 +1220,6 @@ static void init_pmic(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
-#ifdef ARIES
-	unsigned char val2[2];
-#endif /* ARIES */
 
 	if (cpu_is_s5pc100())
 		return;
@@ -1241,39 +1245,24 @@ static void init_pmic(void)
 	 */
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
-#ifndef ARIES
-	val[0] |= (1 << 7);
-#else
-	val[0] |= ((1 << 7)|(1 << 6));
-	val2[0] = 0x2;
-	i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
-	i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
-#endif /* ARIES */
+
+	if (board_is_aries())
+		val[0] |= MAX8998_LDO7;		/* LDO7: VLCD_1.8V */
+
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/* ONOFF3 */
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-#ifndef ARIES
 	/*
 	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
 	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
 	 */
 	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
 			MAX8998_LDO16 | MAX8998_LDO17);
-#else
 
-	/*
-	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
-	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
-	 */
-	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
-			MAX8998_LDO16);
+	if (board_is_aries())
+		val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
 
-	val[0] |= MAX8998_LDO17;
-	val2[0] = 0xE;
-	i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
-	i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
-#endif /* ARIES */
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 }
