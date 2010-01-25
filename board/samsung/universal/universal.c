@@ -42,8 +42,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-//#define ARIES 1
-
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
@@ -184,10 +182,7 @@ enum {
 #define LIMO_REAL_BOARD		0x800
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
-
-#ifdef ARIES
-#define ARIES_BOARD	0x4000
-#endif /* ARIES */
+#define ARIES_BOARD		0x4000
 
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
@@ -250,12 +245,10 @@ static int board_is_j1b2(void)
 	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
 }
 
-#ifdef ARIES
 static int board_is_aries(void)
 {
 	return machine_is_aquila() && (board_rev & ARIES_BOARD);
 }
-#endif
 
 static int board_is_p2_real(void)
 {
@@ -279,16 +272,12 @@ void i2c_init_board(void)
 		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
-	}
-#ifdef ARIES
-	else if (board_is_aries()) {
+	} else if (board_is_aries()) {
 		i2c_gpio[I2C_GPIO6].bus = &i2c_cypress_gpio6;
 		i2c_gpio[I2C_GPIO7].bus = &i2c_aries_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
-	}
-#endif /* ARIES */
-	else {
+	} else {
 		num_bus--;
 	}
 
@@ -386,10 +375,8 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Media");
 		if (board_rev & BAMBOO_BOARD)
 			count += sprintf(buf + count, " - Bamboo");
-#ifdef ARIES
 		if (board_rev & ARIES_BOARD)
 			count += sprintf(buf + count, " - Aries");
-#endif /* ARIES */
 	} else if (board == MACH_P1P2) {
 		/* P1P2 */
 		if (board_rev & P1_REAL_BOARD)
@@ -410,14 +397,12 @@ static void check_board_revision(int board, int rev)
 		/* Limo Real or Universal */
 		if (rev & LIMO_UNIVERSAL_BOARD)
 			board_rev &= ~J1_B2_BOARD;
-		if (rev & LIMO_REAL_BOARD) {
+		if (rev & LIMO_REAL_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		}
-#ifdef ARIES
 		if (rev & ARIES_BOARD)
-			board_rev &= ~(J1_B2_BOARD);
-#endif /* ARIES */
+			board_rev &= ~(J1_B2_BOARD |
+					LIMO_UNIVERSAL_BOARD);
 		if (rev & MEDIA_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -442,42 +427,28 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
-static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
+static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
 {
 	unsigned int rev;
-#ifdef ARIES
+	int mode3 = 1;
+
+	if (hwrev3)
+		mode3 = 7;
+
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
 	gpio_direction_input(bank, 4);
-	gpio_direction_input(bank, 7);
+	gpio_direction_input(bank, mode3);
 
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
 	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
-	gpio_set_pull(bank, 7, GPIO_PULL_NONE);		/* HWREV_MODE3 */
+	gpio_set_pull(bank, mode3, GPIO_PULL_NONE);	/* HWREV_MODE3 */
 
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
-	rev |= (gpio_get_value(bank, 7) << 3);
-	/* test */
-	rev = 9;
-#else
-	gpio_direction_input(bank, 1);
-	gpio_direction_input(bank, 2);
-	gpio_direction_input(bank, 3);
-	gpio_direction_input(bank, 4);
-
-	gpio_set_pull(bank, 1, GPIO_PULL_NONE);		/* HWREV_MODE3 */
-	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
-	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
-	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
-
-	rev = gpio_get_value(bank, 2);
-	rev |= (gpio_get_value(bank, 3) << 1);
-	rev |= (gpio_get_value(bank, 4) << 2);
-	rev |= (gpio_get_value(bank, 1) << 3);
-#endif /* ARIES */
+	rev |= (gpio_get_value(bank, mode3) << 3);
 
 	return rev;
 }
@@ -490,7 +461,7 @@ static void check_hw_revision(void)
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
 
-		board_rev = get_hw_revision(&gpio->gpio_j0);
+		board_rev = get_hw_revision(&gpio->gpio_j0, 0);
 
 		/* C100 TickerTape */
 		if (board_rev == 3)
@@ -498,8 +469,9 @@ static void check_hw_revision(void)
 	} else {
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+		int hwrev3 = 0;
 
-		board_rev = get_hw_revision(&gpio->gpio_j0);
+		board_rev = 0;
 
 		/*
 		 * Note Check 'Aquila' board first
@@ -535,13 +507,8 @@ static void check_hw_revision(void)
 			gpio_direction_input(&gpio->gpio_j2, 6);
 
 			/* Check board */
-#ifndef ARIES
 			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
-#else
-			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
-				board_rev |= ARIES_BOARD;
-#endif /* ARIES */
 
 			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
@@ -553,6 +520,7 @@ static void check_hw_revision(void)
 			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
 			gpio_direction_output(&gpio->gpio_j2, 6, 0);
 		}
+
 		/* Workaround: C110 Aquila Rev0.6 */
 		if (board_rev == 6) {
 			board = MACH_AQUILA;
@@ -627,6 +595,17 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
 			board = MACH_GEMINUS;
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+
+		/* Aquila - Aries MP0_5[6] == 1 */
+		gpio_direction_input(&gpio->gpio_mp0_5, 6);
+		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
+			board = MACH_AQUILA;
+			board_rev |= ARIES_BOARD;
+			hwrev3 = 1;
+		} else
+			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+
+		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
 
 	/* Set machine id */
@@ -1129,10 +1108,8 @@ static void check_micro_usb(int intr)
 
 	if (machine_is_cypress())
 		i2c_set_bus_num(I2C_GPIO6);
-#ifdef ARIES
-	if (board_is_aries())
+	else if (board_is_aries())
 		i2c_set_bus_num(I2C_GPIO6);
-#endif /* ARIES */
 	else
 		i2c_set_bus_num(I2C_PMIC);
 
@@ -1181,10 +1158,8 @@ static void micro_usb_switch(int path)
 
 	if (machine_is_cypress())
 		i2c_set_bus_num(I2C_GPIO6);
-#ifdef ARIES
-	if (board_is_aries())
+	else if (board_is_aries())
 		i2c_set_bus_num(I2C_GPIO6);
-#endif /* ARIES */
 	else
 		i2c_set_bus_num(I2C_PMIC);
 
@@ -1209,6 +1184,8 @@ static void micro_usb_switch(int path)
 #define MAX8998_REG_ONOFF1	0x11
 #define MAX8998_REG_ONOFF2	0x12
 #define MAX8998_REG_ONOFF3	0x13
+#define MAX8998_REG_LDO7	0x21
+#define MAX8998_REG_LDO17	0x29
 #define MAX8998_LDO3		(1 << 2)
 #define MAX8998_LDO10		(1 << 3)
 #define MAX8998_LDO11		(1 << 2)
@@ -1219,10 +1196,6 @@ static void micro_usb_switch(int path)
 #define MAX8998_LDO16		(1 << 5)
 #define MAX8998_LDO17		(1 << 4)
 
-#ifdef ARIES
-#define MAX8998_REG_LDO7	0x21
-#define MAX8998_REG_LDO17	0x29
-#endif /* ARIES */
 
 static void init_pmic(void)
 {
@@ -1719,9 +1692,7 @@ void lcd_power_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_j1, 4, 1);
 		*/
 
-#ifdef ARIES
-		if (board_is_aries())
-		{
+		if (board_is_aries()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
@@ -1749,9 +1720,6 @@ void lcd_power_on(unsigned int onoff)
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		}
-#endif /* ARIES */
-
-
 	} else {
 		if (machine_is_aquila() || machine_is_geminus())
 			gpio_set_value(&gpio->gpio_j1, 3, 0);
@@ -1764,9 +1732,7 @@ void lcd_power_on(unsigned int onoff)
 		     gpio_set_value(&gpio->gpio_j1, 4, 0);
 		*/
 
-#ifdef ARIES
-		if (board_is_aries())
-		{
+		if (board_is_aries()) {
 			unsigned char addr;
 			unsigned char val[2];
 
@@ -1787,8 +1753,6 @@ void lcd_power_on(unsigned int onoff)
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		}
-#endif /* ARIES */
-
 	}
 }
 
@@ -2074,8 +2038,10 @@ int dram_init(void)
 		/*
 		 * Aquila Rev0.5 4G3G1G
 		 * Aquila Rev0.8 4G3G1G
+		 * Aquila Rev0.9 4G3G1G
 		 */
-		if (machine_is_aquila() && (hwrevision(5) || hwrevision(8))) {
+		if (machine_is_aquila() &&
+		    (hwrevision(5) || hwrevision(8) || hwrevision(9))) {
 			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 			sz = (memconfig1 >> 16) & 0xFF;

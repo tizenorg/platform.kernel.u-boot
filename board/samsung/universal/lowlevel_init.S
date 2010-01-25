@@ -244,24 +244,43 @@ lowlevel_init:
 	 * Aquila Rev 0.6 : 4G1G1G x32 for MSM6290
 	 * Aquila Rev 0.7 : 4G2G1G x16 for Infineon ES3.1
 	 * Aquila Rev 0.8 : 4G3G1G x16 for Infineon ES3.1
+	 * Aquila Rev 0.9 : 4G3G1G x16 for Infineon ES3.1
 	 */
 	ldr	r2, =0xE0200200
 	ldr	r4, [r2, #0x48]
-	bic	r1, r4, #(0xFF << 2)	/* PULLUP_DISABLE: 4 * 2-bit */
+	/*
+	 * HWREV0[2], HWREV1[3], HWREV2[4]
+	 */
+	bic	r1, r4, #(0x3F << 4)	/* PULLUP_DISABLE: 3 * 2-bit */
+	/* HWREV3[1] */
+	bic	r1, r1, #(0x3 << 2)	/* PULLUP_DISABLE: 2 * 2-bit */
+	/* HWREV3[7] */
+	bic	r1, r1, #(0x3 << 14)	/* PULLUP_DISABLE: 2 * 2-bit */
 	str	r1, [r2, #0x48]
 	/* For write completion */
 	nop
 	nop
 
 	ldr	r3, [r2, #0x44]
-	and	r1, r3, #(0xf << 1)
-	cmp	r1, #(0x5 << 2)
+	and	r1, r3, #(0x7 << 2)	/* HWREV: 2 3 4 */
+	mov	r1, r1, lsr #2
+	cmp	r1, #0x5
 	moveq	r9, #3
-	cmp	r1, #(0x6 << 2)
+	cmp	r1, #0x6
 	moveq	r9, #1
-	cmp	r1, #(0x7 << 2)
+	cmp	r1, #0x7
 	moveq	r9, #2
-	cmp	r1, #(0x1 << 1)
+	and	r0, r3, #(0x1 << 1)	/* HWREV3[1] */
+	mov	r0, r0, lsr #1
+	orr	r1, r1, r0, lsl #3
+	cmp	r1, #0x8		/* Rev 0.8 */
+	moveq	r9, #3
+	and	r1, r3, #(0x7 << 2)	/* HWREV: 2 3 4 */
+	mov	r1, r1, lsr #2
+	and	r0, r3, #(0x1 << 7)	/* HWREV3[7] */
+	mov	r0, r0, lsr #7
+	orr	r1, r1, r0, lsl #3
+	cmp	r1, #0x9		/* Rev 0.9 */
 	moveq	r9, #3
 	str	r4, [r2, #0x48]		/* Restore PULLUP configuration */
 
