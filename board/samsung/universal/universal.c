@@ -172,7 +172,6 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
-	MACH_P1P2,
 	MACH_GEMINUS,
 	MACH_CYPRESS,
 };
@@ -187,10 +186,6 @@ enum {
 #define BAMBOO_BOARD		0x2000
 #define ARIES_BOARD		0x4000
 
-/* board is MACH_P1P2 and board is like below. */
-#define P1_REAL_BOARD		0x200
-#define P2_REAL_BOARD		0x400
-
 #define BOARD_MASK		0xF00
 
 static int c110_machine_id(void)
@@ -201,11 +196,6 @@ static int c110_machine_id(void)
 static int machine_is_aquila(void)
 {
 	return c110_machine_id() == MACH_AQUILA;
-}
-
-static int machine_is_p1p2(void)
-{
-	return c110_machine_id() == MACH_P1P2;
 }
 
 static int machine_is_tickertape(void)
@@ -251,11 +241,6 @@ static int board_is_j1b2(void)
 static int board_is_aries(void)
 {
 	return machine_is_aquila() && (board_rev & ARIES_BOARD);
-}
-
-static int board_is_p2_real(void)
-{
-	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
 }
 
 static void enable_battery(void);
@@ -347,7 +332,6 @@ static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
-	"P1P2",
 	"Geminus",
 	"Cypress",
 };
@@ -382,14 +366,6 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Bamboo");
 		if (board_rev & ARIES_BOARD)
 			count += sprintf(buf + count, " - Aries");
-	} else if (board == MACH_P1P2) {
-		/* P1P2 */
-		if (board_rev & P1_REAL_BOARD)
-			count += sprintf(buf + count, " - P1 Real");
-		else if (board_rev & P2_REAL_BOARD)
-			count += sprintf(buf + count, " - P2 Real");
-		else
-			count += sprintf(buf + count, " - Universal");
 	}
 
 	return buf;
@@ -416,8 +392,6 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-		break;
-	case MACH_P1P2:
 		break;
 	case MACH_CYPRESS:
 		/* There's no HWREV_MODE3 */
@@ -486,17 +460,16 @@ static void check_hw_revision(void)
 		 * LRA: Limo Real Aquila
 		 * LUA: Limo Universal Aquila
 		 * OA: Old Aquila
-		 * P1P2: Smart Book
 		 * CYP: Cypress
 		 * BB: Bamboo
 		 *
 		 * ADDR = 0xE0200000 + OFF
 		 *
-		 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	    P1P2 CYP
-		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00	    0x00
+		 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	     CYP
+		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00	    
 		 *   J2: 0x0284	          0x01 0x10 0x00 
-		 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		    0x18 0x0F
-		 *   H3: 0x0C64	               0x03 0x07 0x0F		    0xff
+		 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		     0x0F
+		 *   H3: 0x0C64	               0x03 0x07 0x0F		    
 		 *   D1: 0x00C4	0x0F	       0x3F 0x3F 0x0F 0xXC 0x3F
 		 *    I: 0x0224	                         0x02 0x00 0x08
 		 * MP03: 0x0324	                         0x9x      0xbx 0x9x
@@ -548,40 +521,6 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
 			board = MACH_CYPRESS;
 		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
-
-		/* C110 P1P2 */
-		if (gpio_get_value(&gpio->gpio_h3, 7) == 1) {
-			board = MACH_P1P2;
-			board_rev &= ~BOARD_MASK;
-		}
-
-		/* set gpio configuration for P1P2. */
-		gpio_direction_input(&gpio->gpio_j0, 6);
-		gpio_direction_input(&gpio->gpio_j0, 7);
-
-		/*
-		 * do not change order below
-		 * because it needs delay to get gpio value.
-		 */
-		/* HWREV_MODE4 */
-		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_NONE);
-		/* HWREV_MODE5 */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
-
-		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
-			board = MACH_P1P2;
-			board_rev &= ~BOARD_MASK;
-			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
-				board_rev |= P1_REAL_BOARD;
-			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)
-				board_rev |= P2_REAL_BOARD;
-		}
-
-		/* set gpio to default value. */
-		/* HWREV_MODE4 */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
-		/* HWREV_MODE5 */
-		gpio_set_pull(&gpio->gpio_j0, 7, GPIO_PULL_DOWN);
 
 		/* C110 Geminus for rev0.0 */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
@@ -719,9 +658,6 @@ static void enable_ldos(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	if (machine_is_p1p2())
-		return;
-
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
 	gpio_direction_output(&s5pc110_gpio->gpio_g3, 6, 1);
 }
@@ -774,58 +710,10 @@ static void setup_media_gpios(void)
 	gpio_set_pull(&s5pc110_gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
-static void setup_p1p2_gpios(void)
-{
-	if (!machine_is_p1p2())
-		return;
-
-	/*
-	 * Note: Please write GPIO alphabet order
-	 */
-	/* RESET_REQ_N: XM0FRnB[1]: MP0_3[5] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_3, 5, 1);
-	/* CODEC_LDO_EN: XM0FRnB[2]: MP0_3[6] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_3, 6, 1);
-}
-
 #define KBR3		(1 << 3)
 #define KBR2		(1 << 2)
 #define KBR1		(1 << 1)
 #define KBR0		(1 << 0)
-
-static void check_p2_keypad(void)
-{
-	unsigned int auto_download = 0;
-	unsigned char addr = 0x34, val[2];	/* adp5587 key controller */
-	int i, ret;
-	i2c_set_bus_num(I2C_2);
-
-	if (i2c_probe(addr)) {
-		printf("Can't found adp5587 key controller\n");
-		return;
-	}
-	/* Row 8, Column 10 */
-	val[0] = 0xf;
-	ret = i2c_write(addr, 0x1D, 1, val, 1);		/* Set KP_GPIO1 */
-	val[0] = 0xf;
-	ret |= i2c_write(addr, 0x1E, 1, val, 1);	/* Set KP_GPIO2 */
-	val[0] = 0x3;
-	ret |= i2c_write(addr, 0x1F, 1, val, 1);	/* Set KP_GPIO3 */
-	val[0] = 0x3f;		/* CMP2_INT | CMP1_INT | OVR_FLOW_INT |
-				   K_LCK_INT | GPI_INT | KE_INT */
-	ret |= i2c_write(addr, 0x02, 1, val, 1);	/* Status is W1C */
-	val[0] = 0x19;		/* INT_CFG | OVR_FLOW_IEN | KE_IEN */
-	ret |= i2c_write(addr, 0x01, 1, val, 1);
-	for (i = 0; i < 10; i++) {
-		udelay(1000);		/* FIXME */
-		i2c_read(addr, 0x04 + i, 1, val, 1);
-		if (val[0] == 0x94)
-			auto_download = 1;
-	}
-
-	if (auto_download == 1)
-		setenv("bootcmd", "usbdown");
-}
 
 static void check_keypad(void)
 {
@@ -862,16 +750,13 @@ static void check_keypad(void)
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			if (row_mask & (0xF << (i << 2))) {
 				gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
-				if (!machine_is_p1p2())
-					gpio_set_pull(&s5pc110_gpio->gpio_h3,
-							i, GPIO_PULL_UP);
+				gpio_set_pull(&s5pc110_gpio->gpio_h3, i,
+						GPIO_PULL_UP);
 			}
 
 			/* Set GPH2[3:0] to KP_COL[3:0] */
 			if (col_mask & (0xF << (i << 2)))
 				gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
-			if (machine_is_p1p2())
-				gpio_set_pull(&s5pc110_gpio->gpio_h2, i, GPIO_PULL_UP);
 		}
 
 		reg = S5PC110_KEYPAD_BASE;
@@ -900,10 +785,6 @@ static void check_keypad(void)
 
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
 			display_info = 1;
-		if (machine_is_p1p2()) {
-			if ((col_value[0] & 0xd) == 0xd)
-				auto_download = 1;
-		}
 	}
 
 	if (auto_download)
@@ -1584,12 +1465,6 @@ void lcd_cfg_gpio(void)
 	/* gpio pad configuration for LCD ON. */
 	gpio_cfg_pin(&gpio_base->gpio_j1, 3, GPIO_OUTPUT);
 
-	/* MLCD_ON2 */
-	/*
-	if (board_is_p2_real())
-	     gpio_cfg_pin(&gpio_base->gpio_j1, 4, GPIO_OUTPUT);
-	*/
-
 	/* LCD_BACKLIGHT_EN */
 	if (machine_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
@@ -1687,11 +1562,6 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
-		/*
-		if (board_is_p2_real())
-			gpio_set_value(&gpio->gpio_j1, 4, 1);
-		*/
-
 		if (board_is_aries()) {
 			unsigned char addr;
 			unsigned char val[2];
@@ -1726,11 +1596,6 @@ void lcd_power_on(unsigned int onoff)
 
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 0);
-
-		/*
-		if (board_is_p2_real())
-		     gpio_set_value(&gpio->gpio_j1, 4, 0);
-		*/
 
 		if (board_is_aries()) {
 			unsigned char addr;
@@ -1928,18 +1793,13 @@ int misc_init_r(void)
 	*/
 
 	/*
-	 * env values below should be added in case that lcd panel of geminus,
-	 * p1 and p2 are enabled at u-boot.
+	 * env values below should be added in case that lcd panel of geminus.
 	 * setenv means that lcd panel has been turned on at u-boot.
 	 */
 	if (machine_is_geminus())
 		setenv("lcdinfo", "lcd=lms480jc01");
 	if (board_is_media())
 		setenv("lcdinfo", "lcd=media");
-	/*
-	if (board_is_p2_real())
-		setenv("lcdinfo", "lcd=ams701");
-	*/
 #endif
 	setup_meminfo();
 
@@ -1963,14 +1823,8 @@ int misc_init_r(void)
 	/* Setup Media board GPIOs */
 	setup_media_gpios();
 
-	/* Setup P1P2 board GPIOS */
-	setup_p1p2_gpios();
-
 	/* To usbdown automatically */
-	if (board_is_p2_real())
-		check_p2_keypad();
-	else
-		check_keypad();
+	check_keypad();
 
 	/* check max8998 */
 	init_pmic();
