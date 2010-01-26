@@ -84,7 +84,7 @@ int i2c_gpio_get(void)
 
 	bank = (struct s5pc1xx_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 	if (!bank)
-		return;
+		return 0;
 
 	return gpio_get_value(bank, i2c_gpio[bus_index].bus->sda_pin);
 }

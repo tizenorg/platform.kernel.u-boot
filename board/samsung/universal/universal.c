@@ -261,15 +261,15 @@ void i2c_init_board(void)
 			i2c_gpio[I2C_GPIO7].bus->gpio_base =
 				(unsigned int)&gpio->gpio_mp0_5;
 		} else {
-			i2c_gpio[I2C_GPIO6].bus->gpio_base = NULL;
-			i2c_gpio[I2C_GPIO7].bus->gpio_base = NULL;
+			i2c_gpio[I2C_GPIO6].bus->gpio_base = 0;
+			i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 		}
 	} else if (machine_is_cypress()) {
 		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	} else {
-		i2c_gpio[I2C_GPIO7].bus->gpio_base = NULL;
+		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	}
 
 	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
