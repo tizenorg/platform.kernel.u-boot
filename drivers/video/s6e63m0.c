@@ -369,8 +369,8 @@ static const unsigned short SEQ_ACL_ON[] = {
 };
 
 static const unsigned short SEQ_ACL_OFF[] = {
-	/* ACL on */
-	0xc0, 0x01,
+	/* ACL off */
+	0xc0, 0x00,
 
 	ENDDEF, 0x0000
 };
@@ -545,7 +545,7 @@ void s6e63m0_cfg_ldo(void)
 	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
 	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_ACL_ON);
-	s6e63m0_panel_send_sequence(SEQ_ELVSS_ON);
+	s6e63m0_panel_send_sequence(SEQ_ELVSS_OFF);
 }
 
 void s6e63m0_enable_ldo(unsigned int onoff)
