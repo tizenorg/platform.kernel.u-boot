@@ -1038,8 +1038,8 @@ static void into_charge_mode(void)
 	unsigned char val[2];
 	unsigned int level;
 	int i, j;
-	bmp_image_t *bmp[CHARGER_ANIMATION_FRAME];
-	unsigned long len[CHARGER_ANIMATION_FRAME];
+	bmp_image_t *bmp;
+	unsigned long len;
 	ulong bmp_addr[CHARGER_ANIMATION_FRAME];
 
 	i2c_set_bus_num(I2C_PMIC);
@@ -1073,9 +1073,9 @@ static void into_charge_mode(void)
 		for (j = level; j < CHARGER_ANIMATION_FRAME; j++) {
 			int k;
 
-			bmp[j] = gunzip_bmp(bmp_addr[j], &len[j]);
-			lcd_display_bitmap((ulong) bmp[j], 140, 202);
-			free(bmp[j]);
+			bmp = gunzip_bmp(bmp_addr[j], &len);
+			lcd_display_bitmap((ulong) bmp, 140, 202);
+			free(bmp);
 
 			for (k = 0; k < 10; k++)
 				if (max8998_power_key()) {
