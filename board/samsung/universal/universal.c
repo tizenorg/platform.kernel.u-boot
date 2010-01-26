@@ -172,6 +172,7 @@ enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
 	MACH_AQUILA,
+	MACH_P1P2,	/* Don't remove it */
 	MACH_GEMINUS,
 	MACH_CYPRESS,
 };
@@ -332,6 +333,7 @@ static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
 	"Aquila",
+	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
 };
