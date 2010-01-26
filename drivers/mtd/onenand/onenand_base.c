@@ -2634,8 +2634,10 @@ static int onenand_probe(struct mtd_info *mtd)
 
 	/* Save system configuration 1 */
 	syscfg = this->read_word(this->base + ONENAND_REG_SYS_CFG1);
+#if !defined(CONFIG_S5PC110) && !defined(CONFIG_S5P6442)
 	/* Clear Sync. Burst Read mode to read BootRAM */
 	this->write_word((syscfg & ~ONENAND_SYS_CFG1_SYNC_READ), this->base + ONENAND_REG_SYS_CFG1);
+#endif
 
 	/* Send the command for reading device ID from BootRAM */
 	this->write_word(ONENAND_CMD_READID, this->base + ONENAND_BOOTRAM);

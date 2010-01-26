@@ -217,6 +217,24 @@ lowlevel_init:
 	/* init system clock */
 	bl	system_clock_init
 
+	/* OneNAND Sync Read Support at S5PC110 only
+	 * RM[15]	: Sync Read
+	 * BRWL[14:12]	: 7 CLK
+	 * BL[11:9]	: Continuous
+	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
+	 * HF[2]	: High Frequency Enable (Over 66MHz)
+	 */
+	cmp	r7, r8
+	ldrne	r1, =0xE004
+	ldrne	r0, =0xB001E442
+	strneh	r1, [r0]
+
+	ldrne	r1, =0x2E004
+	ldrne	r0, =0xB0600000
+	strne	r1, [r0, #0x100]			@ ONENAND_IF_CTRL
+	ldrne	r1, =0x1212
+	strne	r1, [r0, #0x108]
+
 	/* Board detection to set proper memory configuration */
 	cmp	r7, r8
 	moveq	r9, #1		/* r9 has 1Gib default at s5pc100 */
@@ -270,22 +288,6 @@ lowlevel_init:
 	str	r4, [r2, #0x48]		/* Restore PULLUP configuration */
 
 	bl	mem_ctrl_asm_init
-
-	/* OneNAND Sync Read Support at S5PC110 only
-	 * RM[15]	: Sync Read
-	 * BRWL[14:12]	: 7 CLK
-	 * BL[11:9]	: Continuous
-	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
-	 * HF[2]	: High Frequency Enable (Over 66MHz)
-	 */
-	cmp	r7, r8
-	ldrne	r1, =0xE00C
-
-	ldrne	r0, =0xB001E442
-	strneh	r1, [r0]
-
-	ldrne	r0, =0xB0600000
-	strne	r1, [r0, #0x100]			@ ONENAND_IF_CTRL
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */
 	ldreq	r0, =S5PC100_RST_STAT
