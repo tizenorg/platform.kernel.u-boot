@@ -221,29 +221,13 @@ lowlevel_init:
 	cmp	r7, r8
 	moveq	r9, #1		/* r9 has 1Gib default at s5pc100 */
 	movne	r9, #2		/* r9 has 2Gib default at s5pc110 */
-	/* FIXME 1Gib detection: Limo Universal */
-	/* Check Limo Real board
-	 *      LR (suspend)    LU              J1B2
-	 * 0x04 0x01 (0x01)     0x01 (0x01)     0x01 (0x01)
-	 * 0x24 0x28 (0xA8)     0x28 (0x6A)     0x1C (0x1C)
-	 * 0x44 0x00 (0xC7)     0x00 (0x47)     0x00 (0x47)
-	 * 0x64 0x03 (0x1F)     0x07 (0x1F)     0x0f (0x0F)
-	 *
-	 * Check (0 << 3) at 0x64 at boot
-	 * Check 0x47 at 0x44 at suspend
-	 */
-	ldrne	r2, =0xE0200C00
-	ldrne	r1, [r2, #0x64]
-	and	r1, r1, #(1 << 2)
-	cmp	r1, #(1 << 2)
-	moveq	r9, #1
-	ldr	r1, [r2, #0x44]
-	cmp	r1, #0x47
-	moveq	r9, #1
+
 	/*
+	 * Aquila Rev 0.3 : 4G2G1G x16 for Infineon ES3.0
+	 * Aquila Rev 0.4 : 4G2G1G x16 for Infineon ES3.1 (same as Rev 0.7)
 	 * Aquila Rev 0.5 : 4G3G1G x16 for Infineon ES3.1
 	 * Aquila Rev 0.6 : 4G1G1G x32 for MSM6290
-	 * Aquila Rev 0.7 : 4G2G1G x16 for Infineon ES3.1
+	 * Aquila Rev 0.7 : 4G2G1G x16 for Infineon ES3.1 (same as Rev 0.4)
 	 * Aquila Rev 0.8 : 4G3G1G x16 for Infineon ES3.1
 	 * Aquila Rev 0.9 : 4G3G1G x16 for Infineon ES3.1
 	 */
