@@ -353,6 +353,11 @@ static const unsigned short SEQ_ETC_CONDITION_SET[] = {
 	DATA_ONLY, 0x15,
 	DATA_ONLY, 0x18,
 
+	0xb2, 0x10,
+	DATA_ONLY, 0x10,
+	DATA_ONLY, 0x0b,
+	DATA_ONLY, 0x05,
+
 	ENDDEF, 0x0000
 };
 
@@ -366,6 +371,20 @@ static const unsigned short SEQ_ACL_ON[] = {
 static const unsigned short SEQ_ACL_OFF[] = {
 	/* ACL on */
 	0xc0, 0x01,
+
+	ENDDEF, 0x0000
+};
+
+static const unsigned short SEQ_ELVSS_ON[] = {
+	/* ELVSS on */
+	0xb1, 0x0b,
+
+	ENDDEF, 0x0000
+};
+
+static const unsigned short SEQ_ELVSS_OFF[] = {
+	/* ELVSS off */
+	0xb1, 0x0a,
 
 	ENDDEF, 0x0000
 };
@@ -526,6 +545,7 @@ void s6e63m0_cfg_ldo(void)
 	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
 	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET);
 	s6e63m0_panel_send_sequence(SEQ_ACL_ON);
+	s6e63m0_panel_send_sequence(SEQ_ELVSS_ON);
 }
 
 void s6e63m0_enable_ldo(unsigned int onoff)
