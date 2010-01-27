@@ -396,9 +396,6 @@ static void check_board_revision(int board, int rev)
 					MEDIA_BOARD);
 		break;
 	case MACH_CYPRESS:
-		/* There's no HWREV_MODE3 */
-		board_rev &= ~(1 << 3);
-		/* Fall through */
 	case MACH_TICKERTAPE:
 	case MACH_GEMINUS:
 		board_rev &= ~BOARD_MASK;
@@ -506,6 +503,7 @@ static void check_hw_revision(void)
 			board = MACH_AQUILA;
 			board_rev |= LIMO_REAL_BOARD;
 		}
+
 		/* C110 Aquila Bamboo */
 		if (gpio_get_value(&gpio->gpio_j2, 0) == 1) {
 			board = MACH_AQUILA;
@@ -516,13 +514,6 @@ static void check_hw_revision(void)
 		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
 				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
-
-		/* C110 Cypress: Do first this than P1P2 */
-		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j2, 2);
-		if (gpio_get_value(&gpio->gpio_j2, 2) == 1)
-			board = MACH_CYPRESS;
-		gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 
 		/* C110 Geminus for rev0.0 */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
@@ -545,8 +536,17 @@ static void check_hw_revision(void)
 		/* Aquila - Aries MP0_5[6] == 1 */
 		gpio_direction_input(&gpio->gpio_mp0_5, 6);
 		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
-			board = MACH_AQUILA;
-			board_rev |= ARIES_BOARD;
+			/* Cypress: Do this for cypress */
+			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j2, 2);
+			if (gpio_get_value(&gpio->gpio_j2, 2) == 1) {
+				board = MACH_CYPRESS;
+				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+			} else {
+				board = MACH_AQUILA;
+				board_rev |= ARIES_BOARD;
+			}
+			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 1;
 		} else
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
