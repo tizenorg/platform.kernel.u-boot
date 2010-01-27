@@ -987,6 +987,7 @@ static void check_micro_usb(int intr)
 	unsigned char addr;
 	unsigned char val[2];
 	static int started_charging_once = 0;
+	char *path;
 
 	if (cpu_is_s5pc100())
 		return;
@@ -1041,6 +1042,11 @@ static void check_micro_usb(int intr)
 
 	if (val[0] == FSA_ADC_FAC_USB)
 		setenv("bootcmd", "usbdown");
+
+	path = getenv("usb");
+
+	if (!strncmp(path, "cp", 2))
+		run_command("microusb cp", 0);
 }
 
 static void micro_usb_switch(int path)
@@ -2056,6 +2062,9 @@ int usb_board_init(void)
 		/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
 		gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 0, 0);
 
+	/* USB Path to AP */
+	micro_usb_switch(0);
+
 	return 0;
 }
 #endif
@@ -2477,19 +2486,23 @@ static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		if (strncmp(argv[1], "cp", 2) == 0) {
 			micro_usb_switch(1);
 			pmic_ldo_control(0, 0, 2, 1);
-			return 0;
+			setenv("usb", "cp");
 		} else if (strncmp(argv[1], "ap", 2) == 0) {
 			micro_usb_switch(0);
 			pmic_ldo_control(0, 0, 2, 0);
-			return 0;
+			setenv("usb", "ap");
 		}
 		break;
 	default:
-		break;
+		cmd_usage(cmdtp);
+		return 1;
 	}
 
-	cmd_usage(cmdtp);
-	return 1;
+	saveenv();
+
+	printf("USB Path is set to %s\n", getenv("usb"));
+
+	return 0;
 }
 
 U_BOOT_CMD(
