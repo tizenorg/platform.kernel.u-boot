@@ -1171,9 +1171,16 @@ static void setup_power_down_mode_registers(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	if (!(machine_is_aquila() && board_is_limo_real()) && !board_is_aries()) {
+	/* Only Limo real and aries supports worked for sleep currnet */
+	if (machine_is_aquila()) {
+		if (board_is_limo_real())
+			/* Support */;
+		else if (board_is_aries())
+			/* Support */;
+		else
+			return;
+	} else
 		return;
-	}
 
 	if (board_is_aries()) {
 		/* Aquila rev 0.9 */
