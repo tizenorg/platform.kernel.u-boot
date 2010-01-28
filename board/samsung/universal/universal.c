@@ -529,8 +529,10 @@ static void check_hw_revision(void)
 		/* C110 Geminus for rev0.1 ~ */
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
 		gpio_direction_input(&gpio->gpio_j0, 6);
-		if (gpio_get_value(&gpio->gpio_j0, 6) == 1)
+		if (gpio_get_value(&gpio->gpio_j0, 6) == 1) {
 			board = MACH_GEMINUS;
+			hwrev3 = 1;
+		}
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 
 		/* Aquila - Aries MP0_5[6] == 1 */
