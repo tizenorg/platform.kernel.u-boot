@@ -1171,8 +1171,9 @@ static void setup_power_down_mode_registers(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	if (!(machine_is_aquila() && board_is_limo_real()))
+	if (!(machine_is_aquila() && board_is_limo_real()) && !board_is_aries()) {
 		return;
+	}
 
 	if (board_is_aries()) {
 		/* Aquila rev 0.9 */
