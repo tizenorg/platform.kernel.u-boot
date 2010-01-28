@@ -39,6 +39,7 @@
 #include <bmp_layout.h>
 
 #include "animation_frames.h"
+#include "gpio_setting.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1157,226 +1158,14 @@ static void init_pmic(void)
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 }
 
-#define PDN_MASK(x)		(0x3 << ((x) << 1))
-
-#define CON_INPUT(x)		(0x0 << ((x) << 2))
-#define CON_OUTPUT(x)		(0x1 << ((x) << 2))
-#define CON_IRQ(x)		(0xf << ((x) << 2))
-
-#define DAT_SET(x)		(0x1 << (x))
-#define DAT_CLEAR(x)		(0x0 << (x))
-
-#define OUTPUT0(x)		(0x0 << ((x) << 1))
-#define OUTPUT1(x)		(0x1 << ((x) << 1))
-#define INPUT(x)		(0x2 << ((x) << 1))
-
-#define PULL_DIS(x)		(0x0 << ((x) << 1))
-#define PULL_DOWN(x)		(0x1 << ((x) << 1))
-#define PULL_UP(x)		(0x2 << ((x) << 1))
-
-#define PREVIOUS(x)		(0x3 << ((x) << 1))
-
-struct gpio_powermode {
-	unsigned int	conpdn;
-	unsigned int	pudpdn;
-};
-
-struct gpio_external {
-	unsigned int	con;
-	unsigned int	dat;
-	unsigned int	pud;
-};
-
-static struct gpio_powermode powerdown_modes[] = {
-	{	/* S5PC110_GPIO_A0_OFFSET */
-		INPUT(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT0(5) | INPUT(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_A1_OFFSET */
-		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
-	}, {	/* S5PC110_GPIO_B_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_C0_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		OUTPUT0(4),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4),
-	}, {	/* S5PC110_GPIO_C1_OFFSET */
-		/* OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4), */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		OUTPUT0(4),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4),
-	}, {	/* S5PC110_GPIO_D0_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
-	}, {	/* S5PC110_GPIO_D1_OFFSET */
-		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
-		INPUT(4) | INPUT(5),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5),
-	}, {	/* S5PC110_GPIO_E0_OFFSET */
-		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
-		INPUT(4) | INPUT(5) | INPUT(6) | INPUT(7),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DOWN(3) |
-		PULL_DOWN(4) | PULL_DOWN(5) | PULL_DOWN(6) | PULL_DOWN(7),
-	}, {	/* S5PC110_GPIO_E1_OFFSET */
-		INPUT(0) | INPUT(1) | INPUT(2) | OUTPUT0(3) |
-		OUTPUT0(4),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DOWN(2) | PULL_DIS(3) |
-		PULL_DIS(4),
-	}, {	/* S5PC110_GPIO_F0_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_F1_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_F2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_F3_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5),
-	}, {	/* S5PC110_GPIO_G0_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
-	}, {	/* S5PC110_GPIO_G1_OFFSET */
-		OUTPUT0(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
-		INPUT(4) | INPUT(5) | INPUT(6),
-		PULL_DIS(0) | PULL_UP(1) | PULL_DIS(2) | PULL_UP(3) |
-		PULL_UP(4) | PULL_UP(5) | PULL_UP(6),
-	}, {	/* S5PC110_GPIO_G2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
-	}, {	/* S5PC110_GPIO_G3_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | INPUT(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
-	}, {	/* S5PC110_GPIO_I_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
-	}, {	/* S5PC110_GPIO_J0_OFFSET */
-		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3) |
-		INPUT(4) | INPUT(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DOWN(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_J1_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_J2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
-	}, {	/* S5PC110_GPIO_J3_OFFSET */
-		INPUT(0) | INPUT(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT1(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
-		PULL_DOWN(0) | PULL_DOWN(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_GPIO_J4_OFFSET */
-		INPUT(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		OUTPUT0(4),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4),
-	}, {	/* S5PC110_MP0_1_OFFSET */
-		/* XM0CSN[4]: MP0_1[4] -> output high */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
-		OUTPUT1(4) | OUTPUT0(5) | OUTPUT1(6) | OUTPUT1(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_MP0_2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
-	}, {	/* S5PC110_MP0_3_OFFSET */
-		/* XM0FWEN: MP0_3[2] -> output high */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT1(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_MP0_4_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
-		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DOWN(3) |
-		PULL_DOWN(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_MP0_5_OFFSET */
-		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DOWN(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_MP0_6_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	}, {	/* S5PC110_MP0_7_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
-	},
-};
-
-static struct gpio_external external_powerdown_modes[] = {
-	{	/* S5PC110_GPIO_H0_OFFSET */
-		CON_OUTPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
-		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_INPUT(7),
-		DAT_SET(0) | DAT_CLEAR(2) | DAT_CLEAR(3) |
-		DAT_CLEAR(4) | DAT_CLEAR(5),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5),
-	}, {	/* S5PC110_GPIO_H1_OFFSET */
-		/* CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
-		CON_IRQ(4) | CON_INPUT(5) | CON_INPUT(6) | CON_INPUT(7),
-		DAT_CLEAR(2),
-		PULL_DOWN(0) | PULL_DOWN(1) |
-		PULL_DOWN(6),		*/
-		CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
-		CON_INPUT(4) | CON_INPUT(5) | CON_OUTPUT(6) | CON_INPUT(7),
-		DAT_SET(0),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DOWN(4),
-	}, {	/* S5PC110_GPIO_H2_OFFSET */
-		CON_OUTPUT(0) | CON_OUTPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
-		CON_IRQ(4) | CON_IRQ(5) | CON_IRQ(6) | CON_IRQ(7),
-		DAT_CLEAR(0) | DAT_CLEAR(1) | DAT_CLEAR(2) | DAT_CLEAR(3),
-		0,
-	}, {	/* S5PC110_GPIO_H3_OFFSET */
-		CON_IRQ(0) | CON_IRQ(1) | CON_IRQ(2) | CON_OUTPUT(3) |
-		CON_IRQ(4) | CON_INPUT(5) | CON_IRQ(6) | CON_OUTPUT(7),
-		DAT_CLEAR(3) | DAT_CLEAR(7),
-		0,
-	},
-};
-
 static void setup_power_down_mode_registers(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 	struct s5pc1xx_gpio_bank *bank;
 	struct gpio_powermode *p;
+	int n_p;
 	struct gpio_external *ge;
+	int n_ge;
 	int i;
 
 	if (cpu_is_s5pc100())
@@ -1385,10 +1174,23 @@ static void setup_power_down_mode_registers(void)
 	if (!(machine_is_aquila() && board_is_limo_real()))
 		return;
 
-	bank = &gpio->gpio_a0;
-	p = powerdown_modes;
+	if (board_is_aries()) {
+		/* Aquila rev 0.9 */
+		p = aries_powerdown_modes;
+		ge = aries_external_powerdown_modes;
+		n_p = ARRAY_SIZE(aries_powerdown_modes);
+		n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
+	} else {
+		/* Aquila rev 0.8 or lower */
+		p = aquila_powerdown_modes;
+		ge = aquila_external_powerdown_modes;
+		n_p = ARRAY_SIZE(aquila_powerdown_modes);
+		n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+	}
 
-	for (i = 0; i < ARRAY_SIZE(powerdown_modes); i++, p++, bank++) {
+	bank = &gpio->gpio_a0;
+
+	for (i = 0; i < n_p; i++, p++, bank++) {
 		writel(p->conpdn, &bank->pdn_con);
 		writel(p->pudpdn, &bank->pdn_pull);
 	}
@@ -1396,11 +1198,9 @@ static void setup_power_down_mode_registers(void)
 	writel(0xff0022b0, (unsigned int *)0xF0000000);
 	writel(0xff0022b0, (unsigned int *)0xF1400000);
 
-
 	bank = &gpio->gpio_h0;
-	ge = external_powerdown_modes;
 
-	for (i = 0; i < ARRAY_SIZE(external_powerdown_modes); i++) {
+	for (i = 0; i < n_ge; i++) {
 		writel(ge->con, &bank->con);
 		writel(ge->dat, &bank->dat);
 		writel(ge->pud, &bank->pull);
