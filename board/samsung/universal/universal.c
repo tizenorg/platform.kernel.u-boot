@@ -1879,6 +1879,10 @@ int board_mmc_init(bd_t *bis)
 	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	int i;
 
+	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
+	if (machine_is_aquila() && board_is_aries())
+		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
+
 	/* MMC0 Clock source = SCLKMPLL */
 	reg = readl(&clk->src4);
 	reg &= ~0xf;
