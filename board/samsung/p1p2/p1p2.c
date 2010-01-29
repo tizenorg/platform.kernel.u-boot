@@ -480,7 +480,7 @@ static void check_hw_revision(void)
 		 * MP03: 0x0324	                         0x9x      0xbx 0x9x
 		 * MP05: 0x0364	                         0x80      0x88
 		 */
-
+#if 0
 		/* C110 Aquila */
 		if (gpio_get_value(&gpio->gpio_j1, 4) == 0) {
 			board = MACH_AQUILA;
@@ -531,6 +531,7 @@ static void check_hw_revision(void)
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
 		}
+#endif
 
 		/* set gpio configuration for P1P2. */
 		gpio_direction_input(&gpio->gpio_j0, 6);
@@ -545,6 +546,11 @@ static void check_hw_revision(void)
 		/* HWREV_MODE5 */
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
 
+/*
+ * GPJ0[7:6] 00 : P1_real - EVT1 _ AMOLED
+ * 			 11 : P1_real - EVT0 _ TFT
+ * */
+
 		if (gpio_get_value(&gpio->gpio_j0, 7) == 1) {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
@@ -556,14 +562,16 @@ static void check_hw_revision(void)
 			}
 			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)
 				board_rev |= P2_REAL_BOARD;
-		}
+		} else {
+			board = MACH_P1P2;
+			board_rev &= ~BOARD_MASK;
+			board_rev |= P1_REAL_BOARD;
 		#ifdef CONFIG_LCD
-		else	{
-			if (gpio_get_value(&gpio->gpio_j0, 6) == 1)	{
+			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)	{
 				lcd_type = LCD_AMOLED;
 			}
-		}
 		#endif
+		}
 
 		/* set gpio to default value. */
 		/* HWREV_MODE4 */
