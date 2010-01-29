@@ -269,7 +269,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5),
 	}, {	/* S5PC110_GPIO_G0_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
@@ -279,7 +279,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(0) | PULL_UP(1) | PULL_DIS(2) | PULL_UP(3) |
 		PULL_UP(4) | PULL_UP(5) | PULL_UP(6),
 	}, {	/* S5PC110_GPIO_G2_OFFSET */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
@@ -296,8 +296,8 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 	}, {	/* S5PC110_GPIO_J0_OFFSET */
 		INPUT(0) | INPUT(1) | INPUT(2) | INPUT(3) |
 		INPUT(4) | INPUT(5) | OUTPUT0(6) | INPUT(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
+		PULL_DIS(0) | PULL_DIS(1) | PULL_UP(2) | PULL_UP(3) |
+		PULL_DOWN(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DOWN(7),
 	}, {	/* S5PC110_GPIO_J1_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		OUTPUT0(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
@@ -320,9 +320,9 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(4),
 	}, {	/* S5PC110_MP0_1_OFFSET */
 		/* XM0CSN[4]: MP0_1[4] -> output high */
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
 		OUTPUT1(4) | OUTPUT0(5) | OUTPUT1(6) | OUTPUT1(7),
-		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DOWN(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_MP0_2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3),
@@ -365,11 +365,11 @@ static struct gpio_external aries_external_powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5),
 	}, {	/* S5PC110_GPIO_H1_OFFSET */
-		CON_INPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
-		CON_INPUT(4) | CON_INPUT(5) | CON_OUTPUT(6) | CON_INPUT(7),
-		DAT_SET(0),
+		CON_OUTPUT(0) | CON_OUTPUT(1) | CON_OUTPUT(2) | CON_IRQ(3) |
+		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_OUTPUT(6) | CON_INPUT(7),
+		DAT_CLEAR(0),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DOWN(4),
+		PULL_DIS(4),
 	}, {	/* S5PC110_GPIO_H2_OFFSET */
 		CON_OUTPUT(0) | CON_OUTPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
 		CON_IRQ(4) | CON_IRQ(5) | CON_IRQ(6) | CON_IRQ(7),
@@ -377,8 +377,8 @@ static struct gpio_external aries_external_powerdown_modes[] = {
 		0,
 	}, {	/* S5PC110_GPIO_H3_OFFSET */
 		CON_IRQ(0) | CON_IRQ(1) | CON_IRQ(2) | CON_OUTPUT(3) |
-		CON_IRQ(4) | CON_INPUT(5) | CON_IRQ(6) | CON_OUTPUT(7),
-		DAT_CLEAR(3) | DAT_CLEAR(7),
+		CON_IRQ(4) | CON_OUTPUT(5) | CON_IRQ(6) | CON_OUTPUT(7),
+		DAT_CLEAR(3) | DAT_CLEAR(5) | DAT_CLEAR(7),
 		0,
 	},
 };
