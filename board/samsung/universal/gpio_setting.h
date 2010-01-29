@@ -1,6 +1,9 @@
 #ifndef __GPIO_SETTING_H
 #define __GPIO_SETTING_H
 
+#include <asm/arch/gpio.h>
+#include <asm/arch/cpu.h>
+
 #define PDN_MASK(x)		(0x3 << ((x) << 1))
 
 #define CON_INPUT(x)		(0x0 << ((x) << 2))
@@ -13,6 +16,7 @@
 #define OUTPUT0(x)		(0x0 << ((x) << 1))
 #define OUTPUT1(x)		(0x1 << ((x) << 1))
 #define INPUT(x)		(0x2 << ((x) << 1))
+#define KEEP_STATE(x)		(0x3 << ((x) << 1))
 
 #define PULL_DIS(x)		(0x0 << ((x) << 1))
 #define PULL_DOWN(x)		(0x1 << ((x) << 1))
@@ -30,6 +34,23 @@ struct gpio_external {
 	unsigned int	dat;
 	unsigned int	pud;
 };
+
+#define	__GPIO(x)	\
+	&((struct s5pc110_gpio *)S5PC110_GPIO_BASE)->gpio_##x
+/* In mirror mode, it sets "I(PD/PU)" according to the
+ * output at the u-boot time. */
+struct s5pc11x_gpio_item {
+	struct s5pc11x_gpio_bank *bank;
+	unsigned int number;
+};
+
+static struct s5pc11x_gpio_item aquila_mirror_powerdown_mode[] = {
+};
+
+static struct s5pc11x_gpio_item aries_mirror_powerdown_mode[] = {
+};
+
+#undef __GPIO
 
 static struct gpio_powermode aquila_powerdown_modes[] = {
 	{	/* S5PC110_GPIO_A0_OFFSET */
@@ -305,9 +326,9 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_J2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		INPUT(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
+		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
-		PULL_DIS(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
+		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_J3_OFFSET */
 		INPUT(0) | INPUT(1) | OUTPUT0(2) | OUTPUT0(3) |
 		INPUT(4) | INPUT(5) | INPUT(6) | INPUT(7),
