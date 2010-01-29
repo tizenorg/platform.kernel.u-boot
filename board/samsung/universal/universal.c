@@ -726,7 +726,6 @@ static void check_keypad(void)
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int col_value[4], i;
-
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
@@ -785,6 +784,9 @@ static void check_keypad(void)
 
 		/* expected value is row_value[0] = 0x00 row_value[1] = 0x01 */
 		/* workaround */
+		if (col_value[1] == 0xd && col_value[2] == 0xe && machine_is_geminus())
+			auto_download = 1;
+	
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
 			auto_download = 1;
 
