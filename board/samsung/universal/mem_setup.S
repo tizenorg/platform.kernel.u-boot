@@ -173,7 +173,7 @@ swap_memory:
 	cmp	r9, #1
 	ldreq	r4, =0x40f81222				@ 1Gib
 	cmp	r9, #3
-	ldreq	r5, =0x50f81222				@ 2Gib + 1Gib
+	ldreq	r5, =0x50f81312				@ 2Gib + 1Gib
 	cmp	r9, #4
 	ldreq	r5, =0x50f01322				@ 2Gib + 2Gib
 
