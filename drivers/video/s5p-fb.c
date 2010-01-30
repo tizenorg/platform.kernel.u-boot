@@ -27,6 +27,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <lcd.h>
+#include <malloc.h>
 
 #include "s5p-fb.h"
 #include "logo.h"
@@ -51,6 +52,7 @@ short console_row;
 
 static unsigned int panel_width, panel_height;
 
+#ifdef USE_LCD_TEST
 static unsigned short makepixel565(char r, char g, char b)
 {
     return (unsigned short)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
@@ -90,6 +92,7 @@ static void read_image32(char* pImg, int x1pos, int y1pos, int x2pos,
 		}
 	}
 }
+#endif
 
 /* LCD Panel data */
 vidinfo_t panel_info;
@@ -117,6 +120,7 @@ static void s5pc_lcd_init(vidinfo_t *vid)
 	s5pc_fimd_lcd_init(vid);
 }
 
+#ifdef USE_LCD_TEST
 static void lcd_test(unsigned int width, unsigned int height)
 {
 	unsigned int height_level = height / 3;
@@ -131,6 +135,7 @@ static void lcd_test(unsigned int width, unsigned int height)
 	read_image32((char *)lcd_base, 0, height_level * 2, width, height,
 			makepixel8888(0, 0, 0, 255));
 }
+#endif
 
 int conv_rgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
 {
@@ -195,7 +200,8 @@ void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned shor
 static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
-	unsigned int in_len,out_len, width, height;
+	unsigned int in_len, width, height;
+	unsigned long out_len;
 	void *dst = NULL;
 
 	width = 298;
@@ -207,11 +213,11 @@ static void draw_samsung_logo(void* lcdbase)
 	dst = malloc(in_len);
 	if (dst == NULL) {
 		printf("Error: malloc in gunzip failed!\n");
-		return NULL;
+		return;
 	}
 	if (gunzip(dst, in_len, (uchar *)logo, &out_len) != 0) {
 		free(dst);
-		return NULL;
+		return;
 	}
 	if (out_len == CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
 		printf("Image could be truncated"
@@ -271,7 +277,9 @@ void lcd_ctrl_init(void *lcdbase)
 	/*
 	if (strcmp(option, "test") == 0) {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+#ifdef USE_LCD_TEST
 		lcd_test(panel_width, panel_height);
+#endif
 	} else if (strcmp(option, "image") == 0)
 		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 	else {
