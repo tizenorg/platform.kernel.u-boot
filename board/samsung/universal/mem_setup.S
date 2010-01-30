@@ -168,14 +168,14 @@ swap_memory:
 	 * [ 3:0 ] 2: 4 banks
 	 */
 	/* Default : 2GiB */
-	ldr	r4, =0x40f01322				@ 2Gib
-	ldr	r5, =0x50f81222
+	ldr	r4, =0x40f01322				@ 2Gib: MCP B
+	ldr	r5, =0x50f81312				@ dummy: MCP D
 	cmp	r9, #1
-	ldreq	r4, =0x40f81222				@ 1Gib
+	ldreq	r4, =0x40f81222				@ 1Gib: MCP A
 	cmp	r9, #3
-	ldreq	r5, =0x50f81312				@ 2Gib + 1Gib
+	ldreq	r5, =0x50f81312				@ 2Gib + 1Gib: MCP D
 	cmp	r9, #4
-	ldreq	r5, =0x50f01322				@ 2Gib + 2Gib
+	ldreq	r5, =0x50f01312				@ 2Gib + 2Gib: MCP E
 
 	cmp	r7, r8
 	strne	r4, [r6, #0x008]			@ MEMCONFIG0_OFFSET
