@@ -506,82 +506,32 @@ system_clock_init:
 	orr	r1, r1, #(0x3 << 8)		@ CLKOUT[9:8] 3 XUSBXTI
 	str	r1, [r2]
 
-	/* CLK_GATE_IP0 */
-#define CLK_GATE_IP0_CLK_CSIS		(0x01 << 31)
-#define CLK_GATE_IP0_CLK_IPC		(0x01 << 30)
-#define CLK_GATE_IP0_CLK_ROTATOR	(0x01 << 29)
-#define CLK_GATE_IP0_CLK_JPEG		(0x01 << 28)
-#define CLK_GATE_IP0_RESERVED27		(0x01 << 27)
-#define CLK_GATE_IP0_CLK_FIMC2		(0x01 << 26)
-#define CLK_GATE_IP0_CLK_FIMC1		(0x01 << 25)
-#define CLK_GATE_IP0_CLK_FIMC0		(0x01 << 24)
-#define CLK_GATE_IP0_RESERVED17		(0x7F << 17)
-#define CLK_GATE_IP0_CLK_MFC		(0x01 << 16)
-#define CLK_GATE_IP0_RESERVED13		(0x07 << 13)
-#define CLK_GATE_IP0_CLK_G2D		(0x01 << 12)
-#define CLK_GATE_IP0_RESERVED9		(0x07 << 9)
-#define CLK_GATE_IP0_CLK_G3D		(0x01 << 8)
-#define CLK_GATE_IP0_RESERVED6		(0x03 << 6)
-#define CLK_GATE_IP0_CLK_IMEM		(0x01 << 5)
-#define CLK_GATE_IP0_CLK_PDMA1		(0x01 << 4)
-#define CLK_GATE_IP0_CLK_PDMA0		(0x01 << 3)
-#define CLK_GATE_IP0_CLK_MDMA		(0x01 << 2)
-#define CLK_GATE_IP0_CLK_DMC1		(0x01 << 1)
-#define CLK_GATE_IP0_CLK_DMC0		(0x01 << 0)
-#if 1
-	ldr	r1, =0x08fefeeb			@ DMC[1:0] PDMA0[3] IMEM[5]
-#else
-	ldr	r1, =(CLK_GATE_IP0_RESERVED27 | \
-			CLK_GATE_IP0_RESERVED17 | \
-			CLK_GATE_IP0_RESERVED13 | \
-			CLK_GATE_IP0_RESERVED9 | \
-			CLK_GATE_IP0_RESERVED6 | \
-			CLK_GATE_IP0_CLK_IMEM | \
-			CLK_GATE_IP0_CLK_PDMA0 | \
-			CLK_GATE_IP0_CLK_DMC1 | \
-			CLK_GATE_IP0_CLK_DMC0)
-#endif
-	str	r1, [r0, #0x460]		@ S5PC110_CLK_GATE_IP0
+	/* CLK_IP0 */
+	ldr	r1, =0x8fefeeb			@ DMC[1:0] PDMA0[3] IMEM[5]
+	str	r1, [r0, #0x460]		@ S5PC110_CLK_IP0
 
-	/* CLK_GATE_IP1 */
-#define CLK_GATE_IP1_RESERVED29		(0x07 << 29)
-#define CLK_GATE_IP1_RESERVED27		(0x01 << 27)
-#define CLK_GATE_IP1_CLK_NANDXL		(0x01 << 24)
-#define CLK_GATE_IP1_RESERVED18		(0x3f << 18)
-#define CLK_GATE_IP1_CLK_USBOTG		(0x01 << 16)
-#define CLK_GATE_IP1_RESERVED3		(0x1f << 3)
-#define CLK_GATE_IP1_CLK_FIMD		(0x01 << 0)
-#if 1
-	ldr	r1, =0x8fefeeb			@ FIMD[0] USBOTG[16]
+	/* CLK_IP1 */
+	ldr	r1, =0xe9fdf0f9			@ FIMD[0] USBOTG[16]
 						@ NANDXL[24]
-#else
-	ldr	r1, =(CLK_GATE_IP1_RESERVED29 | \
-			CLK_GATE_IP1_RESERVED27 | \
-			CLK_GATE_IP1_CLK_NANDXL | \
-			CLK_GATE_IP1_RESERVED18 | \
-			CLK_GATE_IP1_CLK_USBOTG | \
-			CLK_GATE_IP1_RESERVED3 | \
-			CLK_GATE_IP1_CLK_FIMD)
-#endif
-	str	r1, [r0, #0x464]		@ S5PC110_CLK_GATE_IP1
+	str	r1, [r0, #0x464]		@ S5PC110_CLK_IP1
 
-	/* CLK_GATE_IP2 */
-	ldr	r1, =0x0f75f7fc			@ CORESIGHT[8] MODEM[9]
+	/* CLK_IP2 */
+	ldr	r1, =0xf75f7fc			@ CORESIGHT[8] MODEM[9]
 						@ HOSTIF[10] HSMMC0[16]
 						@ HSMMC2[18] VIC[27:24]
-	str	r1, [r0, #0x468]		@ S5PC110_CLK_GATE_IP2
+	str	r1, [r0, #0x468]		@ S5PC110_CLK_IP2
 
-	/* CLK_GATE_IP3 */
+	/* CLK_IP3 */
 	ldr	r1, =0x8eff038c			@ I2C[8:6]
 						@ SYSTIMER[16] UART0[17]
 						@ UART1[18] UART2[19]
 						@ UART3[20] WDT[22]
 						@ PWM[23] GPIO[26] SYSCON[27]
-	str	r1, [r0, #0x46c]		@ S5PC110_CLK_GATE_IP3
+	str	r1, [r0, #0x46c]		@ S5PC110_CLK_IP3
 
-	/* CLK_GATE_IP4 */
+	/* CLK_IP4 */
 	ldr	r1, =0xfffffff1			@ CHIP_ID[0] TZPC[8:5]
-	str	r1, [r0, #0x470]		@ S5PC110_CLK_GATE_IP4
+	str	r1, [r0, #0x470]		@ S5PC110_CLK_IP3
 
 200:
 	/* wait at least 200us to stablize all clock */
