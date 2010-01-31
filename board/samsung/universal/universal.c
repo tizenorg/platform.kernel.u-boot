@@ -923,6 +923,9 @@ static int max8998_power_key(void)
 	return 0;
 }
 
+extern void lcd_display_clear(void);
+extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
+
 static void into_charge_mode(void)
 {
 	unsigned char addr = 0xCC >> 1;	/* max8998 */;
@@ -1171,6 +1174,8 @@ static void setup_power_down_mode_registers(void)
 	int n_p;
 	struct gpio_external *ge;
 	int n_ge;
+	struct s5pc1xx_gpio_item *mr;
+	int n_mr;
 	int i;
 
 	if (cpu_is_s5pc100())
@@ -1191,14 +1196,18 @@ static void setup_power_down_mode_registers(void)
 		/* Aquila rev 0.9 */
 		p = aries_powerdown_modes;
 		ge = aries_external_powerdown_modes;
+		mr = aries_mirror_powerdown_mode;
 		n_p = ARRAY_SIZE(aries_powerdown_modes);
 		n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
+		n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
 	} else {
 		/* Aquila rev 0.8 or lower */
 		p = aquila_powerdown_modes;
 		ge = aquila_external_powerdown_modes;
+		mr = aquila_mirror_powerdown_mode;
 		n_p = ARRAY_SIZE(aquila_powerdown_modes);
 		n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+		n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
 	}
 
 	bank = &gpio->gpio_a0;
@@ -1220,6 +1229,18 @@ static void setup_power_down_mode_registers(void)
 
 		bank++;
 		ge++;
+	}
+
+	for (i = 0; i < n_mr; i++) {
+		unsigned int reg = readl(&mr->bank->pdn_con);
+		reg &= ~(1 << mr->number);
+		if (readl(&mr->bank->dat) & (1 << mr->number))
+			reg |= 1 << mr->number;
+		writel(reg, &mr->bank->pdn_con);
+
+		printf("[%8.8X] = %8.8X\n", (unsigned int) (&mr->bank->pdn_con), reg);
+
+		mr++;
 	}
 }
 

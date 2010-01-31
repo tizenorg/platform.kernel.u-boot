@@ -39,15 +39,23 @@ struct gpio_external {
 	&((struct s5pc110_gpio *)S5PC110_GPIO_BASE)->gpio_##x
 /* In mirror mode, it sets "I(PD/PU)" according to the
  * output at the u-boot time. */
-struct s5pc11x_gpio_item {
-	struct s5pc11x_gpio_bank *bank;
+struct s5pc1xx_gpio_item {
+	struct s5pc1xx_gpio_bank *bank;
 	unsigned int number;
 };
 
-static struct s5pc11x_gpio_item aquila_mirror_powerdown_mode[] = {
+static struct s5pc1xx_gpio_item aquila_mirror_powerdown_mode[] = {
+	{ .bank = __GPIO(j0), .number = 1},
+	{ .bank = __GPIO(j0), .number = 2},
+	{ .bank = __GPIO(j0), .number = 3},
+	{ .bank = __GPIO(j0), .number = 4},
 };
 
-static struct s5pc11x_gpio_item aries_mirror_powerdown_mode[] = {
+static struct s5pc1xx_gpio_item aries_mirror_powerdown_mode[] = {
+	{ .bank = __GPIO(j0), .number = 2},
+	{ .bank = __GPIO(j0), .number = 3},
+	{ .bank = __GPIO(j0), .number = 4},
+	{ .bank = __GPIO(j0), .number = 7},
 };
 
 #undef __GPIO
