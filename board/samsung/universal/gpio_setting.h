@@ -230,7 +230,7 @@ static struct gpio_external aquila_external_powerdown_modes[] = {
 	}, {	/* S5PC110_GPIO_H3_OFFSET */
 		CON_IRQ(0) | CON_IRQ(1) | CON_IRQ(2) | CON_OUTPUT(3) |
 		CON_IRQ(4) | CON_INPUT(5) | CON_IRQ(6) | CON_OUTPUT(7),
-		DAT_CLEAR(3) | DAT_CLEAR(7),
+		DAT_CLEAR(3) | DAT_SET(7),
 		0,
 	},
 };
