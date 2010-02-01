@@ -817,6 +817,9 @@ static void enable_battery(void)
 		return;
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
+	} else if (machine_is_geminus()) {
+		if (hwrevision(1))
+			i2c_set_bus_num(I2C_GPIO7);
 	}
 
 	if (i2c_probe(addr)) {
@@ -845,6 +848,9 @@ static void check_battery(void)
 		return;
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
+	} else if (machine_is_geminus()) {
+		if (hwrevision(1))
+			i2c_set_bus_num(I2C_GPIO7);
 	}
 
 	if (i2c_probe(addr)) {
@@ -1015,6 +1021,9 @@ static void check_micro_usb(int intr)
 			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
+	} else if (machine_is_geminus()) {
+		if (hwrevision(1))
+			i2c_set_bus_num(I2C_GPIO6);
 	}
 
 	addr = 0x25;		/* fsa9480 */
@@ -1072,6 +1081,9 @@ static void micro_usb_switch(int path)
 			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
+	} else if (machine_is_geminus()) {
+		if (hwrevision(1))
+			i2c_set_bus_num(I2C_GPIO6);
 	}
 
 	addr = 0x25;		/* fsa9480 */
