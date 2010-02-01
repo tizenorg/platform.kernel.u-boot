@@ -45,10 +45,6 @@ struct s5pc1xx_gpio_item {
 };
 
 static struct s5pc1xx_gpio_item aquila_mirror_powerdown_mode[] = {
-	{ .bank = __GPIO(j0), .number = 1},
-	{ .bank = __GPIO(j0), .number = 2},
-	{ .bank = __GPIO(j0), .number = 3},
-	{ .bank = __GPIO(j0), .number = 4},
 };
 
 static struct s5pc1xx_gpio_item aries_mirror_powerdown_mode[] = {
