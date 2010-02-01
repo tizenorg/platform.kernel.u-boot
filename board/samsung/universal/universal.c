@@ -1201,25 +1201,58 @@ static void setup_power_down_mode_registers(void)
 			/* Support */;
 		else
 			return;
+	} else if (machine_is_geminus()) {
+		/* Support */;
 	} else
 		return;
 
-	if (board_is_aries()) {
-		/* Aquila rev 0.9 */
-		p = aries_powerdown_modes;
-		ge = aries_external_powerdown_modes;
-		mr = aries_mirror_powerdown_mode;
-		n_p = ARRAY_SIZE(aries_powerdown_modes);
-		n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
-		n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
-	} else {
-		/* Aquila rev 0.8 or lower */
-		p = aquila_powerdown_modes;
-		ge = aquila_external_powerdown_modes;
-		mr = aquila_mirror_powerdown_mode;
-		n_p = ARRAY_SIZE(aquila_powerdown_modes);
-		n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
-		n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
+	if (machine_is_aquila()) {
+		if (board_is_aries()) {
+			/* Aquila rev 0.9 */
+			p = aries_powerdown_modes;
+			ge = aries_external_powerdown_modes;
+			mr = aries_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(aries_powerdown_modes);
+			n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
+		} else {
+			/* Aquila rev 0.8 or lower */
+			p = aquila_powerdown_modes;
+			ge = aquila_external_powerdown_modes;
+			mr = aquila_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(aquila_powerdown_modes);
+			n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
+		}
+	} else if (machine_is_geminus()) {
+		if (hwrevision(1)) {
+			/* Same as Aquila rev 0.9 */
+#if 0
+			p = aries_powerdown_modes;
+			ge = aries_external_powerdown_modes;
+			mr = aries_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(aries_powerdown_modes);
+			n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
+#else
+			p = aquila_powerdown_modes;
+			ge = aquila_external_powerdown_modes;
+			mr = aquila_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(aquila_powerdown_modes);
+			n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
+#endif
+		} else if (hwrevision(0)) {
+			/* Same as Aquila rev 0.8 or lower */
+			p = aquila_powerdown_modes;
+			ge = aquila_external_powerdown_modes;
+			mr = aquila_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(aquila_powerdown_modes);
+			n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
+		} else {
+			return; /* Not supported */
+		}
 	}
 
 	bank = &gpio->gpio_a0;
