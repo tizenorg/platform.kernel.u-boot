@@ -144,8 +144,8 @@
 				",3584k(config)"\
 				",8m(csa_new)"\
 				",6m(kernel)"\
-				",1m(log)"\
-				",9728k(modem)"\
+				",256k(log)"\
+				",10496k(modem)"\
 				",8m(csa)"\
 				",-(UBI)\0"
 
@@ -154,8 +154,8 @@
 				",3584k(config)"\
 				",8m(csa_new)"\
 				",6m(kernel)"\
-				",1m(log)"\
-				",9728k(modem)"\
+				",256k(log)"\
+				",10496k(modem)"\
 				",8m(csa)"\
 				",-(UBI)\0"
 
