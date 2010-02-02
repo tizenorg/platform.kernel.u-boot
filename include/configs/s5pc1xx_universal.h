@@ -141,20 +141,22 @@
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",128k(params)"\
-				",3m(kernel)"\
-				",18m(modem)"\
-				",7m(fota)"\
-				",8m(csa)"\
+				",3584k(config)"\
+				",8m(csa_new)"\
+				",6m(kernel)"\
 				",1m(log)"\
+				",9728k(modem)"\
+				",8m(csa)"\
 				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",256k(params)"\
-				",3m(kernel)"\
-				",18m(modem)"\
-				",7m(fota)"\
-				",8m(csa)"\
+				",3584k(config)"\
+				",8m(csa_new)"\
+				",6m(kernel)"\
 				",1m(log)"\
+				",9728k(modem)"\
+				",8m(csa)"\
 				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
@@ -169,13 +171,13 @@
 		" ${meminfo}" \
 		" ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7 ubi.mtd=5" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=7" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x32008000 0x0 0x40000\0"
 
-#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=5"
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=7"
 
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
 
@@ -183,11 +185,11 @@
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0x80000 0x300000;" \
-	" onenand write 0x31008000 0x80000 0x300000\0" \
+	"updatek=onenand erase 0xc00000 0x600000;" \
+	" onenand write 0x31008000 0xc00000 0x600000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x32000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x30007FC0 0x80000 0x300000;" \
+	"bootk=onenand read 0x30007FC0 0xc00000 0x600000;" \
 	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
@@ -211,8 +213,8 @@
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=8\0" \
-	"ubiblock=7\0" \
+	"bootblock=9\0" \
+	"ubiblock=8\0" \
 	"ubi=enabled"
 
 /*
