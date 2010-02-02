@@ -14,6 +14,9 @@
 /* version of USB Downloader Application */
 #define APP_VERSION	"1.4.1"
 
+#define OPS_READ	0
+#define OPS_WRITE	1
+
 #ifdef CONFIG_CMD_MTDPARTS
 #include <jffs2/load_kernel.h>
 static struct part_info *parts[16];
@@ -237,12 +240,17 @@ int ubi_cmd(int part, char *p1, char *p2, char *p3)
 
 extern int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
-static int mmc_cmd(char *p1, char *p2, char *p3)
+static int mmc_cmd(int ops, char *p1, char *p2, char *p3)
 {
-	char *argv[] = {"mmc", "write", "0", p1, p2, p3};
 	int ret;
 
-	ret = do_mmcops(NULL, 0, 6, argv);
+	if (ops) {
+		char *argv[] = {"mmc", "write", "0", p1, p2, p3};
+		ret = do_mmcops(NULL, 0, 6, argv);
+	} else {
+		char *argv[] = {"mmc", "read", "0", p1, p2, p3};
+		ret = do_mmcops(NULL, 0, 6, argv);
+	}
 
 	return ret;
 }
@@ -252,6 +260,7 @@ static unsigned int cur_part_size;
 static unsigned int cur_partition;
 
 static unsigned int mmc_parts;
+static unsigned int mmc_part_write;
 
 struct partition_info {
 	u32 size;
@@ -321,7 +330,7 @@ static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 		sprintf(length, "%x", cnt);
 		sprintf(offset, "%x", cur_blk_offset);
 		sprintf(ramaddr, "0x%x", *ram_addr);
-		mmc_cmd(ramaddr, offset, length);
+		mmc_cmd(OPS_WRITE, ramaddr, offset, length);
 
 		cur_blk_offset += cnt;
 
@@ -331,7 +340,7 @@ static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 	return ret;
 }
 
-static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
+static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		char *offset, char *length)
 {
 	u32 ram_addr;
@@ -358,7 +367,7 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				mbr->partition[2].num_sectors +
 				mbr->partition[3].num_sectors);
 
-		/* modify lba_begin of p2 and p3 */
+		/* modify lba_begin of p2 and p3 and p4 */
 		for (i = 1; i < 4; i++) {
 			mmc_parts++;
 			if (part_info.partition[i].size == 0)
@@ -384,7 +393,7 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		sprintf(length, "%x", MBR_OFFSET);
 		sprintf(offset, "%x", 0);
 		sprintf(ramaddr, "0x%x", (u32)ram_addr);
-		ret = mmc_cmd(ramaddr, offset, length);
+		ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
 
 		ram_addr += (MBR_OFFSET * usbd->mmc_blk);
 		len -= (MBR_OFFSET * usbd->mmc_blk);
@@ -427,10 +436,55 @@ static void write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				(int)usbd->mmc_blk);
 		}
 	}
+
+	return 0;
+}
+
+static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
+		char *offset, char *length)
+{
+	u32 ram_addr;
+	int ret;
+	int i;
+
+	ram_addr = (u32)down_ram_addr;
+
+	if (cur_blk_offset == 0) {
+		/* read MBR */
+		sprintf(length, "%x", MBR_OFFSET);
+		sprintf(offset, "%x", 0);
+		sprintf(ramaddr, "0x%x", (u32)&mbr_info);
+		ret = mmc_cmd(OPS_READ, ramaddr, offset, length);
+
+		for (i = 0; i < 4; i++) {
+			printf("p%d\t0x%08x\t0x%08x\n", i + 1,
+				mbr_info.partition[i].lba_begin,
+				mbr_info.partition[i].num_sectors);
+		}
+
+		cur_blk_offset = (unsigned int)
+			mbr_info.partition[mmc_part_write - 1].lba_begin;
+		cur_partition = mmc_part_write - 1;
+		cur_part_size = (unsigned int)len;
+
+		if (mmc_part_write == 1) {
+			ram_addr += sizeof(boot_sector);
+			cur_blk_offset += sizeof(boot_sector) / usbd->mmc_blk;
+			len -= sizeof(boot_sector);
+		}
+	}
+
+	printf("\nWrite Partition %d.. %d blocks\n",
+		cur_partition + 1,
+		len / (int)usbd->mmc_blk);
+
+	write_mmc_partition(usbd, &ram_addr, len);
+
+	return 0;
 }
 #endif
 
-int write_file_system(char *ramaddr, ulong len, char *offset,
+static int write_file_system(char *ramaddr, ulong len, char *offset,
 		char *length, int part_num, int ubi_update)
 {
 #ifdef CONFIG_USE_YAFFS
@@ -648,6 +702,7 @@ static int process_data(struct usbd_ops *usbd)
 	case COMMAND_WRITE_PART_9:
 		printf("COMMAND_WRITE_MMC\n");
 		img_type = IMG_MMC;
+		mmc_part_write = arg;
 		break;
 
 	case COMMAND_WRITE_UBI_INFO:
@@ -812,7 +867,12 @@ static int process_data(struct usbd_ops *usbd)
 
 #ifdef CONFIG_CMD_MMC
 	case IMG_MMC:
-		write_file_mmc(usbd, ramaddr, len, offset, length);
+		if (mmc_part_write)
+			ret = write_file_mmc_part(usbd, ramaddr,
+						len, offset, length);
+		else
+			ret = write_file_mmc(usbd, ramaddr,
+						len, offset, length);
 		break;
 #endif
 
@@ -859,7 +919,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	else
 		down_mode = MODE_NORMAL;
 
-	printf("USB Downloader v%s (%d)\n", APP_VERSION, down_mode);
+	printf("USB Downloader v%s\n", APP_VERSION);
 
 	/* get partition info */
 	err = get_part_info();
