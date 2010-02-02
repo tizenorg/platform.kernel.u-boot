@@ -1666,6 +1666,26 @@ static void setup_meminfo(void)
 	setenv("meminfo", meminfo);
 }
 
+/*
+ * CSA partition Migration
+ * It will be deleted
+ */
+static void csa_migration()
+{
+	unsigned int *ubi_id;
+	int i;
+
+	printf("CSA Migration....\n");
+	run_command("onenand read 0x40000000 0x400000 0x400000", 0);
+
+	for (i == 0; i < 10; i++) {
+		ubi_id = 0x40000000 + 0x40000 * i;
+		if (*ubi_id == 0x23494255) /* 0x23494255 = UBI */
+			return;
+	}
+	run_command("onenand erase 0x400000 0x800000", 0);
+}
+
 int misc_init_r(void)
 {
 #ifdef CONFIG_LCD
@@ -1729,6 +1749,9 @@ int misc_init_r(void)
 
 	/* check fsa9480 */
 	check_micro_usb(0);
+
+	/* csa migration (temporary) */
+	csa_migration();
 
 	return 0;
 }
