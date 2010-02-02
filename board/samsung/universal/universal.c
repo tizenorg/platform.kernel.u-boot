@@ -1670,18 +1670,19 @@ static void setup_meminfo(void)
  * CSA partition Migration
  * It will be deleted
  */
-static void csa_migration()
+static void csa_migration(void)
 {
 	unsigned int *ubi_id;
 	int i;
 
-	printf("CSA Migration....\n");
 	run_command("onenand read 0x40000000 0x400000 0x400000", 0);
 
 	for (i == 0; i < 10; i++) {
 		ubi_id = 0x40000000 + 0x40000 * i;
-		if (*ubi_id == 0x23494255) /* 0x23494255 = UBI */
+		if (*ubi_id == 0x23494255) /* 0x23494255 = UBI */ {
+			printf("CSA Migration is already done....\n");
 			return;
+		}
 	}
 	run_command("onenand erase 0x400000 0x800000", 0);
 }
