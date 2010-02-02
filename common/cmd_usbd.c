@@ -367,12 +367,14 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				mbr->partition[2].num_sectors +
 				mbr->partition[3].num_sectors);
 
+		mmc_parts++;
+
 		/* modify lba_begin of p2 and p3 and p4 */
 		for (i = 1; i < 4; i++) {
-			mmc_parts++;
 			if (part_info.partition[i].size == 0)
 				break;
 
+			mmc_parts++;
 			mbr->partition[i].lba_begin =
 				mbr->partition[i - 1].lba_begin +
 				mbr->partition[i - 1].num_sectors;
