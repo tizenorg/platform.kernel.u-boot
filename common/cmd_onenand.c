@@ -86,6 +86,7 @@ static int onenand_block_read(loff_t from, ssize_t len,
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
 			ofs += blocksize;
+			/* FIXME need to check how to handle the 'len' */
 			len -= blocksize;
 			continue;
 		}
@@ -145,7 +146,6 @@ static int onenand_block_write(loff_t to, ssize_t len,
 			printk("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
 			skip_ofs += blocksize;
-			len -= blocksize;
 			goto next;
 		}
 
