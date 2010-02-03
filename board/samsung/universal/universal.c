@@ -363,25 +363,29 @@ static char *display_features(int board, int board_rev)
 {
 	int count = 0;
 	char *buf = feature_buffer;
+	char *name = NULL;
 
 	if (board == MACH_AQUILA) {
 		if (board_rev & SPLIT_SCREEN_FEATURE)
-			count += sprintf(buf + count, " - SplitScreen");
+			name = "SplitScreen";
 		if (board_rev & J1_B2_BOARD)
-			count += sprintf(buf + count, " - J1 B2 board");
+			name = "J1 B2";
 		/* Limo Real or Universal */
 		if (board_rev & LIMO_REAL_BOARD)
-			count += sprintf(buf + count, " - Limo Real");
+			name = "Limo Real";
 		else if (board_rev & LIMO_UNIVERSAL_BOARD)
-			count += sprintf(buf + count, " - Limo Universal");
+			name = "Limo Universal";
 		if (board_rev & MEDIA_BOARD)
-			count += sprintf(buf + count, " - Media");
+			name = "Media";
 		if (board_rev & BAMBOO_BOARD)
-			count += sprintf(buf + count, " - Bamboo");
+			name = "Bamboo";
 		if (board_rev & ARIES_BOARD)
-			count += sprintf(buf + count, " - Aries");
+			name = "Aries";
 		if (board_rev & NEPTUNE_BOARD)
-			count += sprintf(buf + count, " - Neptune");
+			name = "Neptune";
+
+		if (name)
+			count += sprintf(buf + count, " - %s", name);
 	}
 
 	return buf;
@@ -809,7 +813,7 @@ static void check_keypad(void)
 		/* workaround */
 		if (col_value[1] == 0xd && col_value[2] == 0xe && machine_is_geminus())
 			auto_download = 1;
-	
+
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
 			auto_download = 1;
 
@@ -860,7 +864,7 @@ static void check_battery(void)
 	i2c_set_bus_num(I2C_GPIO3);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries())
+		if (board_is_aries() || board_is_neptune())
 			i2c_set_bus_num(I2C_GPIO7);
 		else if (board_is_j1b2())
 			return;
