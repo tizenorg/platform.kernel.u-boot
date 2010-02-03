@@ -860,7 +860,10 @@ static int process_data(struct usbd_ops *usbd)
 		sprintf(length, "%x", parts[part_id]->size);
 
 		/* Erase */
-		nand_cmd(0, offset, length, NULL);
+		if (!arg)
+			nand_cmd(0, offset, length, NULL);
+		else
+			printf("CSA Clear will be skipped temporary\n");
 
 		/* Write : arg (0 Modem) / (1 CSA) */
 		if (!arg) {
