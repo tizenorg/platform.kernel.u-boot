@@ -1762,8 +1762,8 @@ static void csa_migration(void)
 
 	run_command("onenand read 0x40000000 0x400000 0x400000", 0);
 
-	for (i == 0; i < 10; i++) {
-		ubi_id = 0x40000000 + 0x40000 * i;
+	for (i = 0; i < 10; i++) {
+		ubi_id = (void *) (0x40000000 + 0x40000 * i);
 		if (*ubi_id == 0x23494255) /* 0x23494255 = UBI */ {
 			printf("CSA Migration is already done....\n");
 			return;
