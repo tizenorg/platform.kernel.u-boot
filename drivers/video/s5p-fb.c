@@ -203,7 +203,6 @@ static void draw_samsung_logo(void* lcdbase)
 	unsigned int in_len, width, height;
 	unsigned long out_len;
 	void *dst = NULL;
-
 	width = 298;
 	height = 78;
 	x = ((panel_width - width) >> 1);
@@ -232,29 +231,27 @@ static void lcd_panel_on(vidinfo_t *vid)
 	if (vid->cfg_gpio)
 		vid->cfg_gpio();
 
-	if (vid->lcd_power_on) {
+	if (vid->lcd_power_on)
 		vid->lcd_power_on(1);
-	}
 
 	udelay(vid->power_on_delay);
 
-	if (vid->reset_lcd) {
+	if (vid->reset_lcd)
 		vid->reset_lcd();
-	}
 
 	udelay(vid->reset_delay);
 
-	if (vid->backlight_on) {
+	if (vid->backlight_on)
 		vid->backlight_on(1);
-	}
 
-	if (vid->cfg_ldo) {
+
+	if (vid->cfg_ldo)
 		vid->cfg_ldo();
-	}
 
-	if (vid->enable_ldo) {
+
+	if (vid->enable_ldo)
 		vid->enable_ldo(1);
-	}
+
 }
 
 /* extern void init_onenand_ext2(void); */

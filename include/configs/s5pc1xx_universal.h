@@ -326,6 +326,7 @@
 #define CONFIG_LCD		1
 #define CONFIG_S5PC1XXFB	1
 #define CONFIG_S6E63M0		1
+#define CONFIG_S6D16A0X		1
 #define CONFIG_CMD_BMP
 #endif
 

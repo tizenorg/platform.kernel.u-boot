@@ -46,6 +46,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
+/* FIXME Neptune workaround */
+#define USE_NEPTUNE_BOARD
+#undef USE_NEPTUNE_BOARD
+
 static unsigned int board_rev;
 static unsigned int battery_soc;
 static struct s5pc110_gpio *s5pc110_gpio;
@@ -187,6 +191,7 @@ enum {
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
 #define ARIES_BOARD		0x4000
+#define NEPTUNE_BOARD		0x8000
 
 #define BOARD_MASK		0xF00
 
@@ -243,6 +248,11 @@ static int board_is_j1b2(void)
 static int board_is_aries(void)
 {
 	return machine_is_aquila() && (board_rev & ARIES_BOARD);
+}
+
+static int board_is_neptune(void)
+{
+	return machine_is_aquila() && (board_rev & NEPTUNE_BOARD);
 }
 
 static void enable_battery(void);
@@ -337,6 +347,7 @@ static const char *board_name[] = {
 	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
+	"Neptune",
 };
 
 enum {
@@ -369,6 +380,8 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - Bamboo");
 		if (board_rev & ARIES_BOARD)
 			count += sprintf(buf + count, " - Aries");
+		if (board_rev & NEPTUNE_BOARD)
+			count += sprintf(buf + count, " - Neptune");
 	}
 
 	return buf;
@@ -384,9 +397,6 @@ static void check_board_revision(int board, int rev)
 		if (rev & LIMO_REAL_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & ARIES_BOARD)
-			board_rev &= ~(J1_B2_BOARD |
-					LIMO_UNIVERSAL_BOARD);
 		if (rev & MEDIA_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -395,6 +405,12 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
+		if (rev & ARIES_BOARD)
+			board_rev &= ~(J1_B2_BOARD |
+					LIMO_UNIVERSAL_BOARD);
+		if (rev & NEPTUNE_BOARD)
+			board_rev &= ~(J1_B2_BOARD |
+					LIMO_UNIVERSAL_BOARD);
 		break;
 	case MACH_CYPRESS:
 	case MACH_TICKERTAPE:
@@ -548,6 +564,10 @@ static void check_hw_revision(void)
 			} else {
 				board = MACH_AQUILA;
 				board_rev |= ARIES_BOARD;
+#ifdef USE_NEPTUNE_BOARD
+				board_rev &= ~ARIES_BOARD;
+				board_rev |= NEPTUNE_BOARD;
+#endif
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 1;
@@ -809,7 +829,7 @@ static void enable_battery(void)
 	i2c_set_bus_num(I2C_GPIO3);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries())
+		if (board_is_aries() || board_is_neptune())
 			i2c_set_bus_num(I2C_GPIO7);
 		else if (board_is_j1b2())
 			return;
@@ -1017,7 +1037,7 @@ static void check_micro_usb(int intr)
 	i2c_set_bus_num(I2C_PMIC);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries())
+		if (board_is_aries() || board_is_neptune())
 			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
@@ -1077,7 +1097,7 @@ static void micro_usb_switch(int path)
 	i2c_set_bus_num(I2C_PMIC);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries())
+		if (board_is_aries() || board_is_neptune())
 			i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
@@ -1157,7 +1177,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
 
-	if (board_is_aries())
+	if (board_is_aries() || board_is_neptune())
 		val[0] |= MAX8998_LDO7;		/* LDO7: VLCD_1.8V */
 
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
@@ -1171,7 +1191,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
 			MAX8998_LDO16 | MAX8998_LDO17);
 
-	if (board_is_aries())
+	if (board_is_aries() || board_is_neptune())
 		val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
 
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
@@ -1197,7 +1217,7 @@ static void setup_power_down_mode_registers(void)
 	if (machine_is_aquila()) {
 		if (board_is_limo_real())
 			/* Support */;
-		else if (board_is_aries())
+		else if (board_is_aries() || board_is_neptune())
 			/* Support */;
 		else
 			return;
@@ -1207,7 +1227,7 @@ static void setup_power_down_mode_registers(void)
 		return;
 
 	if (machine_is_aquila()) {
-		if (board_is_aries()) {
+		if (board_is_aries() || board_is_neptune()) {
 			/* Aquila rev 0.9 */
 			p = aries_powerdown_modes;
 			ge = aries_external_powerdown_modes;
@@ -1304,9 +1324,24 @@ struct s6e63m0_platform_data {
 	unsigned int board_is_media;
 };
 
+struct s6d16a0x_platform_data {
+	struct s5pc1xx_gpio_bank *cs_bank;
+	struct s5pc1xx_gpio_bank *clk_bank;
+	struct s5pc1xx_gpio_bank *si_bank;
+	struct s5pc1xx_gpio_bank *so_bank;
+
+	unsigned int cs_num;
+	unsigned int clk_num;
+	unsigned int si_num;
+	unsigned int so_num;
+};
+
 extern void s6e63m0_set_platform_data(struct s6e63m0_platform_data *pd);
+extern void s6d16a0x_set_platform_data(struct s6d16a0x_platform_data *pd);
 
 struct s6e63m0_platform_data s6e63m0_pd;
+struct s6d16a0x_platform_data s6d16a0x_pd;
+
 struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 void lcd_cfg_gpio(void)
@@ -1368,20 +1403,31 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (machine_is_aquila()) {
-		s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_1;
-		s6e63m0_pd.cs_num = 1;
-		s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
-		s6e63m0_pd.clk_num = 1;
-		s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
-		s6e63m0_pd.si_num = 3;
-		s6e63m0_pd.so_bank = &gpio_base->gpio_mp0_4;
-		s6e63m0_pd.so_num = 2;
+		if (board_is_neptune()) {
+			s6d16a0x_pd.cs_bank = &gpio_base->gpio_mp0_1;
+			s6d16a0x_pd.cs_num = 1;
+			s6d16a0x_pd.clk_bank = &gpio_base->gpio_mp0_4;
+			s6d16a0x_pd.clk_num = 1;
+			s6d16a0x_pd.si_bank = &gpio_base->gpio_mp0_4;
+			s6d16a0x_pd.si_num = 3;
+			s6d16a0x_pd.so_bank = &gpio_base->gpio_mp0_4;
+			s6d16a0x_pd.so_num = 2;
+			s6d16a0x_set_platform_data(&s6d16a0x_pd);
+		} else {
+			s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_1;
+			s6e63m0_pd.cs_num = 1;
+			s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
+			s6e63m0_pd.clk_num = 1;
+			s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
+			s6e63m0_pd.si_num = 3;
+			s6e63m0_pd.so_bank = &gpio_base->gpio_mp0_4;
+			s6e63m0_pd.so_num = 2;
 
-		if (board_is_media())
-			s6e63m0_pd.board_is_media = 1;
-
+			if (board_is_media())
+				s6e63m0_pd.board_is_media = 1;
+			s6e63m0_set_platform_data(&s6e63m0_pd);
+		}
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_platform_data(&s6e63m0_pd);
 	}
 
 	if (machine_is_cypress()) {
@@ -1443,15 +1489,15 @@ void reset_lcd(void)
 void lcd_power_on(unsigned int onoff)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 	if (onoff) {
+		/* TSP_LDO_ON */
 		if (machine_is_aquila() || machine_is_geminus())
 			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
-		if (board_is_aries()) {
+		if (board_is_aries() || board_is_neptune()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
@@ -1462,22 +1508,22 @@ void lcd_power_on(unsigned int onoff)
 				printf("Can't found max8998\n");
 				return;
 			}
-
-			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-			val[0] |= (1 << 7);
-			val2[0] = 0x2;
-			i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
-			i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
-			i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+			val[0] &= ~(MAX8998_LDO17);
+			val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
+			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			val[0] |= MAX8998_LDO17;
 			val2[0] = 0xE;
-			i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
-			i2c_read(addr, MAX8998_REG_LDO7, 1, val2, 1);
+			i2c_write(addr, MAX8998_REG_LDO17, 1, val2, 1);
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+
+			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+			val[0] |= MAX8998_LDO7;
+			val2[0] = 0x2;
+			i2c_write(addr, MAX8998_REG_LDO7, 1, val2, 1);
+			i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 		}
 	} else {
 		if (machine_is_aquila() || machine_is_geminus())
@@ -1486,7 +1532,7 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 0);
 
-		if (board_is_aries()) {
+		if (board_is_aries() || board_is_neptune()) {
 			unsigned char addr;
 			unsigned char val[2];
 
@@ -1512,6 +1558,8 @@ void lcd_power_on(unsigned int onoff)
 
 extern void s6e63m0_cfg_ldo(void);
 extern void s6e63m0_enable_ldo(unsigned int onoff);
+extern void s6d16a0x_cfg_ldo(void);
+extern void s6d16a0x_enable_ldo(unsigned int onoff);
 
 void init_panel_info(vidinfo_t *vid)
 {
@@ -1565,12 +1613,49 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_lcd = reset_lcd;
 		vid->backlight_on = backlight_on;
 		vid->lcd_power_on = lcd_power_on;
-
 		vid->cfg_ldo = s6e63m0_cfg_ldo;
 		vid->enable_ldo = s6e63m0_enable_ldo;
 
 		vid->init_delay = 25000;
 		vid->reset_delay = 120000;
+	}
+
+	if (board_is_neptune()) {
+		vid->vl_freq	= 100;
+		vid->vl_col	= 320;
+		vid->vl_row	= 480;
+		vid->vl_width	= 320;
+		vid->vl_height	= 480;
+
+		vid->vl_clkp	= CONFIG_SYS_HIGH;
+		vid->vl_hsp	= CONFIG_SYS_HIGH;
+		vid->vl_vsp	= CONFIG_SYS_HIGH;
+		vid->vl_dp	= CONFIG_SYS_LOW;
+		vid->vl_bpix	= 32;
+
+		/* disable dual lcd mode. */
+		vid->dual_lcd_enabled = 0;
+
+		/* S6D16A0X LCD Panel */
+		vid->vl_hspw	= 16;
+		vid->vl_hbpd	= 24;
+		vid->vl_hfpd	= 16;
+
+		vid->vl_vspw	= 2;
+		vid->vl_vbpd	= 2;
+		vid->vl_vfpd	= 4;
+
+		vid->cfg_gpio = lcd_cfg_gpio;
+		vid->backlight_on = NULL;
+		vid->lcd_power_on = lcd_power_on;
+		vid->reset_lcd = reset_lcd;
+		vid->cfg_ldo = s6d16a0x_cfg_ldo;
+		vid->enable_ldo = s6d16a0x_enable_ldo;
+
+		vid->init_delay = 10000;
+		vid->power_on_delay = 10000;
+		vid->reset_delay = 1000;
+
 	}
 
 	if (machine_is_geminus()) {
@@ -1693,9 +1778,11 @@ int misc_init_r(void)
 	/* It should be located at first */
 	lcd_is_enabled = 0;
 
-	if (board_is_limo_real() ||
+	if (board_is_neptune())
+		setenv("lcdinfo", "lcd=s6d16a0x");
+	else if ((board_is_limo_real() ||
 		board_is_limo_universal() ||
-		board_is_j1b2())
+		board_is_j1b2()))
 		setenv("lcdinfo", "lcd=s6e63m0");
 	/* it can't classify tl2796 with single-lcd and dual-lcd.
 	else
@@ -1983,7 +2070,7 @@ int board_mmc_init(bd_t *bis)
 	int i;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
-	if (machine_is_aquila() && board_is_aries())
+	if (machine_is_aquila() && (board_is_aries() || board_is_neptune()))
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
 
 	/* MMC0 Clock source = SCLKMPLL */

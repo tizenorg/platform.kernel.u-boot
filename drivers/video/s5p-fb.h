@@ -257,6 +257,10 @@ extern void s6e63m0_lcd_panel_init(void);
 extern void s6e63m0_lcd_panel_power_on(void);
 extern void s6e63m0_lcd_panel_enable(void);
 
+extern void s6d16a0x_lcd_panel_init(void);
+extern void s6d16a0x_lcd_panel_power_on(void);
+extern void s6d16a0x_lcd_panel_enable(void);
+
 extern void ams701ka_lcd_panel_init(void);
 extern void ams701ka_lcd_panel_power_on(void);
 extern void ams701ka_lcd_panel_enable(void);
