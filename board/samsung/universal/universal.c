@@ -1314,7 +1314,7 @@ static void setup_power_down_mode_registers(void)
 }
 
 #ifdef CONFIG_LCD
-struct s6e63m0_platform_data {
+struct spi_platform_data {
 	struct s5pc1xx_gpio_bank *cs_bank;
 	struct s5pc1xx_gpio_bank *clk_bank;
 	struct s5pc1xx_gpio_bank *si_bank;
@@ -1328,23 +1328,11 @@ struct s6e63m0_platform_data {
 	unsigned int board_is_media;
 };
 
-struct s6d16a0x_platform_data {
-	struct s5pc1xx_gpio_bank *cs_bank;
-	struct s5pc1xx_gpio_bank *clk_bank;
-	struct s5pc1xx_gpio_bank *si_bank;
-	struct s5pc1xx_gpio_bank *so_bank;
+extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
+extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
 
-	unsigned int cs_num;
-	unsigned int clk_num;
-	unsigned int si_num;
-	unsigned int so_num;
-};
-
-extern void s6e63m0_set_platform_data(struct s6e63m0_platform_data *pd);
-extern void s6d16a0x_set_platform_data(struct s6d16a0x_platform_data *pd);
-
-struct s6e63m0_platform_data s6e63m0_pd;
-struct s6d16a0x_platform_data s6d16a0x_pd;
+struct spi_platform_data s6e63m0_pd;
+struct spi_platform_data s6d16a0x_pd;
 
 struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
