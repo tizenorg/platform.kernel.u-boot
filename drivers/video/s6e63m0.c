@@ -25,31 +25,10 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
-
-#define SLEEPMSEC		0x1000
-#define ENDDEF			0x2000
-#define	DEFMASK			0xFF00
-#define COMMAND_ONLY		0xFE
-#define DATA_ONLY		0xFF
-
-#define PACKET_LEN		8
-
-struct s6e63m0_platform_data {
-	struct s5pc1xx_gpio_bank *cs_bank;
-	struct s5pc1xx_gpio_bank *clk_bank;
-	struct s5pc1xx_gpio_bank *si_bank;
-	struct s5pc1xx_gpio_bank *so_bank;
-
-	unsigned int cs_num;
-	unsigned int clk_num;
-	unsigned int si_num;
-	unsigned int so_num;
-
-	unsigned int board_is_media;
-};
+#include "s5p-spi.h"
 
 /* these machine specific platform data would be setting at universal.c */
-struct s6e63m0_platform_data *s6e63m0;
+struct spi_platform_data *s6e63m0;
 
 void cs_low(void)
 {
@@ -559,7 +538,7 @@ void s6e63m0_enable_ldo(unsigned int onoff)
 }
 
 /* this function would be called at universal.c */
-void s6e63m0_set_platform_data(struct s6e63m0_platform_data *pd)
+void s6e63m0_set_platform_data(struct spi_platform_data *pd)
 {
 	if (pd == NULL) {
 		printf("pd is NULL.\n");

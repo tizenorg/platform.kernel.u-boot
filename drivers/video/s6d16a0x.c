@@ -25,37 +25,10 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
-
-#define SLEEPMSEC		0x1000
-#define ENDDEF			0x2000
-#define	DEFMASK			0xFF00
-#define COMMAND_ONLY		0xFE
-#define DATA_ONLY		0xFF
-
-#define PACKET_LEN		8
-
-struct s6d16a0x_platform_data {
-	struct s5pc11x_gpio_bank *cs_bank;
-	struct s5pc11x_gpio_bank *clk_bank;
-	struct s5pc11x_gpio_bank *si_bank;
-	struct s5pc11x_gpio_bank *so_bank;
-
-	unsigned int cs_num;
-	unsigned int clk_num;
-	unsigned int si_num;
-	unsigned int so_num;
-
-	struct device			*dev;
-	struct spi_device		*spi;
-	unsigned int			power;
-	struct lcd_device		*ld;
-	//struct backlight_device		*bd;
-	struct s6d16a0x_platform_data	*pdata;
-}
-;
+#include "s5p-spi.h"
 
 /* these machine specific platform data would be setting at universal.c */
-struct s6d16a0x_platform_data *s6d16a0x;
+struct spi_platform_data *s6d16a0x;
 
 void cs_low_(void)
 {
@@ -455,7 +428,6 @@ static void s6d16a0x_c110_spi_write_byte(unsigned char address, unsigned char co
 	udelay(Delay);
 }
 
-
 static unsigned char s6d16a0x_c110_spi_read_byte(unsigned char select, unsigned char address)
 {
 	int     j;
@@ -572,7 +544,7 @@ void s6d16a0x_enable_ldo(unsigned int onoff)
 }
 
 /* this function would be called at universal.c */
-void s6d16a0x_set_platform_data(struct s6d16a0x_platform_data *pd)
+void s6d16a0x_set_platform_data(struct spi_platform_data *pd)
 {
 	if (pd == NULL) {
 		printf("pd is NULL.\n");
@@ -581,3 +553,4 @@ void s6d16a0x_set_platform_data(struct s6d16a0x_platform_data *pd)
 
 	s6d16a0x = pd;
 }
+

@@ -1331,8 +1331,7 @@ struct spi_platform_data {
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
 extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
 
-struct spi_platform_data s6e63m0_pd;
-struct spi_platform_data s6d16a0x_pd;
+struct spi_platform_data spi_pd;
 
 struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
@@ -1396,28 +1395,28 @@ void lcd_cfg_gpio(void)
 
 	if (machine_is_aquila()) {
 		if (board_is_neptune()) {
-			s6d16a0x_pd.cs_bank = &gpio_base->gpio_mp0_1;
-			s6d16a0x_pd.cs_num = 1;
-			s6d16a0x_pd.clk_bank = &gpio_base->gpio_mp0_4;
-			s6d16a0x_pd.clk_num = 1;
-			s6d16a0x_pd.si_bank = &gpio_base->gpio_mp0_4;
-			s6d16a0x_pd.si_num = 3;
-			s6d16a0x_pd.so_bank = &gpio_base->gpio_mp0_4;
-			s6d16a0x_pd.so_num = 2;
-			s6d16a0x_set_platform_data(&s6d16a0x_pd);
+			spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
+			spi_pd.cs_num = 1;
+			spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.clk_num = 1;
+			spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.si_num = 3;
+			spi_pd.so_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.so_num = 2;
+			s6d16a0x_set_platform_data(&spi_pd);
 		} else {
-			s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_1;
-			s6e63m0_pd.cs_num = 1;
-			s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
-			s6e63m0_pd.clk_num = 1;
-			s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
-			s6e63m0_pd.si_num = 3;
-			s6e63m0_pd.so_bank = &gpio_base->gpio_mp0_4;
-			s6e63m0_pd.so_num = 2;
+			spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
+			spi_pd.cs_num = 1;
+			spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.clk_num = 1;
+			spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.si_num = 3;
+			spi_pd.so_bank = &gpio_base->gpio_mp0_4;
+			spi_pd.so_num = 2;
 
 			if (board_is_media())
-				s6e63m0_pd.board_is_media = 1;
-			s6e63m0_set_platform_data(&s6e63m0_pd);
+				spi_pd.board_is_media = 1;
+			s6e63m0_set_platform_data(&spi_pd);
 		}
 		/* these data would be sent to s6e63m0 lcd panel driver. */
 	}
@@ -1441,15 +1440,15 @@ void lcd_cfg_gpio(void)
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
 #endif
-		s6e63m0_pd.cs_bank = &gpio_base->gpio_mp0_5;
-		s6e63m0_pd.cs_num = 1;
-		s6e63m0_pd.clk_bank = &gpio_base->gpio_mp0_4;
-		s6e63m0_pd.clk_num = 0;
-		s6e63m0_pd.si_bank = &gpio_base->gpio_mp0_4;
-		s6e63m0_pd.si_num = 2;
+		spi_pd.cs_bank = &gpio_base->gpio_mp0_5;
+		spi_pd.cs_num = 1;
+		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.clk_num = 0;
+		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.si_num = 2;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
-		s6e63m0_set_platform_data(&s6e63m0_pd);
+		s6e63m0_set_platform_data(&spi_pd);
 	}
 
 	return;
