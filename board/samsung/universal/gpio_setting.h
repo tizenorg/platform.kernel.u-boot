@@ -319,7 +319,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110(ARIES)_GPIO_F3_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		INPUT(4) | PDNCON_NC(5),
+		KEEP_STATE(4) | PDNCON_NC(5),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DOWN(4) | PDNPUD_NC(5),
 	}, {	/* S5PC110(ARIES)_GPIO_G0_OFFSET */
