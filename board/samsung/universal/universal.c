@@ -665,8 +665,10 @@ static void show_hw_revision(void)
 		s5pc1xx_set_cpu_rev(0);
 	}
 
-	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, get_board_name(board),
-		display_features(board, board_rev));
+	dprintf("HW Revision:\t%x (%s%s) %s\n",
+		board_rev, get_board_name(board),
+		display_features(board, board_rev),
+		s5pc1xx_get_cpu_rev() ? "" : "EVT0");
 }
 
 static void check_auto_burn(void)
