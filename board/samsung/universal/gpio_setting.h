@@ -393,10 +393,10 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PDNCON_NC(0) | PDNCON_NC(1) | INPUT(2) | PDNCON_NC(3),
 		PDNPUD_NC(0) | PDNPUD_NC(1) | PULL_DIS(2) | PDNPUD_NC(3),
 	}, {	/* S5PC110(ARIES)_MP0_3_OFFSET */
-		/* PDA_ACTIVE(MP0_3_3 Xm0FREn) Output-High */
-		PDNCON_NC(0) | PDNCON_NC(1) | OUTPUT1(2) | OUTPUT1(3) |
+		/* XM0FWEN: MP0_3[2] -> output high */
+		PDNCON_NC(0) | PDNCON_NC(1) | OUTPUT1(2) | INPUT(3) |
 		INPUT(4) | OUTPUT1(5) | PDNCON_NC(6) | PDNCON_NC(7),
-		PDNPUD_NC(0) | PDNPUD_NC(1) | PULL_DIS(2) | PULL_DIS(3) |
+		PDNPUD_NC(0) | PDNPUD_NC(1) | PULL_DIS(2) | PULL_DOWN(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PDNPUD_NC(6) | PDNPUD_NC(7),
 	}, {	/* S5PC110(ARIES)_MP0_4_OFFSET */
 		PDNCON_NC(0) | OUTPUT0(1) | OUTPUT0(2) | INPUT(3) |
