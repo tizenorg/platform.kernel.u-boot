@@ -134,8 +134,11 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_F3_OFFSET */
+		/*
+		 * GPF3[4]: CODEC_LDO_EN can be enabled at suspend
+		 */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-		OUTPUT0(4) | OUTPUT0(5),
+		KEEP_STATE(4) | OUTPUT0(5),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5),
 	}, {	/* S5PC110_GPIO_G0_OFFSET */
@@ -319,7 +322,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110(ARIES)_GPIO_F3_OFFSET */
 		/*
-		 * GPF3[4]: LDO_CODEC_EN can be enabled at suspend
+		 * GPF3[4]: CODEC_LDO_EN can be enabled at suspend
 		 */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		KEEP_STATE(4) | PDNCON_NC(5),
