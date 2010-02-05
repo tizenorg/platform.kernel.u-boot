@@ -139,10 +139,14 @@ static void recv_setup(char *addr, int len)
 
 #ifdef CONFIG_GENERIC_MMC
 #include <mmc.h>
+extern int s5p_no_mmc_support(void);
 
 static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 {
 	struct mmc *mmc;
+
+	if (s5p_no_mmc_support)
+		return;
 
 	usbd->mmc_dev = 0;
 	/* FIXME */
