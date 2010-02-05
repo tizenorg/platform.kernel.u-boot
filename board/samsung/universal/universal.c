@@ -1402,14 +1402,14 @@ void lcd_cfg_gpio(void)
 		spi_pd.si_num = 3;
 		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.so_num = 2;
-		s6e63m0_set_platform_data(&spi_pd);
 
 		if (board_is_neptune())
 			s6d16a0x_set_platform_data(&spi_pd);
-		else if (board_is_media())
+		else {
+			s6e63m0_set_platform_data(&spi_pd);
+			if (board_is_media())
 				spi_pd.board_is_media = 1;
-
-		/* these data would be sent to s6e63m0 lcd panel driver. */
+		}
 	}
 
 	if (machine_is_cypress()) {
