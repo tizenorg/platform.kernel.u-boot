@@ -180,6 +180,8 @@ enum {
 	MACH_P1P2,	/* Don't remove it */
 	MACH_GEMINUS,
 	MACH_CYPRESS,
+
+	MACH_WMG160 = 160,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -253,6 +255,12 @@ static int board_is_aries(void)
 static int board_is_neptune(void)
 {
 	return machine_is_aquila() && (board_rev & NEPTUNE_BOARD);
+}
+
+/* DLNA Dongle */
+static int machine_is_wmg160(void)
+{
+	return c110_machine_id() == MACH_WMG160;
 }
 
 static void enable_battery(void);
