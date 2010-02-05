@@ -594,20 +594,23 @@ static void check_hw_revision(void)
 		} else
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 
-		/* WMG160 - GPB[0:7] == 0x00000000 */
+#if 0
+		/* WMG160 - FIMXE */
 		do {
 			int i, wmg160 = 1;
 
 			for (i = 0; i < 8; i++) {
-				if (gpio_get_value(&gpio->gpio_g1, i) == 0)
-					continue;
-				wmg160 = 0;
+				if (gpio_get_value(&gpio->gpio_h1, i) != 0) {
+					wmg160 = 0;
+					break;
+				}
 			}
 			if (wmg160) {
 				board = MACH_WMG160;
 				hwrev3 = 1;
 			}
 		} while (0);
+#endif
 
 		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
