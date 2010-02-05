@@ -1146,8 +1146,10 @@ static void micro_usb_switch(int path)
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
 			i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_wmg160())
+	} else if (machine_is_wmg160()) {
 		i2c_set_bus_num(I2C_GPIO6);
+		return;
+	}
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
@@ -1158,12 +1160,12 @@ static void micro_usb_switch(int path)
 	if (path)
 		val[0] = 0x90;	/* VAUDIO */
 	else
-		val[0] = 0x24;	/* DHOST */
+		val[0] = (1 << 5) | (1 << 2);	/* DHOST */
 
 	i2c_write(addr, 0x13, 1, val, 1);	/* MANSW1 */
 
 	i2c_read(addr, 0x2, 1, val, 1);
-	val[0] &= ~(1 << 2);
+	val[0] &= ~(1 << 2);			/* Manual switching */
 	i2c_write(addr, 0x2, 1, val, 1);
 }
 
