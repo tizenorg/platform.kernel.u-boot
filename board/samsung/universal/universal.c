@@ -187,15 +187,15 @@ enum {
 #define SPLIT_SCREEN_FEATURE	0x100
 
 /* board is MACH_AQUILA and board is like below. */
-#define J1_B2_BOARD		0x200
-#define LIMO_UNIVERSAL_BOARD	0x400
-#define LIMO_REAL_BOARD		0x800
+#define J1_B2_BOARD		0x0200
+#define LIMO_UNIVERSAL_BOARD	0x0400
+#define LIMO_REAL_BOARD		0x0800
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
 #define ARIES_BOARD		0x4000
 #define NEPTUNE_BOARD		0x8000
 
-#define BOARD_MASK		0xF00
+#define BOARD_MASK		0xFF00
 
 static int c110_machine_id(void)
 {
@@ -399,6 +399,13 @@ static char *display_features(int board, int board_rev)
 	return buf;
 }
 
+static char *get_board_name(int board)
+{
+	if (board == MACH_WMG160)
+		return "WMG160";
+	return (char *) board_name[board];
+}
+
 static void check_board_revision(int board, int rev)
 {
 	switch (board) {
@@ -427,6 +434,7 @@ static void check_board_revision(int board, int rev)
 	case MACH_CYPRESS:
 	case MACH_TICKERTAPE:
 	case MACH_GEMINUS:
+	case MACH_WMG160:
 		board_rev &= ~BOARD_MASK;
 		break;
 	default:
@@ -586,6 +594,21 @@ static void check_hw_revision(void)
 		} else
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 
+		/* WMG160 - GPB[0:7] == 0x00000000 */
+		do {
+			int i, wmg160 = 1;
+
+			for (i = 0; i < 8; i++) {
+				if (gpio_get_value(&gpio->gpio_b, i) == 0)
+					continue;
+				wmg160 = 0;
+			}
+			if (wmg160) {
+				board = MACH_WMG160;
+				hwrev3 = 1;
+			}
+		} while (0);
+
 		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
 
@@ -642,7 +665,7 @@ static void show_hw_revision(void)
 		s5pc1xx_set_cpu_rev(0);
 	}
 
-	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
+	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, get_board_name(board),
 		display_features(board, board_rev));
 }
 
