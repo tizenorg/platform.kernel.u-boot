@@ -599,7 +599,7 @@ static void check_hw_revision(void)
 			int i, wmg160 = 1;
 
 			for (i = 0; i < 8; i++) {
-				if (gpio_get_value(&gpio->gpio_b, i) == 0)
+				if (gpio_get_value(&gpio->gpio_g1, i) == 0)
 					continue;
 				wmg160 = 0;
 			}
