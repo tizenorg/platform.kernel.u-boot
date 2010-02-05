@@ -1583,6 +1583,13 @@ extern void s6e63m0_enable_ldo(unsigned int onoff);
 extern void s6d16a0x_cfg_ldo(void);
 extern void s6d16a0x_enable_ldo(unsigned int onoff);
 
+int s5p_no_lcd_support(void)
+{
+	if (machine_is_wmg160())
+		return 1;
+	return 0;
+}
+
 void init_panel_info(vidinfo_t *vid)
 {
 	vid->cfg_gpio = NULL;
@@ -2094,6 +2101,9 @@ int board_mmc_init(bd_t *bis)
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
 	if (machine_is_aquila() && (board_is_aries() || board_is_neptune()))
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
+
+	if (machine_is_wmg160())
+		return -1;
 
 	/* MMC0 Clock source = SCLKMPLL */
 	reg = readl(&clk->src4);

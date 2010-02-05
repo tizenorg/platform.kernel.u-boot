@@ -256,10 +256,14 @@ static void lcd_panel_on(vidinfo_t *vid)
 
 /* extern void init_onenand_ext2(void); */
 extern void init_panel_info(vidinfo_t *vid);
+extern int s5p_no_lcd_support(void);
 
 void lcd_ctrl_init(void *lcdbase)
 {
 	char *option;
+
+	if (s5p_no_lcd_support())
+		return;
 
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 
