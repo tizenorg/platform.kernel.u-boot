@@ -786,6 +786,10 @@ static void check_keypad(void)
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int col_value[4], i;
+
+	if (machine_is_wmg160())
+		return;
+
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
@@ -901,14 +905,13 @@ static void check_battery(void)
 			i2c_set_bus_num(I2C_GPIO7);
 		else if (board_is_j1b2())
 			return;
-	} else if (machine_is_tickertape()) {
-		return;
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
 			i2c_set_bus_num(I2C_GPIO7);
-	}
+	} else
+		return;
 
 	if (i2c_probe(addr)) {
 		printf("Can't found max17040 fuel gauge\n");
@@ -1081,7 +1084,8 @@ static void check_micro_usb(int intr)
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
 			i2c_set_bus_num(I2C_GPIO6);
-	}
+	} else if (machine_is_wmg160())
+		i2c_set_bus_num(I2C_GPIO6);
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
@@ -1141,7 +1145,8 @@ static void micro_usb_switch(int path)
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
 			i2c_set_bus_num(I2C_GPIO6);
-	}
+	} else if (machine_is_wmg160())
+		i2c_set_bus_num(I2C_GPIO6);
 
 	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
@@ -1196,8 +1201,10 @@ static void init_pmic(void)
 
 	addr = 0xCC >> 1;	/* max8998 */
 	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
-		return;
+		if (i2c_probe(addr)) {
+			printf("Can't found max8998\n");
+			return;
+		}
 	}
 
 	/* ONOFF1 */
