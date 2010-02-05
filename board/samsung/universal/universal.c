@@ -2094,6 +2094,13 @@ int usb_board_init(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
+int s5p_no_mmc_support(void)
+{
+	if (machine_is_wmg160())
+		return 1;
+	return 0;
+}
+
 int board_mmc_init(bd_t *bis)
 {
 	unsigned int reg;
