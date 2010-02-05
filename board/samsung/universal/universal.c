@@ -1394,30 +1394,21 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (machine_is_aquila()) {
-		if (board_is_neptune()) {
-			spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
-			spi_pd.cs_num = 1;
-			spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.clk_num = 1;
-			spi_pd.si_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.si_num = 3;
-			spi_pd.so_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.so_num = 2;
-			s6d16a0x_set_platform_data(&spi_pd);
-		} else {
-			spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
-			spi_pd.cs_num = 1;
-			spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.clk_num = 1;
-			spi_pd.si_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.si_num = 3;
-			spi_pd.so_bank = &gpio_base->gpio_mp0_4;
-			spi_pd.so_num = 2;
+		spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
+		spi_pd.cs_num = 1;
+		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.clk_num = 1;
+		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.si_num = 3;
+		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.so_num = 2;
+		s6e63m0_set_platform_data(&spi_pd);
 
-			if (board_is_media())
+		if (board_is_neptune())
+			s6d16a0x_set_platform_data(&spi_pd);
+		else if (board_is_media())
 				spi_pd.board_is_media = 1;
-			s6e63m0_set_platform_data(&spi_pd);
-		}
+
 		/* these data would be sent to s6e63m0 lcd panel driver. */
 	}
 
