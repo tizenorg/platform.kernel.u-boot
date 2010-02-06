@@ -347,6 +347,11 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 	int i;
 	int ret;
 
+	if (!usbd->mmc_total) {
+		printf("MMC is not supported!\n");
+		return 0;
+	}
+
 	ram_addr = (u32)down_ram_addr;
 
 	if (cur_blk_offset == 0) {
