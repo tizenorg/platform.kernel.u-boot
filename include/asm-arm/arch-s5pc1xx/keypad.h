@@ -31,4 +31,8 @@
 #define S5PC1XX_KEYIFROW_OFFSET		(0x0C)
 #define S5PC1XX_KEYIFFC_OFFSET		(0x10)
 
+/* KEYIFCOL */
+#define S5PC1XX_KEYIFCOL_MASK		(0xff << 0)
+#define S5PC110_KEYIFCOLEN_MASK		(0xff << 8)
+
 #endif

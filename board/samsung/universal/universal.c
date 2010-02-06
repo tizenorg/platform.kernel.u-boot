@@ -787,9 +787,12 @@ static void setup_media_gpios(void)
 static void check_keypad(void)
 {
 	unsigned int reg, value;
-	unsigned int col_mask, row_mask;
+	unsigned int col_num, row_num;
+	unsigned int col_mask;
+	unsigned int col_mask_shift;
+	unsigned int row_state[4];
+	unsigned int i;
 	unsigned int auto_download = 0;
-	unsigned int col_value[4], i;
 
 	if (machine_is_wmg160())
 		return;
@@ -797,6 +800,9 @@ static void check_keypad(void)
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+
+		row_num = 3;
+		col_num = 3;
 
 		/* Set GPH2[2:0] to KP_COL[2:0] */
 		gpio_cfg_pin(&gpio->gpio_h2, 0, 0x3);
@@ -809,63 +815,62 @@ static void check_keypad(void)
 		gpio_cfg_pin(&gpio->gpio_h3, 2, 0x3);
 
 		reg = S5PC100_KEYPAD_BASE;
+		col_mask = S5PC1XX_KEYIFCOL_MASK;
+		col_mask_shift = 0;
 	} else {
 		if (board_is_limo_real() || board_is_limo_universal()) {
-			row_mask = 0x00FF;
-			col_mask = 0x0FFF;
+			row_num = 2;
+			col_num = 3;
 		} else {
-			row_mask = 0xFFFF;
-			col_mask = 0xFFFF;
+			row_num = 4;
+			col_num = 4;
 		}
 
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < row_num; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
-			if (row_mask & (0xF << (i << 2))) {
-				gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
-				gpio_set_pull(&s5pc110_gpio->gpio_h3, i,
-						GPIO_PULL_UP);
-			}
-
-			/* Set GPH2[3:0] to KP_COL[3:0] */
-			if (col_mask & (0xF << (i << 2)))
-				gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
+			gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
+			gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
 		}
+
+		for (i = 0; i < col_num; i++)
+			/* Set GPH2[3:0] to KP_COL[3:0] */
+			gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
 
 		reg = S5PC110_KEYPAD_BASE;
+		col_mask = S5PC110_KEYIFCOLEN_MASK;
+		col_mask_shift = 8;
 	}
-	/* init col */
-	value = 0x00;
-	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
-	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-	/* VOLUMEDOWN and CAM(Half shot) Button */
-	if ((value & KBR1) == 0) {
-		i = 0;
-		while (i < 4) {
-			value = readl(reg + S5PC1XX_KEYIFCOL_OFFSET);
-			value |= 0xff;
-			value &= ~(1 << i);
-			writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
-			udelay(10*1000);
-			col_value[i++] = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-		}
-		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-		printf("%s[%d] col_value 0x%x, 0x%x, 0x%x\n", __func__, __LINE__, col_value[0], col_value[1], col_value[2]);
-		/* expected value is row_value[0] = 0x00 row_value[1] = 0x01 */
-		/* workaround */
-		if (col_value[1] == 0xd && col_value[2] == 0xe && machine_is_geminus())
+	/* KEYIFCOL reg clear */
+	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+	/* key_scan */
+	for (i = 0; i < col_num; i++) {
+		value = col_mask;
+		value &= ~(1 << i) << col_mask_shift;
+
+		writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+		udelay(1000);
+
+		value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+		row_state[i] = ~value & ((1 << row_num) - 1);
+		printf("[%d col] row_state: 0x%x\n", i, row_state[i]);
+	}
+
+	/* KEYIFCOL reg clear */
+	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+	if (machine_is_aquila) {
+		/* cam full shot & volume down */
+		if ((row_state[0] & 0x1) && (row_state[1] & 0x2))
 			auto_download = 1;
-
-		/* Workaround for aquila */
-		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x0)
-			auto_download = 1;
-
-		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
-			auto_download = 1;
-
-		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) != 0x3)
+		/* volume down */
+		else if ((row_state[1] & 0x2))
 			display_info = 1;
-	}
+	} else if (machine_is_geminus())
+		/* volume down & home */
+		if ((row_state[1] & 0x2) && (row_state[2] & 0x1))
+			auto_download = 1;
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
