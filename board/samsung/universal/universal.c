@@ -552,6 +552,22 @@ static void check_hw_revision(void)
 				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
+		/* WMG160 - GPH3[0:4] = 0x00 */
+		if (board == MACH_TICKERTAPE) {
+			int i, wmg160 = 1;
+
+			for (i = 0; i < 4; i++) {
+				if (gpio_get_value(&gpio->gpio_h3, i) != 0) {
+					wmg160 = 0;
+					break;
+				}
+			}
+			if (wmg160) {
+				board = MACH_WMG160;
+				hwrev3 = 1;
+			}
+		}
+
 		/* C110 Geminus for rev0.0 */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
 		gpio_direction_input(&gpio->gpio_j1, 2);
@@ -593,22 +609,6 @@ static void check_hw_revision(void)
 			hwrev3 = 1;
 		} else
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
-
-		/* WMG160 - GPH3[0:4] = 0x00 */
-		do {
-			int i, wmg160 = 1;
-
-			for (i = 0; i < 4; i++) {
-				if (gpio_get_value(&gpio->gpio_h3, i) != 0) {
-					wmg160 = 0;
-					break;
-				}
-			}
-			if (wmg160) {
-				board = MACH_WMG160;
-				hwrev3 = 1;
-			}
-		} while (0);
 
 		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
@@ -847,9 +847,14 @@ static void check_keypad(void)
 		}
 		writel(0x00, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
+		printf("%s[%d] col_value 0x%x, 0x%x, 0x%x\n", __func__, __LINE__, col_value[0], col_value[1], col_value[2]);
 		/* expected value is row_value[0] = 0x00 row_value[1] = 0x01 */
 		/* workaround */
 		if (col_value[1] == 0xd && col_value[2] == 0xe && machine_is_geminus())
+			auto_download = 1;
+
+		/* Workaround for aquila */
+		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x0)
 			auto_download = 1;
 
 		if ((col_value[0] & 0x3) == 0x3 && (col_value[1] & 0x3) == 0x3)
