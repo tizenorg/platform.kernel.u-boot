@@ -552,6 +552,8 @@ static void check_hw_revision(void)
 				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
+/* FIXME: This occurs wrong board detection when usb down key is pushed */
+#if 0
 		/* WMG160 - GPH3[0:4] = 0x00 */
 		if (board == MACH_TICKERTAPE) {
 			int i, wmg160 = 1;
@@ -567,6 +569,7 @@ static void check_hw_revision(void)
 				hwrev3 = 1;
 			}
 		}
+#endif
 
 		/* C110 Geminus for rev0.0 */
 		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
