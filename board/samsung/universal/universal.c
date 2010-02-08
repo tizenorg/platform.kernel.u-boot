@@ -1113,15 +1113,17 @@ static void check_micro_usb(int intr)
 	/* Read Device Type 1 */
 	i2c_read(addr, 0x0a, 1, val, 1);
 
-#define FSA_DEDICATED_CHARGER	(1 << 6)
-#define FSA_UART		(1 << 3)
-#define FSA_USB			(1 << 2)
+#define FSA_DEV1_CHARGER	(1 << 6)
+#define FSA_DEV1_UART		(1 << 3)
+#define FSA_DEV1_USB		(1 << 2)
+#define FSA_DEV2_JIG_USB_OFF	(1 << 1)
+#define FSA_DEV2_JIG_USB_ON	(1 << 0)
 
 	/*
 	 * If USB, use default 475mA
 	 * If Charger, use 600mA and go to charge mode
 	 */
-	if ((val[0] & FSA_DEDICATED_CHARGER) && !started_charging_once) {
+	if ((val[0] & FSA_DEV1_CHARGER) && !started_charging_once) {
 		started_charging_once = 1;
 		into_charge_mode();
 	}
@@ -1129,10 +1131,11 @@ static void check_micro_usb(int intr)
 	/* If Factory Mode is Boot ON-USB, go to download mode */
 	i2c_read(addr, 0x07, 1, val, 1);
 
-#define FSA_ADC_FAC_USB		0x19
+#define FSA_ADC_FAC_USB_OFF	0x18
+#define FSA_ADC_FAC_USB_ON	0x19
 #define FSA_ADC_FAC_UART	0x1d
 
-	if (val[0] == FSA_ADC_FAC_USB)
+	if (val[0] == FSA_ADC_FAC_USB_ON || val[0] == FSA_ADC_FAC_USB_OFF)
 		setenv("bootcmd", "usbdown");
 
 	path = getenv("usb");
