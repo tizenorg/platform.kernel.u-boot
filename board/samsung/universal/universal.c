@@ -1828,25 +1828,18 @@ int misc_init_r(void)
 	/* It should be located at first */
 	lcd_is_enabled = 0;
 
-	if (board_is_neptune())
-		setenv("lcdinfo", "lcd=s6d16a0x");
-	else if ((board_is_limo_real() ||
-		board_is_limo_universal() ||
-		board_is_j1b2()))
-		setenv("lcdinfo", "lcd=s6e63m0");
-	/* it can't classify tl2796 with single-lcd and dual-lcd.
-	else
-		setenv("lcdinfo", "lcd=tl2796-dual");
-	*/
-
-	/*
-	 * env values below should be added in case that lcd panel of geminus.
-	 * setenv means that lcd panel has been turned on at u-boot.
-	 */
+	if (machine_is_aquila()) {
+		if (board_is_neptune())
+			setenv("lcdinfo", "lcd=neptune");
+		else if (board_is_media())
+			setenv("lcdinfo", "lcd=media");
+		else
+			setenv("lcdinfo", "lcd=aquila");
+	}
 	if (machine_is_geminus())
-		setenv("lcdinfo", "lcd=lms480jc01");
-	if (board_is_media())
-		setenv("lcdinfo", "lcd=media");
+		setenv("lcdinfo", "lcd=geminus");
+	if (machine_is_cypress())
+		setenv("lcdinfo", "lcd=cypress");
 #endif
 	setup_meminfo();
 
