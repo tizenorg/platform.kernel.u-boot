@@ -23,12 +23,6 @@
 #ifndef __ASM_ARM_ARCH_CLOCK_H_
 #define __ASM_ARM_ARCH_CLOCK_H_
 
-#define APLL	0
-#define MPLL	1
-#define EPLL	2
-#define HPLL	3
-#define VPLL	4
-
 #define S5PC110_APLL_LOCK		0xE0100000
 #define S5PC110_MPLL_LOCK		0xE0100008
 #define S5PC110_EPLL_LOCK		0xE0100010
