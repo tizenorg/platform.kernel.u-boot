@@ -153,7 +153,7 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 {
 	struct mmc *mmc;
 
-	if (s5p_no_mmc_support)
+	if (s5p_no_mmc_support())
 		return;
 
 	usbd->mmc_dev = 0;
