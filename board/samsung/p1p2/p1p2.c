@@ -819,6 +819,79 @@ static void check_p2_keypad(void)
 static void check_keypad(void)
 {
 	unsigned int reg, value;
+	unsigned int col_num, row_num;
+	unsigned int col_mask;
+	unsigned int col_mask_shift;
+	unsigned int row_state[4];
+	unsigned int i;
+	unsigned int auto_download = 0;
+
+	writel((readl(0xE010046C) | (0x1 << 21)), 0xE010046C);
+
+	if (cpu_is_s5pc100()) {
+		struct s5pc100_gpio *gpio =
+				(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+		row_num = 3;
+		col_num = 3;
+	/* Set GPH2[2:0] to KP_COL[2:0] */
+	gpio_cfg_pin(&gpio->gpio_h2, 0, 0x3);
+	gpio_cfg_pin(&gpio->gpio_h2, 1, 0x3);
+	gpio_cfg_pin(&gpio->gpio_h2, 2, 0x3);
+	
+	/* Set GPH3[2:0] to KP_ROW[2:0] */
+	gpio_cfg_pin(&gpio->gpio_h3, 0, 0x3);
+	gpio_cfg_pin(&gpio->gpio_h3, 1, 0x3);
+	gpio_cfg_pin(&gpio->gpio_h3, 2, 0x3);
+	reg = S5PC110_KEYPAD_BASE;
+	col_mask = S5PC1XX_KEYIFCOL_MASK;
+	col_mask_shift = 0;
+} else {
+	if (board_is_limo_real() || board_is_limo_universal()) {
+	row_num = 2;
+	col_num = 3;
+	} else if (machine_is_p1p2()){
+	row_num = 2;
+	col_num = 3;
+	}
+	else {
+		row_num = 4;
+		col_num = 4;
+	}
+	for (i = 0; i < row_num; i++) {
+	/* Set GPH3[3:0] to KP_ROW[3:0] */
+	gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
+	gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
+	}
+																		
+	for (i = 0; i < col_num; i++){
+	/* Set GPH2[3:0] to KP_COL[3:0] */
+	gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
+	gpio_set_pull(&s5pc110_gpio->gpio_h2,i, GPIO_PULL_DOWN);
+	}
+	reg = S5PC110_KEYPAD_BASE;
+	col_mask = S5PC110_KEYIFCOLEN_MASK;
+	col_mask_shift = 8;
+	}
+
+	/* KEYIFCOL reg clear */
+	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
+	/* key_scan */
+	for (i = 0; i < col_num; i++) {
+	value = col_mask;
+	value &= ~(1 << i) << col_mask_shift;
+	writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+	udelay(1000);
+	value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+	row_state[i] = ~value & ((1 << row_num) - 1);
+	printf("[%d col] row_state: 0x%x :value = 0x%x\n", i, row_state[i], value);
+	}
+	if(row_state[2] & 0x2)
+	setenv("bootcmd","usbdown");
+}
+#if 0
+static void check_keypad(void)
+{
+	unsigned int reg, value;
 	unsigned int col_mask, row_mask;
 	unsigned int auto_download = 0;
 	unsigned int col_value[4], i;
@@ -898,6 +971,7 @@ static void check_keypad(void)
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
 }
+#endif
 
 static void enable_battery(void)
 {
