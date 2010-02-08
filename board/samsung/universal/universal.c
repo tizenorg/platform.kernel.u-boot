@@ -662,6 +662,8 @@ static void show_hw_revision(void)
 	} else if (machine_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
 			s5pc1xx_set_cpu_rev(0);
+	} else if (machine_is_cypress()) {
+		s5pc1xx_set_cpu_rev(1);
 	} else {
 		s5pc1xx_set_cpu_rev(0);
 	}
@@ -1382,6 +1384,7 @@ struct spi_platform_data {
 	unsigned int so_num;
 
 	unsigned int board_is_media;
+	unsigned int board_is_cypress;
 };
 
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
@@ -1493,6 +1496,8 @@ void lcd_cfg_gpio(void)
 		spi_pd.clk_num = 0;
 		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.si_num = 2;
+
+		spi_pd.board_is_cypress = 1;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
 		s6e63m0_set_platform_data(&spi_pd);

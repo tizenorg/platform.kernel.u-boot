@@ -516,7 +516,7 @@ void s6e63m0_cfg_ldo(void)
 
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 
-	if (s6e63m0->board_is_media)
+	if (s6e63m0->board_is_media || s6e63m0->board_is_cypress)
 		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET_REV);
 	else
 		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
