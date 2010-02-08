@@ -857,7 +857,7 @@ static void check_keypad(void)
 	/* KEYIFCOL reg clear */
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-	if (machine_is_aquila) {
+	if (machine_is_aquila()) {
 		/* cam full shot & volume down */
 		if ((row_state[0] & 0x1) && (row_state[1] & 0x2))
 			auto_download = 1;
