@@ -1454,6 +1454,12 @@ extern void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
 struct s6e63m0_platform_data pd_cs, pd_clk, pd_si, pd_so;
 struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
+int s5p_no_lcd_support(void)
+{
+	return 0;
+}
+
+
 void lcd_cfg_gpio(void)
 {
 	unsigned int i, f3_end = 4;
@@ -2051,6 +2057,12 @@ int usb_board_init(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
+int s5p_no_mmc_support(void)
+{
+	return 0;
+}
+
+
 int board_mmc_init(bd_t *bis)
 {
 	unsigned int reg;
