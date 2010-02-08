@@ -43,6 +43,8 @@ static int __usb_board_init(void)
 
 int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 
+extern int s5p_no_lcd_support(void);
+
 /* clear download informations */
 static void s5p_usb_clear_dnfile_info(void)
 {
@@ -68,9 +70,11 @@ static void usb_init(void)
 	}
 
 #ifdef CONFIG_S5PC1XXFB
-	init_font();
-	set_font_color(FONT_WHITE);
-	fb_printf("Ready to USB Connection\n");
+	if (!s5p_no_lcd_support()) {
+		init_font();
+		set_font_color(FONT_WHITE);
+		fb_printf("Ready to USB Connection\n");
+	}
 #endif
 
 	s5p_usbctl_init();
@@ -91,8 +95,10 @@ static void usb_init(void)
 	printf("Connected!!\n");
 
 #ifdef CONFIG_S5PC1XXFB
-	fb_printf("Download Start\n");
-	draw_progress(40, 0, FONT_WHITE);
+	if (!s5p_no_lcd_support()) {
+		fb_printf("Download Start\n");
+		draw_progress(40, 0, FONT_WHITE);
+	}
 #endif
 }
 
@@ -100,11 +106,13 @@ static void usb_stop(void)
 {
 	s5p_usb_stop();
 #ifdef CONFIG_S5PC1XXFB
-	exit_font();
+	if (!s5p_no_lcd_support()) {
+		exit_font();
 
-	/* it uses fb3 as default window. */
-	s5pc_fimd_lcd_off(3);
-	s5pc_fimd_window_off(3);
+		/* it uses fb3 as default window. */
+		s5pc_fimd_lcd_off(3);
+		s5pc_fimd_window_off(3);
+	}
 #endif
 }
 
@@ -187,7 +195,8 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->rx_len = rx_len;
 	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
 #ifdef CONFIG_S5PC1XXFB
-	usbd->set_progress = set_progress;
+	if (!s5p_no_lcd_support())
+		usbd->set_progress = set_progress;
 #endif
 #ifdef CONFIG_GENERIC_MMC
 	usbd_set_mmc_dev(usbd);
