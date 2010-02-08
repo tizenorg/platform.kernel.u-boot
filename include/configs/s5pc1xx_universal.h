@@ -163,13 +163,12 @@
 
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 
-#define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
-		" console=ttySAC2,115200n8" \
-		" ${meminfo}"
+#define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
 
-#define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" ${meminfo}" \
-		" ${mtdparts}"
+#define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
+		" ${console} ${meminfo}"
+
+#define CONFIG_COMMON_BOOT	"${console} ${meminfo} ${mtdparts}"
 
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=7 ubi.mtd=3" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
@@ -209,6 +208,7 @@
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
+	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
