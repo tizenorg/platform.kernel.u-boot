@@ -1135,7 +1135,7 @@ static void check_micro_usb(int intr)
 #define FSA_ADC_FAC_USB_ON	0x19
 #define FSA_ADC_FAC_UART	0x1d
 
-	if (val[0] == FSA_ADC_FAC_USB_ON)
+	if (val[0] == FSA_ADC_FAC_USB_ON || val[0] == FSA_ADC_FAC_USB_OFF)
 		setenv("bootcmd", "usbdown");
 
 	path = getenv("usb");
