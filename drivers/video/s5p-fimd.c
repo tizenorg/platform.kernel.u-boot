@@ -27,14 +27,11 @@
 #include <lcd.h>
 
 #include <asm/arch/clk.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
-
-/* CLOCK DIVIDER 0 */
-#define CLK_DIV0	0xE0100300
-#define CLK_DIV1	0xE0100304
 
 /* LCD CONTROLLER REGISTER BASE */
 #define S5PC100_LCRB		0xEE000000
@@ -134,8 +131,9 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 
 static void s5pc_fimd_set_clock(void)
 {
-	unsigned int cfg = 0, div = 0, mpll_ratio = 0;
+	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0;
 	unsigned long pixel_clock, src_clock, max_clock;
+	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 
 	s5pc1xx_clock_init();
 
@@ -160,24 +158,29 @@ static void s5pc_fimd_set_clock(void)
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
 		S5P_VIDCON0_VCLKEN_MASK | S5P_VIDCON0_CLKDIR_MASK);
-	cfg |= (S5P_VIDCON0_CLKSEL_HCLK | S5P_VIDCON0_CLKVALUP_ALWAYS | \
+	cfg |= (S5P_VIDCON0_CLKSEL_SCLK | S5P_VIDCON0_CLKVALUP_ALWAYS | \
 		S5P_VIDCON0_VCLKEN_NORMAL | S5P_VIDCON0_CLKDIR_DIVIDED);
 
 	if (pixel_clock > max_clock)
 		pixel_clock = max_clock;
 
-	/* get mpll ratio */
-	if (cpu_is_s5pc110())
-		mpll_ratio = (readl(CLK_DIV0) & 0xf0000) >> 16;
-	else
-		mpll_ratio = (readl(CLK_DIV1) & 0xf0) >> 4;
+	/* set source clock to SCLKMPLL. */
+	temp = readl(&clk->src1);
+	writel((temp & ~0xf00000) | 0x600000, &clk->src1);
+	temp = 0;
 
-	/* 
-	 * It can get source clock speed as (mpll / mpll_ratio) 
-	 * because lcd controller uses hclk_dsys.
-	 * mpll is a parent of hclk_dsys.
-	 */
-	div = (unsigned int)((src_clock / (mpll_ratio + 1)) / pixel_clock);
+	/* set fimd ratio to 3. */
+	temp = readl(&clk->div1);
+	writel((temp & ~0xf00000) | 0x300000, &clk->div1);
+	temp = 0;
+
+	/* get mpll ratio */
+	temp = readl(&clk->div1);
+	fimd_ratio = (temp & 0xf00000) >> 20;
+	temp = 0;
+
+	/* It can get source clock speed as (mpll / fimd_ratio + 1) */
+	div = (unsigned int)((src_clock / (fimd_ratio + 1)) / pixel_clock);
 
 	/* in case of dual lcd mode. */
 	if (pvid->dual_lcd_enabled)
@@ -186,8 +189,8 @@ static void s5pc_fimd_set_clock(void)
 	cfg |= S5P_VIDCON0_CLKVAL_F(div - 1);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
-	udebug("mpll_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
-		mpll_ratio, src_clock, pixel_clock, div);
+	udebug("fimd_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
+		fimd_ratio, src_clock, pixel_clock, div);
 
 	return;
 }
