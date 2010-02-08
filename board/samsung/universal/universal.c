@@ -1830,16 +1830,16 @@ int misc_init_r(void)
 
 	if (machine_is_aquila()) {
 		if (board_is_neptune())
-			setenv("lcdinfo", "lcd=neptune");
+			setenv("lcdinfo", "lcd=s6d16a0x");
 		else if (board_is_media())
-			setenv("lcdinfo", "lcd=media");
+			setenv("lcdinfo", "lcd=s6e63m0");
 		else
-			setenv("lcdinfo", "lcd=aquila");
+			setenv("lcdinfo", "lcd=s6e63m0");
 	}
 	if (machine_is_geminus())
-		setenv("lcdinfo", "lcd=geminus");
+		setenv("lcdinfo", "lcd=lms480jc01");
 	if (machine_is_cypress())
-		setenv("lcdinfo", "lcd=cypress");
+		setenv("lcdinfo", "lcd=s6e63m0");
 #endif
 	setup_meminfo();
 
