@@ -33,6 +33,10 @@
 #define PDNPUD_NC(x)		PULL_DIS(x)
 #endif
 
+/* #define OPTMIZED_SLEEP_CURRENT_BCM4329 */
+/* #define OPTIMIZED_SLEEP_CURRENT_FM */
+/* #define OPTIMIZED_SLEEP_CURRENT_CODEC */
+
 struct gpio_powermode {
 	unsigned int	conpdn;
 	unsigned int	pudpdn;
@@ -138,7 +142,11 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		 * GPF3[4]: CODEC_LDO_EN can be enabled at suspend
 		 */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+#ifdef OPTIMIZED_SLEEP_CURRENT_CODEC
+		OUTPUT0(4) | OUTPUT0(5),
+#else
 		KEEP_STATE(4) | OUTPUT0(5),
+#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5),
 	}, {	/* S5PC110_GPIO_G0_OFFSET */
@@ -182,7 +190,11 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_J2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+#define OPTIMIZED_SLEEP_CURRENT_FM
+		INPUT(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
+#else
 		INPUT(4) | KEEP_STATE(5) | INPUT(6) | INPUT(7),
+#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DOWN(6) | PULL_DOWN(7),
 	}, {	/* S5PC110_GPIO_J3_OFFSET */
@@ -325,7 +337,11 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		 * GPF3[4]: CODEC_LDO_EN can be enabled at suspend
 		 */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+#ifdef OPTIMIZED_SLEEP_CURRENT_CODEC
+		INPUT(4) | PDNCON_NC(5),
+#else
 		KEEP_STATE(4) | PDNCON_NC(5),
+#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DOWN(4) | PDNPUD_NC(5),
 	}, {	/* S5PC110(ARIES)_GPIO_G0_OFFSET */
@@ -370,7 +386,11 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110(ARIES)_GPIO_J2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
+#ifdef OPTIMIZED_SLEEP_CURRENT_FM
+		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
+#else
 		INPUT(4) | KEEP_STATE(5) | OUTPUT0(6) | OUTPUT0(7),
+#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110(ARIES)_GPIO_J3_OFFSET */
