@@ -428,6 +428,7 @@ static void s6d16a0x_c110_spi_write_byte(unsigned char address, unsigned char co
 	udelay(Delay);
 }
 
+#ifdef UNUSED_FUNCTIONS
 static unsigned char s6d16a0x_c110_spi_read_byte(unsigned char select, unsigned char address)
 {
 	int     j;
@@ -487,6 +488,7 @@ static unsigned char s6d16a0x_c110_spi_read_byte(unsigned char select, unsigned 
 
 	return command;
 }
+#endif
 
 static void s6d16a0x_spi_write(unsigned char address, unsigned char command)
 {

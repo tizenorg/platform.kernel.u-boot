@@ -237,11 +237,6 @@ static int board_is_media(void)
 	return machine_is_aquila() && (board_rev & MEDIA_BOARD);
 }
 
-static int board_is_bamboo(void)
-{
-	return machine_is_aquila() && (board_rev & BAMBOO_BOARD);
-}
-
 static int board_is_j1b2(void)
 {
 	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
@@ -1372,20 +1367,7 @@ static void setup_power_down_mode_registers(void)
 }
 
 #ifdef CONFIG_LCD
-struct spi_platform_data {
-	struct s5pc1xx_gpio_bank *cs_bank;
-	struct s5pc1xx_gpio_bank *clk_bank;
-	struct s5pc1xx_gpio_bank *si_bank;
-	struct s5pc1xx_gpio_bank *so_bank;
-
-	unsigned int cs_num;
-	unsigned int clk_num;
-	unsigned int si_num;
-	unsigned int so_num;
-
-	unsigned int board_is_media;
-	unsigned int board_is_cypress;
-};
+#include "../../../drivers/video/s5p-spi.h"
 
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
 extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
@@ -1467,7 +1449,7 @@ void lcd_cfg_gpio(void)
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
 			if (board_is_media())
-				spi_pd.board_is_media = 1;
+				spi_pd.set_rev = 1;
 		}
 	}
 
@@ -1497,7 +1479,7 @@ void lcd_cfg_gpio(void)
 		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.si_num = 2;
 
-		spi_pd.board_is_cypress = 1;
+		spi_pd.set_rev = 1;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
 		s6e63m0_set_platform_data(&spi_pd);

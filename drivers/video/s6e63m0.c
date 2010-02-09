@@ -424,7 +424,7 @@ static void s6e63m0_c110_spi_write_byte(unsigned char address, unsigned char com
 	udelay(DELAY);
 }
 
-
+#ifdef UNUSED_FUNCTION
 static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned char address)
 {
 	int     j;
@@ -484,6 +484,7 @@ static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned c
 
 	return command;
 }
+#endif
 
 static void s6e63m0_spi_write(unsigned char address, unsigned char command)
 {
@@ -516,7 +517,7 @@ void s6e63m0_cfg_ldo(void)
 
 	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
 
-	if (s6e63m0->board_is_media || s6e63m0->board_is_cypress)
+	if (s6e63m0->set_rev)
 		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET_REV);
 	else
 		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);

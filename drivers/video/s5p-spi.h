@@ -18,7 +18,6 @@ struct spi_platform_data {
 	unsigned int si_num;
 	unsigned int so_num;
 
-	unsigned int board_is_media;
-	unsigned int board_is_cypress
+	unsigned int set_rev;
 };
 
