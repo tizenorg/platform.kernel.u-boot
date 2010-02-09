@@ -645,10 +645,7 @@ static void show_hw_revision(void)
 	check_board_revision(board, board_rev);
 
 	/* Set CPU Revision */
-	if (board_is_limo_real()) {
-		if ((board_rev & 0xf) < 8)
-			s5pc1xx_set_cpu_rev(0);
-	} else {
+	if ((board_rev & 0xf) > 2) {
 		s5pc1xx_set_cpu_rev(0);
 	}
 
