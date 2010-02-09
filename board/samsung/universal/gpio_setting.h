@@ -190,7 +190,7 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_J2_OFFSET */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
-#define OPTIMIZED_SLEEP_CURRENT_FM
+#ifdef OPTIMIZED_SLEEP_CURRENT_FM
 		INPUT(4) | OUTPUT0(5) | INPUT(6) | INPUT(7),
 #else
 		INPUT(4) | KEEP_STATE(5) | INPUT(6) | INPUT(7),
