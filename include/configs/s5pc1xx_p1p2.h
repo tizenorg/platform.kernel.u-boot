@@ -141,20 +141,22 @@
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",128k(params)"\
-				",3m(kernel)"\
-				",18m(modem)"\
-				",7m(fota)"\
-				",8m(csa)"\
+				",3584k(config)"\
+				",8m(csa_new)"\
+				",5376k(kernel)"\
 				",1m(log)"\
+				",10496k(modem)"\
+				",8m(csa)"\
 				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",256k(params)"\
-				",3m(kernel)"\
-				",18m(modem)"\
-				",7m(fota)"\
-				",8m(csa)"\
+				",3584k(config)"\
+				",8m(csa_new)"\
+				",5376k(kernel)"\
 				",1m(log)"\
+				",10496k(modem)"\
+				",8m(csa)"\
 				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
@@ -169,13 +171,14 @@
 		" ${meminfo}" \
 		" ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7 ubi.mtd=5" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=7 ubi.mtd=3" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x32008000 0x0 0x40000\0"
 
-#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=5"
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=7 ubi.mtd=3"
+
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
@@ -209,7 +212,7 @@
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=8\0" \
-	"ubiblock=7\0" \
+	"ubiblock=8\0" \
 	"ubi=enabled"
 
 /*
