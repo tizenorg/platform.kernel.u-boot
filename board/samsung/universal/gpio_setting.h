@@ -236,7 +236,7 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 static struct gpio_external aquila_external_powerdown_modes[] = {
 	{	/* S5PC110_GPIO_H0_OFFSET */
 		CON_OUTPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
-		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_INPUT(7),
+		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_IRQ(7),
 		DAT_SET(0) | DAT_CLEAR(2) | DAT_CLEAR(3) |
 		DAT_CLEAR(4) | DAT_CLEAR(5),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
@@ -426,7 +426,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 static struct gpio_external aries_external_powerdown_modes[] = {
 	{	/* S5PC110(ARIES)_GPIO_H0_OFFSET */
 		CON_OUTPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
-		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_INPUT(7),
+		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_IRQ(7),
 		DAT_SET(0) | DAT_CLEAR(2) | DAT_CLEAR(3) |
 		DAT_CLEAR(4) | DAT_CLEAR(5),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |

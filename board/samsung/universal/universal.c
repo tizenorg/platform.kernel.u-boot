@@ -997,6 +997,24 @@ static int max8998_power_key(void)
 	return 0;
 }
 
+static int max8998_has_ext_power_source(void)
+{
+	unsigned char addr, val[2];
+	i2c_set_bus_num(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return 0;
+	}
+
+	/* Accessing STATUS2 register */
+	i2c_read(addr, 0x09, 1, val, 1);
+	if (val[0] & (1 << 5))
+		return 1;
+
+	return 0;
+}
+
 extern void lcd_display_clear(void);
 extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
 
@@ -1021,7 +1039,9 @@ static void into_charge_mode(void)
 
 	i2c_read(addr, 0x0C, 1, val, 1);
 	val[0] &= ~(0x7 << 0);
+	val[0] &= ~(0x7 << 5);
 	val[0] |= 5;		/* 600mA */
+	val[0] |= (3 << 5); /* Stop at 150mA(25%) */
 	i2c_write(addr, 0x0C, 1, val, 1);
 
 #ifdef CONFIG_S5PC1XXFB
@@ -1048,8 +1068,9 @@ static void into_charge_mode(void)
 			for (k = 0; k < 10; k++)
 				if (max8998_power_key()) {
 					lcd_display_clear();
-					/* FIXME don't use static function */
-					/* draw_samsung_logo(lcd_base); */
+					return;
+				} else if (!max8998_has_ext_power_source()) {
+					lcd_display_clear();
 					return;
 				} else
 					udelay(100 * 1000);
