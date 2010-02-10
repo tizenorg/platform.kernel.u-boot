@@ -40,6 +40,8 @@ static void __board_sleep_init(void) { }
 void board_sleep_init(void)
 	__attribute__((weak, alias("__board_sleep_init")));
 
+extern void board_sleep_init_late(void);
+
 struct regs_to_save {
 	unsigned int	start_address;
 	unsigned int	size;
