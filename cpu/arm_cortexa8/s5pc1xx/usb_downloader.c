@@ -44,6 +44,8 @@ static int __usb_board_init(void)
 int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 
 extern int s5p_no_lcd_support(void);
+extern void s5pc_fimd_lcd_off(unsigned int win_id);
+extern void s5pc_fimd_window_off(unsigned int win_id);
 
 /* clear download informations */
 static void s5p_usb_clear_dnfile_info(void)
@@ -51,14 +53,6 @@ static void s5p_usb_clear_dnfile_info(void)
 	otg.dn_addr = 0;
 	otg.dn_filesize = 0;
 	otg.dn_ptr = 0;
-}
-
-/* clear upload informations */
-static void s5p_usb_clear_upfile_info(void)
-{
-	otg.up_addr = 0;
-	otg.up_size = 0;
-	otg.up_ptr = 0;
 }
 
 /* start the usb controller */
