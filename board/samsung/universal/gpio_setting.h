@@ -77,19 +77,8 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
 	}, {	/* S5PC110_GPIO_B_OFFSET */
-#ifdef OPTMIZED_SLEEP_CURRENT_BCM4329
-		/*
-		 * Chip Status:			Off	On	
-		 * GPB[3]: BT_nRST		low	high
-		 * GPB[5]: WLAN_BT_nRST		low	high
-		 * GPG1[2]: WLAN_nRST		low	high (need to verify)
-		 */
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		INPUT(4) | OUTPUT0(5) | OUTPUT0(6) | OUTPUT0(7),
-#else
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | KEEP_STATE(3) |
-		INPUT(4) | KEEP_STATE(5) | OUTPUT0(6) | OUTPUT0(7),
-#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6) | PULL_DIS(7),
 	}, {	/* S5PC110_GPIO_C0_OFFSET */
@@ -149,6 +138,11 @@ static struct gpio_powermode aquila_powerdown_modes[] = {
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PULL_DIS(6),
 	}, {	/* S5PC110_GPIO_G1_OFFSET */
+
+		/*
+		 * Chip Status:			Off	On	
+		 * GPG1[2]: WLAN_nRST		low	high (need to verify)
+		 */
 #ifdef OPTMIZED_SLEEP_CURRENT_BCM4329
 		OUTPUT0(0) | INPUT(1) | OUTPUT0(2) | INPUT(3) |
 #else
@@ -270,13 +264,8 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 		INPUT(0) | OUTPUT0(1) | INPUT(2) | INPUT(3),
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3),
 	}, {	/* S5PC110(ARIES)_GPIO_B_OFFSET */
-#ifdef OPTMIZED_SLEEP_CURRENT_BCM4329
 		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | OUTPUT0(3) |
 		INPUT(4) | OUTPUT0(5) | PDNCON_NC(6) | OUTPUT0(7),
-#else
-		OUTPUT0(0) | OUTPUT0(1) | OUTPUT0(2) | KEEP_STATE(3) |
-		INPUT(4) | KEEP_STATE(5) | PDNCON_NC(6) | OUTPUT0(7),
-#endif
 		PULL_DIS(0) | PULL_DIS(1) | PULL_DIS(2) | PULL_DIS(3) |
 		PULL_DIS(4) | PULL_DIS(5) | PDNPUD_NC(6) | PULL_DIS(7),
 	}, {	/* S5PC110(ARIES)_GPIO_C0_OFFSET */
