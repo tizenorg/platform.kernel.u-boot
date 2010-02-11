@@ -49,5 +49,6 @@ struct s5pc110_rtc {
 	unsigned int _resv4;
 	unsigned int curticcnt /* 0x0090 */
 };
+#endif
 
 #endif
