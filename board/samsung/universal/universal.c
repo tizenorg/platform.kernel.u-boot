@@ -183,8 +183,9 @@ enum {
 
 	MACH_WMG160 = 160,
 
-	MACH_AQUILA = 2646,
-	MACH_KESSLER = 3102,
+	MACH_AQUILA	= 2646,
+
+	MACH_KESSLER	= 3102,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -195,6 +196,8 @@ enum {
 #define LIMO_REAL_BOARD		0x0800
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
+
+/* board is MACH_KESSLER and board is like below */
 #define ARIES_BOARD		0x4000
 #define NEPTUNE_BOARD		0x8000
 
@@ -384,14 +387,14 @@ static char *display_features(int board, int board_rev)
 			name = "Media";
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
+	} else if (board == MACH_KESSLER) {
 		if (board_rev & ARIES_BOARD)
 			name = "Aries";
 		if (board_rev & NEPTUNE_BOARD)
 			name = "Neptune";
-
-		if (name)
-			count += sprintf(buf + count, " - %s", name);
 	}
+	if (name)
+		count += sprintf(buf + count, " - %s", name);
 
 	return buf;
 }
@@ -409,8 +412,7 @@ static char *get_board_name(int board)
 
 static void check_board_revision(int board, int rev)
 {
-	switch (board) {
-	case MACH_AQUILA:
+	if (board == MACH_AQUILA) {
 		/* Limo Real or Universal */
 		if (rev & LIMO_UNIVERSAL_BOARD)
 			board_rev &= ~J1_B2_BOARD;
@@ -425,24 +427,15 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-		break;
-	case MACH_KESSLER:
+	} else if (board == MACH_KESSLER) {
 		if (rev & ARIES_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & NEPTUNE_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		break;
-	case MACH_CYPRESS:
-	case MACH_TICKERTAPE:
-	case MACH_GEMINUS:
-	case MACH_WMG160:
+	} else
 		board_rev &= ~BOARD_MASK;
-		break;
-	default:
-		break;
-	}
 }
 
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
@@ -866,7 +859,8 @@ static void check_keypad(void)
 
 		value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 		row_state[i] = ~value & ((1 << row_num) - 1);
-		printf("[%d col] row_state: 0x%x\n", i, row_state[i]);
+		if (row_state[i])
+			printf("[%d col] row_state: 0x%x\n", i, row_state[i]);
 	}
 
 	/* KEYIFCOL reg clear */
