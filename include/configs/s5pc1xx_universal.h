@@ -143,20 +143,20 @@
 				",128k(params)"\
 				",3584k(config)"\
 				",8m(csa)"\
-				",6m(kernel)"\
+				",7m(kernel)"\
 				",1m(log)"\
 				",12m(modem)"\
-				",30m(qboot)"\
+				",32m(qboot)"\
 				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:256k(bootloader)"\
 				",256k(params)"\
 				",3584k(config)"\
 				",8m(csa)"\
-				",6m(kernel)"\
+				",7m(kernel)"\
 				",1m(log)"\
 				",12m(modem)"\
-				",30m(qboot)"\
+				",32m(qboot)"\
 				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
