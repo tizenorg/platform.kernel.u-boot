@@ -866,7 +866,7 @@ static void check_keypad(void)
 	/* KEYIFCOL reg clear */
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-	if (machine_is_aquila()) {
+	if (machine_is_aquila() || machine_is_kessler()) {
 		/* cam full shot & volume down */
 		if ((row_state[0] & 0x1) && (row_state[1] & 0x2))
 			auto_download = 1;
@@ -1463,7 +1463,7 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_INPUT);
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
-	if (machine_is_aquila()) {
+	if (machine_is_aquila() || machine_is_kessler()) {
 		spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
 		spi_pd.cs_num = 1;
 		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
@@ -1534,7 +1534,7 @@ void reset_lcd(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	if (machine_is_aquila() || machine_is_geminus())
+	if (machine_is_aquila() || machine_is_kessler() || machine_is_geminus())
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	if (machine_is_cypress())
 		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
@@ -1555,6 +1555,8 @@ void lcd_power_on(unsigned int onoff)
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
+
+			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
 			i2c_set_bus_num(I2C_PMIC);
 			addr = 0xCC >> 1;	/* max8998 */
@@ -1669,7 +1671,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_vbpd	= 3;
 	vid->vl_vfpd	= 28;
 
-	if (machine_is_aquila() || machine_is_cypress()) {
+	if (machine_is_aquila() || machine_is_kessler() || machine_is_cypress()) {
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
 		vid->backlight_on = backlight_on;
@@ -1818,7 +1820,7 @@ int misc_init_r(void)
 	/* It should be located at first */
 	lcd_is_enabled = 0;
 
-	if (machine_is_aquila()) {
+	if (machine_is_aquila() || machine_is_kessler()) {
 		if (board_is_neptune())
 			setenv("lcdinfo", "lcd=s6d16a0x");
 		else if (board_is_media())
@@ -1924,14 +1926,14 @@ int dram_init(void)
 		 * Aquila Rev0.8 4G3G1G
 		 * Aquila Rev0.9 4G3G1G
 		 */
-		if (machine_is_aquila() &&
-		    (hwrevision(5) || hwrevision(8) || hwrevision(9))) {
-			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
+		if (machine_is_aquila() || machine_is_kessler())
+			if (hwrevision(5) || hwrevision(8) || hwrevision(9)) {
+				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
-			sz = (memconfig1 >> 16) & 0xFF;
-			sz = ((unsigned char) ~sz) + 1;
-			sz = sz << 4;
-		}
+				sz = (memconfig1 >> 16) & 0xFF;
+				sz = ((unsigned char) ~sz) + 1;
+				sz = sz << 4;
+			}
 
 	}
 	/*
@@ -2478,7 +2480,7 @@ static int do_power(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int device, on;
 
-	if (!machine_is_aquila())
+	if (!machine_is_aquila() && !machine_is_kessler())
 		goto out;
 
 	switch (argc) {
