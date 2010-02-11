@@ -23,24 +23,31 @@
 #ifndef __ASM_ARM_ARCH_RTC_H_
 #define __ASM_ARM_ARCH_RTC_H_
 
-/* DRAM Memory Controller */
-#define S5PC110_INTP		0xE2800030
-#define S5PC110_RTCCON		0xE2800040
-#define S5PC110_TICCNT		0xE2800044
-#define S5PC110_RTCALM		0xE2800050
-#define S5PC110_ALMSEC		0xE2800054
-#define S5PC110_ALMMIN		0xE2800058
-#define S5PC110_ALMHOUR		0xE280005C
-#define S5PC110_ALMDAY		0xE2800060
-#define S5PC110_ALMMON		0xE2800064
-#define S5PC110_ALMYEAR		0xE2800068
-#define S5PC110_BCDSEC		0xE2800070
-#define S5PC110_BCDMIN		0xE2800074
-#define S5PC110_BCDHOUR		0xE2800078
-#define S5PC110_BCDDAYWEEK	0xE280007C
-#define S5PC110_BCDDAY		0xE2800080
-#define S5PC110_BCDMON		0xE2800084
-#define S5PC110_BCDYEAR		0xE2800088
-#define S5PC110_CURTICCNT	0xE2800090
+#ifndef __ASSEMBLY__
+struct s5pc110_rtc {
+	unsigned int _resv0[3*4]; /* Starts at 0xE2800000 */
+	unsigned int intp; /* 0x0030 */
+	unsigned int _resv1[3];
+	unsigned int rtccon; /* 0x0040 */
+	unsigned int ticcnt;
+	unsigned int _resv2[2];
+	unsigned int rtcalm; /* 0x0050 */
+	unsigned int almsec;
+	unsigned int almmin;
+	unsigned int almhour;
+	unsigned int almday; /* 0x0060 */
+	unsigned int almmon;
+	unsigned int almyear;
+	unsigned int _resv3;
+	unsigned int bcdsec; /* 0x0070 */
+	unsigned int bcdmin;
+	unsigned int bcdhour;
+	unsigned int bcddayweek;
+	unsigned int bcdday; /* 0x0080 */
+	unsigned int bcdmon;
+	unsigned int bcdyear;
+	unsigned int _resv4;
+	unsigned int curticcnt /* 0x0090 */
+};
 
 #endif
