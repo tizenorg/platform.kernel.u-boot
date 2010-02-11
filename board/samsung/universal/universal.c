@@ -115,7 +115,7 @@ static struct i2c_gpio_bus_data i2c_gpio6 = {
 };
 
 /*
- * i2c gpio7 - aries
+ * i2c gpio7 - kessler
  * SDA: MP05[1]
  * SCL: MP05[0]
  */
@@ -176,7 +176,7 @@ static int hwrevision(int rev)
 enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
-	MACH_KESSLER,
+	MACH_CHANGED,
 	MACH_P1P2,	/* Don't remove it */
 	MACH_GEMINUS,
 	MACH_CYPRESS,
@@ -184,6 +184,7 @@ enum {
 	MACH_WMG160 = 160,
 
 	MACH_AQUILA = 2646,
+	MACH_KESSLER = 3102,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -244,14 +245,15 @@ static int board_is_j1b2(void)
 	return machine_is_aquila() && (board_rev & J1_B2_BOARD);
 }
 
-static int board_is_aries(void)
+/* Kessler */
+static int machine_is_kessler(void)
 {
-	return machine_is_aquila() && (board_rev & ARIES_BOARD);
+	return gd->bd->bi_arch_number == MACH_KESSLER;
 }
 
 static int board_is_neptune(void)
 {
-	return machine_is_aquila() && (board_rev & NEPTUNE_BOARD);
+	return machine_is_kessler() && (board_rev & NEPTUNE_BOARD);
 }
 
 /* DLNA Dongle */
@@ -273,13 +275,11 @@ void i2c_init_board(void)
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries()) {
-			i2c_gpio[I2C_GPIO7].bus->gpio_base =
-				(unsigned int)&gpio->gpio_mp0_5;
-		} else {
-			i2c_gpio[I2C_GPIO6].bus->gpio_base = 0;
-			i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
-		}
+		i2c_gpio[I2C_GPIO6].bus->gpio_base = 0;
+		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
+	} else if (machine_is_kessler()) {
+		i2c_gpio[I2C_GPIO7].bus->gpio_base =
+			(unsigned int)&gpio->gpio_mp0_5;
 	} else if (machine_is_cypress()) {
 		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
@@ -400,7 +400,9 @@ static char *get_board_name(int board)
 {
 	if (board == MACH_AQUILA)
 		return "Aquila";
-	if (board == MACH_WMG160)
+	else if (board == MACH_KESSLER)
+		return "Kessler";
+	else if (board == MACH_WMG160)
 		return "WMG160";
 	return (char *) board_name[board];
 }
@@ -423,6 +425,8 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
+		break;
+	case MACH_KESSLER:
 		if (rev & ARIES_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -615,6 +619,8 @@ static void check_hw_revision(void)
 	/* Set machine id */
 	if (board == MACH_AQUILA)
 		gd->bd->bi_arch_number = MACH_AQUILA;
+	else if (board == MACH_KESSLER)
+		gd->bd->bi_arch_number = MACH_KESSLER;
 	else if (cpu_is_s5pc110())
 		gd->bd->bi_arch_number = C110_MACH_START + board;
 	else
@@ -649,6 +655,8 @@ static void show_hw_revision(void)
 
 	if (machine_is_aquila())
 		board = MACH_AQUILA;
+	else if (machine_is_kessler())
+		board = MACH_KESSLER;
 	else if (cpu_is_s5pc110())
 		board = gd->bd->bi_arch_number - C110_MACH_START;
 	else
@@ -662,7 +670,9 @@ static void show_hw_revision(void)
 			if ((board_rev & 0xf) < 8)
 				s5pc1xx_set_cpu_rev(0);
 		}
-	} else if (machine_is_geminus()) {
+	} else if (machine_is_kessler())
+		s5pc1xx_set_cpu_rev(1);
+	else if (machine_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
 			s5pc1xx_set_cpu_rev(0);
 	} else if (machine_is_cypress()) {
@@ -886,11 +896,11 @@ static void enable_battery(void)
 	i2c_set_bus_num(I2C_GPIO3);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries() || board_is_neptune())
-			i2c_set_bus_num(I2C_GPIO7);
-		else if (board_is_j1b2())
+		if (board_is_j1b2())
 			return;
-	} else if (machine_is_tickertape()) {
+	} else if (machine_is_kessler())
+		i2c_set_bus_num(I2C_GPIO7);
+	else if (machine_is_tickertape()) {
 		return;
 	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
@@ -917,11 +927,11 @@ static void check_battery(void)
 	i2c_set_bus_num(I2C_GPIO3);
 
 	if (machine_is_aquila()) {
-		if (board_is_aries() || board_is_neptune())
-			i2c_set_bus_num(I2C_GPIO7);
-		else if (board_is_j1b2())
+		if (board_is_j1b2())
 			return;
-	} else if (machine_is_cypress()) {
+	} else if (machine_is_kessler())
+		i2c_set_bus_num(I2C_GPIO7);
+	else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
@@ -1113,10 +1123,9 @@ static void check_micro_usb(int intr)
 
 	i2c_set_bus_num(I2C_PMIC);
 
-	if (machine_is_aquila()) {
-		if (board_is_aries() || board_is_neptune())
-			i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_cypress()) {
+	if (machine_is_kessler())
+		i2c_set_bus_num(I2C_GPIO6);
+	else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
@@ -1177,10 +1186,9 @@ static void micro_usb_switch(int path)
 
 	i2c_set_bus_num(I2C_PMIC);
 
-	if (machine_is_aquila()) {
-		if (board_is_aries() || board_is_neptune())
-			i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_cypress()) {
+	if (machine_is_kessler())
+		i2c_set_bus_num(I2C_GPIO6);
+	else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
@@ -1263,7 +1271,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
 
-	if (board_is_aries() || board_is_neptune())
+	if (machine_is_kessler())
 		val[0] |= MAX8998_LDO7;		/* LDO7: VLCD_1.8V */
 
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
@@ -1277,7 +1285,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
 			MAX8998_LDO16 | MAX8998_LDO17);
 
-	if (board_is_aries() || board_is_neptune())
+	if (machine_is_kessler())
 		val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
 
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
@@ -1299,47 +1307,45 @@ static void setup_power_down_mode_registers(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	/* Only Limo real and aries supports worked for sleep currnet */
+	/* Only Limo real and kessler supports worked for sleep currnet */
 	if (machine_is_aquila()) {
 		if (board_is_limo_real())
 			/* Support */;
-		else if (board_is_aries() || board_is_neptune())
-			/* Support */;
 		else
 			return;
+	} else if (machine_is_kessler()) {
+		/* Support */;
 	} else if (machine_is_geminus()) {
 		/* Support */;
 	} else
 		return;
 
 	if (machine_is_aquila()) {
-		if (board_is_aries() || board_is_neptune()) {
-			/* Aquila rev 0.9 */
-			p = aries_powerdown_modes;
-			ge = aries_external_powerdown_modes;
-			mr = aries_mirror_powerdown_mode;
-			n_p = ARRAY_SIZE(aries_powerdown_modes);
-			n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
-			n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
-		} else {
-			/* Aquila rev 0.8 or lower */
-			p = aquila_powerdown_modes;
-			ge = aquila_external_powerdown_modes;
-			mr = aquila_mirror_powerdown_mode;
-			n_p = ARRAY_SIZE(aquila_powerdown_modes);
-			n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
-			n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
-		}
+		/* Aquila rev 0.8 or lower */
+		p = aquila_powerdown_modes;
+		ge = aquila_external_powerdown_modes;
+		mr = aquila_mirror_powerdown_mode;
+		n_p = ARRAY_SIZE(aquila_powerdown_modes);
+		n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
+		n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
+	} else if (machine_is_kessler()) {
+		/* Aquila rev 0.9 */
+		p = kessler_powerdown_modes;
+		ge = kessler_external_powerdown_modes;
+		mr = kessler_mirror_powerdown_mode;
+		n_p = ARRAY_SIZE(kessler_powerdown_modes);
+		n_ge = ARRAY_SIZE(kessler_external_powerdown_modes);
+		n_mr = ARRAY_SIZE(kessler_mirror_powerdown_mode);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1)) {
 			/* Same as Aquila rev 0.9 */
 #if 0
-			p = aries_powerdown_modes;
-			ge = aries_external_powerdown_modes;
-			mr = aries_mirror_powerdown_mode;
-			n_p = ARRAY_SIZE(aries_powerdown_modes);
-			n_ge = ARRAY_SIZE(aries_external_powerdown_modes);
-			n_mr = ARRAY_SIZE(aries_mirror_powerdown_mode);
+			p = kessler_powerdown_modes;
+			ge = kessler_external_powerdown_modes;
+			mr = kessler_mirror_powerdown_mode;
+			n_p = ARRAY_SIZE(kessler_powerdown_modes);
+			n_ge = ARRAY_SIZE(kessler_external_powerdown_modes);
+			n_mr = ARRAY_SIZE(kessler_mirror_powerdown_mode);
 #else
 			p = aquila_powerdown_modes;
 			ge = aquila_external_powerdown_modes;
@@ -1551,7 +1557,7 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
-		if (board_is_aries() || board_is_neptune()) {
+		if (machine_is_kessler()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
@@ -1586,7 +1592,7 @@ void lcd_power_on(unsigned int onoff)
 		if (machine_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 0);
 
-		if (board_is_aries() || board_is_neptune()) {
+		if (machine_is_kessler()) {
 			unsigned char addr;
 			unsigned char val[2];
 
@@ -2107,7 +2113,7 @@ int board_mmc_init(bd_t *bis)
 	int i;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
-	if (machine_is_aquila() && (board_is_aries() || board_is_neptune()))
+	if (machine_is_kessler())
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
 
 	if (machine_is_wmg160())

@@ -58,7 +58,7 @@ struct s5pc1xx_gpio_item {
 static struct s5pc1xx_gpio_item aquila_mirror_powerdown_mode[] = {
 };
 
-static struct s5pc1xx_gpio_item aries_mirror_powerdown_mode[] = {
+static struct s5pc1xx_gpio_item kessler_mirror_powerdown_mode[] = {
 	{ .bank = __GPIO(j0), .number = 2},
 	{ .bank = __GPIO(j0), .number = 3},
 	{ .bank = __GPIO(j0), .number = 4},
@@ -254,7 +254,7 @@ static struct gpio_external aquila_external_powerdown_modes[] = {
 	},
 };
 
-static struct gpio_powermode aries_powerdown_modes[] = {
+static struct gpio_powermode kessler_powerdown_modes[] = {
 	{	/* S5PC110(ARIES)_GPIO_A0_OFFSET */
 		INPUT(0) | OUTPUT0(1) | INPUT(2) | OUTPUT0(3) |
 		INPUT(4) | OUTPUT0(5) | INPUT(6) | OUTPUT0(7),
@@ -412,7 +412,7 @@ static struct gpio_powermode aries_powerdown_modes[] = {
 	},
 };
 
-static struct gpio_external aries_external_powerdown_modes[] = {
+static struct gpio_external kessler_external_powerdown_modes[] = {
 	{	/* S5PC110(ARIES)_GPIO_H0_OFFSET */
 		CON_OUTPUT(0) | CON_INPUT(1) | CON_OUTPUT(2) | CON_OUTPUT(3) |
 		CON_OUTPUT(4) | CON_OUTPUT(5) | CON_INPUT(6) | CON_IRQ(7),
