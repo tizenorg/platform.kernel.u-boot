@@ -176,12 +176,14 @@ static int hwrevision(int rev)
 enum {
 	MACH_UNIVERSAL,
 	MACH_TICKERTAPE,
-	MACH_AQUILA,
+	MACH_KESSLER,
 	MACH_P1P2,	/* Don't remove it */
 	MACH_GEMINUS,
 	MACH_CYPRESS,
 
 	MACH_WMG160 = 160,
+
+	MACH_AQUILA = 2646,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -204,7 +206,7 @@ static int c110_machine_id(void)
 
 static int machine_is_aquila(void)
 {
-	return c110_machine_id() == MACH_AQUILA;
+	return (gd->bd->bi_arch_number == MACH_AQUILA);
 }
 
 static int machine_is_tickertape(void)
@@ -396,6 +398,8 @@ static char *display_features(int board, int board_rev)
 
 static char *get_board_name(int board)
 {
+	if (board == MACH_AQUILA)
+		return "Aquila";
 	if (board == MACH_WMG160)
 		return "WMG160";
 	return (char *) board_name[board];
@@ -583,7 +587,7 @@ static void check_hw_revision(void)
 		}
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 
-		/* Aquila - Aries MP0_5[6] == 1 */
+		/* Kessler MP0_5[6] == 1 */
 		gpio_direction_input(&gpio->gpio_mp0_5, 6);
 		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
 			/* Cypress: Do this for cypress */
@@ -593,7 +597,7 @@ static void check_hw_revision(void)
 				board = MACH_CYPRESS;
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
-				board = MACH_AQUILA;
+				board = MACH_KESSLER;
 				board_rev |= ARIES_BOARD;
 #ifdef USE_NEPTUNE_BOARD
 				board_rev &= ~ARIES_BOARD;
@@ -609,7 +613,9 @@ static void check_hw_revision(void)
 	}
 
 	/* Set machine id */
-	if (cpu_is_s5pc110())
+	if (board == MACH_AQUILA)
+		gd->bd->bi_arch_number = MACH_AQUILA;
+	else if (cpu_is_s5pc110())
 		gd->bd->bi_arch_number = C110_MACH_START + board;
 	else
 		gd->bd->bi_arch_number = C100_MACH_START + board;
@@ -641,7 +647,9 @@ static void show_hw_revision(void)
 		}
 	}
 
-	if (cpu_is_s5pc110())
+	if (machine_is_aquila())
+		board = MACH_AQUILA;
+	else if (cpu_is_s5pc110())
 		board = gd->bd->bi_arch_number - C110_MACH_START;
 	else
 		board = gd->bd->bi_arch_number - C100_MACH_START;
@@ -1872,7 +1880,7 @@ int board_init(void)
 	/* Set Initial global variables */
 	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	gd->bd->bi_arch_number = MACH_TYPE;
+	gd->bd->bi_arch_number = MACH_AQUILA;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	/* Check H/W Revision */
