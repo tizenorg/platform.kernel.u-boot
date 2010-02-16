@@ -163,38 +163,39 @@
 
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 
+#define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
+
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
-		" console=ttySAC2,115200n8" \
-		" ${meminfo}"
+		" ${console} ${meminfo}"
 
-#define CONFIG_COMMON_BOOT	"console=ttySAC2,115200n8" \
-		" ${meminfo}" \
-		" ${mtdparts}"
+#define CONFIG_COMMON_BOOT	"${console} ${meminfo} ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=7 ubi.mtd=5" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=7 ubi.mtd=3" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x40000;" \
 			" onenand write 0x32008000 0x0 0x40000\0"
 
-#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=5"
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=7 ubi.mtd=3"
 
+#define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0x80000 0x300000;" \
-	" onenand write 0x31008000 0x80000 0x300000\0" \
+	"updatek=onenand erase 0xc00000 0x600000;" \
+	" onenand write 0x31008000 0xc00000 0x600000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x32000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x30007FC0 0x80000 0x300000;" \
+	"bootk=onenand read 0x30007FC0 0xc00000 0x600000;" \
 	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs" \
-	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
+	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
+	 CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
+	 CONFIG_COMMON_BOOT "; run bootk\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk " CONFIG_UBI_MTD \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
@@ -207,11 +208,12 @@
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
+	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=8\0" \
+	"bootblock=9\0" \
 	"ubiblock=8\0" \
 	"ubi=enabled"
 
@@ -333,9 +335,8 @@
 
 /* Insert bmp animation compressed */
 #define CONFIG_VIDEO_BMP_GZIP
-#define CONFIG_CMD_BMP
 #ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
-#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE  (250*250*4)
+#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)
 #endif
 
 #endif	/* __CONFIG_H */
