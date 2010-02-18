@@ -48,7 +48,7 @@ void gpio_cfg_pin(struct s5pc1xx_gpio_bank *bank, int gpio, int cfg)
 		value = readl(&bank->con);
 }
 
-void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int enable)
+void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int en)
 {
 	unsigned int value;
 
@@ -56,7 +56,7 @@ void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int enable)
 
 	value = readl(&bank->dat);
 	value &= ~DAT_MASK(gpio);
-	if (enable)
+	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
 	if (s5pc1xx_get_cpu_rev() == 0)
@@ -68,13 +68,13 @@ void gpio_direction_input(struct s5pc1xx_gpio_bank *bank, int gpio)
 	gpio_cfg_pin(bank, gpio, GPIO_INPUT);
 }
 
-void gpio_set_value(struct s5pc1xx_gpio_bank *bank, int gpio, int enable)
+void gpio_set_value(struct s5pc1xx_gpio_bank *bank, int gpio, int en)
 {
 	unsigned int value;
 
 	value = readl(&bank->dat);
 	value &= ~DAT_MASK(gpio);
-	if (enable)
+	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
 	if (s5pc1xx_get_cpu_rev() == 0)
@@ -118,14 +118,14 @@ void gpio_set_drv(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 	value &= ~DRV_MASK(gpio);
 
 	switch (mode) {
-	case GPIO_DRV_1x:
-	case GPIO_DRV_2x:
-	case GPIO_DRV_3x:
-	case GPIO_DRV_4x:
+	case GPIO_DRV_1X:
+	case GPIO_DRV_2X:
+	case GPIO_DRV_3X:
+	case GPIO_DRV_4X:
 		value |= DRV_SET(gpio, mode);
 		break;
 	default:
-		break;
+		return;
 	}
 
 	writel(value, &bank->drv);
@@ -146,7 +146,7 @@ void gpio_set_rate(struct s5pc1xx_gpio_bank *bank, int gpio, int mode)
 		value |= RATE_SET(gpio);
 		break;
 	default:
-		break;
+		return;
 	}
 
 	writel(value, &bank->drv);

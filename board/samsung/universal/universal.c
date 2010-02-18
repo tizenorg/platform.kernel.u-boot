@@ -1419,11 +1419,11 @@ void lcd_cfg_gpio(void)
 		gpio_set_pull(&gpio_base->gpio_f2, i, GPIO_PULL_NONE);
 
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio_base->gpio_f0, i, GPIO_DRV_4x);
+		gpio_set_drv(&gpio_base->gpio_f0, i, GPIO_DRV_4X);
 		gpio_set_rate(&gpio_base->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio_base->gpio_f1, i, GPIO_DRV_4x);
+		gpio_set_drv(&gpio_base->gpio_f1, i, GPIO_DRV_4X);
 		gpio_set_rate(&gpio_base->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio_base->gpio_f2, i, GPIO_DRV_4x);
+		gpio_set_drv(&gpio_base->gpio_f2, i, GPIO_DRV_4X);
 		gpio_set_rate(&gpio_base->gpio_f2, i, GPIO_DRV_SLOW);
 	}
 
@@ -1437,7 +1437,7 @@ void lcd_cfg_gpio(void)
 		/* pull-up/down disable */
 		gpio_set_pull(&gpio_base->gpio_f3, i, GPIO_PULL_NONE);
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio_base->gpio_f3, i, GPIO_DRV_4x);
+		gpio_set_drv(&gpio_base->gpio_f3, i, GPIO_DRV_4X);
 		gpio_set_rate(&gpio_base->gpio_f3, i, GPIO_DRV_SLOW);
 	}
 	/* display output path selection (only [1:0] valid) */
@@ -2149,7 +2149,7 @@ int board_mmc_init(bd_t *bis)
 		/* GPG0[0:6] pull disable */
 		gpio_set_pull(&s5pc110_gpio->gpio_g0, i, GPIO_PULL_NONE);
 		/* GPG0[0:6] drv 4x */
-		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4x);
+		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4X);
 	}
 
 	return s5pc1xx_mmc_init(0);

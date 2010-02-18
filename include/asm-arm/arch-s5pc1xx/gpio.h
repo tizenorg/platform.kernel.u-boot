@@ -127,9 +127,9 @@ struct s5pc110_gpio {
 
 /* functions */
 void gpio_cfg_pin(struct s5pc1xx_gpio_bank *bank, int gpio, int cfg);
-void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int enable);
+void gpio_direction_output(struct s5pc1xx_gpio_bank *bank, int gpio, int en);
 void gpio_direction_input(struct s5pc1xx_gpio_bank *bank, int gpio);
-void gpio_set_value(struct s5pc1xx_gpio_bank *bank, int gpio, int enable);
+void gpio_set_value(struct s5pc1xx_gpio_bank *bank, int gpio, int en);
 unsigned int gpio_get_value(struct s5pc1xx_gpio_bank *bank, int gpio);
 void gpio_set_pull(struct s5pc1xx_gpio_bank *bank, int gpio, int mode);
 void gpio_set_drv(struct s5pc1xx_gpio_bank *bank, int gpio, int mode);
@@ -148,10 +148,10 @@ void gpio_set_rate(struct s5pc1xx_gpio_bank *bank, int gpio, int mode);
 #define GPIO_PULL_UP	0x2
 
 /* Drive Strength level */
-#define GPIO_DRV_1x	0x0
-#define GPIO_DRV_2x	0x1
-#define GPIO_DRV_3x	0x2
-#define GPIO_DRV_4x	0x3
+#define GPIO_DRV_1X	0x0
+#define GPIO_DRV_2X	0x1
+#define GPIO_DRV_3X	0x2
+#define GPIO_DRV_4X	0x3
 #define GPIO_DRV_FAST	0x0
 #define GPIO_DRV_SLOW	0x1
 
