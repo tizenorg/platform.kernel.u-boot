@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2000
+# (C) Copyright 2000-2004
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -21,13 +21,31 @@
 # MA 02111-1307 USA
 #
 
-#
-# ExbitGen board
-#
+include $(TOPDIR)/config.mk
 
-LDFLAGS += $(LINKER_UNDEFS)
+LIB	= $(obj)lib$(BOARD).a
 
-TEXT_BASE := 0xFFF80000
-#TEXT_BASE := 0x00100000
+COBJS	:= spear600.o
+SOBJS	:=
 
-PLATFORM_RELFLAGS := $(PLATFORM_RELFLAGS)
+SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
+SOBJS	:= $(addprefix $(obj),$(SOBJS))
+
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+
+clean:
+	rm -f $(SOBJS) $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak $(obj).depend
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

@@ -1,6 +1,5 @@
 /*
- * (C) Copyright 2003
- * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
+ * Copyright (C) 2009 Wolfgang Denk <wd@denx.de>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -21,32 +20,30 @@
  * MA 02111-1307 USA
  */
 
-#define GPIO_CPU_LED		GPIO_3
+#include <ppc_asm.tmpl>
 
+	.file	"reloc.S"
 
-#define CPLD_BASE		0x10000000		/* t.b.m. */
-#define DEBUG_LEDS_ADDR		CPLD_BASE + 0x01
-#define HW_ID_ADDR		CPLD_BASE + 0x02
-#define DIP_SWITCH_ADDR		CPLD_BASE + 0x04
-#define PHY_CTRL_ADDR		CPLD_BASE + 0x05
-#define SPI_OUT_ADDR		CPLD_BASE + 0x07
-#define SPI_IN_ADDR		CPLD_BASE + 0x08
-#define MDIO_OUT_ADDR		CPLD_BASE + 0x09
-#define MDIO_IN_ADDR		CPLD_BASE + 0x0A
-#define MISC_OUT_ADDR		CPLD_BASE + 0x0B
+	.text
+#ifndef CONFIG_NAND_SPL
+	/*
+	 * Function: relocate entries for one exception vector
+	 */
+	.globl trap_reloc
+	.type	trap_reloc, @function
+trap_reloc:
+	lwz	r0, 0(r7)		/* hdlr ...		*/
+	add	r0, r0, r3		/*  ... += dest_addr	*/
+	stw	r0, 0(r7)
 
-/* Addresses used on I2C bus */
-#define LM75_CHIP_ADDR		0x9C
-#define LM75_CPU_ADDR		0x9E
-#define SDRAM_SPD_ADDR		0xA0
+	lwz	r0, 4(r7)		/* int_return ...	*/
+	add	r0, r0, r3		/*  ... += dest_addr	*/
+	stw	r0, 4(r7)
 
-#define SDRAM_SPD_WRITE_ADDRESS	(SDRAM_SPD_ADDR)
-#define SDRAM_SPD_READ_ADDRESS	(SDRAM_SPD_ADDR+1)
+	lwz	r0, 8(r7)		/* transfer_to_handler ...*/
+	add	r0, r0, r3		/*  ... += dest_addr	*/
+	stw	r0, 8(r7)
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE 1
+	blr
+	.size	trap_reloc, .-trap_reloc
 #endif

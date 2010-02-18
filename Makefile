@@ -324,6 +324,10 @@ $(obj)u-boot.img:	$(obj)u-boot.bin
 			sed -e 's/"[	 ]*$$/ for $(BOARD) board"/') \
 		-d $< $@
 
+$(obj)u-boot.imx:       $(obj)u-boot.bin
+		$(obj)tools/mkimage -n $(IMX_CONFIG) -T imximage \
+		-e $(TEXT_BASE) -d $< $@
+
 $(obj)u-boot.kwb:       $(obj)u-boot.bin
 		$(obj)tools/mkimage -n $(KWD_CONFIG) -T kwbimage \
 		-a $(TEXT_BASE) -e $(TEXT_BASE) -d $< $@
@@ -1331,9 +1335,6 @@ ebony_config:	unconfig
 
 ERIC_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx eric
-
-EXBITGEN_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc ppc4xx exbitgen
 
 fx12mm_flash_config: unconfig
 	@mkdir -p $(obj)include $(obj)board/xilinx/ppc405-generic
@@ -2485,8 +2486,10 @@ MPC8555CDS_config:	unconfig
 MPC8568MDS_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx mpc8568mds freescale
 
+MPC8569MDS_ATM_config \
+MPC8569MDS_NAND_config \
 MPC8569MDS_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc mpc85xx mpc8569mds freescale
+	@$(MKCONFIG) -t $(@:_config=) MPC8569MDS ppc mpc85xx mpc8569mds freescale
 
 MPC8572DS_36BIT_config \
 MPC8572DS_config:       unconfig
@@ -3035,6 +3038,14 @@ smdk2400_config	:	unconfig
 
 smdk2410_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t smdk2410 samsung s3c24x0
+
+spear300_config \
+spear310_config \
+spear320_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear3xx arm arm926ejs $(@:_config=) spear spear
+
+spear600_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear6xx arm arm926ejs $(@:_config=) spear spear
 
 SX1_stdout_serial_config \
 SX1_config:		unconfig
