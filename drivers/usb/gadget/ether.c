@@ -30,7 +30,7 @@
 
 #include "gadget_chips.h"
 
-#define USB_NET_NAME "usb0"
+#define USB_NET_NAME "CDC Ethernet"
 #define dprintf(x, ...)
 #undef INFO
 #define INFO(x, s...)	printf(s)
@@ -108,7 +108,7 @@ static const char driver_desc [] = DRIVER_DESC;
 			|USB_CDC_PACKET_TYPE_PROMISCUOUS \
 			|USB_CDC_PACKET_TYPE_DIRECTED)
 
-#define USB_CONNECT_TIMEOUT (3 * CONFIG_SYS_HZ)
+#define USB_CONNECT_TIMEOUT (10 * CONFIG_SYS_HZ)
 
 /*-------------------------------------------------------------------------*/
 static struct eth_dev l_ethdev;
@@ -133,6 +133,14 @@ static inline int is_cdc(struct eth_dev *dev)
 #define	cdc_active(dev)		( is_cdc(dev))
 
 #define DEFAULT_QLEN	2	/* double buffering by default */
+
+#ifdef CONFIG_USB_GADGET_DUALSPEED
+
+static unsigned qmult = 5;
+
+#else	/* full speed (low speed doesn't do bulk) */
+#define qmult		1
+#endif
 
 /* peak bulk transfer bits-per-second */
 #define	HS_BPS		(13 * 512 * 8 * 1000 * 8)
@@ -920,10 +928,14 @@ static void eth_status_complete (struct usb_ep *ep, struct usb_request *req)
 	int				value = req->status;
 	struct eth_dev			*dev = ep->driver_data;
 
+	dprintf("eth_status_complete\n");
+
 	/* issue the second notification if host reads the first */
 	if (event->bNotificationType == USB_CDC_NOTIFY_NETWORK_CONNECTION
 			&& value == 0) {
-		__le32	*data = req->buf + sizeof *event;
+		char *src, *dst = req->buf + sizeof *event;
+		__le32 data;
+		int i;
 
 		event->bmRequestType = 0xA1;
 		event->bNotificationType = USB_CDC_NOTIFY_SPEED_CHANGE;
@@ -932,8 +944,16 @@ static void eth_status_complete (struct usb_ep *ep, struct usb_request *req)
 		event->wLength = __constant_cpu_to_le16 (8);
 
 		/* SPEED_CHANGE data is up/down speeds in bits/sec */
-		data [0] = data [1] = cpu_to_le32 (BITRATE (dev->gadget));
 
+		data = cpu_to_le32 (BITRATE (dev->gadget));
+
+		src = &data;
+		for (i=0; i<4; i++)
+			*dst++ = *src++;
+		src = &data;
+		for (i=0; i<4; i++)
+			*dst++ = *src++;
+	
 		req->length = STATUS_BYTECOUNT;
 		value = usb_ep_queue (ep, req, GFP_ATOMIC);
 		dprintf ("send SPEED_CHANGE --> %d\n", value);
@@ -950,6 +970,7 @@ static void eth_status_complete (struct usb_ep *ep, struct usb_request *req)
 		}
 	}
 	req->context = NULL;
+	dprintf("done\n");
 }
 
 static void issue_start_status (struct eth_dev *dev)
@@ -1422,7 +1443,7 @@ static void eth_unbind (struct usb_gadget *gadget)
 {
 	struct eth_dev *dev = get_gadget_data (gadget);
 
-	printf("eth_unbind:...\n");
+	dprintf("eth_unbind:...\n");
 
 	if (dev->stat_req) {
 		usb_ep_free_request (dev->status_ep, dev->stat_req);
@@ -1759,6 +1780,7 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 {
 	struct eth_dev *dev=&l_ethdev;
 	struct usb_gadget *gadget;
+	int status = 0;
 	unsigned long ts;
 	unsigned long timeout = USB_CONNECT_TIMEOUT;
 
@@ -1767,12 +1789,18 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 		goto fail;
 	}
 
+	status = usb_gadget_register_driver(&eth_driver);
+	if (status < 0)
+		goto fail;
+
+	usb_gadget_handle_interrupts();
+
 	dev->network_started = 0;
 	dev->tx_req = NULL;
 	dev->rx_req = NULL;
 
 	packet_received = 0;
-	packet_sent = 0;
+	packet_sent = 1;
 
 	gadget = dev->gadget;
 	usb_gadget_connect(gadget);
@@ -1783,12 +1811,17 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 	ts = get_timer(0);
 	while (!l_ethdev.network_started)
 	{
+		int irq_res;
 		/* Handle control-c and timeouts */
 		if (ctrlc() || (get_timer(ts) > timeout)) {
 			printf("The remote end did not respond in time.\n");
 			goto fail;
 		}
-		usb_gadget_handle_interrupts();
+		irq_res = usb_gadget_handle_interrupts();
+
+		/* hack nice progress display */
+		if (irq_res && !l_ethdev.network_started)
+			printf(".");	
 	}
 
 	rx_submit (dev, dev->rx_req, 0);
@@ -1805,6 +1838,13 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 	struct eth_dev *dev = &l_ethdev;
 	dprintf("%s:...\n",__func__);
 
+	while(!packet_sent)
+	{
+		packet_sent=0;
+		usb_gadget_handle_interrupts();
+		dprintf("^");
+	}
+
 	req = dev->tx_req;
 
 	req->buf = (void *)packet;
@@ -1820,7 +1860,7 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 		length++;
 
 	req->length = length;
-#if 0
+#if 1
 	/* throttle highspeed IRQ rate back slightly */
 	if (gadget_is_dualspeed(dev->gadget))
 		req->no_interrupt = (dev->gadget->speed == USB_SPEED_HIGH)
@@ -1832,10 +1872,6 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 
 	if (!retval)
 		dprintf("%s: packet queued\n",__func__);
-	while(!packet_sent)
-	{
-		packet_sent=0;
-	}
 
 	return 0;
 }
@@ -1843,6 +1879,8 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 static int usb_eth_recv(struct eth_device* netdev)
 {
 	struct eth_dev *dev = &l_ethdev;
+
+	dprintf("%s:...\n",__func__);
 
 	usb_gadget_handle_interrupts();
 
@@ -1856,9 +1894,11 @@ static int usb_eth_recv(struct eth_device* netdev)
 
 			if (dev->rx_req)
 				rx_submit (dev, dev->rx_req, 0);
+			dprintf("-");
 		}
 		else printf("dev->rx_req invalid\n");
 	}
+	dprintf("done\n");
 	return 0;
 }
 
@@ -1872,7 +1912,8 @@ void usb_eth_halt(struct eth_device* netdev)
 		return;
 	}
 
-	usb_gadget_disconnect(dev->gadget);
+	usb_gadget_unregister_driver(&eth_driver);
+	usb_gadget_handle_interrupts();
 }
 
 static struct usb_gadget_driver eth_driver = {
@@ -1893,7 +1934,7 @@ int usb_eth_initialize(bd_t *bi)
 	int status = 0;
 	struct eth_device *netdev=&l_netdev;
 
-	sprintf(netdev->name,"usb_ether");
+	sprintf(netdev->name, "USB CDC Ethernet");
 
 	netdev->init = usb_eth_init;
 	netdev->send = usb_eth_send;
@@ -1932,10 +1973,6 @@ int usb_eth_initialize(bd_t *bi)
 		status = -1;
 	}
 	if (status)
-		goto fail;
-
-	status = usb_gadget_register_driver(&eth_driver);
-	if (status < 0)
 		goto fail;
 
 	eth_register(netdev);

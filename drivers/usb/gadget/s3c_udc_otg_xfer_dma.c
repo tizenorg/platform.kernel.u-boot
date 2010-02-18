@@ -77,6 +77,15 @@ static inline void s3c_udc_pre_setup(void)
 
 	ep_ctrl = readl(S3C_UDC_OTG_DOEPCTL(EP0_CON));
 	writel(ep_ctrl|DEPCTL_EPENA|DEPCTL_CNAK, S3C_UDC_OTG_DOEPCTL(EP0_CON));
+
+	DEBUG_OUT_EP("%s: EP%d RX DMA start : DOEPDMA = 0x%x, DOEPTSIZ = 0x%x, DOEPCTL = 0x%x\n"
+			"\tbuf = 0x%p, pktcnt = %d, xfersize = %d\n",
+			__func__, 0,
+			readl(S3C_UDC_OTG_DOEPDMA(0)),
+			readl(S3C_UDC_OTG_DOEPTSIZ(0)),
+			readl(S3C_UDC_OTG_DOEPCTL(0)),
+			usb_ctrl, 1, sizeof(*usb_ctrl));
+
 }
 
 static int setdma_rx(struct s3c_ep *ep, struct s3c_request *req)
@@ -511,7 +520,7 @@ static int s3c_queue(struct usb_ep *_ep, struct usb_request *_req,
 
 	if (unlikely(!_ep || (!ep->desc && ep->ep.name != ep0name))) {
 
-		DEBUG("%s: bad ep\n", __func__);
+		DEBUG("%s: bad ep: %s, %d, %x\n", __func__, ep->ep.name, !ep->desc, _ep);
 		return -EINVAL;
 	}
 
@@ -534,6 +543,22 @@ static int s3c_queue(struct usb_ep *_ep, struct usb_request *_req,
 		__func__,_ep->name, ep_is_in(ep)? "in" : "out",
 		_req, _req->length,_req->buf,
 		list_empty(&ep->queue), ep->stopped);
+
+#ifdef DEBUG_S3C_UDC
+	{
+		int i, len = _req->length;
+
+		printf("pkt = ");
+		if (len > 64)
+			len = 64;
+		for (i=0; i<len; i++) {
+			printf("%02x", ((u8*)_req->buf)[i]);
+			if ((i & 7) == 7)
+				printf(" ");
+		}
+		printf("\n");
+	}
+#endif
 
 	if (list_empty(&ep->queue) && !ep->stopped) {
 

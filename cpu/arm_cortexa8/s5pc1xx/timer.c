@@ -112,7 +112,7 @@ void reset_timer(void)
 
 unsigned long get_timer(unsigned long base)
 {
-	return get_timer_masked() - base;
+	return (get_timer_masked()/2000 - base);
 }
 
 void set_timer(unsigned long t)

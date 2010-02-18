@@ -22,56 +22,39 @@
 #ifndef __S3C_USB_GADGET
 #define __S3C_USB_GADGET
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ioport.h>
-#include <linux/types.h>
-#include <linux/version.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/timer.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/proc_fs.h>
-#include <linux/mm.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/regulator/consumer.h>
-
-#include <asm/byteorder.h>
-#include <asm/dma.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/system.h>
-#include <asm/unaligned.h>
-//#include <asm/hardware.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
+#include <linux/list.h>
+
+
+#define __iomem
+
+/*-------------------------------------------------------------------------*/
 
 #define DMA_BUFFER_SIZE		(4096*4)	/* DMA bounce buffer size, 16K is enough even for mass storage */
 
 // Max packet size
+/*
 #if defined(CONFIG_USB_GADGET_S3C_FS)
 #define EP0_FIFO_SIZE		8
 #define EP_FIFO_SIZE		64
 #define S3C_MAX_ENDPOINTS	5
 #elif defined(CONFIG_USB_GADGET_S3C_HS) || defined(CONFIG_PLAT_S5P64XX) || defined(CONFIG_PLAT_S5PC1XX) \
 	|| defined(CONFIG_CPU_S5P6442)
+*/
 #define EP0_FIFO_SIZE		64
 #define EP_FIFO_SIZE		512
 #define EP_FIFO_SIZE2		1024
 #define S3C_MAX_ENDPOINTS	16
+/*
 #else
 #define EP0_FIFO_SIZE		64
 #define EP_FIFO_SIZE		512
 #define EP_FIFO_SIZE2		1024
 #define S3C_MAX_ENDPOINTS	16
 #endif
-
+*/
 #define WAIT_FOR_SETUP          0
 #define DATA_STATE_XMIT         1
 #define DATA_STATE_NEED_ZLP     2
@@ -126,7 +109,8 @@ struct s3c_udc {
 	struct usb_gadget gadget;
 	struct usb_gadget_driver *driver;
 	//struct device *dev;
-	struct platform_device *dev;
+//	struct platform_device *dev;
+	struct s3c_plat_otg_data *pdata;
 	spinlock_t lock;
 	void *dma_buf[S3C_MAX_ENDPOINTS+1];
 
@@ -135,8 +119,8 @@ struct s3c_udc {
 
 	unsigned char usb_address;
 
-	struct regulator *regulator_a;
-	struct regulator *regulator_d;
+//	struct regulator *regulator_a;
+//	struct regulator *regulator_d;
 
 	unsigned req_pending:1, req_std:1, req_config:1;
 };
@@ -146,5 +130,33 @@ extern struct s3c_udc *the_controller;
 #define ep_is_in(EP) 		(((EP)->bEndpointAddress&USB_DIR_IN)==USB_DIR_IN)
 #define ep_index(EP) 		((EP)->bEndpointAddress&0xF)
 #define ep_maxpacket(EP) 	((EP)->ep.maxpacket)
+
+
+
+/*-------------------------------------------------------------------------*/
+
+#ifdef DEBUG
+#define DBG(stuff...)		printf("udc: " stuff)
+#else
+#define DBG(stuff...)		do{}while(0)
+#endif
+
+#ifdef VERBOSE
+#define VDBG(x...)	printf(x)
+//VDBG(x...) printf(__FUNCTION__ , x)
+#else
+#define VDBG(stuff...)	do{}while(0)
+#endif
+
+#ifdef PACKET_TRACE
+#    define PACKET		VDBG
+#else
+#    define PACKET(stuff...)	do{}while(0)
+#endif
+
+#define ERR(stuff...)		printf("ERR udc: " stuff)
+#define WARN(stuff...)		printf("WARNING udc: " stuff)
+#define INFO(stuff...)		printf("INFO udc: " stuff)
+
 
 #endif

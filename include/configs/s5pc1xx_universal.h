@@ -110,7 +110,6 @@
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
-#undef CONFIG_CMD_NET
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
@@ -124,15 +123,35 @@
 
 #define CONFIG_SYS_64BIT_VSPRINTF	1
 
-#define CONFIG_BOOTDELAY	1
+#define CONFIG_BOOTDELAY	10
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
+
+/* Ethernet */
+#define CONFIG_NET_MULTI		1
+#define CONFIG_NET_RETRY_COUNT		2
+#define CONFIG_NET_DO_NOT_TRY_ANOTHER	1
+
+/* Configure Ethernet over USB */
+/*#define CONFIG_USB_ETH_RNDIS		1*/
+#define CONFIG_USB_GADGET		1
+#define CONFIG_USB_GADGET_S3C_UDC_OTG		1
+#define CONFIG_USB_GADGET_DUALSPEED	1
+#define CONFIG_USB_ETHER		1
+#define CONFIG_USBNET_MANUFACTURER      "S5PC1xx U-Boot"
+/* ethaddr settings can be overruled via environment settings */
+#define CONFIG_USBNET_DEV_ADDR		"8e:28:0f:fa:3c:39"
+#define CONFIG_USBNET_HOST_ADDR		"0a:fa:63:8b:e8:0a"
+#define CONFIG_USB_CDC_VENDOR_ID        0x0525
+#define CONFIG_USB_CDC_PRODUCT_ID       0xa4a1
+#define CONFIG_USB_RNDIS_VENDOR_ID      0x0525
+#define CONFIG_USB_RNDIS_PRODUCT_ID     0xa4a2
 
 #define CONFIG_NETMASK		255.255.255.0
 #define CONFIG_IPADDR		192.168.129.3
 #define CONFIG_SERVERIP		192.168.129.1
 #define CONFIG_GATEWAYIP	192.168.129.1
-#define CONFIG_ETHADDR		00:0E:99:34:10:00
+#define CONFIG_ETHADDR		8e:28:0f:fa:3c:39
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
@@ -196,6 +215,9 @@
 	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
 	 CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
 	 CONFIG_COMMON_BOOT "; run bootk\0" \
+	"tftpboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
+	 CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
+	 CONFIG_COMMON_BOOT "; tftp 0x30007FC0 uImage; bootm 0x30007FC0\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"android=set bootargs root=ubi0!ramdisk " CONFIG_UBI_MTD \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \

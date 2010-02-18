@@ -33,6 +33,8 @@
 #include <asm/arch/mmc.h>
 #include <asm/arch/power.h>
 #include <asm/arch/mem.h>
+#include <asm/arch/hs_otg.h>
+#include <asm/arch/regs-otg.h>
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
@@ -2042,6 +2044,63 @@ void board_sleep_resume(void)
 	/* check fsa9480 */
 	check_micro_usb(1);
 }
+
+#if defined(CONFIG_USB_GADGET_S3C_UDC_OTG)
+
+static int s5pc1xx_phy_control(int on)
+{
+	static int status;
+
+	if (on && !status) {
+//		printf("turning USB power on\n");
+#ifdef CONFIG_CMD_PMIC
+		run_command("pmic ldo 3 on", 0);
+#endif
+		/* S5PC110 */
+		if (board_is_limo_universal() ||
+			board_is_limo_real() ||
+			board_is_media()) {
+			/* check usb path */
+			if (board_is_limo_real() && !hwrevision(6))
+				check_mhl();
+		}
+
+		if (machine_is_tickertape())
+			/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
+			gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 0, 0);
+
+		/* USB Path to AP */
+		micro_usb_switch(0);
+		status = 1;
+	} else if (!on && status) {
+//		printf("turning USB power off\n");
+#ifdef CONFIG_CMD_PMIC
+		run_command("pmic ldo 3 off", 0);
+#endif
+		status = 0;
+	}
+	udelay(10000);
+}
+
+struct s3c_plat_otg_data s5pc110_otg_data = {
+	.phy_control = s5pc1xx_phy_control,
+	.regs_phy = S5PC110_PHY_BASE,
+	.regs_otg = S5PC110_OTG_BASE,
+};
+
+int board_eth_init(bd_t *bis)
+{
+	int res = -1;
+
+	if (cpu_is_s5pc100())
+		return -1;
+
+	s3c_udc_probe(&s5pc110_otg_data);
+	if (usb_eth_initialize(bis) >= 0)
+		res = 0;
+	return res;
+}
+#endif
 
 #ifdef CONFIG_CMD_USBDOWN
 int usb_board_init(void)

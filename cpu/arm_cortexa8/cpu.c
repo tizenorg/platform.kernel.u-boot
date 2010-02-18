@@ -39,7 +39,7 @@
 #include <asm/arch/sys_proto.h>
 #endif
 
-static void cache_flush(void);
+void cache_flush(void);
 
 int cleanup_before_linux(void)
 {
@@ -77,7 +77,7 @@ int cleanup_before_linux(void)
 	return 0;
 }
 
-static void cache_flush(void)
+void cache_flush(void)
 {
 	asm ("mcr p15, 0, %0, c7, c5, 0": :"r" (0));
 }
