@@ -33,6 +33,8 @@ GLSOBJS	+= _lshrdi3.o
 GLSOBJS	+= _modsi3.o
 GLSOBJS	+= _udivsi3.o
 GLSOBJS	+= _umodsi3.o
+SOBJS	+= _io-readsb.o
+SOBJS	+= _io-writesb.o
 
 GLCOBJS	+= div0.o
 
@@ -68,8 +70,8 @@ endif
 
 all:	$(TARGETS)
 
-$(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
 
 $(LIBGCC): $(obj).depend $(LGOBJS)
 	$(AR) $(ARFLAGS) $@ $(LGOBJS)

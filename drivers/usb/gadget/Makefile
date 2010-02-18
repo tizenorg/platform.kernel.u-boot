@@ -37,6 +37,7 @@ COBJS-$(CONFIG_SPEARUDC) += spr_udc.o
 endif
 # new USB gadget layer dependencies
 COBJS-$(CONFIG_USB_ETHER) += ether.o epautoconf.o config.o usbstring.o
+COBJS-$(CONFIG_USB_GADGET_AT91) += at91_udc.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
