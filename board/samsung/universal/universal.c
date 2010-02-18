@@ -46,10 +46,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
-/* FIXME Neptune workaround */
-#define USE_NEPTUNE_BOARD
-#undef USE_NEPTUNE_BOARD
-
 static unsigned int board_rev;
 static unsigned int battery_soc;
 static struct s5pc110_gpio *s5pc110_gpio;
@@ -596,10 +592,13 @@ static void check_hw_revision(void)
 			} else {
 				board = MACH_KESSLER;
 				board_rev |= ARIES_BOARD;
-#ifdef USE_NEPTUNE_BOARD
-				board_rev &= ~ARIES_BOARD;
-				board_rev |= NEPTUNE_BOARD;
-#endif
+
+				/* Neptune MP0_5[4] == 1 */
+				gpio_direction_input(&gpio->gpio_mp0_5, 4);
+				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
+					board_rev &= ~ARIES_BOARD;
+					board_rev |= NEPTUNE_BOARD;
+				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 1;
