@@ -23,24 +23,35 @@
  *		updates to merge with Linux 2.6, better match RNDIS spec
  */
 
-#include <linux/module.h>
+/*#include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
-#include <linux/init.h>
+#include <linux/init.h>*/
 #include <linux/list.h>
-#include <linux/proc_fs.h>
-#include <linux/netdevice.h>
+/*#include <linux/proc_fs.h>
+#include <linux/netdevice.h>*/
+#include <asm/errno.h>
 
 #include <asm/io.h>
 #include <asm/byteorder.h>
 #include <asm/system.h>
 #include <asm/unaligned.h>
 
+#include <malloc.h>
+
 
 #undef	RNDIS_PM
 #undef	RNDIS_WAKEUP
 #undef	VERBOSE
+#define ENOTSUPP	524
+#define ETH_ALEN	6 /* copied from ether.c */
+
+#define netif_running(...)	1
+#define netif_carrier_on(...) do { } while(0)
+#define netif_wake_queue(...) do { } while(0)
+#define netif_carrier_off(...) do { } while(0)
+#define netif_stop_queue(...) do { } while(0)
 
 #include "rndis.h"
 
@@ -62,10 +73,15 @@ MODULE_PARM_DESC (rndis_debug, "enable debugging");
 
 #define DBG(str,args...) do { \
 	if (rndis_debug) \
-		pr_debug(str , ## args); \
+		printf(str , ## args); \
 	} while (0)
 
 #define RNDIS_MAX_CONFIGS	1
+
+static rndis_packet_buffer rndis_buffer = {
+	.len = 0,
+	.in_use = 0
+};
 
 
 static rndis_params rndis_per_dev_params [RNDIS_MAX_CONFIGS];
@@ -672,8 +688,7 @@ gen_ndis_query_resp (int configNr, u32 OID, u8 *buf, unsigned buf_len,
 #endif
 
 	default:
-		pr_warning("%s: query unknown OID 0x%08X\n",
-			 __func__, OID);
+		printf("%s: query unknown OID 0x%08X\n", __func__, OID);
 	}
 	if (retval < 0)
 		length = 0;
@@ -792,7 +807,7 @@ update_linkstate:
 #endif	/* RNDIS_PM */
 
 	default:
-		pr_warning("%s: set unknown OID 0x%08X, size %d\n",
+		printf("%s: set unknown OID 0x%08X, size %d\n",
 			 __func__, OID, buf_len);
 	}
 
@@ -827,7 +842,7 @@ static int rndis_init_response (int configNr, rndis_init_msg_type *buf)
 	resp->MaxPacketsPerTransfer = __constant_cpu_to_le32 (1);
 	resp->MaxTransferSize = cpu_to_le32 (
 		  rndis_per_dev_params [configNr].dev->mtu
-		+ sizeof (struct ethhdr)
+		+ ETHER_HDR_SIZE
 		+ sizeof (struct rndis_packet_msg_type)
 		+ 22);
 	resp->PacketAlignmentFactor = __constant_cpu_to_le32 (0);
@@ -1117,7 +1132,7 @@ int rndis_msg_parser (u8 configNr, u8 *buf)
 		 * In one case those messages seemed to relate to the host
 		 * suspending itself.
 		 */
-		pr_warning("%s: unknown RNDIS message 0x%08X len %d\n",
+		printf("%s: unknown RNDIS message 0x%08X len %d\n",
 			__func__ , MsgType, MsgLength);
 		{
 			unsigned i;
@@ -1145,7 +1160,7 @@ int rndis_msg_parser (u8 configNr, u8 *buf)
 	return -ENOTSUPP;
 }
 
-int rndis_register (int (* rndis_control_ack) (struct net_device *))
+int rndis_register (int (* rndis_control_ack) (struct eth_device *))
 {
 	u8 i;
 
@@ -1172,8 +1187,8 @@ void rndis_deregister (int configNr)
 	return;
 }
 
-int rndis_set_param_dev (u8 configNr, struct net_device *dev,
-			 struct net_device_stats *stats,
+int rndis_set_param_dev (u8 configNr, struct eth_device *dev,
+			 struct eth_device_stats *stats,
 			 u16 *cdc_filter)
 {
 	DBG("%s:\n", __func__ );
@@ -1210,6 +1225,46 @@ int rndis_set_param_medium (u8 configNr, u32 medium, u32 speed)
 	return 0;
 }
 
+rndis_packet_buffer *rndis_packet_create(void *data, int len)
+{
+	struct rndis_packet_msg_type	*header;
+	int header_size, total_size;
+	if (rndis_buffer.in_use) {
+		printf("error: RNDIS packet buffer is currently in use\n");
+		return NULL;
+	}
+	header_size = sizeof(*header);
+	total_size = header_size + len;
+	if (total_size > RNDIS_MAX_PACKET_SIZE) {
+		printf("error: RNDIS packet size %d exceeds %d\n",
+		        total_size, RNDIS_MAX_PACKET_SIZE);
+		return NULL;
+	}
+	header = (struct rndis_packet_msg_type*) rndis_buffer.data;
+	memset(header, 0, header_size);
+	header->MessageType = __constant_cpu_to_le32(REMOTE_NDIS_PACKET_MSG);
+	header->MessageLength = cpu_to_le32(total_size);
+	header->DataOffset = __constant_cpu_to_le32 (36);
+	header->DataLength = cpu_to_le32(len);
+
+	memcpy(rndis_buffer.data + header_size, data, len);
+
+	rndis_buffer.len = total_size;
+	rndis_buffer.in_use = 1;
+	return &rndis_buffer;
+}
+
+void rndis_packet_free(rndis_packet_buffer *b)
+{
+	if (b != &rndis_buffer) {
+		printf("error: freeing invalid RNDIS packet\n");
+		return;
+	}
+	rndis_buffer.len = 0;
+	rndis_buffer.in_use = 0;
+}
+
+#if 0
 void rndis_add_hdr (struct sk_buff *skb)
 {
 	struct rndis_packet_msg_type	*header;
@@ -1223,6 +1278,7 @@ void rndis_add_hdr (struct sk_buff *skb)
 	header->DataOffset = __constant_cpu_to_le32 (36);
 	header->DataLength = cpu_to_le32(skb->len - sizeof *header);
 }
+#endif
 
 void rndis_free_response (int configNr, u8 *buf)
 {
@@ -1235,7 +1291,7 @@ void rndis_free_response (int configNr, u8 *buf)
 		r = list_entry (act, rndis_resp_t, list);
 		if (r && r->buf == buf) {
 			list_del (&r->list);
-			kfree (r);
+			free (r);
 		}
 	}
 }
@@ -1266,7 +1322,7 @@ static rndis_resp_t *rndis_add_response (int configNr, u32 length)
 	rndis_resp_t	*r;
 
 	/* NOTE:  this gets copied into ether.c USB_BUFSIZ bytes ... */
-	r = kmalloc (sizeof (rndis_resp_t) + length, GFP_ATOMIC);
+	r = malloc (sizeof (rndis_resp_t) + length);
 	if (!r) return NULL;
 
 	r->buf = (u8 *) (r + 1);
@@ -1278,6 +1334,30 @@ static rndis_resp_t *rndis_add_response (int configNr, u32 length)
 	return r;
 }
 
+int rndis_rm_hdr(void **data, int *len)
+{
+	/* tmp points to a struct rndis_packet_msg_type */
+	__le32		*tmp = (void *) *data;
+	int DataOffset, DataLength;
+
+	/* MessageType, MessageLength */
+	if (__constant_cpu_to_le32(REMOTE_NDIS_PACKET_MSG)
+			!= get_unaligned(tmp++))
+		return -EINVAL;
+	tmp++;
+	DataOffset = get_unaligned_le32(tmp++);
+	DataLength = get_unaligned_le32(tmp++);
+
+	if (DataLength > *len)
+		return -EOVERFLOW;
+	
+	*len = DataLength;
+	*data = *data + DataOffset;
+
+	return 0;
+}
+
+#if 0
 int rndis_rm_hdr(struct sk_buff *skb)
 {
 	/* tmp points to a struct rndis_packet_msg_type */
@@ -1296,6 +1376,7 @@ int rndis_rm_hdr(struct sk_buff *skb)
 
 	return 0;
 }
+#endif
 
 #ifdef	CONFIG_USB_GADGET_DEBUG_FILES
 
@@ -1396,7 +1477,7 @@ static struct proc_dir_entry *rndis_connect_state [RNDIS_MAX_CONFIGS];
 #endif	/* CONFIG_USB_GADGET_DEBUG_FILES */
 
 
-int __init rndis_init (void)
+int rndis_init (void)
 {
 	u8 i;
 

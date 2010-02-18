@@ -17,6 +17,13 @@
 #ifndef _LINUX_RNDIS_H
 #define _LINUX_RNDIS_H
 
+#include <common.h>
+#include <asm/errno.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/cdc.h>
+#include <linux/usb/gadget.h>
+#include <net.h>
+
 #include "ndis.h"
 
 #define RNDIS_MAXIMUM_FRAME_SIZE	1518
@@ -234,27 +241,41 @@ typedef struct rndis_params
 
 	const u8		*host_mac;
 	u16			*filter;
-	struct net_device	*dev;
-	struct net_device_stats *stats;
+	struct eth_device	*dev;
+	struct eth_device_stats *stats;
 
 	u32			vendorID;
 	const char		*vendorDescr;
-	int			(*ack) (struct net_device *);
+	int			(*ack) (struct eth_device *);
 	struct list_head	resp_queue;
 } rndis_params;
 
+#define RNDIS_MAX_PACKET_SIZE PKTSIZE
+typedef struct rndis_packet_buffer {
+	u8 data[RNDIS_MAX_PACKET_SIZE];
+	int len;
+	int in_use;
+} rndis_packet_buffer;
+
+rndis_packet_buffer *rndis_packet_create(void *data, int len);
+void rndis_packet_free(rndis_packet_buffer *b);
+
 /* RNDIS Message parser and other useless functions */
 int  rndis_msg_parser (u8 configNr, u8 *buf);
-int  rndis_register (int (*rndis_control_ack) (struct net_device *));
+int  rndis_register (int (*rndis_control_ack) (struct eth_device *));
 void rndis_deregister (int configNr);
-int  rndis_set_param_dev (u8 configNr, struct net_device *dev,
-			 struct net_device_stats *stats,
+int  rndis_set_param_dev (u8 configNr, struct eth_device *dev,
+			 struct eth_device_stats *stats,
 			 u16 *cdc_filter);
 int  rndis_set_param_vendor (u8 configNr, u32 vendorID,
 			    const char *vendorDescr);
 int  rndis_set_param_medium (u8 configNr, u32 medium, u32 speed);
+#if 0
 void rndis_add_hdr (struct sk_buff *skb);
 int rndis_rm_hdr (struct sk_buff *skb);
+#endif
+int rndis_rm_hdr(void **data, int *len);
+
 u8   *rndis_get_next_response (int configNr, u32 *length);
 void rndis_free_response (int configNr, u8 *buf);
 
@@ -264,7 +285,7 @@ int  rndis_signal_disconnect (int configNr);
 int  rndis_state (int configNr);
 extern void rndis_set_host_mac (int configNr, const u8 *addr);
 
-int __devinit rndis_init (void);
+int  rndis_init (void);
 void rndis_exit (void);
 
 #endif  /* _LINUX_RNDIS_H */
