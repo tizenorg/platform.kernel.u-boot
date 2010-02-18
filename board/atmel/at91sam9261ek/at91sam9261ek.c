@@ -33,13 +33,28 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/io.h>
 #include <lcd.h>
+#include <usb/at91_udc.h>
 #include <atmel_lcdc.h>
 #if defined(CONFIG_RESET_PHY_R) && defined(CONFIG_DRIVER_DM9000)
 #include <net.h>
 #include <netdev.h>
 #endif
 
+#if defined(CONFIG_USB_GADGET_AT91) && !defined(CONFIG_USB_GADGET)
+#error "Need CONFIG_USB_GADGET when CONFIG_USB_GADGET_AT91 enabled"
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
+
+#ifdef CONFIG_USB_GADGET_AT91
+struct platform_data brd = {
+	.board = {
+		.vbus_pin   = AT91_PIN_PB29,
+		.pullup_pin = 0,
+	},
+	.udc_clk = AT91SAM9261_ID_UDP,
+};
+#endif
 
 /* ------------------------------------------------------------------------- */
 /*
@@ -138,6 +153,16 @@ static void at91sam9261ek_dm9000_hw_init(void)
 
 	/* Configure Interrupt pin as input, no pull-up */
 	at91_set_gpio_input(AT91_PIN_PC11, 0);
+}
+#endif
+
+#ifdef CONFIG_USB_GADGET_AT91
+static void at91sam9261ek_usbd_hw_init(void)
+{
+	/* PLLB is already enabled by the bootstrap loader... */
+	at91_sys_write(AT91_PMC_SCER, AT91SAM926x_PMC_UDP);
+	at91_sys_write(AT91_PMC_PCER, 1 << AT91SAM9261_ID_PIOB);
+	at91_set_gpio_input(brd.board.vbus_pin, 0);
 }
 #endif
 
@@ -255,6 +280,9 @@ int board_init(void)
 #ifdef CONFIG_HAS_DATAFLASH
 	at91_spi0_hw_init(1 << 0);
 #endif
+#ifdef CONFIG_USB_GADGET_AT91
+	at91sam9261ek_usbd_hw_init();
+#endif
 #ifdef CONFIG_DRIVER_DM9000
 	at91sam9261ek_dm9000_hw_init();
 #endif
@@ -264,10 +292,21 @@ int board_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_DRIVER_DM9000
+#if defined(CONFIG_DRIVER_DM9000) || defined(CONFIG_USB_GADGET_AT91)
 int board_eth_init(bd_t *bis)
 {
-	return dm9000_initialize(bis);
+	int res = -1;
+
+#if defined(CONFIG_DRIVER_DM9000)
+	res = dm9000_initialize(bis);
+#endif
+#if defined(CONFIG_USB_GADGET_AT91)
+	at91udc_probe(&brd);
+
+	if (usb_eth_initialize(bis) >= 0)
+		res = 0;
+#endif
+	return res;
 }
 #endif
 

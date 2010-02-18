@@ -148,6 +148,24 @@
 #define CONFIG_DM9000_NO_SROM		1
 #define CONFIG_NET_RETRY_COUNT		20
 #define CONFIG_RESET_PHY_R		1
+#define CONFIG_NET_DO_NOT_TRY_ANOTHER	1
+
+/* Configure Ethernet over USB */
+/*#define CONFIG_USB_ETH_RNDIS		1*/
+#define CONFIG_USB_GADGET		1
+#define CONFIG_USB_GADGET_AT91		1
+#define CONFIG_USB_ETHER		1
+#ifdef CONFIG_USB_GADGET
+#define CFG_USBD_REGS_BASE		AT91SAM9261_BASE_UDP
+#endif
+#define CONFIG_USBNET_MANUFACTURER      "Atmel AT91SAM9261-EK"
+/* ethaddr settings can be overruled via environment settings */
+#define CONFIG_USBNET_DEV_ADDR		"8e:28:0f:fa:3c:39"
+#define CONFIG_USBNET_HOST_ADDR		"0a:fa:63:8b:e8:0a"
+#define CONFIG_USB_CDC_VENDOR_ID        0x0525
+#define CONFIG_USB_CDC_PRODUCT_ID       0xa4a1
+#define CONFIG_USB_RNDIS_VENDOR_ID      0x0525
+#define CONFIG_USB_RNDIS_PRODUCT_ID     0xa4a2
 
 /* USB */
 #define CONFIG_USB_ATMEL
