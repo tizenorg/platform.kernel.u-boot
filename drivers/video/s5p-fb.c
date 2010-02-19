@@ -222,6 +222,7 @@ static void draw_samsung_logo(void* lcdbase)
 		printf("Image could be truncated"
 				" (increase CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)!\n");
 	_draw_samsung_logo(lcdbase, x, y, width, height, (unsigned short *) dst);
+	free(dst);
 }
 
 static void lcd_panel_on(vidinfo_t *vid)
