@@ -308,6 +308,11 @@ void i2c_init_board(void)
 static char device_info[DEV_INFO_LEN];
 static int display_info;
 
+static void empty_device_info_buffer(void)
+{
+	memset(device_info, 0x0, DEV_INFO_LEN);
+}
+
 static void dprintf(const char *fmt, ...)
 {
 	va_list args;
@@ -323,7 +328,7 @@ static void dprintf(const char *fmt, ...)
 	if ((strlen(device_info) + strlen(buf)) > (DEV_INFO_LEN - 1)) {
 		puts("Flushing device info...\n");
 		puts(device_info);
-		device_info[0] = 0;
+		empty_device_info_buffer();
 	}
 	strcat(device_info, buf);
 	puts(buf);
@@ -1098,6 +1103,7 @@ static void into_charge_mode(void)
 		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *) S5PC110_RTC_BASE;
 		unsigned int org, org_ip3, org_tcfg0;
 
+		empty_device_info_buffer();
 		if (max8998_power_key()) {
 			lcd_display_clear();
 			return;
@@ -2065,8 +2071,8 @@ void board_sleep_init(void)
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		saved_val[3][0] = val[0];
 		saved_val[3][1] = val[1];
-		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
-		//i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		val[0] &= ~((1 << 6) | (1 << 4));
+		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		printf("Turned off regulators with Kessler setting."
 			       " Preparing to sleep. [%s:%d]\n",

@@ -291,14 +291,19 @@ void s5pc110_wakeup(void)
 	writel(reg_others, S5PC110_OTHERS);
 
 	printf("%s: Waking up...\n", __func__);
+	printf("Wakeup Source: (0x%08x)\n", readl(S5PC110_WAKEUP_STAT));
+	if (readl(S5PC110_WAKEUP_STAT) | 0x01) {
+		printf("Pending EINT: 0X %2.2X %2.2X %2.2X %2.2X\n",
+				readl(0xE0200F4C),
+				readl(0xE0200F48),
+				readl(0xE0200F44),
+				readl(0xE0200F40));
+	}
 
 	timer_init();
 #if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
 	/* init_func_i2c */
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
-#endif
-#if defined(CONFIG_CMD_ONENAND)
-	onenand_init();
 #endif
 #ifdef CONFIG_SERIAL_MULTI
 	serial_initialize();
@@ -332,7 +337,11 @@ static int s5pc110_sleep(int mode)
 	value |= (1 << 2);
 	value |= (1 << 1);
 
+	value &= ~(1 << 2); /* RTC_TICK. To check temperature while charging */
+	value &= ~(1 << 1);
+
 	writel(value, S5PC110_WAKEUP_MASK);
+	printf("WAKEUP_MASK = 0x%8.8x (%8.8x)\n", value, readl(S5PC110_WAKEUP_MASK));
 
 	value = readl(S5PC110_EINT_WAKEUP_MASK);
 	value = 0xFFFFFFFF;
@@ -343,12 +352,9 @@ static int s5pc110_sleep(int mode)
 	value &= ~(1 << 25);      /* KBR(1) */
 	/*      value &= ~(1 << 28);*/    /* T-Flash */
 	writel(value, S5PC110_EINT_WAKEUP_MASK);
-
-	if (s5pc1xx_get_cpu_rev() == 0) {
-		value = readl(S5PC110_EINT_WAKEUP_MASK);
-		for (i = 0; i < 4; i++)
-			value = readl(0xE0200F40 + i * 4);
-	}
+	value = readl(S5PC110_EINT_WAKEUP_MASK);
+	for (i = 0; i < 4; i++)
+		value = readl(0xE0200F40 + i * 4);
 
 	s5pc110_save_regs();
 
@@ -356,12 +362,10 @@ static int s5pc110_sleep(int mode)
 
 	writel((unsigned long) s5pc110_cpu_resume, S5PC110_INFORM0);
 
-	if (s5pc1xx_get_cpu_rev() == 0) {
-		value = readl(S5PC110_SLEEP_CFG);
-		value &= ~(1 << 0); /* OSC_EN off */
-		value &= ~(1 << 1); /* USBOSC_EN off */
-		writel(value, S5PC110_SLEEP_CFG);
-	}
+	value = readl(S5PC110_SLEEP_CFG);
+	value &= ~(1 << 0); /* OSC_EN off */
+	value &= ~(1 << 1); /* USBOSC_EN off */
+	writel(value, S5PC110_SLEEP_CFG);
 
 	value = readl(S5PC110_PWR_CFG);
 	value &= ~S5PC110_CFG_STANDBYWFI_MASK;
@@ -454,20 +458,20 @@ static int s5pc110_sleep(int mode)
 
 	s5pc110_wakeup();
 
+#if 0
 	writel(0, S5PC110_EINT_WAKEUP_MASK);
 	readl(S5PC110_EINT_WAKEUP_MASK);
+#endif
 
 	for (i = 0; i < 4; i++)
 		readl(0xE0200F40 + i * 4);
 
 	value = readl(S5PC110_WAKEUP_STAT);
 	writel(0xFFFF & value, S5PC110_WAKEUP_STAT);
-
-	printf("Wakeup Source: 0x%08x\n", value);
-	value = readl(S5PC110_WAKEUP_STAT);
+	readl(S5PC110_WAKEUP_STAT);
 
 	board_sleep_resume();
-	return 0;
+	return value;
 }
 
 int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
