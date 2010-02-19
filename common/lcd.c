@@ -888,8 +888,16 @@ static void *lcd_logo (void)
 #endif
 
 		if (lcd_display_bitmap (addr, x, y) == 0) {
+#ifdef CONFIG_VIDEO_BMP_GZIP
+			if (addr)
+				free((void *)addr);
+#endif
 			return ((void *)lcd_base);
 		}
+#ifdef CONFIG_VIDEO_BMP_GZIP
+		if (addr)
+			free((void *)addr);
+#endif
 	}
 #endif /* CONFIG_SPLASH_SCREEN */
 
