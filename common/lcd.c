@@ -854,6 +854,7 @@ static void *lcd_logo (void)
 #ifdef CONFIG_SPLASH_SCREEN
 	char *s;
 	ulong addr;
+	int allocated = 0;
 	static int do_splash = 1;
 
 	if (do_splash && (s = getenv("splashimage")) != NULL) {
@@ -884,18 +885,20 @@ static void *lcd_logo (void)
 		if (!((bmp->header.signature[0]=='B') &&
 		      (bmp->header.signature[1]=='M'))) {
 			addr = (ulong)gunzip_bmp(addr, &len);
+			if (addr)
+				allocated = 1;
 		}
 #endif
 
 		if (lcd_display_bitmap (addr, x, y) == 0) {
 #ifdef CONFIG_VIDEO_BMP_GZIP
-			if (addr)
+			if (addr && allocated)
 				free((void *)addr);
 #endif
 			return ((void *)lcd_base);
 		}
 #ifdef CONFIG_VIDEO_BMP_GZIP
-		if (addr)
+		if (addr && allocated)
 			free((void *)addr);
 #endif
 	}
