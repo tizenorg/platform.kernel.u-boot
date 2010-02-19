@@ -35,6 +35,7 @@
 #include <asm/arch/mem.h>
 #include <asm/arch/hs_otg.h>
 #include <asm/arch/regs-otg.h>
+#include <asm/arch/rtc.h>
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
@@ -1040,6 +1041,7 @@ static void into_charge_mode(void)
 	bmp_image_t *bmp;
 	unsigned long len;
 	ulong bmp_addr[CHARGER_ANIMATION_FRAME];
+	unsigned int reg, wakeup_stat;
 
 	i2c_set_bus_num(I2C_PMIC);
 
@@ -1092,13 +1094,74 @@ static void into_charge_mode(void)
 	exit_font();
 #endif
 
-	/* EVT0: sleep 1, EVT1: sleep */
-	if (s5pc1xx_get_cpu_rev() == 0) {
-		run_command("sleep 1", 0);
-		return;
-	}
+	do {
+		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *) S5PC110_RTC_BASE;
+		unsigned int org, org_ip3, org_tcfg0;
 
-	run_command("sleep", 0);
+		if (max8998_power_key()) {
+			lcd_display_clear();
+			return;
+		} else if (!max8998_has_ext_power_source()) {
+			lcd_display_clear();
+			return;
+		}
+
+		/* Enable RTC at CLKGATE IP3 */
+		org_ip3 = readl(0xE010046C);
+		writel(org_ip3 | (1 << 15) | (1 << 16), 0xE010046C);
+
+		reg = org = readl(&rtc->rtccon);
+		reg |= (1 << 0);
+		writel(reg, &rtc->rtccon);
+
+		reg = readl(&rtc->rtccon);
+		writel(reg | (1 << 3), &rtc->rtccon);
+		udelay(10);
+		writel(reg & ~(1 << 3), &rtc->rtccon);
+		udelay(10);
+
+		reg = readl(&rtc->rtccon);
+		reg &= ~( (1 << 8) | (0xF << 4));
+		reg |= (1 << 8) | (0xD << 4); /* D: 4 Hz, 9: 64 Hz */
+		writel(reg, &rtc->rtccon);
+
+		reg = 15 * 4 - 1; /* 15 sec */
+		writel(reg, &rtc->ticcnt);
+
+		/* TODO: turn LCD/FB off for sure */
+
+		/* EVT0: sleep 1, EVT1: sleep */
+		if (cpu_is_s5pc110()) {
+			char *name = "dummy";
+			char *usage = "N/A";
+			char *help = NULL;
+			cmd_tbl_t ctt;
+			ctt.name = name;
+			ctt.usage = usage;
+			ctt.help = help;
+
+			if (s5pc1xx_get_cpu_rev() == 0) {
+				char *argv[] = {"1", "1"};
+				wakeup_stat = do_sleep(&ctt, 0, 2, argv);
+			} else {
+				char *argv[] = {"0", "0"};
+				wakeup_stat = do_sleep(&ctt, 0, 1, argv);
+			}
+		} else {
+			printf("\n\n\nERROR: this is not S5PC110.\n\n\n");
+			return;
+		}
+
+		writel(org, &rtc->rtccon);
+		writel(org_tcfg0, 0xE2600000);
+		writel(org_ip3, 0xE010046C);
+
+		/* TODO: 1. TEMP HIGH/LOW: stop charging and wake it up */
+		/* TODO: 2. BATT FULL: stop charing and wake it up */
+
+	} while (wakeup_stat == 0x04); /* RTC TICK */
+
+	/* TODO: Reenable logo display */
 }
 
 static void check_micro_usb(int intr)
@@ -1389,9 +1452,6 @@ static void setup_power_down_mode_registers(void)
 		if (readl(&mr->bank->dat) & (1 << mr->number))
 			reg |= 1 << mr->number;
 		writel(reg, &mr->bank->pdn_con);
-
-		printf("[%8.8X] = %8.8X\n", (unsigned int) (&mr->bank->pdn_con), reg);
-
 		mr++;
 	}
 }
@@ -1975,39 +2035,79 @@ void board_sleep_init(void)
 		return;
 	}
 
-	/* Set ONOFF1 */
-	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
-	saved_val[0][0] = val[0];
-	saved_val[0][1] = val[1];
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
-			(1 << 1) | (1 << 0));
-	i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
-	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
-	/* Set ONOFF2 */
-	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-	saved_val[1][0] = val[0];
-	saved_val[1][1] = val[1];
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
-			(1 << 2) | (1 << 1) | (1 << 0));
-	val[0] |= (1 << 7);
-	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-	/* Set ONOFF3 */
-	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-	saved_val[2][0] = val[0];
-	saved_val[2][1] = val[1];
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
-	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-	/* Set ONOFF4 */
-	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-	saved_val[3][0] = val[0];
-	saved_val[3][1] = val[1];
-	val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
-	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-	printf("Turned off regulators. Preparing to sleep. [%s:%d]\n",
-			__FILE__, __LINE__);
+	if (machine_is_kessler()) {
+
+		/* Set ONOFF1 */
+		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		saved_val[0][0] = val[0];
+		saved_val[0][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
+				(1 << 1) | (1 << 0));
+		i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		/* Set ONOFF2 */
+		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		saved_val[1][0] = val[0];
+		saved_val[1][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
+				(1 << 2) | (1 << 1) | (1 << 0));
+		val[0] |= (1 << 7);
+		i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		/* Set ONOFF3 */
+		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		saved_val[2][0] = val[0];
+		saved_val[2][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
+		i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		/* Set ONOFF4 */
+		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		saved_val[3][0] = val[0];
+		saved_val[3][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
+		//i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		printf("Turned off regulators with Kessler setting."
+			       " Preparing to sleep. [%s:%d]\n",
+				__FILE__, __LINE__);
+	} else { /* Default */
+
+		/* Set ONOFF1 */
+		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		saved_val[0][0] = val[0];
+		saved_val[0][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4) | (1 << 2) |
+				(1 << 1) | (1 << 0));
+		i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+		/* Set ONOFF2 */
+		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		saved_val[1][0] = val[0];
+		saved_val[1][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 3) |
+				(1 << 2) | (1 << 1) | (1 << 0));
+		val[0] |= (1 << 7);
+		i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+		/* Set ONOFF3 */
+		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		saved_val[2][0] = val[0];
+		saved_val[2][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
+		i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+		/* Set ONOFF4 */
+		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		saved_val[3][0] = val[0];
+		saved_val[3][1] = val[1];
+		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
+		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		printf("Turned off regulators with default(Aquila) setting."
+			       " Preparing to sleep. [%s:%d]\n",
+				__FILE__, __LINE__);
+	}
 }
 
 void board_sleep_resume(void)
