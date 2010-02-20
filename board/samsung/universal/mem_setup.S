@@ -304,10 +304,10 @@ swap_memory:
 	ldr	r1, =0x00202113
 	ldr	r2, =0x00212113
 #else
-	ldr	r1, =0xff212100
+	ldr	r1, =0x00212113
 #endif
 	str	r1, [r0, #0x004]			@ MEMCONTROL_OFFSET
-	strne	r2, [r6, #0x004]			@ MEMCONTROL_OFFSET
+	strne	r1, [r6, #0x004]			@ MEMCONTROL_OFFSET
 
 	/* Skip when S5PC110 */
 	bne	1f
