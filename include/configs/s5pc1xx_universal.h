@@ -128,7 +128,7 @@
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
-#undef CONFIG_CMD_NET
+//#undef CONFIG_CMD_NET
 
 #ifdef CONFIG_CMD_NET
 /* Ethernet */
