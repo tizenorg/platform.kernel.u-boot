@@ -46,7 +46,8 @@
 #define EP0_FIFO_SIZE		64
 #define EP_FIFO_SIZE		512
 #define EP_FIFO_SIZE2		1024
-#define S3C_MAX_ENDPOINTS	16
+#define S3C_MAX_ENDPOINTS	4 /* ep0-control, ep1in-bulk, ep2out-bulk, ep3in-int */
+#define S3C_MAX_HW_ENDPOINTS	16
 /*
 #else
 #define EP0_FIFO_SIZE		64

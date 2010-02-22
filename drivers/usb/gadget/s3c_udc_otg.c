@@ -65,6 +65,7 @@ typedef int	irqreturn_t;
 #define EXPORT_SYMBOL(x)
 
 #define dma_cache_maint(addr, size, mode) cache_flush()
+void cache_flush(void);
 
 #define kmalloc(size, type) malloc(size)
 #define kfree(addr) free(addr)
@@ -611,13 +612,13 @@ static void reconfig_usbd(void)
 	writel((NPTX_FIFO_SIZE >> 2) << 16 | ((RX_FIFO_SIZE >> 2)) << 0,
 		S3C_UDC_OTG_GNPTXFSIZ);
 
-	for (i = 1; i < S3C_MAX_ENDPOINTS; i++) 
+	for (i = 1; i < S3C_MAX_HW_ENDPOINTS; i++) 
 		writel((PTX_FIFO_SIZE >> 2) << 16 |
 			((RX_FIFO_SIZE + NPTX_FIFO_SIZE + PTX_FIFO_SIZE*(i-1)) >> 2) << 0,
 			S3C_UDC_OTG_DIEPTXF(i));
 
 /* check if defined tx fifo sizes fits in SPRAM (S5PC110 fifo has 7936 entries */
-#if (((RX_FIFO_SIZE + NPTX_FIFO_SIZE + PTX_FIFO_SIZE*(S3C_MAX_ENDPOINTS-1)) >> 2) >= 7936)
+#if (((RX_FIFO_SIZE + NPTX_FIFO_SIZE + PTX_FIFO_SIZE*(S3C_MAX_HW_ENDPOINTS-1)) >> 2) >= 7936)
 #error Too large tx fifo size defined!
 #endif
 
@@ -857,6 +858,7 @@ static void s3c_fifo_flush(struct usb_ep *_ep)
 	DEBUG("%s: %d\n", __FUNCTION__, ep_index(ep));
 }
 
+#if 0
 /* ---------------------------------------------------------------------------
  * 	device-scoped parts of the api to the usb controller hardware
  * ---------------------------------------------------------------------------
@@ -876,17 +878,11 @@ static int s3c_udc_wakeup(struct usb_gadget *_gadget)
 	DEBUG("%s: %p\n", __FUNCTION__, _gadget);
 	return -ENOTSUPP;
 }
+#endif
 
 static const struct usb_gadget_ops s3c_udc_ops = {
-	.get_frame = s3c_udc_get_frame,
-	.wakeup = s3c_udc_wakeup,
 	/* current versions must always be self-powered */
 };
-
-static void nop_release(struct device *dev)
-{
-//	DEBUG("%s %s\n", __FUNCTION__, dev->bus_id);
-}
 
 static struct s3c_udc memory = {
 	.usb_address = 0,
@@ -962,6 +958,7 @@ static struct s3c_udc memory = {
 		  .ep_type = ep_interrupt,
 		  .fifo_num = 3,
 		  },
+#if 0
 	.ep[4] = {
 		  .ep = {
 			 .name = "ep4out-bulk",
@@ -1130,6 +1127,7 @@ static struct s3c_udc memory = {
 		  .ep_type = ep_interrupt,
 		  .fifo_num = 15,
 		  },
+#endif
 };
 
 /*

@@ -241,7 +241,7 @@ static void complete_tx(struct s3c_udc *dev, u8 ep_num)
 {
 	struct s3c_ep *ep = &dev->ep[ep_num];
 	struct s3c_request *req;
-	u32 ep_tsr = 0, xfer_size = 0, xfer_length, is_short = 0;
+	u32 ep_tsr = 0, xfer_size = 0, is_short = 0;
 	u32 last;
 
 	if (list_empty(&ep->queue)) {
