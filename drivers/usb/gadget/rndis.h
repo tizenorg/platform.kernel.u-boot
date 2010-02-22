@@ -274,7 +274,7 @@ int  rndis_set_param_medium (u8 configNr, u32 medium, u32 speed);
 void rndis_add_hdr (struct sk_buff *skb);
 int rndis_rm_hdr (struct sk_buff *skb);
 #endif
-int rndis_rm_hdr(void **data, int *len);
+int rndis_rm_hdr(void *data, int *len);
 
 u8   *rndis_get_next_response (int configNr, u32 *length);
 void rndis_free_response (int configNr, u8 *buf);

@@ -33,6 +33,8 @@ static int clear_feature_flag = 0;
 #define GET_MAX_LUN_REQUEST	0xFE
 #define BOT_RESET_REQUEST	0xFF
 
+#if 0
+
 /* TEST MODE in set_feature request */
 #define TEST_SELECTOR_MASK	0xFF
 #define TEST_PKT_SIZE		53
@@ -45,6 +47,8 @@ static u8 test_pkt[TEST_PKT_SIZE] = {
 	0x7F,0xBF,0xDF,0xEF,0xF7,0xFB,0xFD,					//'1' + JJJJJJJK x 8
 	0xFC,0x7E,0xBF,0xDF,0xEF,0xF7,0xFB,0xFD,0x7E				//{JKKKKKKK x 10},JK
 };
+
+#endif
 
 void s3c_udc_ep_set_stall(struct s3c_ep *ep);
 
@@ -980,7 +984,7 @@ void s3c_udc_ep_activate(struct s3c_ep *ep)
 	if (!(ep_ctrl & DEPCTL_USBACTEP)) {
 		ep_ctrl = (ep_ctrl & ~DEPCTL_TYPE_MASK)| (ep->bmAttributes << DEPCTL_TYPE_BIT);
 		ep_ctrl = (ep_ctrl & ~DEPCTL_MPS_MASK) | (ep->ep.maxpacket << DEPCTL_MPS_BIT);
-		ep_ctrl |= (DEPCTL_SETD0PID | DEPCTL_USBACTEP);
+		ep_ctrl |= (DEPCTL_SETD0PID | DEPCTL_USBACTEP | DEPCTL_SNAK);
 
 		if (ep_is_in(ep)) {
 			writel(ep_ctrl, S3C_UDC_OTG_DIEPCTL(ep_num));
@@ -1056,6 +1060,8 @@ static int s3c_udc_clear_feature(struct usb_ep *_ep)
 	return 0;
 }
 
+#if 0
+
 /* Set into the test mode for Test Mode set_feature request */
 static inline void set_test_mode(void)
 {
@@ -1117,6 +1123,8 @@ static inline void set_test_mode(void)
 	}
 }
 
+#endif
+
 static int s3c_udc_set_feature(struct usb_ep *_ep)
 {
 	struct s3c_ep	*ep;
@@ -1138,12 +1146,12 @@ static int s3c_udc_set_feature(struct usb_ep *_ep)
 		case USB_DEVICE_REMOTE_WAKEUP:
 			DEBUG_SETUP("\tSET_FEATURE: USB_DEVICE_REMOTE_WAKEUP\n");
 			break;
-
+#if 0
 		case USB_DEVICE_TEST_MODE:
 			DEBUG_SETUP("\tSET_FEATURE: USB_DEVICE_TEST_MODE\n");
 			set_test_mode();
 			break;
-
+#endif
 		case USB_DEVICE_B_HNP_ENABLE:
 			DEBUG_SETUP("\tSET_FEATURE: USB_DEVICE_B_HNP_ENABLE\n");
 			break;
@@ -1204,6 +1212,22 @@ static void s3c_ep0_setup(struct s3c_udc *dev)
 			__func__, usb_ctrl->bRequestType,
 			(usb_ctrl->bRequestType & USB_DIR_IN) ? "IN" : "OUT", usb_ctrl->bRequest,
 			usb_ctrl->wLength, usb_ctrl->wValue, usb_ctrl->wIndex);
+
+#ifdef DEBUG_S3C_UDC
+	{
+		int i, len = sizeof(*usb_ctrl);
+		char *p = usb_ctrl;
+
+		printf("pkt = ");
+		for (i=0; i<len; i++) {
+			printf("%02x", ((u8*)p)[i]);
+			if ((i & 7) == 7)
+				printf(" ");
+		}
+		printf("\n");
+	}
+#endif
+
 
 	if (usb_ctrl->bRequest == GET_MAX_LUN_REQUEST && usb_ctrl->wLength != 1) {
 		DEBUG_SETUP("\t%s:GET_MAX_LUN_REQUEST:invalid wLength = %d, setup returned\n",

@@ -48,7 +48,7 @@
 #define ETH_ALEN	6 /* copied from ether.c */
 
 #define netif_running(...)	1
-#define netif_carrier_on(...) do { } while(0)
+#define netif_carrier_on(...) eth_connection_established()
 #define netif_wake_queue(...) do { } while(0)
 #define netif_carrier_off(...) do { } while(0)
 #define netif_stop_queue(...) do { } while(0)
@@ -63,13 +63,7 @@
  * and will be happier if you provide the host_addr module parameter.
  */
 
-#if 0
-static int rndis_debug = 0;
-module_param (rndis_debug, int, 0);
-MODULE_PARM_DESC (rndis_debug, "enable debugging");
-#else
 #define rndis_debug		0
-#endif
 
 #define DBG(str,args...) do { \
 	if (rndis_debug) \
@@ -830,10 +824,9 @@ static int rndis_init_response (int configNr, rndis_init_msg_type *buf)
 		return -ENOMEM;
 	resp = (rndis_init_cmplt_type *) r->buf;
 
-	resp->MessageType = __constant_cpu_to_le32 (
-			REMOTE_NDIS_INITIALIZE_CMPLT);
+	resp->MessageType = __constant_cpu_to_le32 (REMOTE_NDIS_INITIALIZE_CMPLT);
 	resp->MessageLength = __constant_cpu_to_le32 (52);
-	resp->RequestID = buf->RequestID; /* Still LE in msg buffer */
+	resp->RequestID = get_unaligned_le32(&buf->RequestID); /* Still LE in msg buffer */
 	resp->Status = __constant_cpu_to_le32 (RNDIS_STATUS_SUCCESS);
 	resp->MajorVersion = __constant_cpu_to_le32 (RNDIS_MAJOR_VERSION);
 	resp->MinorVersion = __constant_cpu_to_le32 (RNDIS_MINOR_VERSION);
@@ -861,7 +854,7 @@ static int rndis_query_response (int configNr, rndis_query_msg_type *buf)
 	rndis_query_cmplt_type *resp;
 	rndis_resp_t            *r;
 
-	// DBG("%s: OID = %08X\n", __func__, cpu_to_le32(buf->OID));
+	// DBG("%s: OID = %08X\n", __func__, get_unaligned_le32(&buf->OID));
 	if (!rndis_per_dev_params [configNr].dev) return -ENOTSUPP;
 
 	/*
@@ -877,12 +870,12 @@ static int rndis_query_response (int configNr, rndis_query_msg_type *buf)
 	resp = (rndis_query_cmplt_type *) r->buf;
 
 	resp->MessageType = __constant_cpu_to_le32 (REMOTE_NDIS_QUERY_CMPLT);
-	resp->RequestID = buf->RequestID; /* Still LE in msg buffer */
+	resp->RequestID = get_unaligned_le32(&buf->RequestID); /* Still LE in msg buffer */
 
-	if (gen_ndis_query_resp (configNr, le32_to_cpu (buf->OID),
-			le32_to_cpu(buf->InformationBufferOffset)
+	if (gen_ndis_query_resp (configNr, get_unaligned_le32(&buf->OID),
+			get_unaligned_le32(&buf->InformationBufferOffset)
 					+ 8 + (u8 *) buf,
-			le32_to_cpu(buf->InformationBufferLength),
+			get_unaligned_le32(&buf->InformationBufferLength),
 			r)) {
 		/* OID not supported */
 		resp->Status = __constant_cpu_to_le32 (
@@ -913,8 +906,8 @@ static int rndis_set_response (int configNr, rndis_set_msg_type *buf)
 		return -ENOMEM;
 	resp = (rndis_set_cmplt_type *) r->buf;
 
-	BufLength = le32_to_cpu (buf->InformationBufferLength);
-	BufOffset = le32_to_cpu (buf->InformationBufferOffset);
+	BufLength = get_unaligned_le32(&buf->InformationBufferLength);
+	BufOffset = get_unaligned_le32(&buf->InformationBufferOffset);
 
 #ifdef	VERBOSE
 	DBG("%s: Length: %d\n", __func__, BufLength);
@@ -930,8 +923,8 @@ static int rndis_set_response (int configNr, rndis_set_msg_type *buf)
 
 	resp->MessageType = __constant_cpu_to_le32 (REMOTE_NDIS_SET_CMPLT);
 	resp->MessageLength = __constant_cpu_to_le32 (16);
-	resp->RequestID = buf->RequestID; /* Still LE in msg buffer */
-	if (gen_ndis_set_resp (configNr, le32_to_cpu (buf->OID),
+	resp->RequestID = get_unaligned_le32(&buf->RequestID); /* Still LE in msg buffer */
+	if (gen_ndis_set_resp (configNr, get_unaligned_le32(&buf->OID),
 			((u8 *) buf) + 8 + BufOffset, BufLength, r))
 		resp->Status = __constant_cpu_to_le32 (RNDIS_STATUS_NOT_SUPPORTED);
 	else
@@ -983,7 +976,7 @@ static int rndis_keepalive_response (int configNr,
 	resp->MessageType = __constant_cpu_to_le32 (
 			REMOTE_NDIS_KEEPALIVE_CMPLT);
 	resp->MessageLength = __constant_cpu_to_le32 (16);
-	resp->RequestID = buf->RequestID; /* Still LE in msg buffer */
+	resp->RequestID = get_unaligned_le32(&buf->RequestID); /* Still LE in msg buffer */
 	resp->Status = __constant_cpu_to_le32 (RNDIS_STATUS_SUCCESS);
 
 	if (rndis_per_dev_params [configNr].ack)
@@ -1192,7 +1185,7 @@ int rndis_set_param_dev (u8 configNr, struct eth_device *dev,
 			 u16 *cdc_filter)
 {
 	DBG("%s:\n", __func__ );
-	if (!dev || !stats) return -1;
+//	if (!dev || !stats) return -1;
 	if (configNr >= RNDIS_MAX_CONFIGS) return -1;
 
 	rndis_per_dev_params [configNr].dev = dev;
@@ -1249,6 +1242,7 @@ rndis_packet_buffer *rndis_packet_create(void *data, int len)
 
 	memcpy(rndis_buffer.data + header_size, data, len);
 
+	DBG("Created RNDIS packet of size %d data offset %d total %d\n", len, header_size, total_size);
 	rndis_buffer.len = total_size;
 	rndis_buffer.in_use = 1;
 	return &rndis_buffer;
@@ -1334,11 +1328,15 @@ static rndis_resp_t *rndis_add_response (int configNr, u32 length)
 	return r;
 }
 
-int rndis_rm_hdr(void **data, int *len)
+int rndis_rm_hdr(void *data, int *len)
 {
+	int i;
+	char *dst = data;
+	char *src = data;
 	/* tmp points to a struct rndis_packet_msg_type */
-	__le32		*tmp = (void *) *data;
+	__le32		*tmp = (void *) data;
 	int DataOffset, DataLength;
+	DBG("%s, %d\n", __FUNCTION__, __LINE__);
 
 	/* MessageType, MessageLength */
 	if (__constant_cpu_to_le32(REMOTE_NDIS_PACKET_MSG)
@@ -1348,11 +1346,16 @@ int rndis_rm_hdr(void **data, int *len)
 	DataOffset = get_unaligned_le32(tmp++);
 	DataLength = get_unaligned_le32(tmp++);
 
+	src += DataOffset + 8;
 	if (DataLength > *len)
 		return -EOVERFLOW;
 	
+	for (i=0; i<DataLength; i++)
+		dst[i] = src[i];
+
 	*len = DataLength;
-	*data = *data + DataOffset;
+
+	DBG("RNDIS pkt: offset %d size %d, src %x dst %x\n", DataOffset, DataLength, src, dst);
 
 	return 0;
 }

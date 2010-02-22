@@ -248,11 +248,17 @@ void otg_phy_init(void)
 
 void otg_phy_off(void)
 {
-	writel(readl(S3C_USBOTG_PHYPWR)|(0x3<<3), S3C_USBOTG_PHYPWR);
+	/* reset controller just in case */
+	writel(0x1, S3C_USBOTG_RSTCON);
+	udelay(20);
+	writel(0x0, S3C_USBOTG_RSTCON);
+	udelay(20);
+
+	writel(readl(S3C_USBOTG_PHYPWR)|(0x3<<3)|(0x1), S3C_USBOTG_PHYPWR);
 	writel(readl(S5PC110_USB_PHY_CON)&~(1<<0), S5PC110_USB_PHY_CON);
 //	writel(readl(S5P_USB_PHY_CONTROL)&~(1<<0), S5P_USB_PHY_CONTROL);
 
-	writel((readl(S3C_USBOTG_PHYPWR)&~(0x3<<3)&~(0x1<<0)),S3C_USBOTG_PHYPWR);
+//	writel((readl(S3C_USBOTG_PHYPWR)&~(0x3<<3)&~(0x1<<0)),S3C_USBOTG_PHYPWR);
 	writel((readl(S3C_USBOTG_PHYCLK)&~(0x5<<2)),S3C_USBOTG_PHYCLK);
 
 	udelay(10000);
@@ -583,6 +589,11 @@ static void reconfig_usbd(void)
 	/* 7. Set NAK bit of EP0, EP1, EP2*/
 	writel(DEPCTL_EPDIS|DEPCTL_SNAK|(0<<0), S3C_UDC_OTG_DOEPCTL(EP0_CON));
 	writel(DEPCTL_EPDIS|DEPCTL_SNAK|(0<<0), S3C_UDC_OTG_DIEPCTL(EP0_CON));
+
+	for (i = 1; i < S3C_MAX_ENDPOINTS; i++) {
+		writel(DEPCTL_EPDIS|DEPCTL_SNAK, S3C_UDC_OTG_DOEPCTL(i));
+		writel(DEPCTL_EPDIS|DEPCTL_SNAK, S3C_UDC_OTG_DIEPCTL(i));
+	}
 
 	/* 8. Unmask EPO interrupts*/
 	writel( ((1<<EP0_CON)<<DAINT_OUT_BIT)|(1<<EP0_CON), S3C_UDC_OTG_DAINTMSK);
