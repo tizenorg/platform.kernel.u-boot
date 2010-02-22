@@ -136,6 +136,9 @@
 #define CONFIG_NET_RETRY_COUNT		2
 #define CONFIG_NET_DO_NOT_TRY_ANOTHER	1
 
+/* NFS support in Ethernet over USB is broken */
+#undef CONFIG_CMD_NFS
+
 /* Configure Ethernet over USB */
 #define CONFIG_USB_ETH_RNDIS		1
 #define CONFIG_USB_GADGET		1
@@ -150,6 +153,7 @@
 #define CONFIG_USB_CDC_PRODUCT_ID       0xa4a1
 #define CONFIG_USB_RNDIS_VENDOR_ID      0x0525
 #define CONFIG_USB_RNDIS_PRODUCT_ID     0xa4a2
+
 #endif
 
 #define CONFIG_NETMASK		255.255.255.0
