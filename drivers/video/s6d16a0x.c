@@ -363,7 +363,7 @@ static const unsigned short SEQ_PASET[] = {
 
 static const unsigned short SEQ_COLMOD[] = {
 	0x3A, 0x77,
-	0x36, 0xC4,	/* MADCTL : Reverse display */
+	/* 0x36, 0xC4, */	/* MADCTL : Reverse display */
 
 	ENDDEF, 0x0000
 };

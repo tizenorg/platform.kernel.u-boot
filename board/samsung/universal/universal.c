@@ -1520,6 +1520,10 @@ void lcd_cfg_gpio(void)
 	/* LCD_BACKLIGHT_EN */
 	if (machine_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
+	if (board_is_neptune()) {
+		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 4, GPIO_OUTPUT);
+		gpio_direction_output(&gpio_base->gpio_mp0_4, 4, 0);
+	}
 
 	/*
 	 * gpio pad configuration for
@@ -1584,8 +1588,21 @@ void lcd_cfg_gpio(void)
 	return;
 }
 
+#define SWRST_REG		0x00
+#define LEDCON_REG		0x01
+#define LED_CUR_SET_REG		0x03
+#define LED_CUR_TR_REG		0x08
+
+#define SWRST			0x01
+#define NORMAL_MODE		0x01
+#define CUR_SET			0x63
+#define TR_SET			0x00
+
 void backlight_on(unsigned int onoff)
 {
+
+	unsigned char addr;
+	unsigned char val[2];
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 	if (onoff) {
@@ -1594,6 +1611,31 @@ void backlight_on(unsigned int onoff)
 	} else {
 		if (machine_is_geminus())
 			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
+	}
+
+	if (board_is_neptune) {
+		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
+		udelay(6);
+
+		i2c_set_bus_num(I2C_GPIO5);
+
+		addr = 0x76;
+		if (i2c_probe(addr)) {
+			if (i2c_probe(addr)) {
+				printf("Can't found s6d16a0x backlight i2c\n");
+				return;
+			}
+		}
+		val[0] = SWRST;
+		i2c_write(addr, SWRST_REG, 1, val, 1);
+		/* NORMAL MODE */
+		val[0] = CUR_SET;
+		i2c_write(addr, LED_CUR_SET_REG, 1, val, 1);
+		val[0] = TR_SET;
+		i2c_write(addr, LED_CUR_TR_REG, 1, val, 1);
+		val[0] = NORMAL_MODE;
+		i2c_write(addr, LEDCON_REG, 1, val, 1);
+		udelay(5000);
 	}
 }
 
@@ -1776,7 +1818,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->vl_vfpd	= 4;
 
 		vid->cfg_gpio = lcd_cfg_gpio;
-		vid->backlight_on = NULL;
+		vid->backlight_on = backlight_on;
 		vid->lcd_power_on = lcd_power_on;
 		vid->reset_lcd = reset_lcd;
 		vid->cfg_ldo = s6d16a0x_cfg_ldo;
