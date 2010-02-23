@@ -36,6 +36,7 @@
 #include <asm/arch/hs_otg.h>
 #include <asm/arch/regs-otg.h>
 #include <asm/arch/rtc.h>
+#include <asm/arch/adc.h>
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
@@ -1034,35 +1035,232 @@ static int max8998_has_ext_power_source(void)
 	return 0;
 }
 
+struct thermister_stat {
+	short centigrade;
+	unsigned short adc;
+};
+
+static struct thermister_stat adc_to_temperature_data[] = {
+	{ .centigrade = -20,    .adc = 1856, },
+	{ .centigrade = -15,    .adc = 1799, },
+	{ .centigrade = -10,    .adc = 1730, },
+	{ .centigrade = -5,     .adc = 1649, },
+	{ .centigrade = 0,      .adc = 1556, },
+	{ .centigrade = 5,      .adc = 1454, },
+	{ .centigrade = 10,     .adc = 1343, },
+	{ .centigrade = 15,     .adc = 1227, },
+	{ .centigrade = 20,     .adc = 1109, },
+	{ .centigrade = 25,     .adc = 992, },
+	{ .centigrade = 30,     .adc = 880, },
+	{ .centigrade = 35,     .adc = 773, },
+	{ .centigrade = 40,     .adc = 675, },
+	{ .centigrade = 45,     .adc = 586, },
+	{ .centigrade = 50,     .adc = 507, },
+	{ .centigrade = 55,     .adc = 436, },
+	{ .centigrade = 58,     .adc = 399, },
+	{ .centigrade = 63,     .adc = 343, },
+	{ .centigrade = 65,     .adc = 322, },
+};
+
+#ifndef USHRT_MAX
+#define USHRT_MAX	0xFFFFU
+#endif
+static int adc_to_temperature_centigrade(unsigned short adc)
+{
+	int i;
+	int approximation;
+	/* low_*: Greatest Lower Bound,
+	 *          *          *          * high_*: Smallest Upper Bound */
+	int low_temp, high_temp;
+	unsigned short low_adc = 0, high_adc = USHRT_MAX;
+	for (i = 0; i < ARRAY_SIZE(adc_to_temperature_data); i++) {
+		if (adc_to_temperature_data[i].adc <= adc &&
+				adc_to_temperature_data[i].adc >= low_adc) {
+			low_temp = adc_to_temperature_data[i].centigrade;
+			low_adc = adc_to_temperature_data[i].adc;
+		}
+		if (adc_to_temperature_data[i].adc >= adc &&
+				adc_to_temperature_data[i].adc <= high_adc) {
+			high_temp = adc_to_temperature_data[i].centigrade;
+			high_adc = adc_to_temperature_data[i].adc;
+		}
+	}
+
+	/* Linear approximation between cloest low and high,
+	 * which is the weighted average of the two. */
+
+	/* The following equation is correct only when the two are different */
+	if (low_adc == high_adc)
+		return low_temp;
+	if (ARRAY_SIZE(adc_to_temperature_data) < 2)
+		return 20; /* The room temperature */
+	if (low_adc == 0)
+		return high_temp;
+	if (high_adc == USHRT_MAX)
+		return low_temp;
+	approximation = low_temp * (adc - low_adc) +
+		high_temp * (high_adc - adc);
+	approximation /= high_adc - low_adc;
+	return approximation;
+}
+
+static unsigned short get_adc_value(int channel)
+{
+	struct s5pc110_adc *adc = (struct s5pc110_adc *) S5PC110_ADC_BASE;
+	unsigned short ret = 0;
+	unsigned int reg;
+	int ldonum = 8;
+	char buf[64];
+	unsigned int loop = 0;
+
+	if (machine_is_kessler())
+		ldonum = 4;
+	else if (machine_is_geminus())
+		ldonum = 4;
+	else if (machine_is_wmg160())
+		ldonum = 4;
+	else if (machine_is_cypress())
+		ldonum = 8;
+	else if (machine_is_tickertape())
+		ldonum = 8;
+	else if (machine_is_aquila())
+		ldonum = 8;
+	/*
+	else if (machine_is_p1p2())
+		ldonum = 4;
+	*/
+
+	sprintf(buf, "pmic ldo %d on", ldonum);
+	run_command(buf, 0);
+	writel(channel & 0xF, &adc->adcmux);
+	writel((1 << 14) | (49 << 6), &adc->adccon);
+	writel(1000 & 0xffff, &adc->adcdly);
+	writel(readl(&adc->adccon) | (1 << 16), &adc->adccon); /* 12 bit */
+	udelay(10);
+	writel(readl(&adc->adccon) | (1 << 0), &adc->adccon); /* Enable */
+	udelay(10);
+	do {
+		udelay(1);
+		reg = readl(&adc->adccon);
+	} while (!reg & (1 << 15) && loop++ < 1000);
+	ret = readl(&adc->adcdat0) & 0xFFF;
+	sprintf(buf, "pmic ldo %d off", ldonum);
+	run_command(buf, 0);
+
+	return ret;
+}
+
+static int adc_get_average_ambient_temperature(void)
+{
+	if (machine_is_kessler()) {
+		unsigned short min = USHRT_MAX;
+		unsigned short max = 0;
+		unsigned int sum = 0;
+		unsigned int measured = 0;
+		int i;
+
+		for (i = 0; i < 7; i++) {
+			unsigned short measurement = get_adc_value(6);
+			sum += measurement;
+			measured ++;
+			if (min > measurement)
+				min = measurement;
+			if (max < measurement)
+				max = measurement;
+		}
+		if (measured >= 3) {
+			measured -= 2;
+			sum -= min;
+			sum -= max;
+		}
+		sum /= measured;
+		printf("Average Ambient Temperature = %d(ADC=%d)\n",
+				adc_to_temperature_centigrade(sum), sum);
+		return adc_to_temperature_centigrade(sum);
+	}
+	else
+		return 20; /* 20 Centigrade */
+}
+
+enum temperature_level {
+	_TEMP_OK,
+	_TEMP_OK_HIGH,
+	_TEMP_OK_LOW,
+	_TEMP_TOO_HIGH,
+	_TEMP_TOO_LOW,
+};
+
+static enum temperature_level temperature_check(void)
+{
+	int temp = adc_get_average_ambient_temperature();
+	if (temp < -5)
+		return _TEMP_TOO_LOW;
+	if (temp < 0)
+		return _TEMP_OK_LOW;
+	if (temp > 63)
+		return _TEMP_TOO_HIGH;
+	if (temp > 58)
+		return _TEMP_OK_HIGH;
+	return _TEMP_OK;
+}
+
 extern void lcd_display_clear(void);
 extern int lcd_display_bitmap(ulong bmp_image, int x, int y);
 
+static void charger_en(int enable)
+{
+	/* 0: disable
+	 * 600: 600mA
+	 * 475: 475mA
+	 */
+	unsigned char addr = 0xCC >> 1; /* max8998 */
+	unsigned char val[2];
+
+	i2c_set_bus_num(I2C_PMIC);
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998 (%s:%d)\n", __func__, __LINE__);
+		return;
+	}
+
+	if (!enable) {
+		printf("Disable the charger.\n");
+		i2c_read(addr, 0x0D, 1, val, 1);
+		val[0] &= ~(0x1);
+		val[0] |= 0x1;
+		i2c_write(addr, 0x0D, 1, val, 1);
+	} else {
+		i2c_read(addr, 0x0C, 1, val, 1);
+		val[0] &= ~(0x7 << 0);
+		val[0] &= ~(0x7 << 5);
+		if (enable == 600) {
+			val[0] |= 5; /* 600mA */
+			val[0] |= (3 << 5); /* Stop at 150mA (25%) */
+		} else { /* Assume 475 mA */
+			enable = 475;
+			val[0] |= 2; /* 475mA */
+			val[0] |= (4 << 5); /* Stop at 142.5mA (30%) */
+		}
+		i2c_write(addr, 0x0C, 1, val, 1);
+
+		i2c_read(addr, 0x0D, 1, val, 1);
+		val[0] &= ~(0x1);
+		i2c_write(addr, 0x0D, 1, val, 1);
+		printf("Enable the charger @ %dmA\n", enable);
+	}
+}
+
 static void into_charge_mode(void)
 {
-	unsigned char addr = 0xCC >> 1;	/* max8998 */;
-	unsigned char val[2];
 	unsigned int level;
 	int i, j;
 	bmp_image_t *bmp;
 	unsigned long len;
 	ulong bmp_addr[CHARGER_ANIMATION_FRAME];
 	unsigned int reg, wakeup_stat;
-
-	i2c_set_bus_num(I2C_PMIC);
-
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
-		return;
-	}
+	int charger_speed = 600;
 
 	printf("Charge Mode\n");
-
-	i2c_read(addr, 0x0C, 1, val, 1);
-	val[0] &= ~(0x7 << 0);
-	val[0] &= ~(0x7 << 5);
-	val[0] |= 5;		/* 600mA */
-	val[0] |= (3 << 5); /* Stop at 150mA(25%) */
-	i2c_write(addr, 0x0C, 1, val, 1);
+	charger_en(charger_speed);
 
 #ifdef CONFIG_S5PC1XXFB
 	init_font();
@@ -1102,6 +1300,7 @@ static void into_charge_mode(void)
 	do {
 		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *) S5PC110_RTC_BASE;
 		unsigned int org, org_ip3, org_tcfg0;
+		enum temperature_level  previous_state = _TEMP_OK;
 
 		empty_device_info_buffer();
 		if (max8998_power_key()) {
@@ -1112,9 +1311,9 @@ static void into_charge_mode(void)
 			return;
 		}
 
-		/* Enable RTC at CLKGATE IP3 */
+		/* Enable RTC, SYSTIMER, ADC at CLKGATE IP3 */
 		org_ip3 = readl(0xE010046C);
-		writel(org_ip3 | (1 << 15) | (1 << 16), 0xE010046C);
+		writel(org_ip3 | (1 << 15) | (1 << 16) | (1 << 24), 0xE010046C);
 
 		reg = org = readl(&rtc->rtccon);
 		reg |= (1 << 0);
@@ -1135,6 +1334,7 @@ static void into_charge_mode(void)
 		writel(reg, &rtc->ticcnt);
 
 		/* TODO: turn LCD/FB off for sure */
+		lcd_power_on(0);
 
 		/* EVT0: sleep 1, EVT1: sleep */
 		if (cpu_is_s5pc110()) {
@@ -1157,17 +1357,53 @@ static void into_charge_mode(void)
 			printf("\n\n\nERROR: this is not S5PC110.\n\n\n");
 			return;
 		}
+		lcd_power_on(0);
+
+		/* Check TEMP HIGH/LOW */
+		switch (temperature_check()) {
+		case _TEMP_OK:
+			charger_en(charger_speed);
+			previous_state = _TEMP_OK;
+			break;
+		case _TEMP_TOO_LOW:
+			charger_en(0);
+			previous_state = _TEMP_TOO_LOW;
+			break;
+		case _TEMP_TOO_HIGH:
+			charger_en(0);
+			previous_state = _TEMP_TOO_HIGH;
+			break;
+		case _TEMP_OK_LOW:
+			if (previous_state == _TEMP_TOO_LOW)
+				charger_en(0);
+			else
+			{
+				charger_en(charger_speed);
+				previous_state = _TEMP_OK;
+			}
+			break;
+		case _TEMP_OK_HIGH:
+			if (previous_state == _TEMP_TOO_HIGH)
+				charger_en(0);
+			else
+			{
+				charger_en(charger_speed);
+				previous_state = _TEMP_OK;
+			}
+			break;
+		}
 
 		writel(org, &rtc->rtccon);
 		writel(org_tcfg0, 0xE2600000);
 		writel(org_ip3, 0xE010046C);
 
-		/* TODO: 1. TEMP HIGH/LOW: stop charging and wake it up */
-		/* TODO: 2. BATT FULL: stop charing and wake it up */
-
 	} while (wakeup_stat == 0x04); /* RTC TICK */
 
 	/* TODO: Reenable logo display */
+	lcd_power_on(1);
+	reset_lcd();
+
+	run_command("cls", 0);
 }
 
 static void check_micro_usb(int intr)
@@ -1224,7 +1460,18 @@ static void check_micro_usb(int intr)
 	 */
 	if ((val[0] & FSA_DEV1_CHARGER) && !started_charging_once) {
 		started_charging_once = 1;
-		into_charge_mode();
+
+		/* If it's full, do not charge. */
+		if (battery_soc < 100)
+			into_charge_mode();
+		else
+			charger_en(0);
+	}
+	else if (val[0] & FSA_DEV1_USB) {
+		if (battery_soc < 100)
+			charger_en(475);
+		else
+			charger_en(0);
 	}
 
 	/* If Factory Mode is Boot ON-USB, go to download mode */
