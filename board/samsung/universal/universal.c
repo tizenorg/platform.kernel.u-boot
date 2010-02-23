@@ -654,13 +654,13 @@ static void show_hw_revision(void)
 		}
 	}
 
-	if (cpu_is_s5pc110())
+	if (machine_is_kessler() || machine_is_aquila())
+		board = gd->bd->bi_arch_number;
+	else if (cpu_is_s5pc110())
 		board = gd->bd->bi_arch_number - C110_MACH_START;
 	else
 		board = gd->bd->bi_arch_number - C100_MACH_START;
 
-	if (board < 0)
-		board = gd->bd->bi_arch_number;
 
 	check_board_revision(board, board_rev);
 
