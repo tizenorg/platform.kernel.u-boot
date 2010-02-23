@@ -183,8 +183,9 @@ enum {
 
 	MACH_WMG160 = 160,
 
-	MACH_AQUILA	= 2646,
+	MACH_PSEUDO_END,
 
+	MACH_AQUILA	= 2646,
 	MACH_KESSLER	= 3102,
 };
 
@@ -356,7 +357,7 @@ static void display_device_info(void)
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
-	"Aquila",
+	"Kessler",
 	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
@@ -618,14 +619,13 @@ static void check_hw_revision(void)
 	}
 
 	/* Set machine id */
-	if (board == MACH_AQUILA)
-		gd->bd->bi_arch_number = MACH_AQUILA;
-	else if (board == MACH_KESSLER)
-		gd->bd->bi_arch_number = MACH_KESSLER;
-	else if (cpu_is_s5pc110())
-		gd->bd->bi_arch_number = C110_MACH_START + board;
-	else
-		gd->bd->bi_arch_number = C100_MACH_START + board;
+	if (board < MACH_PSEUDO_END) {
+		if (cpu_is_s5pc110())
+			gd->bd->bi_arch_number = C110_MACH_START + board;
+		else
+			gd->bd->bi_arch_number = C100_MACH_START + board;
+	} else
+		gd->bd->bi_arch_number = board;
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
@@ -654,14 +654,13 @@ static void show_hw_revision(void)
 		}
 	}
 
-	if (machine_is_aquila())
-		board = MACH_AQUILA;
-	else if (machine_is_kessler())
-		board = MACH_KESSLER;
-	else if (cpu_is_s5pc110())
+	if (cpu_is_s5pc110())
 		board = gd->bd->bi_arch_number - C110_MACH_START;
 	else
 		board = gd->bd->bi_arch_number - C100_MACH_START;
+
+	if (board < 0)
+		board = gd->bd->bi_arch_number;
 
 	check_board_revision(board, board_rev);
 
@@ -676,11 +675,10 @@ static void show_hw_revision(void)
 	else if (machine_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
 			s5pc1xx_set_cpu_rev(0);
-	} else if (machine_is_cypress()) {
+	} else if (machine_is_cypress())
 		s5pc1xx_set_cpu_rev(1);
-	} else {
+	else
 		s5pc1xx_set_cpu_rev(0);
-	}
 
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
 		board_rev, get_board_name(board),
