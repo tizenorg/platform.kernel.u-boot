@@ -2186,6 +2186,8 @@ static int s5pc1xx_phy_control(int on)
 		status = 0;
 	}
 	udelay(10000);
+
+	return 0;
 }
 
 struct s3c_plat_otg_data s5pc110_otg_data = {
