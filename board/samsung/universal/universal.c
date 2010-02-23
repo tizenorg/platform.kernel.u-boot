@@ -1858,7 +1858,7 @@ void backlight_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
 	}
 
-	if (board_is_neptune) {
+	if (machine_is_kessler() && board_is_neptune()) {
 		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
