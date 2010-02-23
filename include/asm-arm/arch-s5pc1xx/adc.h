@@ -23,7 +23,6 @@
 #ifndef __ASM_ARM_ARCH_ADC_H_
 #define __ASM_ARM_ARCH_ADC_H_
 
-#define S5PC110_ADC_BASE	(0x0)
 #ifndef __ASSEMBLY__
 struct s5pc110_adc {
 	unsigned int adccon; /* starts at 0xE1700000 */
