@@ -201,7 +201,7 @@ static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
 	unsigned int in_len, width, height;
-	unsigned long out_len;
+	unsigned long out_len = ARRAY_SIZE(logo) * sizeof(*logo);
 	void *dst = NULL;
 	width = 298;
 	height = 78;
