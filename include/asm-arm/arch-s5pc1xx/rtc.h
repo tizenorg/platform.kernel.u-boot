@@ -47,7 +47,7 @@ struct s5pc110_rtc {
 	unsigned int bcdmon;
 	unsigned int bcdyear;
 	unsigned int _resv4;
-	unsigned int curticcnt /* 0x0090 */
+	unsigned int curticcnt; /* 0x0090 */
 };
 #endif
 
