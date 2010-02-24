@@ -1534,10 +1534,8 @@ static void init_pmic(void)
 
 	addr = 0xCC >> 1;	/* max8998 */
 	if (i2c_probe(addr)) {
-		if (i2c_probe(addr)) {
-			printf("Can't found max8998\n");
-			return;
-		}
+		printf("Can't found max8998\n");
+		return;
 	}
 
 	/* ONOFF1 */
