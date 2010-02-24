@@ -873,12 +873,18 @@ static void check_keypad(void)
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
 	if (machine_is_aquila() || machine_is_kessler()) {
-		/* cam full shot & volume down */
-		if ((row_state[0] & 0x1) && (row_state[1] & 0x2))
-			auto_download = 1;
 		/* volume down */
-		else if ((row_state[1] & 0x2))
+		if(row_state[1] & 0x2)
 			display_info = 1;
+		if (board_is_neptune()) {
+			/* home & volume down */
+			if ((row_state[1] & 0x1) && (row_state[1] & 0x2))
+				auto_download = 1;
+		} else {
+			/* cam full shot & volume down */
+			if ((row_state[0] & 0x1) && (row_state[1] & 0x2))
+				auto_download = 1;
+		}
 	} else if (machine_is_geminus())
 		/* volume down & home */
 		if ((row_state[1] & 0x2) && (row_state[2] & 0x1))
