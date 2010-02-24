@@ -440,8 +440,9 @@ static void check_board_revision(int board, int rev)
 		if (rev & NEPTUNE_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-	} else
+	} else {
 		board_rev &= ~BOARD_MASK;
+	}
 }
 
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
@@ -504,10 +505,10 @@ static void check_hw_revision(void)
 		 * ADDR = 0xE0200000 + OFF
 		 *
 		 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	     CYP
-		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00	    
-		 *   J2: 0x0284	          0x01 0x10 0x00 
+		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00
+		 *   J2: 0x0284	          0x01 0x10 0x00
 		 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		     0x0F
-		 *   H3: 0x0C64	               0x03 0x07 0x0F		    
+		 *   H3: 0x0C64	               0x03 0x07 0x0F
 		 *   D1: 0x00C4	0x0F	       0x3F 0x3F 0x0F 0xXC 0x3F
 		 *    I: 0x0224	                         0x02 0x00 0x08
 		 * MP03: 0x0324	                         0x9x      0xbx 0x9x
@@ -612,8 +613,9 @@ static void check_hw_revision(void)
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 1;
-		} else
+		} else {
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+		}
 
 		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
@@ -624,8 +626,9 @@ static void check_hw_revision(void)
 			gd->bd->bi_arch_number = C110_MACH_START + board;
 		else
 			gd->bd->bi_arch_number = C100_MACH_START + board;
-	} else
+	} else {
 		gd->bd->bi_arch_number = board;
+	}
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
@@ -670,15 +673,16 @@ static void show_hw_revision(void)
 			if ((board_rev & 0xf) < 8)
 				s5pc1xx_set_cpu_rev(0);
 		}
-	} else if (machine_is_kessler())
+	} else if (machine_is_kessler()) {
 		s5pc1xx_set_cpu_rev(1);
-	else if (machine_is_geminus()) {
+	} else if (machine_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
 			s5pc1xx_set_cpu_rev(0);
-	} else if (machine_is_cypress())
+	} else if (machine_is_cypress()) {
 		s5pc1xx_set_cpu_rev(1);
-	else
+	} else {
 		s5pc1xx_set_cpu_rev(0);
+	}
 
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
 		board_rev, get_board_name(board),
@@ -874,7 +878,7 @@ static void check_keypad(void)
 
 	if (machine_is_aquila() || machine_is_kessler()) {
 		/* volume down */
-		if(row_state[1] & 0x2)
+		if (row_state[1] & 0x2)
 			display_info = 1;
 		if (board_is_neptune()) {
 			/* home & volume down */
@@ -1092,9 +1096,11 @@ static int adc_to_temperature_centigrade(unsigned short adc)
 		return high_temp;
 	if (high_adc == USHRT_MAX)
 		return low_temp;
+
 	approximation = low_temp * (adc - low_adc) +
 		high_temp * (high_adc - adc);
 	approximation /= high_adc - low_adc;
+
 	return approximation;
 }
 
@@ -1126,6 +1132,7 @@ static unsigned short get_adc_value(int channel)
 
 	sprintf(buf, "pmic ldo %d on", ldonum);
 	run_command(buf, 0);
+
 	writel(channel & 0xF, &adc->adcmux);
 	writel((1 << 14) | (49 << 6), &adc->adccon);
 	writel(1000 & 0xffff, &adc->adcdly);
@@ -1133,10 +1140,12 @@ static unsigned short get_adc_value(int channel)
 	udelay(10);
 	writel(readl(&adc->adccon) | (1 << 0), &adc->adccon); /* Enable */
 	udelay(10);
+
 	do {
 		udelay(1);
 		reg = readl(&adc->adccon);
 	} while (!reg & (1 << 15) && loop++ < 1000);
+
 	ret = readl(&adc->adcdat0) & 0xFFF;
 	sprintf(buf, "pmic ldo %d off", ldonum);
 	run_command(buf, 0);
@@ -1156,7 +1165,7 @@ static int adc_get_average_ambient_temperature(void)
 		for (i = 0; i < 7; i++) {
 			unsigned short measurement = get_adc_value(6);
 			sum += measurement;
-			measured ++;
+			measured++;
 			if (min > measurement)
 				min = measurement;
 			if (max < measurement)
@@ -1172,8 +1181,8 @@ static int adc_get_average_ambient_temperature(void)
 				adc_to_temperature_centigrade(sum), sum);
 		return adc_to_temperature_centigrade(sum);
 	}
-	else
-		return 20; /* 20 Centigrade */
+
+	return 20; /* 20 Centigrade */
 }
 
 enum temperature_level {
@@ -1299,7 +1308,7 @@ static void into_charge_mode(void)
 	lcd_power_on(0);
 
 	do {
-		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *) S5PC110_RTC_BASE;
+		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
 		unsigned int org, org_ip3, org_tcfg0;
 		enum temperature_level  previous_state = _TEMP_OK;
 
@@ -1324,7 +1333,7 @@ static void into_charge_mode(void)
 		udelay(10);
 
 		reg = readl(&rtc->rtccon);
-		reg &= ~( (1 << 8) | (0xF << 4));
+		reg &= ~((1 << 8) | (0xF << 4));
 		reg |= (1 << 8) | (0xD << 4); /* D: 4 Hz, 9: 64 Hz */
 		writel(reg, &rtc->rtccon);
 
@@ -1368,19 +1377,17 @@ static void into_charge_mode(void)
 			previous_state = _TEMP_TOO_HIGH;
 			break;
 		case _TEMP_OK_LOW:
-			if (previous_state == _TEMP_TOO_LOW)
+			if (previous_state == _TEMP_TOO_LOW) {
 				charger_en(0);
-			else
-			{
+			} else {
 				charger_en(charger_speed);
 				previous_state = _TEMP_OK;
 			}
 			break;
 		case _TEMP_OK_HIGH:
-			if (previous_state == _TEMP_TOO_HIGH)
+			if (previous_state == _TEMP_TOO_HIGH) {
 				charger_en(0);
-			else
-			{
+			} else {
 				charger_en(charger_speed);
 				previous_state = _TEMP_OK;
 			}
@@ -1413,15 +1420,16 @@ static int fsa9480_probe(void)
 
 	i2c_set_bus_num(I2C_PMIC);
 
-	if (machine_is_kessler())
+	if (machine_is_kessler()) {
 		i2c_set_bus_num(I2C_GPIO6);
-	else if (machine_is_cypress()) {
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
 			i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_wmg160())
+	} else if (machine_is_wmg160()) {
 		i2c_set_bus_num(I2C_GPIO6);
+	}
 
 	if (i2c_probe(addr)) {
 		printf("Can't found fsa9480\n");
@@ -1470,8 +1478,7 @@ static void check_micro_usb(int intr)
 			into_charge_mode();
 		else
 			charger_en(0);
-	}
-	else if (val[0] & FSA_DEV1_USB) {
+	} else if (val[0] & FSA_DEV1_USB) {
 		if (battery_soc < 100)
 			charger_en(475); /* enable charger and keep booting */
 		else
@@ -1615,8 +1622,9 @@ static void setup_power_down_mode_registers(void)
 		/* Support */;
 	} else if (machine_is_geminus()) {
 		/* Support */;
-	} else
+	} else {
 		return;
+	}
 
 	if (machine_is_aquila()) {
 		/* Aquila rev 0.8 or lower */
@@ -1909,7 +1917,7 @@ void lcd_power_on(unsigned int onoff)
 			}
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			val[0] &= ~(MAX8998_LDO17);
-			val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
+			val[0] |= MAX8998_LDO17; /* LDO17: VCC_3.0V_LCD */
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
@@ -2016,7 +2024,8 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_vbpd	= 3;
 	vid->vl_vfpd	= 28;
 
-	if (machine_is_aquila() || machine_is_kessler() || machine_is_cypress()) {
+	if (machine_is_aquila() || machine_is_kessler()
+			|| machine_is_cypress()) {
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
 		vid->backlight_on = backlight_on;
@@ -2303,10 +2312,10 @@ void board_sleep_init_late(void)
 	/* MHL off */
 	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, 0);
 	gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 7, 0);
-	gpio_direction_output(&s5pc110_gpio->gpio_j2, 3, 0); /* MHL_ON for REV02 or higher */
-
-
+	/* MHL_ON for REV02 or higher */
+	gpio_direction_output(&s5pc110_gpio->gpio_j2, 3, 0);
 }
+
 void board_sleep_init(void)
 {
 	unsigned char addr;
@@ -2320,7 +2329,6 @@ void board_sleep_init(void)
 	}
 
 	if (machine_is_kessler()) {
-
 		/* Set ONOFF1 */
 		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 		saved_val[0][0] = val[0];
@@ -2329,6 +2337,7 @@ void board_sleep_init(void)
 				(1 << 1) | (1 << 0));
 		i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+
 		/* Set ONOFF2 */
 		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 		saved_val[1][0] = val[0];
@@ -2338,6 +2347,7 @@ void board_sleep_init(void)
 		val[0] |= (1 << 7);
 		i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+
 		/* Set ONOFF3 */
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		saved_val[2][0] = val[0];
@@ -2345,6 +2355,7 @@ void board_sleep_init(void)
 		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
 		i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+
 		/* Set ONOFF4 */
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		saved_val[3][0] = val[0];
@@ -2352,11 +2363,11 @@ void board_sleep_init(void)
 		val[0] &= ~((1 << 6) | (1 << 4));
 		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+
 		printf("Turned off regulators with Kessler setting."
 			       " Preparing to sleep. [%s:%d]\n",
 				__FILE__, __LINE__);
 	} else { /* Default */
-
 		/* Set ONOFF1 */
 		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 		saved_val[0][0] = val[0];
@@ -2365,6 +2376,7 @@ void board_sleep_init(void)
 				(1 << 1) | (1 << 0));
 		i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+
 		/* Set ONOFF2 */
 		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 		saved_val[1][0] = val[0];
@@ -2374,6 +2386,7 @@ void board_sleep_init(void)
 		val[0] |= (1 << 7);
 		i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+
 		/* Set ONOFF3 */
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		saved_val[2][0] = val[0];
@@ -2381,6 +2394,7 @@ void board_sleep_init(void)
 		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));
 		i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+
 		/* Set ONOFF4 */
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		saved_val[3][0] = val[0];
@@ -2388,6 +2402,7 @@ void board_sleep_init(void)
 		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
 		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
 		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+
 		printf("Turned off regulators with default(Aquila) setting."
 			       " Preparing to sleep. [%s:%d]\n",
 				__FILE__, __LINE__);
@@ -2436,7 +2451,6 @@ static int s5pc1xx_phy_control(int on)
 	static int status;
 
 	if (on && !status) {
-//		printf("turning USB power on\n");
 #ifdef CONFIG_CMD_PMIC
 		run_command("pmic ldo 3 on", 0);
 #endif
@@ -2457,7 +2471,6 @@ static int s5pc1xx_phy_control(int on)
 		micro_usb_switch(0);
 		status = 1;
 	} else if (!on && status) {
-//		printf("turning USB power off\n");
 #ifdef CONFIG_CMD_PMIC
 		run_command("pmic ldo 3 off", 0);
 #endif
