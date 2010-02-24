@@ -266,7 +266,7 @@ static int machine_is_wmg160(void)
 	return c110_machine_id() == MACH_WMG160;
 }
 
-static void enable_battery(void);
+static void check_battery(int mode);
 
 void i2c_init_board(void)
 {
@@ -302,7 +302,7 @@ void i2c_init_board(void)
 
 	/* Reset on max17040 early */
 	if (battery_soc == 0)
-		enable_battery();
+		check_battery(1);
 }
 
 #ifdef CONFIG_MISC_INIT_R
@@ -888,38 +888,7 @@ static void check_keypad(void)
 		setenv("bootcmd", "usbdown");
 }
 
-static void enable_battery(void)
-{
-	unsigned char val[2];
-	unsigned char addr = 0x36;	/* max17040 fuel gauge */
-
-	i2c_set_bus_num(I2C_GPIO3);
-
-	if (machine_is_aquila()) {
-		if (board_is_j1b2())
-			return;
-	} else if (machine_is_kessler())
-		i2c_set_bus_num(I2C_GPIO7);
-	else if (machine_is_tickertape()) {
-		return;
-	} else if (machine_is_cypress()) {
-		i2c_set_bus_num(I2C_GPIO7);
-	} else if (machine_is_geminus()) {
-		if (hwrevision(1))
-			i2c_set_bus_num(I2C_GPIO7);
-	}
-
-	if (i2c_probe(addr)) {
-		printf("Can't found max17040 fuel gauge\n");
-		return;
-	}
-
-	val[0] = 0x54;
-	val[1] = 0x00;
-	i2c_write(addr, 0xfe, 1, val, 2);
-}
-
-static void check_battery(void)
+static void check_battery(int mode)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17040 fuel gauge */
@@ -944,11 +913,16 @@ static void check_battery(void)
 		return;
 	}
 
-	i2c_read(addr, 0x04, 1, val, 1);
-
-	dprintf("battery:\t%d%%\n", val[0]);
-
-	battery_soc = val[0];
+	/* mode 0: check mode / 1: enable mode */
+	if (mode) {
+		val[0] = 0x54;
+		val[1] = 0x00;
+		i2c_write(addr, 0xfe, 1, val, 2);
+	} else {
+		i2c_read(addr, 0x04, 1, val, 1);
+		dprintf("battery:\t%d%%\n", val[0]);
+		battery_soc = val[0];
+	}
 }
 
 static void check_mhl(void)
@@ -2222,7 +2196,7 @@ int misc_init_r(void)
 	setup_power_down_mode_registers();
 
 	/* check max17040 */
-	check_battery();
+	check_battery(0);
 
 	/* check fsa9480 */
 	check_micro_usb(0);
@@ -2432,7 +2406,7 @@ void board_sleep_resume(void)
 	printf("Waked up.\n");
 
 	/* check max17040 */
-	check_battery();
+	check_battery(0);
 
 	/* check fsa9480 */
 	check_micro_usb(1);
