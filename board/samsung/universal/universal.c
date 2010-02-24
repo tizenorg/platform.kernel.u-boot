@@ -1378,12 +1378,9 @@ static void into_charge_mode(void)
 	run_command("cls", 0);
 }
 
-static void check_micro_usb(int intr)
+static int fsa9480_probe(void)
 {
-	unsigned char addr;
-	unsigned char val[2];
-	static int started_charging_once = 0;
-	char *path;
+	unsigned char addr = 0x25;
 
 	if (cpu_is_s5pc100())
 		return;
@@ -1405,11 +1402,25 @@ static void check_micro_usb(int intr)
 	} else if (machine_is_wmg160())
 		i2c_set_bus_num(I2C_GPIO6);
 
-	addr = 0x25;		/* fsa9480 */
 	if (i2c_probe(addr)) {
 		printf("Can't found fsa9480\n");
-		return;
+		return 1;
 	}
+
+	return 0;
+}
+
+static void check_micro_usb(int intr)
+{
+	unsigned char addr;
+	unsigned char val[2];
+	static int started_charging_once = 0;
+	char *path;
+
+	if (fsa9480_probe())
+		return;
+
+	addr = 0x25;		/* fsa9480 */
 
 	/* Clear Interrupt */
 	if (intr) {
@@ -1467,25 +1478,10 @@ static void micro_usb_switch(int path)
 	unsigned char addr;
 	unsigned char val[2];
 
-	i2c_set_bus_num(I2C_PMIC);
-
-	if (machine_is_kessler())
-		i2c_set_bus_num(I2C_GPIO6);
-	else if (machine_is_cypress()) {
-		i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_geminus()) {
-		if (hwrevision(1))
-			i2c_set_bus_num(I2C_GPIO6);
-	} else if (machine_is_wmg160()) {
-		i2c_set_bus_num(I2C_GPIO6);
+	if (fsa9480_probe())
 		return;
-	}
 
 	addr = 0x25;		/* fsa9480 */
-	if (i2c_probe(addr)) {
-		printf("Can't found fsa9480\n");
-		return;
-	}
 
 	if (path)
 		val[0] = 0x90;	/* VAUDIO */
