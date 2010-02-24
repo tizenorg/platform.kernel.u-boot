@@ -424,6 +424,7 @@ static int part_validate(struct mtdids *id, struct part_info *part)
 	return part_validate_eraseblock(id, part);
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Delete selected partition from the partion list of the specified device.
  *
@@ -469,6 +470,7 @@ static int part_del(struct mtd_device *dev, struct part_info *part)
 
 	return 0;
 }
+#endif
 
 /**
  * Delete all partitions from parts head list, free memory.
@@ -552,6 +554,7 @@ static int part_sort_add(struct mtd_device *dev, struct part_info *part)
 	return 0;
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Add provided partition to the partition list of a given device.
  *
@@ -571,6 +574,7 @@ static int part_add(struct mtd_device *dev, struct part_info *part)
 
 	return 0;
 }
+#endif
 
 /**
  * Parse one partition definition, allocate memory and return pointer to this
@@ -791,6 +795,7 @@ static struct mtd_device* device_find(u8 type, u8 num)
 	return NULL;
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Add specified device to the global device list.
  *
@@ -813,6 +818,7 @@ static void device_add(struct mtd_device *dev)
 	else
 		index_partitions();
 }
+#endif
 
 /**
  * Parse device type, name and mtd-id. If syntax is ok allocate memory and
@@ -964,6 +970,7 @@ static int mtd_devices_init(void)
 	return device_delall(&devices);
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /*
  * Search global mtdids list and find id of requested type and number.
  *
@@ -983,6 +990,7 @@ static struct mtdids* id_find(u8 type, u8 num)
 
 	return NULL;
 }
+#endif
 
 /**
  * Search global mtdids list and find id of a requested mtd_id.
@@ -1056,6 +1064,7 @@ int mtd_id_parse(const char *id, const char **ret_id, u8 *dev_type, u8 *dev_num)
 	return 0;
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Process all devices and generate corresponding mtdparts string describing
  * all partitions on all devices.
@@ -1204,6 +1213,7 @@ static int generate_mtdparts_save(char *buf, u32 buflen)
 
 	return ret;
 }
+#endif
 
 /**
  * Format and print out a partition list for each device from global device
@@ -1322,6 +1332,7 @@ int find_dev_and_part(const char *id, struct mtd_device **dev,
 	return 0;
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Find and delete partition. For partition id format see find_dev_and_part().
  *
@@ -1353,6 +1364,7 @@ static int delete_partition(const char *id)
 	printf("partition %s not found\n", id);
 	return 1;
 }
+#endif
 
 /**
  * Accept character string describing mtd partitions and call device_parse()
@@ -1702,6 +1714,7 @@ static struct part_info* mtd_part_info(struct mtd_device *dev, unsigned int part
 /* U-boot commands				   */
 /***************************************************/
 /* command line only */
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Routine implementing u-boot chpart command. Sets new current partition based
  * on the user supplied partition id. For partition id format see find_dev_and_part().
@@ -1739,6 +1752,7 @@ int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	return 0;
 }
+#endif
 
 /**
  * Routine implementing u-boot mtdparts command. Initialize/update default global
@@ -1752,6 +1766,7 @@ int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  */
 int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 	if (argc == 2) {
 		if (strcmp(argv[1], "default") == 0) {
 			setenv("mtdids", (char *)mtdids_default);
@@ -1770,6 +1785,7 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			return mtd_devices_init();
 		}
 	}
+#endif
 
 	/* make sure we are in sync with env variables */
 	if (mtdparts_init() != 0)
@@ -1780,6 +1796,7 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return 0;
 	}
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 	/* mtdparts add <mtd-dev> <size>[@<offset>] <name> [ro] */
 	if (((argc == 5) || (argc == 6)) && (strcmp(argv[1], "add") == 0)) {
 #define PART_ADD_DESC_MAXLEN 64
@@ -1843,12 +1860,14 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 		return delete_partition(argv[2]);
 	}
+#endif
 
 	cmd_usage(cmdtp);
 	return 1;
 }
 
 /***************************************************/
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 U_BOOT_CMD(
 	chpart,	2,	0,	do_chpart,
 	"change active partition",
@@ -1890,4 +1909,12 @@ U_BOOT_CMD(
 	"<name>     := '(' NAME ')'\n"
 	"<ro-flag>  := when set to 'ro' makes partition read-only (not used, passed to kernel)"
 );
+#else
+U_BOOT_CMD(
+	mtdparts,	1,	0,	do_mtdparts,
+	"define flash/nand partitions",
+	"\n"
+	"    - list partition table\n"
+);
+#endif
 /***************************************************/
