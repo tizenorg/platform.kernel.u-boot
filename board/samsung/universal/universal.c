@@ -971,6 +971,22 @@ static void check_mhl(void)
 }
 
 #define CHARGER_ANIMATION_FRAME		6
+static void max8998_clear_interrupt(void)
+{
+	unsigned char addr, val[2];
+	i2c_set_bus_num(I2C_PMIC);
+	addr = 0xCC >> 1;
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return;
+	}
+
+	i2c_read(addr, 0x00, 1, val, 1);
+	i2c_read(addr, 0x01, 1, val, 1);
+	i2c_read(addr, 0x02, 1, val, 1);
+	i2c_read(addr, 0x03, 1, val, 1);
+}
+
 static int max8998_power_key(void)
 {
 	unsigned char addr, val[2];
@@ -1221,6 +1237,8 @@ static void charger_en(int enable)
 	}
 }
 
+void lcd_power_on(unsigned int onoff);
+
 static void into_charge_mode(void)
 {
 	unsigned int level;
@@ -1230,6 +1248,8 @@ static void into_charge_mode(void)
 	ulong bmp_addr[CHARGER_ANIMATION_FRAME];
 	unsigned int reg, wakeup_stat;
 	int charger_speed = 600;
+
+	max8998_clear_interrupt();
 
 	printf("Charge Mode\n");
 	charger_en(charger_speed);
@@ -1258,16 +1278,19 @@ static void into_charge_mode(void)
 			for (k = 0; k < 10; k++)
 				if (max8998_power_key()) {
 					lcd_display_clear();
-					return;
+					goto restore_screen;
 				} else if (!max8998_has_ext_power_source()) {
 					lcd_display_clear();
-					return;
+					goto restore_screen;
 				} else
 					udelay(100 * 1000);
 		}
 	}
 	exit_font();
 #endif
+	/* Disable the display to prevent flickering */
+	/* TODO: how to reenable the display later? */
+	lcd_power_on(0);
 
 	do {
 		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *) S5PC110_RTC_BASE;
@@ -1275,13 +1298,10 @@ static void into_charge_mode(void)
 		enum temperature_level  previous_state = _TEMP_OK;
 
 		empty_device_info_buffer();
-		if (max8998_power_key()) {
-			lcd_display_clear();
-			return;
-		} else if (!max8998_has_ext_power_source()) {
-			lcd_display_clear();
-			return;
-		}
+		if (max8998_power_key())
+			break;
+		else if (!max8998_has_ext_power_source())
+			break;
 
 		/* Enable RTC, SYSTIMER, ADC at CLKGATE IP3 */
 		org_ip3 = readl(0xE010046C);
@@ -1305,9 +1325,6 @@ static void into_charge_mode(void)
 		reg = 15 * 4 - 1; /* 15 sec */
 		writel(reg, &rtc->ticcnt);
 
-		/* TODO: turn LCD/FB off for sure */
-		lcd_power_on(0);
-
 		/* EVT0: sleep 1, EVT1: sleep */
 		if (cpu_is_s5pc110()) {
 			char *name = "dummy";
@@ -1329,7 +1346,6 @@ static void into_charge_mode(void)
 			printf("\n\n\nERROR: this is not S5PC110.\n\n\n");
 			return;
 		}
-		lcd_power_on(0);
 
 		/* Check TEMP HIGH/LOW */
 		switch (temperature_check()) {
@@ -1371,11 +1387,10 @@ static void into_charge_mode(void)
 
 	} while (wakeup_stat == 0x04); /* RTC TICK */
 
-	/* TODO: Reenable logo display */
+restore_screen:
+	/* TODO: Reenable logo display (not working yet) */
 	lcd_power_on(1);
-	reset_lcd();
-
-	run_command("cls", 0);
+	drv_lcd_init_resume();
 }
 
 static int fsa9480_probe(void)
@@ -1452,7 +1467,7 @@ static void check_micro_usb(int intr)
 	}
 	else if (val[0] & FSA_DEV1_USB) {
 		if (battery_soc < 100)
-			charger_en(475);
+			charger_en(475); /* enable charger and keep booting */
 		else
 			charger_en(0);
 	}
@@ -1914,6 +1929,8 @@ void lcd_power_on(unsigned int onoff)
 			unsigned char addr;
 			unsigned char val[2];
 
+			gpio_set_value(&gpio->gpio_j1, 3, 0);
+
 			i2c_set_bus_num(I2C_PMIC);
 			addr = 0xCC >> 1;	/* max8998 */
 			if (i2c_probe(addr)) {
@@ -1922,12 +1939,12 @@ void lcd_power_on(unsigned int onoff)
 			}
 
 			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
-			val[0] &= ~(1 << 7);
+			val[0] &= ~(MAX8998_LDO7);
 			i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
-			val[0] &= ~MAX8998_LDO17;
+			val[0] &= ~(MAX8998_LDO17);
 			i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 		}

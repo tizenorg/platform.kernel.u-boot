@@ -290,15 +290,15 @@ void s5pc110_wakeup(void)
 	reg_others |= (1 << 28); /* UART */
 	writel(reg_others, S5PC110_OTHERS);
 
-	printf("%s: Waking up...\n", __func__);
-	printf("Wakeup Source: (0x%08x)\n", readl(S5PC110_WAKEUP_STAT));
+	printf("Wakeup Source: (0x%08x) ", readl(S5PC110_WAKEUP_STAT));
 	if (readl(S5PC110_WAKEUP_STAT) | 0x01) {
-		printf("Pending EINT: 0X %2.2X %2.2X %2.2X %2.2X\n",
+		printf("/ Pending EINT: 0X %2.2X %2.2X %2.2X %2.2X",
 				readl(0xE0200F4C),
 				readl(0xE0200F48),
 				readl(0xE0200F44),
 				readl(0xE0200F40));
 	}
+	printf("\n");
 
 	timer_init();
 #if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
