@@ -1696,9 +1696,9 @@ static void setup_power_down_mode_registers(void)
 
 	for (i = 0; i < n_mr; i++) {
 		unsigned int reg = readl(&mr->bank->pdn_con);
-		reg &= ~(1 << mr->number);
+		reg &= ~(0x3 << (mr->number << 1));
 		if (readl(&mr->bank->dat) & (1 << mr->number))
-			reg |= 1 << mr->number;
+			reg |= 0x1 << (mr->number << 1);
 		writel(reg, &mr->bank->pdn_con);
 		mr++;
 	}
