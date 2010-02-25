@@ -1696,9 +1696,9 @@ static void setup_power_down_mode_registers(void)
 
 	for (i = 0; i < n_mr; i++) {
 		unsigned int reg = readl(&mr->bank->pdn_con);
-		reg &= ~(1 << mr->number);
+		reg &= ~(0x3 << (mr->number << 1));
 		if (readl(&mr->bank->dat) & (1 << mr->number))
-			reg |= 1 << mr->number;
+			reg |= 0x1 << (mr->number << 1);
 		writel(reg, &mr->bank->pdn_con);
 		mr++;
 	}
@@ -2608,6 +2608,11 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_pull(&s5pc110_gpio->gpio_g0, i, GPIO_PULL_NONE);
 		/* GPG0[0:6] drv 4x */
 		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4X);
+	}
+
+	if (machine_is_geminus()) {
+		gpio_cfg_pin(&s5pc110_gpio->gpio_j2, 7, 0x2);
+		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_UP);
 	}
 
 	return s5pc1xx_mmc_init(0);
