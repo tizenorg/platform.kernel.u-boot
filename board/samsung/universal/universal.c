@@ -2611,8 +2611,8 @@ int board_mmc_init(bd_t *bis)
 	}
 
 	if (machine_is_geminus()) {
-		gpio_cfg_pin(&s5pc110_gpio->gpio_j2, 7, 0x2);
-		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_UP);
+		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
+		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_NONE);
 	}
 
 	return s5pc1xx_mmc_init(0);
