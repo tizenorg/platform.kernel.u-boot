@@ -2413,6 +2413,16 @@ caddy2_config \
 vme8349_config:		unconfig
 	@$(MKCONFIG) -t $(@:_config=) vme8349 ppc mpc83xx vme8349 esd
 
+edb9301_config \
+edb9302_config \
+edb9302a_config \
+edb9307_config \
+edb9307a_config \
+edb9312_config \
+edb9315_config \
+edb9315a_config: unconfig
+	@$(MKCONFIG) -t $(@:_config=) edb93xx arm arm920t edb93xx NULL ep93xx
+
 #########################################################################
 ## MPC85xx Systems
 #########################################################################
@@ -2704,6 +2714,9 @@ CPUAT91_config	:	unconfig
 csb637_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t csb637 NULL at91rm9200
 
+eb_cpux9k2_config	:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm920t eb_cpux9k2 BuS at91
+
 kb9202_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t kb9202 NULL at91rm9200
 
@@ -2869,6 +2882,9 @@ at91sam9g45ekes_config	:	unconfig
 		$(XECHO) "... with environment variable in SPI DATAFLASH CS0" ; \
 	fi;
 	@$(MKCONFIG) -a at91sam9m10g45ek arm arm926ejs at91sam9m10g45ek atmel at91
+
+otc570_config	:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs otc570 esd at91
 
 pm9263_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs pm9263 ronetix at91

@@ -28,6 +28,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define CONFIG_AT91_LEGACY
+
 /* ARM asynchronous clock */
 #define AT91_CPU_NAME		"AT91SAM9261"
 
@@ -157,6 +159,7 @@
 /*
  * Hardware drivers
  */
+#define CONFIG_AT91_GPIO	1
 #define CONFIG_ATMEL_USART	1
 #undef CONFIG_USART0
 #undef CONFIG_USART1
