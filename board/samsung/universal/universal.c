@@ -1411,11 +1411,11 @@ static int fsa9480_probe(void)
 	unsigned char addr = 0x25;
 
 	if (cpu_is_s5pc100())
-		return;
+		return 1;
 
 	if (board_is_limo_real()) {
 		if (hwrevision(0) || hwrevision(1))
-			return;
+			return 1;
 	}
 
 	i2c_set_bus_num(I2C_PMIC);
