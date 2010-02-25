@@ -2610,6 +2610,11 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4X);
 	}
 
+	if (machine_is_geminus()) {
+		gpio_cfg_pin(&s5pc110_gpio->gpio_j2, 7, 0x2);
+		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_UP);
+	}
+
 	return s5pc1xx_mmc_init(0);
 }
 #endif
