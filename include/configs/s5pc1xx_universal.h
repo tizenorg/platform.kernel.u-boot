@@ -110,6 +110,7 @@
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
+#undef CONFIG_CMD_ITEST
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
@@ -131,8 +132,14 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+/* To enable UBI command */
+#if 0
+#define CONFIG_CMD_UBI
+#define CONFIG_RBTREE
+#endif
+
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
-//#undef CONFIG_CMD_NET
+#undef CONFIG_CMD_NET
 
 #ifdef CONFIG_CMD_NET
 /* Ethernet */
