@@ -414,21 +414,15 @@ void s5p_usb_check_current_mode(u8 *pucMode)
 	*pucMode = tmp & 0x1;
 }
 
-void s5p_usb_set_soft_disconnect(void)
+void s5p_usb_soft_disconnect(int set)
 {
 	u32 tmp;
 
 	tmp = s5pc1xx_otg_read_reg(OTG_DCTL);
-	tmp |= SOFT_DISCONNECT;
-	s5pc1xx_otg_write_reg(tmp, OTG_DCTL);
-}
-
-void s5p_usb_clear_soft_disconnect(void)
-{
-	u32 tmp;
-
-	tmp = s5pc1xx_otg_read_reg(OTG_DCTL);
-	tmp &= ~SOFT_DISCONNECT;
+	if (set)
+		tmp |= SOFT_DISCONNECT;
+	else
+		tmp &= ~SOFT_DISCONNECT;
 	s5pc1xx_otg_write_reg(tmp, OTG_DCTL);
 }
 
@@ -470,9 +464,9 @@ int s5p_usbctl_init(void)
 	s5p_usb_check_current_mode(&ucMode);
 
 	if (ucMode == INT_DEV_MODE) {
-		s5p_usb_set_soft_disconnect();
+		s5p_usb_soft_disconnect(1);
 		udelay(10);
-		s5p_usb_clear_soft_disconnect();
+		s5p_usb_soft_disconnect(0);
 		s5p_usb_init_device();
 		return 0;
 	} else {
