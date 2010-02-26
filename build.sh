@@ -71,7 +71,6 @@ if [ "$USER" = "kmpark" ]; then
 	pushd ../images
 	./system.sh
 	popd
-	tar cf /tftpboot/s5pc110-system-evt1.tar u-boot-onenand-evt1.bin
 elif [ "$USER" = "dofmind" ]; then
 	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
