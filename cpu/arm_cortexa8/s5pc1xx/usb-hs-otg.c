@@ -1436,20 +1436,6 @@ static void s5p_usb_set_descriptors(void)
 	otg.desc.ep2.bInterval		= 0x0;
 }
 
-static void s5p_usb_check_speed(USB_SPEED *speed)
-{
-	u32 status;
-
-	status = s5pc1xx_otg_read_reg(OTG_DSTS);
-
-	*speed = (USB_SPEED)((status & 0x6) >> 1);
-}
-
-static int s5p_usb_check_setconf(void)
-{
-	return otg.set_config;
-}
-
 static void s5p_usb_set_opmode(USB_OPMODE mode)
 {
 	otg.op_mode = mode;
