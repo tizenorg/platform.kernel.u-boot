@@ -229,7 +229,7 @@ static void tl2796_panel_send_sequence(const unsigned char *wbuf, unsigned int s
 			udelay(200000);
 		else if (wbuf[i] == 0x1D && wbuf[i + 1] == 0xA0)
 			udelay(250000);
-		s6e63m0_spi_write(wbuf[i], wbuf[i+1]);
+		tl2796_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
 	}
 }
