@@ -25,8 +25,6 @@
 #include <asm/arch/power.h>
 #include "usb-hs-otg.h"
 
-#define SUSPEND_RESUME_ON 0
-
 u32 remode_wakeup;
 u16 config_value;
 
@@ -1483,11 +1481,6 @@ static void s5p_usb_reset(void)
 	/*clear device address */
 	s5pc1xx_otg_write_reg(s5pc1xx_otg_read_reg(OTG_DCFG) & ~(0x7f << 4),
 			OTG_DCFG);
-
-	if (SUSPEND_RESUME_ON) {
-		s5pc1xx_otg_write_reg(s5pc1xx_otg_read_reg(OTG_PCGCCTRL) & ~(1 << 0),
-				OTG_PCGCCTRL);
-	}
 }
 
 static int s5p_usb_set_init(void)
@@ -1623,23 +1616,11 @@ void s5p_udc_int_hndlr(void)
 			return;
 	}
 
-	if (int_status & INT_RESUME) {
+	if (int_status & INT_RESUME)
 		s5pc1xx_otg_write_reg(INT_RESUME, OTG_GINTSTS);
 
-		if (SUSPEND_RESUME_ON) {
-			s5pc1xx_otg_write_reg(s5pc1xx_otg_read_reg(OTG_PCGCCTRL) &
-					~(1 << 0), OTG_PCGCCTRL);
-		}
-	}
-
-	if (int_status & INT_SUSPEND) {
+	if (int_status & INT_SUSPEND)
 		s5pc1xx_otg_write_reg(INT_SUSPEND, OTG_GINTSTS);
-
-		if (SUSPEND_RESUME_ON) {
-			s5pc1xx_otg_write_reg(s5pc1xx_otg_read_reg(OTG_PCGCCTRL) |
-					(1 << 0), OTG_PCGCCTRL);
-		}
-	}
 
 	if (int_status & INT_RX_FIFO_NOT_EMPTY) {
 		s5pc1xx_otg_write_reg(INT_RESUME | INT_OUT_EP | INT_IN_EP |
