@@ -26,11 +26,11 @@
 #include <fbutils.h>
 #endif
 
-static char tx_data[8] = "MPL";
-static long tx_len = 4;
+#define TX_DATA_LEN	4
+#define RX_DATA_LEN	64
 
-static char rx_data[64];
-static long rx_len = 64;
+static char tx_data[TX_DATA_LEN] = "MPL";
+static char rx_data[RX_DATA_LEN];
 
 extern int s5p_receive_done;
 extern int s5p_usb_connected;
@@ -183,8 +183,8 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->recv_setup = recv_setup;
 	usbd->tx_data = tx_data;
 	usbd->rx_data = rx_data;
-	usbd->tx_len = tx_len;
-	usbd->rx_len = rx_len;
+	usbd->tx_len = TX_DATA_LEN;
+	usbd->rx_len = RX_DATA_LEN;
 	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support())
