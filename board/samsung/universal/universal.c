@@ -980,16 +980,28 @@ static void check_mhl(void)
 	i2c_read((0x72 >> 1), 0xa0, 1, val, 1);
 }
 
+static int max8998_probe(void)
+{
+	unsigned char addr = 0xCC >> 1;
+
+	i2c_set_bus_num(I2C_PMIC);
+
+	if (i2c_probe(addr)) {
+		printf("Can't found max8998\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 #define CHARGER_ANIMATION_FRAME		6
 static void max8998_clear_interrupt(void)
 {
 	unsigned char addr, val[2];
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+
+	if (max8998_probe())
 		return;
-	}
 
 	i2c_read(addr, 0x00, 1, val, 1);
 	i2c_read(addr, 0x01, 1, val, 1);
@@ -1000,12 +1012,10 @@ static void max8998_clear_interrupt(void)
 static int max8998_power_key(void)
 {
 	unsigned char addr, val[2];
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+
+	if (max8998_probe())
 		return 0;
-	}
 
 	/* Accessing IRQ1 register */
 	i2c_read(addr, 0x00, 1, val, 1);
@@ -1018,12 +1028,10 @@ static int max8998_power_key(void)
 static int max8998_has_ext_power_source(void)
 {
 	unsigned char addr, val[2];
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+
+	if (max8998_probe())
 		return 0;
-	}
 
 	/* Accessing STATUS2 register */
 	i2c_read(addr, 0x09, 1, val, 1);
@@ -1219,11 +1227,8 @@ static void charger_en(int enable)
 	unsigned char addr = 0xCC >> 1; /* max8998 */
 	unsigned char val[2];
 
-	i2c_set_bus_num(I2C_PMIC);
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998 (%s:%d)\n", __func__, __LINE__);
+	if (max8998_probe())
 		return;
-	}
 
 	if (!enable) {
 		printf("Disable the charger.\n");
@@ -1554,13 +1559,9 @@ static void init_pmic(void)
 	if (cpu_is_s5pc100())
 		return;
 
-	i2c_set_bus_num(I2C_PMIC);
-
 	addr = 0xCC >> 1;	/* max8998 */
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+	if (max8998_probe())
 		return;
-	}
 
 	/* ONOFF1 */
 	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
@@ -1909,12 +1910,10 @@ void lcd_power_on(unsigned int onoff)
 
 			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
-			i2c_set_bus_num(I2C_PMIC);
 			addr = 0xCC >> 1;	/* max8998 */
-			if (i2c_probe(addr)) {
-				printf("Can't found max8998\n");
+			if (max8998_probe())
 				return;
-			}
+
 			i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 			val[0] &= ~(MAX8998_LDO17);
 			val[0] |= MAX8998_LDO17; /* LDO17: VCC_3.0V_LCD */
@@ -1945,12 +1944,9 @@ void lcd_power_on(unsigned int onoff)
 
 			gpio_set_value(&gpio->gpio_j1, 3, 0);
 
-			i2c_set_bus_num(I2C_PMIC);
 			addr = 0xCC >> 1;	/* max8998 */
-			if (i2c_probe(addr)) {
-				printf("Can't found max8998\n");
+			if (max8998_probe())
 				return;
-			}
 
 			i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 			val[0] &= ~(MAX8998_LDO7);
@@ -2321,12 +2317,9 @@ void board_sleep_init(void)
 	unsigned char addr;
 	unsigned char val[2];
 
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't find max8998\n");
+	if (max8998_probe())
 		return;
-	}
 
 	if (machine_is_kessler()) {
 		/* Set ONOFF1 */
@@ -2416,12 +2409,9 @@ void board_sleep_resume(void)
 
 	show_hw_revision();
 
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't find max8998\n");
+	if (max8998_probe())
 		return;
-	}
 
 	/* Set ONOFF1 */
 	i2c_write(addr, MAX8998_REG_ONOFF1, 1, saved_val[0], 1);
@@ -2625,12 +2615,10 @@ static int pmic_status(void)
 	unsigned char addr, val[2];
 	int reg, i;
 
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+
+	if (max8998_probe())
 		return -1;
-	}
 
 	reg = 0x11;
 	i2c_read(addr, reg, 1, val, 1);
@@ -2691,12 +2679,10 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	} else
 		return -1;
 
-	i2c_set_bus_num(I2C_PMIC);
 	addr = 0xCC >> 1;
-	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+
+	if (max8998_probe())
 		return -1;
-	}
 
 	i2c_read(addr, reg, 1, val, 1);
 	if (on)
