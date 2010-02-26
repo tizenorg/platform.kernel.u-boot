@@ -1,7 +1,5 @@
-
 #define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
-
 #define PACKET_LEN		8
 
 struct spi_platform_data {
@@ -18,3 +16,7 @@ struct spi_platform_data {
 	unsigned int set_rev;
 };
 
+void spi_write_byte(struct spi_platform_data *spi,
+				unsigned char address, unsigned char command);
+void spi_read_byte(struct spi_platform_data *spi,
+				unsigned char address, unsigned char command);

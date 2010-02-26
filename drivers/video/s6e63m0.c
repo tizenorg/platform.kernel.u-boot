@@ -28,44 +28,8 @@
 #include "s5p-spi.h"
 
 
-unsigned int size_cmd;
 /* these machine specific platform data would be setting at universal.c */
 struct spi_platform_data *s6e63m0;
-
-void cs_low(void)
-{
-	gpio_set_value(s6e63m0->cs_bank, s6e63m0->cs_num, 0);
-}
-
-void cs_high(void)
-{
-	gpio_set_value(s6e63m0->cs_bank, s6e63m0->cs_num, 1);
-}
-
-void clk_low(void)
-{
-	gpio_set_value(s6e63m0->clk_bank, s6e63m0->clk_num, 0);
-}
-
-void clk_high(void)
-{
-	gpio_set_value(s6e63m0->clk_bank, s6e63m0->clk_num, 1);
-}
-
-void si_low(void)
-{
-	gpio_set_value(s6e63m0->si_bank, s6e63m0->si_num, 0);
-}
-
-void si_high(void)
-{
-	gpio_set_value(s6e63m0->si_bank, s6e63m0->si_num, 1);
-}
-
-char so_read(void)
-{
-	return gpio_get_value(s6e63m0->so_bank, s6e63m0->so_num);
-}
 
 static const unsigned char SEQ_PANEL_CONDITION_SET[] = {
 	0xF8, 0x01,
@@ -365,112 +329,13 @@ static const unsigned char SEQ_DISPLAY_ON[] = {
 	0x29, COMMAND_ONLY,
 };
 
-unsigned char DELAY=1;
-
-static void s6e63m0_c110_spi_write_byte(unsigned char address, unsigned char command)
-{
-	int     j;
-	unsigned short data;
-
-	data = (address << 8) + command;
-
-	cs_high();
-	si_high();
-	clk_high();
-	udelay(DELAY);
-
-	cs_low();
-	udelay(DELAY);
-
-	for (j = PACKET_LEN; j >= 0; j--)
-	{
-		clk_low();
-
-		/* data high or low */
-		if ((data >> j) & 0x0001)
-			si_high();
-		else
-			si_low();
-
-		udelay(DELAY);
-
-		clk_high();
-		udelay(DELAY);
-	}
-
-	cs_high();
-	udelay(DELAY);
-}
-
-#ifdef UNUSED_FUNCTION
-static unsigned char s6e63m0_c110_spi_read_byte(unsigned char select, unsigned char address)
-{
-	int     j;
-	static unsigned int first = 1;
-	unsigned char DELAY=1;
-	unsigned short data = 0;
-	char command = 0;
-
-	data = (select << 8) + address;
-
-	cs_high();
-	si_high();
-	clk_high();
-	udelay(DELAY);
-
-	clk_low();
-	udelay(DELAY);
-
-	for (j = PACKET_LEN + 8; j >= 0; j--)
-	{
-
-		if (j > 7) {
-			clk_low();
-
-			/* data high or low */
-			if ((data >> (j - 8)) & 0x0001)
-				si_high();
-			else
-				si_low();
-
-			udelay(DELAY);
-			clk_high();
-		} else {
-			if (first) {
-				gpio_cfg_pin(s6e63m0->so_bank, s6e63m0->so_num, GPIO_INPUT);
-				first = 0;
-			}
-
-			clk_low();
-
-			if (so_read() & 0x1)
-				command |= 1 << j;
-			else
-				command |= 0 << j;
-
-			udelay(DELAY);
-			clk_high();
-		}
-
-		udelay(DELAY);
-	}
-
-	cs_high();
-	udelay(DELAY);
-
-	gpio_cfg_pin(s6e63m0->so_bank, s6e63m0->so_num, GPIO_OUTPUT);
-
-	return command;
-}
-#endif
-
 static void s6e63m0_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
-		s6e63m0_c110_spi_write_byte(0x0, address);
+		spi_write_byte(s6e63m0, 0x0, address);
 
 	if (command != COMMAND_ONLY)
-		s6e63m0_c110_spi_write_byte(0x1, command);
+		spi_write_byte(s6e63m0, 0x1, command);
 }
 
 static void s6e63m0_panel_send_sequence(const unsigned char *wbuf, unsigned size_cmd)
