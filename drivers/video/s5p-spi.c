@@ -1,3 +1,4 @@
+#include <common.h>
 #include <asm/arch/gpio.h>
 #include "s5p-spi.h"
 
@@ -32,10 +33,12 @@ static void si_high(struct spi_platform_data *spi)
 	gpio_set_value(spi->si_bank, spi->si_num, 1);
 }
 
+/*
 static char so_read(struct spi_platform_data *spi)
 {
 	return gpio_get_value(spi->so_bank, spi->so_num);
 }
+*/
 
 void spi_write_byte(struct spi_platform_data *spi, unsigned char address, unsigned char command)
 {
@@ -53,8 +56,7 @@ void spi_write_byte(struct spi_platform_data *spi, unsigned char address, unsign
 	cs_low(spi);
 	udelay(DELAY);
 
-	for (j = PACKET_LEN; j >= 0; j--)
-	{
+	for (j = PACKET_LEN; j >= 0; j--) {
 		clk_low(spi);
 
 		/* data high or low */
@@ -92,8 +94,7 @@ unsigned char spi_read_byte(struct spi_platform_data *spi, unsigned char select,
 	clk_low(spi);
 	udelay(DELAY);
 
-	for (j = PACKET_LEN + 8; j >= 0; j--)
-	{
+	for (j = PACKET_LEN + 8; j >= 0; j--) {
 
 		if (j > 7) {
 			clk_low(spi);
