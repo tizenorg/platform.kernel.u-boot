@@ -65,14 +65,12 @@ char so_read_(void)
 	return gpio_get_value(s6d16a0x->so_bank, s6d16a0x->so_num);
 }
 
-static const unsigned short SEQ_PASSWD2_SET[] = {
+static const unsigned char SEQ_PASSWD2_SET[] = {
 	0xF1, 0x5A,
 	DATA_ONLY, 0x5A,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_DISCTL_SET[] = {
+static const unsigned char SEQ_DISCTL_SET[] = {
 	0xf2, 0x00,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x62,
@@ -82,11 +80,9 @@ static const unsigned short SEQ_DISCTL_SET[] = {
 	DATA_ONLY, 0x10,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PWRCTL_SET[] = {
+static const unsigned char SEQ_PWRCTL_SET[] = {
 	0xf3, 0x00,
 	DATA_ONLY, 0x10,
 	DATA_ONLY, 0x25,
@@ -99,11 +95,9 @@ static const unsigned short SEQ_PWRCTL_SET[] = {
 	DATA_ONLY, 0x14,
 	DATA_ONLY, 0x12,
 	DATA_ONLY, 0x62,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_VCMCTL_SET[] = {
+static const unsigned char SEQ_VCMCTL_SET[] = {
 	0xf4, 0x00,
 	DATA_ONLY, 0x23,
 	DATA_ONLY, 0x00,
@@ -114,11 +108,9 @@ static const unsigned short SEQ_VCMCTL_SET[] = {
 	DATA_ONLY, 0x5A,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_SRCCTL_SET[] = {
+static const unsigned char SEQ_SRCCTL_SET[] = {
 	0xf5, 0x00,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x57,
@@ -129,22 +121,18 @@ static const unsigned short SEQ_SRCCTL_SET[] = {
 	DATA_ONLY, 0x14,
 	DATA_ONLY, 0x09,
 	DATA_ONLY, 0x09,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PANELCTL1_SET[] = {
+static const unsigned char SEQ_PANELCTL1_SET[] = {
 	0xf6, 0x02,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x80,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x44,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PANELCTL2_SET[] = {
+static const unsigned char SEQ_PANELCTL2_SET[] = {
 	0xf7, 0x00,
 	DATA_ONLY, 0x01,
 	DATA_ONLY, 0x00,
@@ -162,11 +150,9 @@ static const unsigned short SEQ_PANELCTL2_SET[] = {
 	DATA_ONLY, 0x4B,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x8C,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PANELCTL3_SET[] = {
+static const unsigned char SEQ_PANELCTL3_SET[] = {
 	0xf8, 0x00,
 	DATA_ONLY, 0x01,
 	DATA_ONLY, 0x00,
@@ -184,11 +170,9 @@ static const unsigned short SEQ_PANELCTL3_SET[] = {
 	DATA_ONLY, 0x4B,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x8C,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PANELCTL4_SET[] = {
+static const unsigned char SEQ_PANELCTL4_SET[] = {
 	0xf9, 0x00,
 	DATA_ONLY, 0x08,
 	DATA_ONLY, 0x00,
@@ -211,11 +195,9 @@ static const unsigned short SEQ_PANELCTL4_SET[] = {
 	DATA_ONLY, 0x1F,
 	DATA_ONLY, 0xFF,
 	DATA_ONLY, 0xE0,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PGAMMACTL_SET[] = {
+static const unsigned char SEQ_PGAMMACTL_SET[] = {
 	0xfa, 0x1E,
 	DATA_ONLY, 0x35,
 	DATA_ONLY, 0x2C,
@@ -261,11 +243,9 @@ static const unsigned short SEQ_PGAMMACTL_SET[] = {
 	DATA_ONLY, 0x22,
 	DATA_ONLY, 0x22,
 	DATA_ONLY, 0x22,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_NGAMMACTL_SET[] = {
+static const unsigned char SEQ_NGAMMACTL_SET[] = {
 	0xFB, 0x01,
 	DATA_ONLY, 0x1C,
 	DATA_ONLY, 0x1D,
@@ -311,85 +291,66 @@ static const unsigned short SEQ_NGAMMACTL_SET[] = {
 	DATA_ONLY, 0x48,
 	DATA_ONLY, 0x26,
 	DATA_ONLY, 0x0D,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_CLKCTL3_SET[] = {
+static const unsigned char SEQ_CLKCTL3_SET[] = {
 	0xB7, 0x00,
 
 	DATA_ONLY, 0x11,
 	DATA_ONLY, 0x11,
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_HOSTCTL1_SET[] = {
+static const unsigned char SEQ_HOSTCTL1_SET[] = {
 	0xB8, 0x31,
 
 	DATA_ONLY, 0x11,
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_HOSTCTL2_SET[] = {
+static const unsigned char SEQ_HOSTCTL2_SET[] = {
 	0xB9, 0x00,
 
 	DATA_ONLY, 0x06,
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_TEON_SET[] = {
+static const unsigned char SEQ_TEON_SET[] = {
 	COMMAND_ONLY, 0x35,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_CASET[] = {
+static const unsigned char SEQ_CASET[] = {
 	0x2A, 0x00,
 
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x01,
 	DATA_ONLY, 0x3F,
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_PASET[] = {
+static const unsigned char SEQ_PASET[] = {
 	0x2B, 0x00,
 
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x01,
 	DATA_ONLY, 0xDF,
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_COLMOD[] = {
+static const unsigned char SEQ_COLMOD[] = {
 	0x3A, 0x77,
 	/* 0x36, 0xC4, */	/* MADCTL : Reverse display */
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_WRCTRLD[] = {
+static const unsigned char SEQ_WRCTRLD[] = {
 	0x53, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_SLPOUT[] = {
+static const unsigned char SEQ_SLPOUT[] = {
 	0x11, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_DISPON[] = {
+static const unsigned char SEQ_DISPON[] = {
 	0x29, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_DISPOFF[] = {
+static const unsigned char SEQ_DISPOFF[] = {
 	0x28, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
 unsigned char Delay=1;
@@ -499,49 +460,45 @@ static void s6d16a0x_spi_write(unsigned char address, unsigned char command)
 		s6d16a0x_c110_spi_write_byte(0x1, command);
 }
 
-static void s6d16a0x_panel_send_sequence(const unsigned short *wbuf)
+static void s6d16a0x_panel_send_sequence(const unsigned char *wbuf, unsigned int size_cmd)
 {
 	int i = 0;
-
-	while ((wbuf[i] & DEFMASK) != ENDDEF) {
-		if ((wbuf[i] & DEFMASK) != SLEEPMSEC)
-			s6d16a0x_spi_write(wbuf[i], wbuf[i+1]);
-		else
-			udelay(wbuf[i+1]*1000);
+	while (i < size_cmd) {
+		s6d16a0x_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
 	}
 }
 
 void s6d16a0x_cfg_ldo(void)
 {
-	s6d16a0x_panel_send_sequence(SEQ_PASSWD2_SET);
-	s6d16a0x_panel_send_sequence(SEQ_DISCTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PWRCTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_VCMCTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_SRCCTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PANELCTL1_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PANELCTL2_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PANELCTL3_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PANELCTL4_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PGAMMACTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_NGAMMACTL_SET);
-	s6d16a0x_panel_send_sequence(SEQ_CLKCTL3_SET);
-	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL1_SET);
-	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL2_SET);
-	s6d16a0x_panel_send_sequence(SEQ_TEON_SET);
-	s6d16a0x_panel_send_sequence(SEQ_PASSWD2_SET);
-	s6d16a0x_panel_send_sequence(SEQ_CASET);
-	s6d16a0x_panel_send_sequence(SEQ_PASET);
-	s6d16a0x_panel_send_sequence(SEQ_COLMOD);
-	s6d16a0x_panel_send_sequence(SEQ_WRCTRLD);
-	s6d16a0x_panel_send_sequence(SEQ_SLPOUT);
+	s6d16a0x_panel_send_sequence(SEQ_PASSWD2_SET, ARRAY_SIZE(SEQ_PASSWD2_SET));
+	s6d16a0x_panel_send_sequence(SEQ_DISCTL_SET, ARRAY_SIZE(SEQ_DISCTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PWRCTL_SET, ARRAY_SIZE(SEQ_PWRCTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_VCMCTL_SET, ARRAY_SIZE(SEQ_VCMCTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_SRCCTL_SET, ARRAY_SIZE(SEQ_SRCCTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PANELCTL1_SET, ARRAY_SIZE(SEQ_PANELCTL1_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PANELCTL2_SET, ARRAY_SIZE(SEQ_PANELCTL2_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PANELCTL3_SET, ARRAY_SIZE(SEQ_PANELCTL3_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PANELCTL4_SET, ARRAY_SIZE(SEQ_PANELCTL4_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PGAMMACTL_SET, ARRAY_SIZE(SEQ_PGAMMACTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_NGAMMACTL_SET, ARRAY_SIZE(SEQ_NGAMMACTL_SET));
+	s6d16a0x_panel_send_sequence(SEQ_CLKCTL3_SET, ARRAY_SIZE(SEQ_CLKCTL3_SET));
+	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL1_SET, ARRAY_SIZE(SEQ_HOSTCTL1_SET));
+	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL2_SET, ARRAY_SIZE(SEQ_HOSTCTL2_SET));
+	s6d16a0x_panel_send_sequence(SEQ_TEON_SET, ARRAY_SIZE(SEQ_TEON_SET));
+	s6d16a0x_panel_send_sequence(SEQ_PASSWD2_SET, ARRAY_SIZE(SEQ_PASSWD2_SET));
+	s6d16a0x_panel_send_sequence(SEQ_CASET, ARRAY_SIZE(SEQ_CASET));
+	s6d16a0x_panel_send_sequence(SEQ_PASET, ARRAY_SIZE(SEQ_PASET));
+	s6d16a0x_panel_send_sequence(SEQ_COLMOD, ARRAY_SIZE(SEQ_COLMOD));
+	s6d16a0x_panel_send_sequence(SEQ_WRCTRLD, ARRAY_SIZE(SEQ_WRCTRLD));
+	s6d16a0x_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
 	udelay(120000);
 }
 
 void s6d16a0x_enable_ldo(unsigned int onoff)
 {
 	if (onoff) {
-		s6d16a0x_panel_send_sequence(SEQ_DISPON);
+		s6d16a0x_panel_send_sequence(SEQ_DISPON, ARRAY_SIZE(SEQ_DISPON));
 	}
 }
 
