@@ -27,6 +27,8 @@
 #include <asm/arch/gpio.h>
 #include "s5p-spi.h"
 
+
+unsigned int size_cmd;
 /* these machine specific platform data would be setting at universal.c */
 struct spi_platform_data *s6e63m0;
 
@@ -65,7 +67,7 @@ char so_read(void)
 	return gpio_get_value(s6e63m0->so_bank, s6e63m0->so_num);
 }
 
-static const unsigned short SEQ_PANEL_CONDITION_SET[] = {
+static const unsigned char SEQ_PANEL_CONDITION_SET[] = {
 	0xF8, 0x01,
 	DATA_ONLY, 0x27,
 	DATA_ONLY, 0x27,
@@ -80,11 +82,9 @@ static const unsigned short SEQ_PANEL_CONDITION_SET[] = {
 	DATA_ONLY, 0x0d,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
+static const unsigned char SEQ_DISPLAY_CONDITION_SET[] = {
 	0xf2, 0x02,
 	DATA_ONLY, 0x03,
 	DATA_ONLY, 0x1c,
@@ -94,11 +94,9 @@ static const unsigned short SEQ_DISPLAY_CONDITION_SET[] = {
 	0xf7, 0x03,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_DISPLAY_CONDITION_SET_REV[] = {
+static const unsigned char SEQ_DISPLAY_CONDITION_SET_REV[] = {
 	0xf2, 0x02,
 	DATA_ONLY, 0x03,
 	DATA_ONLY, 0x1c,
@@ -108,11 +106,9 @@ static const unsigned short SEQ_DISPLAY_CONDITION_SET_REV[] = {
 	0xf7, 0x00,
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_GAMMA_SETTING[] = {
+static const unsigned char SEQ_GAMMA_SETTING[] = {
 	0xfa, 0x00,
 	DATA_ONLY, 0x18,
 	DATA_ONLY, 0x08,
@@ -136,11 +132,9 @@ static const unsigned short SEQ_GAMMA_SETTING[] = {
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0xd6,
 	0xfa, 0x01,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_ETC_CONDITION_SET[] = {
+static const unsigned char SEQ_ETC_CONDITION_SET[] = {
 	0xf6, 0x00,
 	DATA_ONLY, 0x8c,
 	DATA_ONLY, 0x07,
@@ -336,55 +330,39 @@ static const unsigned short SEQ_ETC_CONDITION_SET[] = {
 	DATA_ONLY, 0x10,
 	DATA_ONLY, 0x0b,
 	DATA_ONLY, 0x05,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_ACL_ON[] = {
+static const unsigned char SEQ_ACL_ON[] = {
 	/* ACL on */
 	0xc0, 0x01,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_ACL_OFF[] = {
+static const unsigned char SEQ_ACL_OFF[] = {
 	/* ACL off */
 	0xc0, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_ELVSS_ON[] = {
+static const unsigned char SEQ_ELVSS_ON[] = {
 	/* ELVSS on */
 	0xb1, 0x0b,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_ELVSS_OFF[] = {
+static const unsigned char SEQ_ELVSS_OFF[] = {
 	/* ELVSS off */
 	0xb1, 0x0a,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_STAND_BY_OFF[] = {
+static const unsigned char SEQ_STAND_BY_OFF[] = {
 	0x11, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
-static const unsigned short SEQ_STAND_BY_ON[] = {
+static const unsigned char SEQ_STAND_BY_ON[] = {
 	0x10, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
 /* added for panel rev 0.1*/
-static const unsigned short SEQ_DISPLAY_ON[] = {
+static const unsigned char SEQ_DISPLAY_ON[] = {
 	0x29, COMMAND_ONLY,
-
-	ENDDEF, 0x0000
 };
 
 unsigned char DELAY=1;
@@ -495,15 +473,11 @@ static void s6e63m0_spi_write(unsigned char address, unsigned char command)
 		s6e63m0_c110_spi_write_byte(0x1, command);
 }
 
-static void s6e63m0_panel_send_sequence(const unsigned short *wbuf)
+static void s6e63m0_panel_send_sequence(const unsigned char *wbuf, unsigned size_cmd)
 {
 	int i = 0;
-
-	while ((wbuf[i] & DEFMASK) != ENDDEF) {
-		if ((wbuf[i] & DEFMASK) != SLEEPMSEC)
-			s6e63m0_spi_write(wbuf[i], wbuf[i+1]);
-		else
-			udelay(wbuf[i+1]*1000);
+	while (i < size_cmd) {
+		s6e63m0_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
 	}
 }
@@ -514,27 +488,25 @@ void s6e63m0_cfg_ldo(void)
 	data = s6e63m0_c110_spi_read_byte(0x0, 0xdd);
 	printf("data = %d, %x\n", data, &data);
 	*/
-
-	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET);
+	s6e63m0_panel_send_sequence(SEQ_PANEL_CONDITION_SET, ARRAY_SIZE(SEQ_PANEL_CONDITION_SET));
 
 	if (s6e63m0->set_rev)
-		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET_REV);
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET_REV, ARRAY_SIZE(SEQ_DISPLAY_CONDITION_SET_REV));
 	else
-		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET);
-
-	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING);
-	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET);
-	s6e63m0_panel_send_sequence(SEQ_ACL_ON);
-	s6e63m0_panel_send_sequence(SEQ_ELVSS_OFF);
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_CONDITION_SET, ARRAY_SIZE(SEQ_DISPLAY_CONDITION_SET));
+	s6e63m0_panel_send_sequence(SEQ_GAMMA_SETTING, ARRAY_SIZE(SEQ_GAMMA_SETTING));
+	s6e63m0_panel_send_sequence(SEQ_ETC_CONDITION_SET, ARRAY_SIZE(SEQ_ETC_CONDITION_SET));
+	s6e63m0_panel_send_sequence(SEQ_ACL_ON, ARRAY_SIZE(SEQ_ACL_ON));
+	s6e63m0_panel_send_sequence(SEQ_ELVSS_OFF, ARRAY_SIZE(SEQ_ELVSS_OFF));
 }
 
 void s6e63m0_enable_ldo(unsigned int onoff)
 {
 	if (onoff) {
-		s6e63m0_panel_send_sequence(SEQ_STAND_BY_OFF);
-		s6e63m0_panel_send_sequence(SEQ_DISPLAY_ON);
+		s6e63m0_panel_send_sequence(SEQ_STAND_BY_OFF, ARRAY_SIZE(SEQ_STAND_BY_OFF));
+		s6e63m0_panel_send_sequence(SEQ_DISPLAY_ON, ARRAY_SIZE(SEQ_DISPLAY_ON));
 	} else {
-		s6e63m0_panel_send_sequence(SEQ_STAND_BY_ON);
+		s6e63m0_panel_send_sequence(SEQ_STAND_BY_ON, ARRAY_SIZE(SEQ_STAND_BY_ON));
 	}
 }
 

@@ -1,7 +1,4 @@
 
-#define SLEEPMSEC		0x1000
-#define ENDDEF			0x2000
-#define	DEFMASK			0xFF00
 #define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
 
