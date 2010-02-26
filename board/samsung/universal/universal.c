@@ -306,7 +306,7 @@ void i2c_init_board(void)
 }
 
 #ifdef CONFIG_MISC_INIT_R
-#define DEV_INFO_LEN		512
+#define DEV_INFO_LEN		256
 static char device_info[DEV_INFO_LEN];
 static int display_info;
 
@@ -332,7 +332,7 @@ static void dprintf(const char *fmt, ...)
 		puts(device_info);
 		empty_device_info_buffer();
 	}
-	strcat(device_info, buf);
+	strncat(device_info, buf, 127);
 	puts(buf);
 }
 
@@ -684,6 +684,7 @@ static void show_hw_revision(void)
 		s5pc1xx_set_cpu_rev(0);
 	}
 
+	empty_device_info_buffer();
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
 		board_rev, get_board_name(board),
 		display_features(board, board_rev),
