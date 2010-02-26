@@ -29,7 +29,6 @@ u32 remode_wakeup;
 u16 config_value;
 
 int s5p_receive_done;
-int s5p_got_header;
 int s5p_usb_connected;
 
 USB_OPMODE op_mode = USB_CPU;
@@ -473,15 +472,6 @@ int s5p_usbctl_init(void)
 	}
 }
 
-int s5p_usbc_activate(void)
-{
-	return 0;
-}
-
-void s5p_usb_stop(void)
-{
-}
-
 static void s5p_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
 {
 	if (type == EP_TYPE_CONTROL) {
@@ -657,18 +647,6 @@ static void s5p_usb_set_feature(void)
 		break;
 	}
 
-	switch (otg.dev_req.wValue_L) {
-	case EP_STALL:
-		/* TBD: additional processing if required */
-		break;
-
-	case TEST_MODE:
-		/* not support */
-		break;
-
-	default:
-		break;
-	}
 	otg.ep0_state = EP0_STATE_INIT;
 }
 
@@ -1299,26 +1277,17 @@ static void s5p_usb_dma_out_done(void)
 	}
 }
 
-static void s5p_usb_set_all_outep_nak(void)
+static void s5p_usb_set_all_outep_nak(int set)
 {
 	u8 i;
 	u32 tmp;
 
 	for (i = 0; i < 16; i++) {
 		tmp = s5pc1xx_otg_read_reg(OTG_DOEPCTL0 + 0x20 * i);
-		tmp |= DEPCTL_SNAK;
-		s5pc1xx_otg_write_reg(tmp, OTG_DOEPCTL0 + 0x20 * i);
-	}
-}
-
-static void s5p_usb_clear_all_outep_nak(void)
-{
-	u8 i;
-	u32 tmp;
-
-	for (i = 0; i < 16; i++) {
-		tmp = s5pc1xx_otg_read_reg(OTG_DOEPCTL0 + 0x20 * i);
-		tmp |= (DEPCTL_EPENA | DEPCTL_CNAK);
+		if (set)
+			tmp |= DEPCTL_SNAK;
+		else
+			tmp |= (DEPCTL_EPENA | DEPCTL_CNAK);
 		s5pc1xx_otg_write_reg(tmp, OTG_DOEPCTL0 + 0x20 * i);
 	}
 }
@@ -1365,8 +1334,8 @@ static void s5p_usb_set_descriptors(void)
 	otg.desc.dev.iProduct		= 0x2;
 	otg.desc.dev.iSerialNumber	= 0x0;
 	otg.desc.dev.bNumConfigurations = 0x1;
-	otg.desc.dev.bcdUSBL	= 0x00;
-	otg.desc.dev.bcdUSBH	= 0x02;
+	otg.desc.dev.bcdUSBL		= 0x00;
+	otg.desc.dev.bcdUSBH		= 0x02;
 
 	otg.desc.config.bLength		= CONFIG_DESC_SIZE;
 	otg.desc.config.bDescriptorType = CONFIGURATION_DESCRIPTOR;
@@ -1394,8 +1363,8 @@ static void s5p_usb_set_descriptors(void)
 	otg.desc.dev.iProduct		= 0x2;
 	otg.desc.dev.iSerialNumber	= 0x0;
 	otg.desc.dev.bNumConfigurations	= 0x1;
-	otg.desc.dev.bcdUSBL	= 0x00;
-	otg.desc.dev.bcdUSBH	= 0x02;
+	otg.desc.dev.bcdUSBL		= 0x00;
+	otg.desc.dev.bcdUSBH		= 0x02;
 
 	otg.desc.config.bLength		= CONFIG_DESC_SIZE;
 	otg.desc.config.bDescriptorType	= CONFIGURATION_DESCRIPTOR;
@@ -1459,7 +1428,7 @@ static void s5p_usb_set_opmode(USB_OPMODE mode)
 
 static void s5p_usb_reset(void)
 {
-	s5p_usb_set_all_outep_nak();
+	s5p_usb_set_all_outep_nak(1);
 
 	otg.ep0_state = EP0_STATE_INIT;
 	s5pc1xx_otg_write_reg(((1 << BULK_OUT_EP) | (1 << CONTROL_EP)) << 16 |
@@ -1476,7 +1445,7 @@ static void s5p_usb_reset(void)
 	s5pc1xx_otg_write_reg(NPTX_FIFO_SIZE << 16 | NPTX_FIFO_START_ADDR << 0,
 			OTG_GNPTXFSIZ);
 
-	s5p_usb_clear_all_outep_nak();
+	s5p_usb_set_all_outep_nak(0);
 
 	/*clear device address */
 	s5pc1xx_otg_write_reg(s5pc1xx_otg_read_reg(OTG_DCFG) & ~(0x7f << 4),
@@ -1530,14 +1499,6 @@ static void s5p_usb_pkt_receive(void)
 			return;
 		}
 
-	} else if ((rx_status & (0xf << 17)) == GLOBAL_OUT_NAK) {
-		/* nop */
-	} else if ((rx_status & (0xf << 17)) == OUT_TRNASFER_COMPLETED) {
-		/* nop */
-	} else if ((rx_status & (0xf << 17)) == SETUP_TRANSACTION_COMPLETED) {
-		/* nop */
-	} else {
-		/* nop */
 	}
 }
 

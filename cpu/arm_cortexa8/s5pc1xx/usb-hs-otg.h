@@ -261,8 +261,6 @@ enum STANDARD_REQUEST_CODE {
 };
 
 int s5p_usbctl_init(void);
-int s5p_usbc_activate(void);
-void s5p_usb_stop(void);
 void s5p_udc_int_hndlr(void);
 void s5p_usb_tx(char *tx_data, int tx_size);
 int s5p_usb_detect_irq(void);

@@ -72,7 +72,6 @@ static void usb_init(void)
 #endif
 
 	s5p_usbctl_init();
-	s5p_usbc_activate();
 
 	printf("USB Start!! - %s Speed\n",
 			otg.speed ? "Full" : "High");
@@ -98,7 +97,6 @@ static void usb_init(void)
 
 static void usb_stop(void)
 {
-	s5p_usb_stop();
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
 		exit_font();
