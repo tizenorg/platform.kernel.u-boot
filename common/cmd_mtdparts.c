@@ -203,6 +203,7 @@ static unsigned long memsize_parse (const char *const ptr, const char **retptr)
 	return ret;
 }
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 /**
  * Format string describing supplied size. This routine does the opposite job
  * to memsize_parse(). Size in bytes is converted to string and if possible
@@ -229,6 +230,7 @@ static void memsize_format(char *buf, u32 size)
 	else
 		sprintf(buf, "%u", size);
 }
+#endif
 
 /**
  * This routine does global indexing of all partitions. Resulting index for
