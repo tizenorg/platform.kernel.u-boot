@@ -25,9 +25,6 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 
-#define SLEEPMSEC		0x1000
-#define ENDDEF			0x2000
-#define	DEFMASK			0xFF00
 #define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
 
@@ -69,34 +66,24 @@
 		S5PC1XX_GPIO_DAT_OFFSET)) | 0x08, S5PC110_GPIO_BASE(S5PC110_GPIO_MP0_4_OFFSET+\
 		S5PC1XX_GPIO_DAT_OFFSET))
 
-const unsigned short SEQ_DISPLAY_ON[] = {
+const unsigned char SEQ_DISPLAY_ON[] = {
 	0x14, 0x03,
-
-	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_DISPLAY_OFF[] = {
+const unsigned char SEQ_DISPLAY_OFF[] = {
 	0x14, 0x00,
-
-	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_STANDBY_ON[] = {
+const unsigned char SEQ_STANDBY_ON[] = {
 	0x1D, 0xA1,
-	SLEEPMSEC, 200,
-
-	ENDDEF, 0x0000
 };
 
-const unsigned short SEQ_STANDBY_OFF[] = {
+const unsigned char SEQ_STANDBY_OFF[] = {
 	0x1D, 0xA0,
-	SLEEPMSEC, 250,
-
-	ENDDEF, 0x0000
 };
 
 
-const unsigned short SEQ_SETTING[] = {
+const unsigned char SEQ_SETTING[] = {
 	0x31, 0x08, /* panel setting */
 	0x32, 0x14,
 	0x30, 0x02,
@@ -144,8 +131,6 @@ const unsigned short SEQ_SETTING[] = {
 	0x22, 0xA4, /* VXX x 0.60 */
 	0x23, 0x00,
 	0x26, 0xA0,
-
-	ENDDEF, 0x0000
 };
 
 static void tl2796_c100_spi_write_byte(unsigned char address, unsigned char command)
@@ -236,15 +221,15 @@ static void tl2796_spi_write(unsigned char address, unsigned char command)
 	}
 }
 
-static void tl2796_panel_send_sequence(const unsigned short *wbuf)
+static void tl2796_panel_send_sequence(const unsigned char *wbuf, unsigned int size)
 {
 	int i = 0;
-
-	while ((wbuf[i] & DEFMASK) != ENDDEF) {
-		if ((wbuf[i] & DEFMASK) != SLEEPMSEC)
-			tl2796_spi_write(wbuf[i], wbuf[i+1]);
-		else
-			udelay(wbuf[i+1]*1000);
+	while (i < size) {
+		if (wbuf[i] == 0x1D && wbuf[i + 1] == 0xA1)
+			udelay(200000);
+		else if (wbuf[i] == 0x1D && wbuf[i + 1] == 0xA0)
+			udelay(250000);
+		tl2796_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
 	}
 }
@@ -275,8 +260,8 @@ void tl2796_c100_panel_power_on(void)
 
 	udelay(20000);
 
-	tl2796_panel_send_sequence(SEQ_SETTING);
-	tl2796_panel_send_sequence(SEQ_STANDBY_OFF);
+	tl2796_panel_send_sequence(SEQ_SETTING, ARRAY_SIZE(SEQ_SETTING));
+	tl2796_panel_send_sequence(SEQ_STANDBY_OFF, ARRAY_SIZE(SEQ_STANBY_OFF));
 }
 
 void lcd_panel_power_on(void)
@@ -307,8 +292,8 @@ void lcd_panel_power_on(void)
 
 	udelay(20000);
 
-	tl2796_panel_send_sequence(SEQ_SETTING);
-	tl2796_panel_send_sequence(SEQ_STANDBY_OFF);
+	tl2796_panel_send_sequence(SEQ_SETTING, ARRAY_SIZE(SEQ_SETTING));
+	tl2796_panel_send_sequence(SEQ_STANDBY_OFF, ARRAY_SIZE(SEQ_STANBY_OFF));
 }
 
 static inline void tl2796_c100_panel_hw_reset(void)
@@ -345,12 +330,12 @@ static inline void tl2796_c110_panel_hw_reset(void)
 
 void lcd_panel_enable(void)
 {
-	tl2796_panel_send_sequence(SEQ_DISPLAY_ON);
+	tl2796_panel_send_sequence(SEQ_DISPLAY_ON, ARRAY_SIZE(SEQ_DISPLAY_ON));
 }
 
 static void tl2796_panel_disable(void)
 {
-	tl2796_panel_send_sequence(SEQ_DISPLAY_OFF);
+	tl2796_panel_send_sequence(SEQ_DISPLAY_OFF, ARRAY_SIZE(SEQ_DISPLAY_OFF));
 }
 
 void tl2796_c100_panel_init(void)
