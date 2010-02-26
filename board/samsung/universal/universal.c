@@ -908,9 +908,9 @@ static void check_battery(int mode)
 	if (machine_is_aquila()) {
 		if (board_is_j1b2())
 			return;
-	} else if (machine_is_kessler())
+	} else if (machine_is_kessler()) {
 		i2c_set_bus_num(I2C_GPIO7);
-	else if (machine_is_cypress()) {
+	} else if (machine_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
 	} else if (machine_is_geminus()) {
 		if (hwrevision(1))
@@ -1292,18 +1292,20 @@ static void into_charge_mode(void)
 			int k;
 
 			bmp = gunzip_bmp(bmp_addr[j], &len);
-			lcd_display_bitmap((ulong) bmp, 140, 202);
+			lcd_display_bitmap((ulong)bmp, 140, 202);
 			free(bmp);
 
-			for (k = 0; k < 10; k++)
+			for (k = 0; k < 10; k++) {
 				if (max8998_power_key()) {
 					lcd_display_clear();
 					goto restore_screen;
 				} else if (!max8998_has_ext_power_source()) {
 					lcd_display_clear();
 					goto restore_screen;
-				} else
+				} else {
 					udelay(100 * 1000);
+				}
+			}
 		}
 	}
 	exit_font();
