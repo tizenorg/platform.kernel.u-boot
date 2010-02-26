@@ -111,6 +111,7 @@
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_ITEST
+#undef CONFIG_CMD_NFS
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
@@ -148,7 +149,6 @@
 #define CONFIG_NET_DO_NOT_TRY_ANOTHER	1
 
 /* NFS support in Ethernet over USB is broken */
-#undef CONFIG_CMD_NFS
 
 /* Configure Ethernet over USB */
 #define CONFIG_USB_ETH_RNDIS		1
