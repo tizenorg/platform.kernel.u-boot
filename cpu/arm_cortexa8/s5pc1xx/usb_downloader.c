@@ -29,7 +29,7 @@
 static char tx_data[8] = "MPL";
 static long tx_len = 4;
 
-static char rx_data[2048];
+static char rx_data[64];
 static long rx_len = 64;
 
 extern int s5p_receive_done;
