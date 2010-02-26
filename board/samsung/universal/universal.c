@@ -1077,7 +1077,7 @@ static int adc_to_temperature_centigrade(unsigned short adc)
 	int approximation;
 	/* low_*: Greatest Lower Bound,
 	 *          *          *          * high_*: Smallest Upper Bound */
-	int low_temp, high_temp;
+	int low_temp = 0, high_temp = 0;
 	unsigned short low_adc = 0, high_adc = USHRT_MAX;
 	for (i = 0; i < ARRAY_SIZE(adc_to_temperature_data); i++) {
 		if (adc_to_temperature_data[i].adc <= adc &&
@@ -1258,6 +1258,8 @@ static void charger_en(int enable)
 }
 
 void lcd_power_on(unsigned int onoff);
+extern int do_sleep (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+extern int drv_lcd_init_resume (void);
 
 static void into_charge_mode(void)
 {
@@ -1316,7 +1318,7 @@ static void into_charge_mode(void)
 
 	do {
 		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
-		unsigned int org, org_ip3, org_tcfg0;
+		unsigned int org, org_ip3;
 		enum temperature_level  previous_state = _TEMP_OK;
 
 		empty_device_info_buffer();
@@ -1402,7 +1404,6 @@ static void into_charge_mode(void)
 		}
 
 		writel(org, &rtc->rtccon);
-		writel(org_tcfg0, 0xE2600000);
 		writel(org_ip3, 0xE010046C);
 
 	} while (wakeup_stat == 0x04); /* RTC TICK */
