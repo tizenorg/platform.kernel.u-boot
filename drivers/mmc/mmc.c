@@ -655,7 +655,7 @@ int mmc_startup(struct mmc *mmc)
 	mmc->csd[3] = cmd.response[3];
 
 	if (mmc->version == MMC_VERSION_UNKNOWN) {
-		int version = (cmd.response[0] >> 26) & 0xf;
+		int version = (mmc->csd[0] >> 26) & 0xf;
 
 		switch (version) {
 			case 0:
@@ -680,17 +680,17 @@ int mmc_startup(struct mmc *mmc)
 	}
 
 	/* divide frequency by 10, since the mults are 10x bigger */
-	freq = fbase[(cmd.response[0] & 0x7)];
-	mult = multipliers[((cmd.response[0] >> 3) & 0xf)];
+	freq = fbase[(mmc->csd[0] & 0x7)];
+	mult = multipliers[((mmc->csd[0] >> 3) & 0xf)];
 
 	mmc->tran_speed = freq * mult;
 
-	mmc->read_bl_len = 1 << ((cmd.response[1] >> 16) & 0xf);
+	mmc->read_bl_len = 1 << ((mmc->csd[1] >> 16) & 0xf);
 
 	if (IS_SD(mmc))
 		mmc->write_bl_len = mmc->read_bl_len;
 	else
-		mmc->write_bl_len = 1 << ((cmd.response[3] >> 22) & 0xf);
+		mmc->write_bl_len = 1 << ((mmc->csd[3] >> 22) & 0xf);
 
 	if (mmc->high_capacity) {
 		csize = (mmc->csd[1] & 0x3f) << 16
