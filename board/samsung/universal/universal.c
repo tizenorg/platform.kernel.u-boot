@@ -2225,7 +2225,7 @@ int misc_init_r(void)
 	check_battery(0);
 
 	/* check fsa9480 */
-	check_micro_usb(0);
+	check_micro_usb(1);
 
 	return 0;
 }
