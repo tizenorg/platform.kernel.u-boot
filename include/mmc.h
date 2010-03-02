@@ -243,7 +243,6 @@ struct mmc {
 	void *priv;
 	uint voltages;
 	uint version;
-	uint ext_csd_rev;
 	uint f_min;
 	uint f_max;
 	int high_capacity;
