@@ -412,6 +412,26 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		return err;
 
+	/* Check MMC version 4.X */
+	if (mmc->version == MMC_VERSION_4)
+		switch (ext_csd[192]) {
+			case EXT_CSD_REV_1_0:
+				mmc->version |= EXT_CSD_REV_1_0;
+				break;
+			case EXT_CSD_REV_1_1:
+				mmc->version |= EXT_CSD_REV_1_1;
+				break;
+			case EXT_CSD_REV_1_2:
+				mmc->version |= EXT_CSD_REV_1_2;
+				break;
+			case EXT_CSD_REV_1_3:
+				mmc->version |= EXT_CSD_REV_1_3;
+				break;
+			case EXT_CSD_REV_1_5:
+				mmc->version |= EXT_CSD_REV_1_5;
+				break;
+		}
+
 	/* No high-speed support */
 	if (!ext_csd[185])
 		return 0;

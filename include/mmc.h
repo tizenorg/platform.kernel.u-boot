@@ -134,6 +134,13 @@
 #define EXT_CSD_REV		192	/* RO */
 #define EXT_CSD_SEC_CNT		212	/* RO, 4 bytes */
 
+#define EXT_CSD_REV_1_0		0
+#define EXT_CSD_REV_1_1		1
+#define EXT_CSD_REV_1_2		2
+#define EXT_CSD_REV_1_3		3
+#define EXT_CSD_REV_1_5		4
+
+
 /*
  * EXT_CSD field definitions
  */
