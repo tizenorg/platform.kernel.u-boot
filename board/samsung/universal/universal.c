@@ -2758,7 +2758,6 @@ U_BOOT_CMD(
 enum {
 	POWER_NONE,
 	POWER_TOUCH,
-	POWER_3_TOUCHKEY,
 	POWER_LCD,
 	POWER_HAPTIC,
 	POWER_AUDIO_CODEC,
@@ -2771,7 +2770,6 @@ static void power_display_devices(void)
 {
 	printf("devices:\n");
 	printf("\t%d - touch\n", POWER_TOUCH);
-	printf("\t%d - 3 touchkey\n", POWER_3_TOUCHKEY);
 	printf("\t%d - LCD\n", POWER_LCD);
 	printf("\t%d - Haptic\n", POWER_HAPTIC);
 	printf("\t%d - Audio Codec\n", POWER_AUDIO_CODEC);
@@ -2833,66 +2831,11 @@ static int power_touch(int on)
 	return 0;
 }
 
-static int power_3_touchkey(int on)
-{
-	if (on) {
-		/* 3_TOUCH_EN - GPJ3[0] : (J1B2) */
-		/* 3_TOUCH_EN - GPJ3[5] : (not J1B2) */
-		if (board_rev & J1_B2_BOARD)
-			gpio_direction_output(&s5pc110_gpio->gpio_j3, 0, on);
-		else
-			gpio_direction_output(&s5pc110_gpio->gpio_j3, 5, on);
-
-		/* 3_TOUCH_CE - GPJ2[6] */
-		gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
-	} else {
-		/* 3_TOUCH_CE - GPJ2[6] */
-		gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, on);	/* TOUCH_CE */
-	}
-
-	if (on) {
-		unsigned int reg;
-		unsigned char val[2];
-		unsigned char addr = 0x20;		/* mcs5000 3-touchkey */
-
-		/* Require 100ms */
-		udelay(80 * 1000);
-
-		/* 3 touchkey */
-		i2c_set_bus_num(I2C_GPIO10);
-
-		/* Workaround to probe */
-		if (i2c_probe(addr)) {
-			if (i2c_probe(addr)) {
-				printf("Can't found 3 touchkey\n");
-				return -ENODEV;
-			}
-		}
-
-#define MCS5000_TK_HW_VERSION  0x06
-#define MCS5000_TK_FW_VERSION  0x0A
-#define MCS5000_TK_MI_VERSION  0x0B
-
-		reg = MCS5000_TK_MI_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		printf("3-touchkey:\tM/I 0x%x, ", val[0]);
-		reg = MCS5000_TK_HW_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		printf("H/W 0x%x, ", val[0]);
-		reg = MCS5000_TK_FW_VERSION;
-		i2c_read(addr, reg, 1, val, 1);
-		printf("F/W 0x%x\n", val[0]);
-	}
-	return 0;
-}
-
 static int power_control(int device, int on)
 {
 	switch (device) {
 	case POWER_TOUCH:
 		return power_touch(on);
-	case POWER_3_TOUCHKEY:
-		return power_3_touchkey(on);
 	case POWER_LCD:
 		return power_lcd(on);
 	case POWER_HAPTIC:
@@ -2915,7 +2858,6 @@ static int power_control(int device, int on)
 static int power_on(int on)
 {
 	power_touch(on);
-	power_3_touchkey(on);
 	power_lcd(on);
 	power_haptic(on);
 	power_audio_codec(on);
