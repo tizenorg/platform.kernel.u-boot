@@ -397,7 +397,7 @@ static char *display_features(int board, int board_rev)
 	} else if (board == MACH_KESSLER) {
 		if (board_rev & NEPTUNE_BOARD)
 			name = "Neptune";
-		if (bardo_rev & S1_BOARD)
+		if (board_rev & S1_BOARD)
 			name = "S1";
 	}
 	if (name)
@@ -452,25 +452,21 @@ static void check_board_revision(int board, int rev)
 static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
 {
 	unsigned int rev;
-	int mode3 = 1;
-
-	if (hwrev3)
-		mode3 = 7;
 
 	gpio_direction_input(bank, 2);
 	gpio_direction_input(bank, 3);
 	gpio_direction_input(bank, 4);
-	gpio_direction_input(bank, mode3);
+	gpio_direction_input(bank, hwrev3);
 
 	gpio_set_pull(bank, 2, GPIO_PULL_NONE);		/* HWREV_MODE0 */
 	gpio_set_pull(bank, 3, GPIO_PULL_NONE);		/* HWREV_MODE1 */
 	gpio_set_pull(bank, 4, GPIO_PULL_NONE);		/* HWREV_MODE2 */
-	gpio_set_pull(bank, mode3, GPIO_PULL_NONE);	/* HWREV_MODE3 */
+	gpio_set_pull(bank, hwrev3, GPIO_PULL_NONE);	/* HWREV_MODE3 */
 
 	rev = gpio_get_value(bank, 2);
 	rev |= (gpio_get_value(bank, 3) << 1);
 	rev |= (gpio_get_value(bank, 4) << 2);
-	rev |= (gpio_get_value(bank, mode3) << 3);
+	rev |= (gpio_get_value(bank, hwrev3) << 3);
 
 	return rev;
 }
@@ -491,7 +487,7 @@ static void check_hw_revision(void)
 	} else {
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-		int hwrev3 = 0;
+		int hwrev3 = 1;
 
 		board_rev = 0;
 
@@ -571,7 +567,7 @@ static void check_hw_revision(void)
 			}
 			if (wmg160) {
 				board = MACH_WMG160;
-				hwrev3 = 1;
+				hwrev3 = 7;
 			}
 		}
 
@@ -591,7 +587,7 @@ static void check_hw_revision(void)
 		gpio_direction_input(&gpio->gpio_j0, 6);
 		if (gpio_get_value(&gpio->gpio_j0, 6) == 1) {
 			board = MACH_GEMINUS;
-			hwrev3 = 1;
+			hwrev3 = 7;
 		}
 		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 
@@ -616,14 +612,14 @@ static void check_hw_revision(void)
 				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
-			hwrev3 = 1;
+			hwrev3 = 7;
 		} else {
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			/* Kessler S1 board detection */
 			if (board == MACH_TICKERTAPE) {
 				board = MACH_KESSLER;
 				board_rev |= S1_BOARD;
-				hwrev3 = 1;
+				hwrev3 = 7;
 			}
 		}
 
