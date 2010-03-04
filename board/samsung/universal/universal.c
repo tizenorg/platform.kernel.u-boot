@@ -199,7 +199,7 @@ enum {
 #define BAMBOO_BOARD		0x2000
 
 /* board is MACH_KESSLER and board is like below */
-#define ARIES_BOARD		0x4000
+#define KESSLER_BOARD		0x4000
 #define NEPTUNE_BOARD		0x8000
 
 #define BOARD_MASK		0xFF00
@@ -394,8 +394,6 @@ static char *display_features(int board, int board_rev)
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
 	} else if (board == MACH_KESSLER) {
-		if (board_rev & ARIES_BOARD)
-			name = "Aries";
 		if (board_rev & NEPTUNE_BOARD)
 			name = "Neptune";
 	}
@@ -434,7 +432,7 @@ static void check_board_revision(int board, int rev)
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
 	} else if (board == MACH_KESSLER) {
-		if (rev & ARIES_BOARD)
+		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & NEPTUNE_BOARD)
@@ -602,12 +600,12 @@ static void check_hw_revision(void)
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
 				board = MACH_KESSLER;
-				board_rev |= ARIES_BOARD;
+				board_rev |= KESSLER_BOARD;
 
 				/* Neptune MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
-					board_rev &= ~ARIES_BOARD;
+					board_rev &= ~KESSLER_BOARD;
 					board_rev |= NEPTUNE_BOARD;
 				}
 			}
