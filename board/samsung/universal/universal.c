@@ -199,6 +199,7 @@ enum {
 #define BAMBOO_BOARD		0x2000
 
 /* board is MACH_KESSLER and board is like below */
+#define S1_BOARD		0x1000
 #define KESSLER_BOARD		0x4000
 #define NEPTUNE_BOARD		0x8000
 
@@ -396,6 +397,8 @@ static char *display_features(int board, int board_rev)
 	} else if (board == MACH_KESSLER) {
 		if (board_rev & NEPTUNE_BOARD)
 			name = "Neptune";
+		if (bardo_rev & S1_BOARD)
+			name = "S1";
 	}
 	if (name)
 		count += sprintf(buf + count, " - %s", name);
@@ -438,6 +441,9 @@ static void check_board_revision(int board, int rev)
 		if (rev & NEPTUNE_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
+		if (rev & S1_BOARD)
+			board_rev &= ~(J1_B2_BOARD | LIMO_UNIVERSAL_BOARD |
+					LIMO_REAL_BOARD);
 	} else {
 		board_rev &= ~BOARD_MASK;
 	}
@@ -613,6 +619,12 @@ static void check_hw_revision(void)
 			hwrev3 = 1;
 		} else {
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+			/* Kessler S1 board detection */
+			if (board == MACH_TICKERTAPE) {
+				board = MACH_KESSLER;
+				board_rev |= S1_BOARD;
+				hwrev3 = 1;
+			}
 		}
 
 		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
