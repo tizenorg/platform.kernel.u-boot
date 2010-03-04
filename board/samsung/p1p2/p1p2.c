@@ -179,6 +179,7 @@ static lcd_type_t lcd_type;
 /* board is MACH_P1P2 and board is like below. */
 #define P1_REAL_BOARD		0x200
 #define P2_REAL_BOARD		0x400
+#define HAYDN_BOARD		0x800
 
 #define BOARD_MASK		0xF00
 
@@ -241,6 +242,7 @@ static int board_is_p2_real(void)
 {
 	return machine_is_p1p2() && (board_rev & P2_REAL_BOARD);
 }
+
 #ifdef CONFIG_LCD
 static int lcd_is_amoled(void)
 {
@@ -373,6 +375,8 @@ static char *display_features(int board, int board_rev)
 			count += sprintf(buf + count, " - P1 Real");
 		else if (board_rev & P2_REAL_BOARD)
 			count += sprintf(buf + count, " - P2 Real");
+		else if (board_rev & HAYDN_BOARD)
+			count += sprintf(buf + count, " - Haydn");
 		else
 			count += sprintf(buf + count, " - Universal");
 	}
@@ -565,7 +569,12 @@ static void check_hw_revision(void)
 		} else {
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
-			board_rev |= P1_REAL_BOARD;
+
+			if (gpio_get_value(&gpio->gpio_c1, 2) == 1)
+				board_rev |= HAYDN_BOARD;
+			else
+				board_rev |= P1_REAL_BOARD;
+
 		#ifdef CONFIG_LCD
 			if (gpio_get_value(&gpio->gpio_j0, 6) == 0)	{
 				lcd_type = LCD_AMOLED;
