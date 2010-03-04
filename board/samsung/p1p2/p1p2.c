@@ -570,7 +570,7 @@ static void check_hw_revision(void)
 			board = MACH_P1P2;
 			board_rev &= ~BOARD_MASK;
 
-			if (gpio_get_value(&gpio->gpio_c1, 2) == 1)
+			if (gpio_get_value(&gpio->gpio_h1, 2) == 1)
 				board_rev |= HAYDN_BOARD;
 			else
 				board_rev |= P1_REAL_BOARD;
