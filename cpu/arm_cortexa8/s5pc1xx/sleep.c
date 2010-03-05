@@ -196,14 +196,12 @@ void s5pc110_save_reg(struct regs_to_save *list,
 {
 	int i;
 	int j;
-	int counter = 0;
 
 	for (i = 0; i < length; i++) {
 		for (j = 0; j < list[i].size; j++) {
 			*buf = readl((unsigned int *)
 					(list[i].start_address+j * 4));
 			buf++;
-			counter++;
 		}
 	}
 }
@@ -500,6 +498,6 @@ int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(
 	sleep,		CONFIG_SYS_MAXARGS,	1, do_sleep,
 	"S5PC110 sleep",
-	"sleep 0 - Sleep with SLEEP_WFI mode\n"
+	"0 - Sleep with SLEEP_WFI mode\n"
 	"sleep 1 - Sleep with SLEEP_REGISTER mode\n"
 );
