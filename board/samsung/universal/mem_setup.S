@@ -222,7 +222,7 @@ swap_memory:
 
 	ldr	r1, =0x14233287
 	str	r1, [r0, #0x034]			@ TIMINGROW_OFFSET
-	ldrne	r1, =0x11344309
+	ldrne	r1, =0x18344309
 	strne	r1, [r6, #0x034]			@ TIMINGROW_OFFSET
 
 	ldr	r1, =0x12130005
@@ -253,8 +253,13 @@ swap_memory:
 	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
-	/* chip0 MRS, CL%LE %LONG3, BL%LE %LONG4 */
+	/* chip0 MRS */
 	ldr	r1, =0x00000032
+	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
+	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
+
+	/* chip0 EMRS */
+	ldr	r1, =0x00020020
 	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
@@ -276,8 +281,13 @@ swap_memory:
 	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
-	/* chip1 MRS, CL%LE %LONG3, BL%LE %LONG4 */
+	/* chip1 MRS */
 	ldr	r1, =0x00100032
+	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
+	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
+
+	/* chip1 EMRS */
+	ldr	r1, =0x00120020
 	str	r1, [r0, #0x010]			@ DIRECTCMD_OFFSET
 	strne	r1, [r6, #0x010]			@ DIRECTCMD_OFFSET
 
