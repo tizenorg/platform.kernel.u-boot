@@ -1162,55 +1162,20 @@ void s5p_usb_tx(char *tx_data, int tx_size)
 	}
 }
 
-static void s5p_usb_rx(u32 fifo_cnt_byte)
-{
-	if (otg.op_mode == USB_CPU) {
-		s5p_usb_read_out_fifo((u8 *)otg.dn_ptr, fifo_cnt_byte);
-		otg.dn_ptr += fifo_cnt_byte;
-
-		s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1,
-				otg.bulkout_max_pktsize);
-
-		/*ep3 enable, clear nak, bulk, usb active, next ep3, max pkt */
-		s5pc1xx_otg_write_reg(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 |
-				otg.bulkout_max_pktsize << 0, OTG_DOEPCTL_OUT);
-
-		if (((u32)otg.dn_ptr - otg.dn_addr) >= (otg.dn_filesize))
-			s5p_receive_done = 1;
-	} else if (otg.dn_filesize > otg.bulkout_max_pktsize) {
-		u32 pkt_cnt, remain_cnt;
-
-		s5pc1xx_otg_write_reg(INT_RESUME | INT_OUT_EP | INT_IN_EP |
-				INT_ENUMDONE | INT_RESET | INT_SUSPEND,
-				OTG_GINTMSK);
-		s5pc1xx_otg_write_reg(MODE_DMA | BURST_INCR4 | GBL_INT_UNMASK,
-				OTG_GAHBCFG);
-		s5pc1xx_otg_write_reg((u32) otg.dn_ptr, OTG_DOEPDMA_OUT);
-		pkt_cnt = (u32)(otg.dn_filesize - otg.bulkout_max_pktsize) /
-				otg.bulkout_max_pktsize;
-		remain_cnt = (u32)((otg.dn_filesize - otg.bulkout_max_pktsize) %
-				otg.bulkout_max_pktsize);
-
-		if (remain_cnt != 0)
-			pkt_cnt += 1;
-
-		if (pkt_cnt > 1023) {
-			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1023,
-					otg.bulkout_max_pktsize * 1023);
-		} else {
-			s5p_usb_set_outep_xfersize(EP_TYPE_BULK, pkt_cnt,
-					otg.dn_filesize - otg.bulkout_max_pktsize);
-		}
-
-		/*ep3 enable, clear nak, bulk, usb active, next ep3, max pkt */
-		s5pc1xx_otg_write_reg(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 |
-				otg.bulkout_max_pktsize << 0, OTG_DOEPCTL_OUT);
-	}
-}
-
 static void s5p_usb_int_bulkout(u32 fifo_cnt_byte)
 {
-	s5p_usb_rx(fifo_cnt_byte);
+	s5p_usb_read_out_fifo((u8 *)otg.dn_ptr, fifo_cnt_byte);
+	otg.dn_ptr += fifo_cnt_byte;
+
+	s5p_usb_set_outep_xfersize(EP_TYPE_BULK, 1,
+			otg.bulkout_max_pktsize);
+
+	/*ep3 enable, clear nak, bulk, usb active, next ep3, max pkt */
+	s5pc1xx_otg_write_reg(1u << 31 | 1 << 26 | 2 << 18 | 1 << 15 |
+			otg.bulkout_max_pktsize << 0, OTG_DOEPCTL_OUT);
+
+	if (((u32)otg.dn_ptr - otg.dn_addr) >= (otg.dn_filesize))
+		s5p_receive_done = 1;
 }
 
 static void s5p_usb_dma_in_done(void)
