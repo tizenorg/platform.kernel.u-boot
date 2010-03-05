@@ -1847,10 +1847,9 @@ void lcd_cfg_gpio(void)
 #define LED_CUR_TR_REG		0x08
 
 #define SWRST			0x01
-#define NORMAL_MODE		0x01
+#define NORMAL_MODE		0x09
 #define CUR_SET			0x63
 #define TR_SET			0x00
-
 void backlight_on(unsigned int onoff)
 {
 

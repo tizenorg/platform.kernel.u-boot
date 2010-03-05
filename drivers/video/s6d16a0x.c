@@ -277,6 +277,29 @@ static const unsigned char SEQ_HOSTCTL2_SET[] = {
 	DATA_ONLY, 0x06,
 };
 
+static const unsigned char SEQ_WRDISBV[] = {
+	0x51, 0xFF,
+};
+
+static const unsigned char SEQ_WRCTRLD[] = {
+	0x53, 0x24,
+};
+
+static const unsigned char SEQ_WRCABC[] = {
+	0x55, 0x01,		/* CABC ON */
+};
+
+static const unsigned char SEQ_WRCABCMB[] = {
+	0x5E, 0xFF,
+};
+
+static const unsigned char SEQ_CABCCTL1[] = {
+	0xC0, 0x80,		/* RRC MAX POWER */
+
+	DATA_ONLY, 0x80,	/* DEFAULT */
+	DATA_ONLY, 0x30,	/* ONOFFDIMMEN ON */
+};
+
 static const unsigned char SEQ_TEON_SET[] = {
 	COMMAND_ONLY, 0x35,
 };
@@ -302,8 +325,8 @@ static const unsigned char SEQ_COLMOD[] = {
 	/* 0x36, 0xC4, */	/* MADCTL : Reverse display */
 };
 
-static const unsigned char SEQ_WRCTRLD[] = {
-	0x53, 0x00,
+static const unsigned char SEQ_WRCTRLK[] = {
+	0x63, 0x00,
 };
 
 static const unsigned char SEQ_SLPOUT[] = {
@@ -352,12 +375,17 @@ void s6d16a0x_cfg_ldo(void)
 	s6d16a0x_panel_send_sequence(SEQ_CLKCTL3_SET, ARRAY_SIZE(SEQ_CLKCTL3_SET));
 	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL1_SET, ARRAY_SIZE(SEQ_HOSTCTL1_SET));
 	s6d16a0x_panel_send_sequence(SEQ_HOSTCTL2_SET, ARRAY_SIZE(SEQ_HOSTCTL2_SET));
+	s6d16a0x_panel_send_sequence(SEQ_WRCABC, ARRAY_SIZE(SEQ_WRCABC));
+	s6d16a0x_panel_send_sequence(SEQ_WRCABCMB, ARRAY_SIZE(SEQ_WRCABCMB));
+	s6d16a0x_panel_send_sequence(SEQ_CABCCTL1, ARRAY_SIZE(SEQ_CABCCTL1));
 	s6d16a0x_panel_send_sequence(SEQ_TEON_SET, ARRAY_SIZE(SEQ_TEON_SET));
 	s6d16a0x_panel_send_sequence(SEQ_PASSWD2_SET, ARRAY_SIZE(SEQ_PASSWD2_SET));
 	s6d16a0x_panel_send_sequence(SEQ_CASET, ARRAY_SIZE(SEQ_CASET));
 	s6d16a0x_panel_send_sequence(SEQ_PASET, ARRAY_SIZE(SEQ_PASET));
 	s6d16a0x_panel_send_sequence(SEQ_COLMOD, ARRAY_SIZE(SEQ_COLMOD));
+	s6d16a0x_panel_send_sequence(SEQ_WRDISBV, ARRAY_SIZE(SEQ_WRDISBV));
 	s6d16a0x_panel_send_sequence(SEQ_WRCTRLD, ARRAY_SIZE(SEQ_WRCTRLD));
+	s6d16a0x_panel_send_sequence(SEQ_WRCTRLK, ARRAY_SIZE(SEQ_WRCTRLK));
 	s6d16a0x_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
 	udelay(120000);
 }
