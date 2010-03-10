@@ -188,11 +188,6 @@ static int c110_machine_id(void)
 	return gd->bd->bi_arch_number - C110_MACH_START;
 }
 
-static int machine_is_aquila(void)
-{
-	return c110_machine_id() == MACH_AQUILA;
-}
-
 static int machine_is_p1p2(void)
 {
 	return c110_machine_id() == MACH_P1P2;
