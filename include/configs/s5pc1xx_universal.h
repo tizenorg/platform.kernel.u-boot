@@ -36,6 +36,7 @@
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_S5PC110		1	/* which is in a S5PC110 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
+#define CONFIG_MACH_AQUILA	1	/* working with Aquila */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
