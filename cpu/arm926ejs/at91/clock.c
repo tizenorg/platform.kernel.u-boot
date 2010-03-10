@@ -147,7 +147,7 @@ int at91_clock_init(unsigned long main_clock)
 {
 	unsigned freq, mckr;
 	at91_pmc_t *pmc = (at91_pmc_t *) AT91_PMC_BASE;
-#ifndef AT91_MAIN_CLOCK
+#ifndef CONFIG_SYS_AT91_MAIN_CLOCK
 	unsigned tmp;
 	/*
 	 * When the bootloader initialized the main oscillator correctly,
@@ -157,9 +157,10 @@ int at91_clock_init(unsigned long main_clock)
 	 */
 	if (!main_clock) {
 		do {
-			tmp = at91_sys_read(AT91_CKGR_MCFR);
-		} while (!(tmp & AT91_PMC_MAINRDY));
-		main_clock = (tmp & AT91_PMC_MAINF) * (AT91_SLOW_CLOCK / 16);
+			tmp = readl(&pmc->mcfr);
+		} while (!(tmp & AT91_PMC_MCFR_MAINRDY));
+		tmp &= AT91_PMC_MCFR_MAINF_MASK;
+		main_clock = tmp * (AT91_SLOW_CLOCK / 16);
 	}
 #endif
 	main_clk_rate_hz = main_clock;

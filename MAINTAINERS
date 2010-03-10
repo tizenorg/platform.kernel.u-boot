@@ -150,6 +150,10 @@ Dave Ellis <DGE@sixnetio.com>
 
 	SXNI855T	MPC8xx
 
+Fred Fan <fanyefeng@gmail.com>
+
+	mx51evk		i.MX51
+
 Thomas Frieden <ThomasF@hyperion-entertainment.com>
 
 	AmigaOneG3SE	MPC7xx
@@ -409,8 +413,8 @@ Heiko Schocher <hs@denx.de>
 	muas3001	MPC8270
 	municse		MPC5200
 	sc3		PPC405GP
+	suen3		ARM926EJS (Kirkwood SoC)
 	uc101		MPC5200
-
 
 Peter De Schrijver <p2@mind.be>
 
@@ -696,6 +700,10 @@ Stelian Pop <stelian.pop@leadtechdesign.com>
 Tom Rix <Tom.Rix@windriver.com>
 
 	omap3_zoom2	ARM CORTEX-A8 (OMAP3xx SoC)
+
+John Rigby <jcrigby@gmail.com>
+
+	tx25		i.MX25
 
 Stefan Roese <sr@denx.de>
 
