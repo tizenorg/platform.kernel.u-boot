@@ -223,13 +223,18 @@ lowlevel_init:
 	 * BL[11:9]	: Continuous
 	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
 	 * HF[2]	: High Frequency Enable (Over 66MHz)
+	 * WM[1]	: Sync Write
 	 */
 	cmp	r7, r8
-	ldrne	r1, =0xE004
+	ldrne	r1, =0xE006
 	ldrne	r0, =0xB001E442
 	strneh	r1, [r0]
 
-	ldrne	r1, =0x2E004
+	/*
+	 * GCE[26]	: Gated Clock Enable
+	 * RPE[17]	: Enables Read Prefetch
+	 */
+	ldrne	r1, =((1 << 26) | (1 << 17) | 0xE006)
 	ldrne	r0, =0xB0600000
 	strne	r1, [r0, #0x100]			@ ONENAND_IF_CTRL
 	ldrne	r1, =0x1212
