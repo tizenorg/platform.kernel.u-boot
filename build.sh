@@ -20,7 +20,7 @@ check_users()
 		JOBS="-j 4"
 	fi
 	if [ "$USER" = "dofmind" ]; then
-		CROSS_COMPILER=/opt/toolchains/arm-2008q3/bin/arm-none-linux-gnueabi-
+		CROSS_COMPILER=arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "prom" ]; then
