@@ -2631,10 +2631,20 @@ static int onenand_probe(struct mtd_info *mtd)
 	int bram_maf_id, bram_dev_id, maf_id, dev_id, ver_id;
 	int density;
 	int syscfg;
+#if defined(CONFIG_S5PC110) || defined(CONFIG_S5P6442)
+	int onenand_if_ctrl_cfg;
+#endif
 
 	/* Save system configuration 1 */
 	syscfg = this->read_word(this->base + ONENAND_REG_SYS_CFG1);
-#if !defined(CONFIG_S5PC110) && !defined(CONFIG_S5P6442)
+
+#if defined(CONFIG_S5PC110) || defined(CONFIG_S5P6442)
+	if (syscfg & ONENAND_SYS_CFG1_WM) {
+		this->write_word(syscfg & ~(ONENAND_SYS_CFG1_WM), this->base + ONENAND_REG_SYS_CFG1);
+		onenand_if_ctrl_cfg = readl(0xB0600100);
+		writel(onenand_if_ctrl_cfg & ~ONENAND_SYS_CFG1_WM, 0xB0600100);
+	}
+#else
 	/* Clear Sync. Burst Read mode to read BootRAM */
 	this->write_word((syscfg & ~ONENAND_SYS_CFG1_SYNC_READ), this->base + ONENAND_REG_SYS_CFG1);
 #endif
@@ -2654,6 +2664,11 @@ static int onenand_probe(struct mtd_info *mtd)
 
 	/* Restore system configuration 1 */
 	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
+
+#if defined(CONFIG_S5PC110) || defined(CONFIG_S5P6442)
+	if (syscfg & ONENAND_SYS_CFG1_WM)
+		writel(onenand_if_ctrl_cfg, 0xB0600100);
+#endif
 
 	/* Check manufacturer ID */
 	if (onenand_check_maf(bram_maf_id))
