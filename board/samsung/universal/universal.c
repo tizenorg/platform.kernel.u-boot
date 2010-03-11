@@ -267,6 +267,7 @@ static int mach_is_wmg160(void)
 }
 
 static void check_battery(int mode);
+static void check_micro_usb(int intr);
 
 void i2c_init_board(void)
 {
@@ -300,6 +301,8 @@ void i2c_init_board(void)
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
 
+	/* Reset on fsa9480 early */
+	check_micro_usb(1);
 	/* Reset on max17040 early */
 	if (battery_soc == 0)
 		check_battery(1);
@@ -1467,7 +1470,7 @@ static void check_micro_usb(int intr)
 	/* Clear Interrupt */
 	if (intr) {
 		i2c_read(addr, 0x03, 1, val, 2);
-		udelay(500 * 1000);
+		return;
 	}
 
 	/* Read Device Type 1 */
@@ -2228,7 +2231,7 @@ int misc_init_r(void)
 	check_battery(0);
 
 	/* check fsa9480 */
-	check_micro_usb(1);
+	check_micro_usb(0);
 
 	return 0;
 }
@@ -2438,7 +2441,7 @@ void board_sleep_resume(void)
 	check_battery(0);
 
 	/* check fsa9480 */
-	check_micro_usb(1);
+	check_micro_usb(0);
 }
 
 #if defined(CONFIG_USB_GADGET_S3C_UDC_OTG)
