@@ -16,7 +16,7 @@ check_users()
 {
 	USER=`whoami`
 	if [ "$USER" = "kmpark" ]; then
-		CROSS_COMPILER=/pub/toolchains/gcc-4.3.2/bin/arm-none-linux-gnueabi-
+		CROSS_COMPILER=/pub/toolchains/gcc-4.4.1/bin/arm-none-linux-gnueabi-
 		JOBS="-j 4"
 	fi
 	if [ "$USER" = "dofmind" ]; then
