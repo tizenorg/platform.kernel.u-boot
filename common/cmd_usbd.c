@@ -740,7 +740,11 @@ static int process_data(struct usbd_ops *usbd)
 		/* Stop USB */
 		usbd->usb_stop();
 
-		do_reset();
+		if (usbd->cpu_reset)
+			usbd->cpu_reset();
+		else
+			do_reset();
+
 		return 0;
 
 	/* Error */

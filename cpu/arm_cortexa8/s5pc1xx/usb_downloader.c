@@ -47,6 +47,23 @@ extern int s5p_no_lcd_support(void);
 extern void s5pc_fimd_lcd_off(unsigned int win_id);
 extern void s5pc_fimd_window_off(unsigned int win_id);
 
+void s5pc1xx_wdt_reset(void)
+{
+	unsigned long wdt_base;
+
+	if (cpu_is_s5pc110())
+		wdt_base = S5PC110_WATCHDOG_BASE;
+	else
+		wdt_base = S5PC100_WATCHDOG_BASE;
+
+	/*
+	 * WTCON
+	 * Watchdog timer[5]	: 0(disable) / 1(enable)
+	 * Reset[0]		: 0(disable) / 1(enable)
+	 */
+	writel((1 << 5) | (1 << 0), wdt_base);
+}
+
 /* clear download informations */
 static void s5p_usb_clear_dnfile_info(void)
 {
@@ -193,6 +210,7 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 #ifdef CONFIG_GENERIC_MMC
 	usbd_set_mmc_dev(usbd);
 #endif
+	usbd->cpu_reset = s5pc1xx_wdt_reset;
 
 	return usbd;
 }

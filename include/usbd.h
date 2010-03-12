@@ -116,6 +116,7 @@ struct usbd_ops {
 	ulong mmc_total;
 
 	void (*set_progress)(int);
+	void (*cpu_reset)(void);
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader
