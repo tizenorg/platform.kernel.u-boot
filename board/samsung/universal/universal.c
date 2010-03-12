@@ -1319,10 +1319,11 @@ static void into_charge_mode(void)
 		}
 	}
 	exit_font();
-#endif
+
 	/* Disable the display to prevent flickering */
 	/* TODO: how to reenable the display later? */
 	lcd_power_on(0);
+#endif
 
 	do {
 		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
@@ -1416,10 +1417,12 @@ static void into_charge_mode(void)
 
 	} while (wakeup_stat == 0x04); /* RTC TICK */
 
+#ifdef CONFIG_S5PC1XXFB
 restore_screen:
 	/* TODO: Reenable logo display (not working yet) */
 	lcd_power_on(1);
 	drv_lcd_init_resume();
+#endif
 }
 
 static int fsa9480_probe(void)
