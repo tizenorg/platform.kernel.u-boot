@@ -1425,6 +1425,18 @@ restore_screen:
 #endif
 }
 
+#define S5PC110_RST_STAT	0xE010A000
+
+#define SWRESET			(1 << 3)
+#define WDTRESET		(1 << 2)
+#define WARMRESET		(1 << 1)
+#define EXTRESET		(1 << 0)
+
+static int get_reset_status(void)
+{
+	return readl(S5PC110_RST_STAT) & 0xf;
+}
+
 static int fsa9480_probe(void)
 {
 	unsigned char addr = 0x25;
@@ -1504,15 +1516,19 @@ static void check_micro_usb(int intr)
 			charger_en(0);
 	}
 
-	/* If Factory Mode is Boot ON-USB, go to download mode */
-	i2c_read(addr, 0x07, 1, val, 1);
+	/* If reset status is watchdog reset then skip it */
+	if (!(get_reset_status() & WDTRESET)) {
+		/* If Factory Mode is Boot ON-USB, go to download mode */
+		i2c_read(addr, 0x07, 1, val, 1);
 
 #define FSA_ADC_FAC_USB_OFF	0x18
 #define FSA_ADC_FAC_USB_ON	0x19
 #define FSA_ADC_FAC_UART	0x1d
 
-	if (val[0] == FSA_ADC_FAC_USB_ON || val[0] == FSA_ADC_FAC_USB_OFF)
-		setenv("bootcmd", "usbdown");
+		if (val[0] == FSA_ADC_FAC_USB_ON ||
+			val[0] == FSA_ADC_FAC_USB_OFF)
+			setenv("bootcmd", "usbdown");
+	}
 
 	path = getenv("usb");
 
