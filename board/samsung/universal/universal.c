@@ -1160,7 +1160,7 @@ static unsigned short get_adc_value(int channel)
 	do {
 		udelay(1);
 		reg = readl(&adc->adccon);
-	} while (!reg & (1 << 15) && loop++ < 1000);
+	} while (!(reg & (1 << 15)) && (loop++ < 1000));
 
 	ret = readl(&adc->adcdat0) & 0xFFF;
 	sprintf(buf, "pmic ldo %d off", ldonum);
