@@ -102,17 +102,20 @@
  ***********************************************************/
 #include <config_cmd_default.h>
 
-#undef CONFIG_CMD_LOADB
-#undef CONFIG_CMD_LOADS
 #undef CONFIG_CMD_BOOTD
+#undef CONFIG_CMD_CONSOLE
+#undef CONFIG_CMD_ECHO
 #undef CONFIG_CMD_FPGA
-#undef CONFIG_CMD_XIMG
-#undef CONFIG_CMD_NAND
-#undef CONFIG_CMD_IMLS
+#undef CONFIG_CMD_ITEST
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_IMLS
-#undef CONFIG_CMD_ITEST
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
+#undef CONFIG_CMD_NAND
+#undef CONFIG_CMD_MISC
 #undef CONFIG_CMD_NFS
+#undef CONFIG_CMD_SOURCE
+#undef CONFIG_CMD_XIMG
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_ONENAND
@@ -121,9 +124,11 @@
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_SLEEP
-#define CONFIG_CMD_GPIO
 #define CONFIG_CMD_PMIC
 #define CONFIG_CMD_DEVICE_POWER
+
+/* disabled commands */
+//#define CONFIG_CMD_GPIO
 
 #undef CONFIG_CRC16
 #undef CONFIG_XYZMODEM
