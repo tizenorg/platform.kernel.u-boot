@@ -272,6 +272,7 @@ static int part_block_markbad(struct mtd_info *mtd, loff_t ofs)
  * attached to the given master MTD object.
  */
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 int del_mtd_partitions(struct mtd_info *master)
 {
 	struct mtd_part *slave, *next;
@@ -286,6 +287,12 @@ int del_mtd_partitions(struct mtd_info *master)
 
 	return 0;
 }
+#else
+int del_mtd_partitions(struct mtd_info *master)
+{
+	return 0;
+}
+#endif
 
 static struct mtd_part *add_one_partition(struct mtd_info *master,
 		const struct mtd_partition *part, int partno,
@@ -356,6 +363,7 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 	slave->offset = part->offset;
 	slave->index = partno;
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 	if (slave->offset == MTDPART_OFS_APPEND)
 		slave->offset = cur_offset;
 	if (slave->offset == MTDPART_OFS_NXTBLK) {
@@ -368,12 +376,14 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 			       (unsigned long long)cur_offset, (unsigned long long)slave->offset);
 		}
 	}
+#endif
 	if (slave->mtd.size == MTDPART_SIZ_FULL)
 		slave->mtd.size = master->size - slave->offset;
 
 	printk(KERN_NOTICE "0x%012llx-0x%012llx : \"%s\"\n", (unsigned long long)slave->offset,
 		(unsigned long long)(slave->offset + slave->mtd.size), slave->mtd.name);
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 	/* let's do some sanity checks */
 	if (slave->offset >= master->size) {
 		/* let's register it anyway to preserve ordering */
@@ -388,7 +398,9 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 		printk(KERN_WARNING"mtd: partition \"%s\" extends beyond the end of device \"%s\" -- size truncated to %#llx\n",
 			part->name, master->name, (unsigned long long)slave->mtd.size);
 	}
+#endif
 	if (master->numeraseregions > 1) {
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 		/* Deal with variable erase size stuff */
 		int i, max = master->numeraseregions;
 		u64 end = slave->offset + slave->mtd.size;
@@ -407,12 +419,14 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 				slave->mtd.erasesize = regions[i].erasesize;
 			}
 		}
+#endif
 		BUG_ON(slave->mtd.erasesize == 0);
 	} else {
 		/* Single erase size */
 		slave->mtd.erasesize = master->erasesize;
 	}
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 	if ((slave->mtd.flags & MTD_WRITEABLE) &&
 	    mtd_mod_by_eb(slave->offset, &slave->mtd)) {
 		/* Doesn't start on a boundary of major erase size */
@@ -428,6 +442,7 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 		printk(KERN_WARNING"mtd: partition \"%s\" doesn't end on an erase block -- force read-only\n",
 			part->name);
 	}
+#endif
 
 	slave->mtd.ecclayout = master->ecclayout;
 	if (master->block_isbad) {
