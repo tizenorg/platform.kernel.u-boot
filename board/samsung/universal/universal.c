@@ -2174,17 +2174,6 @@ void init_panel_info(vidinfo_t *vid)
 }
 #endif
 
-#ifdef CONFIG_LCD
-void fb_set_reserved_mem(void)
-{
-	unsigned int addr = CONFIG_FB_RESERVED_MEM_BASE;
-
-	lcd_setmem(addr);
-
-	gd->fb_base = addr;
-}
-#endif
-
 static void setup_meminfo(void)
 {
 	char meminfo[64] = {0, };

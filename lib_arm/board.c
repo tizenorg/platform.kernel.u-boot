@@ -318,8 +318,6 @@ void start_armboot (void)
 #endif /* CONFIG_VFD */
 
 #ifdef CONFIG_LCD
-	fb_set_reserved_mem();
-
 	/* board init may have inited fb_base */
 	if (!gd->fb_base) {
 #		ifndef PAGE_SIZE

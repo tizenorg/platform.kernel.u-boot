@@ -306,10 +306,6 @@ void	pciinfo	      (int, int);
 int	misc_init_f   (void);
 int	misc_init_r   (void);
 
-#ifdef CONFIG_LCD
-void fb_set_reserved_mem(void);
-#endif
-
 /* common/exports.c */
 void	jumptable_init(void);
 
