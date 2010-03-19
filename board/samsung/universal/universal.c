@@ -692,7 +692,7 @@ static void show_hw_revision(void)
 	}
 
 	if (cpu_is_s5pc110())
-		writel(0xc1100000 | 0xffff & s5pc1xx_get_cpu_rev(),
+		writel(0xc1100000 | (0xffff & s5pc1xx_get_cpu_rev()),
 				S5PC110_INFORM3);
 
 	empty_device_info_buffer();
