@@ -691,6 +691,10 @@ static void show_hw_revision(void)
 		s5pc1xx_set_cpu_rev(0);
 	}
 
+	if (cpu_is_s5pc110())
+		writel(0xc1100000 | 0xffff & s5pc1xx_get_cpu_rev(),
+				S5PC110_INFORM3);
+
 	empty_device_info_buffer();
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
 		board_rev, get_board_name(board),
