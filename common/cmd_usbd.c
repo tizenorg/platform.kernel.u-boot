@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"1.5.1"
+#define APP_VERSION	"1.5.3"
 
 #define OPS_READ	0
 #define OPS_WRITE	1
