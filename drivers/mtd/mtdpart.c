@@ -456,7 +456,9 @@ static struct mtd_part *add_one_partition(struct mtd_info *master,
 		}
 	}
 
+#ifndef CONFIG_CMD_MTDPARTS_LITE
 out_register:
+#endif
 	if (part->mtdp) {
 		/* store the object pointer (caller may or may not register it*/
 		*part->mtdp = &slave->mtd;
