@@ -1741,7 +1741,7 @@ void init_panel_info(vidinfo_t *vid)
 
 	vid->dual_lcd_enabled = 0;
 
-	vid->vl_freq	= 60;
+	vid->vl_freq	= 40;
 	vid->vl_col	= 1024,
 	vid->vl_row	= 600,
 	vid->vl_width	= 1024,
