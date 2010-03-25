@@ -32,6 +32,8 @@
 #define S5PC110_EPLL_CON		0xE0100110
 #define S5PC110_VPLL_CON		0xE0100120
 
+#define	S5PC110_APLL_CON_LOCKED		(1 << 29)
+
 #ifndef __ASSEMBLY__
 struct s5pc100_clock {
 	unsigned int	apll_lock;

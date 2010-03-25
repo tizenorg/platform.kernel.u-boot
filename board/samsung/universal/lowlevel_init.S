@@ -68,8 +68,8 @@ lowlevel_init:
 
 	ldr	r0, =S5PC110_RST_STAT
 	ldr	r1, [r0]
-	bic	r1, r1, #0xfff6ffff
-	cmp	r1, #0x80000
+	and	r1, r1, #S5PC110_RST_STAT_WAKEUP_MODE_MASK
+	cmp	r1, #S5PC110_DEEPIDLE_WAKEUP
 	beq	didle_wakeup
 	cmp	r7, r8
 skip_check_didle:
@@ -407,8 +407,8 @@ didle_wakeup:
 	ldr	r0, =S5PC110_APLL_CON
 lockloop:
 	ldr	r1, [r0]
-	and	r1, r1, #(1<<29)
-	cmp	r1, #(1<<29)
+	and	r1, r1, #S5PC110_APLL_CON_LOCKED
+	cmp	r1, #S5PC110_APLL_CON_LOCKED
 	bne	lockloop
 
 	ldr	r0, =S5PC110_INFORM0
