@@ -45,6 +45,7 @@ build_uboot()
 make_evt_image()
 {
 	cat onenand_ipl/onenand-ipl-16k-evt0.bin u-boot.bin > u-boot-onenand-evt0.bin
+	cat onenand_ipl/onenand-ipl-16k-secure.bin u-boot.bin > u-boot-onenand-secure.bin
 	# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
 	cp u-boot-onenand.bin u-boot-onenand-evt1.bin
 }
