@@ -80,5 +80,6 @@ elif [ "$USER" = "dofmind" ]; then
 elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_secure.tar u-boot-onenand-secure.bin
 	mv -f system_uboot* /home/share/Work/bin
 fi
