@@ -302,6 +302,10 @@ skip_check_didle:
 	moveq	r9, #3
 	str	r4, [r2, #0x48]		/* Restore PULLUP configuration */
 
+#ifdef KESSLER_S1
+	mov	r9, #2			/* Rev 0.9 */
+#endif
+
 	bl	mem_ctrl_asm_init
 
 	/* Wakeup support. Don't know if it's going to be used, untested. */

@@ -260,6 +260,11 @@ static int board_is_neptune(void)
 	return mach_is_kessler() && (board_rev & NEPTUNE_BOARD);
 }
 
+static int board_is_s1(void)
+{
+	return mach_is_kessler() && (board_rev & S1_BOARD);
+}
+
 /* DLNA Dongle */
 static int mach_is_wmg160(void)
 {
@@ -2320,7 +2325,7 @@ int dram_init(void)
 		 * Aquila Rev0.8 4G3G1G
 		 * Aquila Rev0.9 4G3G1G
 		 */
-		if (mach_is_aquila() || mach_is_kessler())
+		if (mach_is_aquila() || mach_is_kessler()) {
 			if (hwrevision(5) || hwrevision(8) || hwrevision(9)) {
 				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
@@ -2328,7 +2333,9 @@ int dram_init(void)
 				sz = ((unsigned char) ~sz) + 1;
 				sz = sz << 4;
 			}
-
+			if (mach_is_kessler() && board_is_s1())
+				sz = 0;
+		}
 	}
 	/*
 	 * bi_dram[1].size contains all DMC1 memory size
