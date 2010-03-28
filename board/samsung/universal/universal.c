@@ -1826,7 +1826,7 @@ void lcd_cfg_gpio(void)
 		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.so_num = 2;
 
-		if (board_is_neptune())
+		if (board_is_neptune() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
@@ -1894,7 +1894,7 @@ void backlight_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
 	}
 
-	if (mach_is_kessler() && board_is_neptune()) {
+	if (mach_is_kessler() && board_is_neptune() && hwrevision(0)) {
 		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
@@ -2071,7 +2071,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 120000;
 	}
 
-	if (board_is_neptune()) {
+	if (board_is_neptune() && hwrevision(0)) {
 		vid->vl_freq	= 100;
 		vid->vl_col	= 320;
 		vid->vl_row	= 480;
@@ -2209,7 +2209,7 @@ int misc_init_r(void)
 	lcd_is_enabled = 0;
 
 	if (mach_is_aquila() || mach_is_kessler()) {
-		if (board_is_neptune())
+		if (board_is_neptune() && hwrevision(0))
 			setenv("lcdinfo", "lcd=s6d16a0x");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
