@@ -1802,7 +1802,7 @@ void lcd_cfg_gpio(void)
 	/* LCD_BACKLIGHT_EN */
 	if (mach_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
-	if (board_is_neptune()) {
+	if (board_is_neptune() && hwrevision(0)) {
 		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 4, GPIO_OUTPUT);
 		gpio_direction_output(&gpio_base->gpio_mp0_4, 4, 0);
 	}
