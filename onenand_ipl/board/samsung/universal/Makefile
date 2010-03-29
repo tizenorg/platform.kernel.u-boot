@@ -58,7 +58,7 @@ $(onenandobj)onenand-ipl-16k-evt1.bin:	$(onenandobj)onenand-ipl checksum
 
 $(onenandobj)onenand-ipl-secure.bin:	$(onenandobj)onenand-ipl checksum
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT1_SEC) -O binary $< $@
-	cat $(onenandobj)/board/$(BOARDDIR)/bl1.bin $@ > $(onenandobj)onenand-ipl-16k-secure.bin
+	cat $(onenandobj)/board/$(BOARDDIR)/bl1.img $@ > $(onenandobj)onenand-ipl-16k-secure.bin
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
