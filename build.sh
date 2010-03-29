@@ -45,7 +45,7 @@ build_uboot()
 make_evt_image()
 {
 	cat onenand_ipl/onenand-ipl-16k-evt0.bin u-boot.bin > u-boot-onenand-evt0.bin
-	cat onenand_ipl/onenand-ipl-16k-secure.bin u-boot.bin > u-boot-onenand-secure.bin
+	cat onenand_ipl/onenand-ipl-16k-fused.bin u-boot.bin > u-boot-onenand-evt1-fused.bin
 	# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
 	cp u-boot-onenand.bin u-boot-onenand-evt1.bin
 }
@@ -80,6 +80,6 @@ elif [ "$USER" = "dofmind" ]; then
 elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_secure.tar u-boot-onenand-secure.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
 	mv -f system_uboot* /home/share/Work/bin
 fi

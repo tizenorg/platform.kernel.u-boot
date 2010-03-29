@@ -43,7 +43,7 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k-evt0.bin $(onenandobj)onenand-ipl-16k-evt1.bin $(onenandobj)onenand-ipl-secure.bin
+ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k-evt0.bin $(onenandobj)onenand-ipl-16k-evt1.bin $(onenandobj)onenand-ipl-fused.bin
 
 all:	$(obj).depend $(ALL)
 
@@ -56,9 +56,9 @@ $(onenandobj)onenand-ipl-16k-evt1.bin:	$(onenandobj)onenand-ipl checksum
 	$(onenandobj)/board/$(BOARDDIR)/checksum $@ 1
 	cat $(onenandobj)/board/$(BOARDDIR)/header.bin $@ > $(onenandobj)onenand-ipl-16k.bin
 
-$(onenandobj)onenand-ipl-secure.bin:	$(onenandobj)onenand-ipl checksum
+$(onenandobj)onenand-ipl-fused.bin:	$(onenandobj)onenand-ipl checksum
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT1_SEC) -O binary $< $@
-	cat $(onenandobj)/board/$(BOARDDIR)/bl1.img $@ > $(onenandobj)onenand-ipl-16k-secure.bin
+	cat $(onenandobj)/board/$(BOARDDIR)/bl1.img $@ > $(onenandobj)onenand-ipl-16k-fused.bin
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
