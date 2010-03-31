@@ -238,7 +238,6 @@ LIST_4xx="		\
 	MIP405		\
 	MIP405T		\
 	ML2		\
-	ml300		\
 	ml507		\
 	ml507_flash	\
 	neo		\
@@ -312,7 +311,6 @@ LIST_824x="		\
 	Sandpoint8240	\
 	Sandpoint8245	\
 	sbc8240		\
-	SL8245		\
 	utx8245		\
 "
 

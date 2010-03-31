@@ -21,10 +21,10 @@
 # MA 02111-1307 USA
 #
 
-VERSION = 2009
-PATCHLEVEL = 11
+VERSION = 2010
+PATCHLEVEL = 03
 SUBLEVEL =
-EXTRAVERSION =
+EXTRAVERSION = -rc2
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -218,7 +218,6 @@ LIBS += drivers/mtd/ubi/libubi.a
 LIBS += drivers/mtd/spi/libspi_flash.a
 LIBS += drivers/net/libnet.a
 LIBS += drivers/net/phy/libphy.a
-LIBS += drivers/net/sk98lin/libsk98lin.a
 LIBS += drivers/pci/libpci.a
 LIBS += drivers/pcmcia/libpcmcia.a
 LIBS += drivers/power/libpower.a
@@ -1436,9 +1435,6 @@ MIP405T_config:	unconfig
 ML2_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx ml2
 
-ml300_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc ppc4xx ml300 xilinx
-
 ml507_flash_config: unconfig
 	@mkdir -p $(obj)include $(obj)board/xilinx/ppc440-generic
 	@mkdir -p $(obj)include $(obj)board/xilinx/ml507
@@ -1740,9 +1736,6 @@ Sandpoint8245_config: unconfig
 
 sbc8240_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc824x sbc8240
-
-SL8245_config: unconfig
-	@$(MKCONFIG) $(@:_config=) ppc mpc824x sl8245
 
 utx8245_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc824x utx8245
