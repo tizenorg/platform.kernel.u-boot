@@ -900,9 +900,13 @@ static void check_keypad(void)
 		/* volume down */
 		if (row_state[1] & 0x2)
 			display_info = 1;
-		if (board_is_neptune()) {
+		if (board_is_neptune() && hwrevision(0)) {
 			/* home & volume down */
 			if ((row_state[1] & 0x1) && (row_state[1] & 0x2))
+				auto_download = 1;
+		} else if (board_is_neptune() && hwrevision(2)) {
+			/* cam full shot & volume down */
+			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
 		} else {
 			/* cam full shot & volume down */
