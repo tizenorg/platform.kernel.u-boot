@@ -25,6 +25,7 @@
 #include <linux/types.h>
 #include <asm/io.h>
 #include <lcd.h>
+#include <div64.h>
 
 #include <asm/arch/clk.h>
 #include <asm/arch/clock.h>
@@ -131,9 +132,11 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 
 static void s5pc_fimd_set_clock(void)
 {
-	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0;
+	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0,
+		     remainder, remainder_div;
 	unsigned long pixel_clock, src_clock, max_clock;
 	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
+	u64 div64;
 
 	s5pc1xx_clock_init();
 
@@ -171,7 +174,7 @@ static void s5pc_fimd_set_clock(void)
 
 	/* set fimd ratio to 3. */
 	temp = readl(&clk->div1);
-	writel((temp & ~0xf00000) | 0x300000, &clk->div1);
+	writel((temp & ~0xf00000) | 0x200000, &clk->div1);
 	temp = 0;
 
 	/* get mpll ratio */
@@ -179,8 +182,18 @@ static void s5pc_fimd_set_clock(void)
 	fimd_ratio = (temp & 0xf00000) >> 20;
 	temp = 0;
 
-	/* It can get source clock speed as (mpll / fimd_ratio + 1) */
-	div = (unsigned int)((src_clock / (fimd_ratio + 1)) / pixel_clock);
+	div64 = ((u64)src_clock) / (fimd_ratio + 1);
+
+	/* get quotient and remainder. */
+	remainder = do_div(div64, pixel_clock);
+	div = (u32) div64;
+
+	remainder *= 10;
+	remainder_div = remainder / pixel_clock;
+
+	/* round about one places of decimals. */
+	if (remainder_div >= 5)
+		div++;
 
 	/* in case of dual lcd mode. */
 	if (pvid->dual_lcd_enabled)
@@ -190,7 +203,7 @@ static void s5pc_fimd_set_clock(void)
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
 	udebug("fimd_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
-		fimd_ratio, src_clock, pixel_clock, div);
+		fimd_ratio, src_clock / (fimd_ratio + 1), pixel_clock, div);
 
 	return;
 }
