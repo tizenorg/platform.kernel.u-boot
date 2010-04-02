@@ -80,7 +80,6 @@ Torsten Demke <torsten.demke@fci.com>
 
 Wolfgang Denk <wd@denx.de>
 
-	IceCube_5100	MGT5100
 	IceCube_5200	MPC5200
 
 	ARIA		MPC5121e
@@ -118,7 +117,6 @@ Wolfgang Denk <wd@denx.de>
 
 	CU824		MPC8240
 	Sandpoint8240	MPC8240
-	SL8245		MPC8245
 
 	ATC		MPC8250
 	PM825		MPC8250
@@ -890,6 +888,10 @@ TsiChung Liew <Tsi-Chung.Liew@freescale.com>
 	M54455EVB	mcf5445x
 	M5475EVB	mcf547x_8x
 	M5485EVB	mcf547x_8x
+
+Wolfgang Wegner <w.wegner@astro-kom.de>
+
+	astro_mcf5373l	MCF5373L
 
 #########################################################################
 # AVR32 Systems:							#
