@@ -168,6 +168,14 @@ skip_check_didle:
 	bic     r1, r1, #0x1
 	str     r1, [r0]
 
+	/*
+	 * Diable ABB block to reduce sleep current at low temperature
+	 * Note that it's hidden register setup don't modify it
+	 */
+	ldr	r0, =0xE010C300
+	ldr	r1, =0x00800000
+	str	r1, [r0]
+
 100:
 	/* IO retension release */
 	ldreq	r0, =S5PC100_OTHERS			@0xE0108200
