@@ -22,6 +22,9 @@
 #include <asm/arch/sys_proto.h>
 #include "sleep.h"
 
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/onenand.h>
+
 struct stack {
 	u32 irq[3];
 	u32 abt[3];
@@ -260,6 +263,9 @@ void s5pc110_restore_regs(void)
 
 void s5pc110_wakeup(void)
 {
+	struct mtd_info *mtd = &onenand_mtd;
+	struct onenand_chip *onenand_chip= mtd->priv;
+
 	struct stack *stk = &stacks[0];
 	__asm__ (
 			"msr    cpsr_c, %1\n\t"
@@ -307,6 +313,11 @@ void s5pc110_wakeup(void)
 	serial_initialize();
 #endif
 	stdio_init_resume();   /* get the devices list going. */
+
+#if defined(CONFIG_CMD_ONENAND)
+	/* unlock all */
+	onenand_chip->unlock_all(mtd);
+#endif
 
 	return;
 }
