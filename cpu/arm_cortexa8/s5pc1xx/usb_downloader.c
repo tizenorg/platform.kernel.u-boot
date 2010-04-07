@@ -76,7 +76,7 @@ static void s5p_usb_clear_dnfile_info(void)
 static void usb_init(void)
 {
 	if (usb_board_init()) {
-		printf("Failed to usb_board_init\n");
+		puts("Failed to usb_board_init\n");
 		return;
 	}
 
@@ -102,7 +102,7 @@ static void usb_init(void)
 
 	s5p_usb_clear_dnfile_info();
 
-	printf("Connected!!\n");
+	puts("Connected!!\n");
 
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {

@@ -717,11 +717,11 @@ static void check_auto_burn(void)
 	char buf[64];
 
 	if (readl(magic_base) == 0x426f6f74) {	/* ASICC: Boot */
-		printf("Auto burning bootloader\n");
+		puts("Auto burning bootloader\n");
 		count += sprintf(buf + count, "run updateb; ");
 	}
 	if (readl(magic_base + 0x04) == 0x4b65726e) {	/* ASICC: Kern */
-		printf("Auto burning kernel\n");
+		puts("Auto burning kernel\n");
 		count += sprintf(buf + count, "run updatek; ");
 	}
 
@@ -943,7 +943,7 @@ static void check_battery(int mode)
 		return;
 
 	if (i2c_probe(addr)) {
-		printf("Can't found max17040 fuel gauge\n");
+		puts("Can't found max17040 fuel gauge\n");
 		return;
 	}
 
@@ -981,7 +981,7 @@ static void check_mhl(void)
 
 	/* set usb path */
 	if (i2c_probe(addr)) {
-		printf("Can't found MHL Chip\n");
+		puts("Can't found MHL Chip\n");
 		return;
 	}
 
@@ -1011,7 +1011,7 @@ static int max8998_probe(void)
 	i2c_set_bus_num(I2C_PMIC);
 
 	if (i2c_probe(addr)) {
-		printf("Can't found max8998\n");
+		puts("Can't found max8998\n");
 		return 1;
 	}
 
@@ -1255,7 +1255,7 @@ static void charger_en(int enable)
 		return;
 
 	if (!enable) {
-		printf("Disable the charger.\n");
+		puts("Disable the charger.\n");
 		i2c_read(addr, 0x0D, 1, val, 1);
 		val[0] &= ~(0x1);
 		val[0] |= 0x1;
@@ -1297,7 +1297,7 @@ static void into_charge_mode(void)
 
 	max8998_clear_interrupt();
 
-	printf("Charge Mode\n");
+	puts("Charge Mode\n");
 	charger_en(charger_speed);
 
 #ifdef CONFIG_S5PC1XXFB
@@ -1392,7 +1392,7 @@ static void into_charge_mode(void)
 				wakeup_stat = do_sleep(&ctt, 0, 1, argv);
 			}
 		} else {
-			printf("\n\n\nERROR: this is not S5PC110.\n\n\n");
+			puts("\n\n\nERROR: this is not S5PC110.\n\n\n");
 			return;
 		}
 
@@ -1479,7 +1479,7 @@ static int fsa9480_probe(void)
 	}
 
 	if (i2c_probe(addr)) {
-		printf("Can't found fsa9480\n");
+		puts("Can't found fsa9480\n");
 		return 1;
 	}
 
@@ -1910,7 +1910,7 @@ void backlight_on(unsigned int onoff)
 		addr = 0x76;
 		if (i2c_probe(addr)) {
 			if (i2c_probe(addr)) {
-				printf("Can't found s6d16a0x backlight i2c\n");
+				puts("Can't found s6d16a0x backlight i2c\n");
 				return;
 			}
 		}
@@ -2483,7 +2483,7 @@ void board_sleep_resume(void)
 	/* Set ONOFF4 */
 	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, saved_val[3], 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-	printf("Waked up.\n");
+	puts("Waked up.\n");
 
 	/* check max17040 */
 	check_battery(0);
@@ -2562,7 +2562,7 @@ int usb_board_init(void)
 
 		/* PMIC */
 		if (i2c_read(0x66, 0, 1, val, 2)) {
-			printf("i2c_read error\n");
+			puts("i2c_read error\n");
 			return 1;
 		}
 
@@ -2570,7 +2570,7 @@ int usb_board_init(void)
 		val[1] |= (1 << 5);
 
 		if (i2c_write(0x66, 0, 1, val, 2)) {
-			printf("i2c_write error\n");
+			puts("i2c_write error\n");
 			return 1;
 		}
 		i2c_read(0x66, 0, 1, val, 2);

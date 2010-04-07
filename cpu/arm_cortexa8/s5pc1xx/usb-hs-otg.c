@@ -378,7 +378,7 @@ static void s5p_usb_wait_cable_insert(void)
 		if (tmp & (B_SESSION_VALID | A_SESSION_VALID)) {
 			break;
 		} else if (ucFirst == 1) {
-			printf("Insert a OTG cable into the connector!\n");
+			puts("Insert a OTG cable into the connector!\n");
 			ucFirst = 0;
 		}
 	} while (1);
@@ -467,7 +467,7 @@ int s5p_usbctl_init(void)
 		s5p_usb_init_device();
 		return 0;
 	} else {
-		printf("Error : Current Mode is Host\n");
+		puts("Error : Current Mode is Host\n");
 		return 0;
 	}
 }
@@ -1427,10 +1427,10 @@ static int s5p_usb_set_init(void)
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		s5p_usb_set_max_pktsize(USB_HIGH);
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
-		printf("Error: Don't support Full_Speed\n");
+		puts("Error: Don't support Full_Speed\n");
 		return 0;
 	} else {
-		printf("Error: Neither High_Speed nor Full_Speed\n");
+		puts("Error: Neither High_Speed nor Full_Speed\n");
 		return 0;
 	}
 

@@ -302,7 +302,7 @@ void s5pc110_wakeup(void)
 				readl(0xE0200F44),
 				readl(0xE0200F40));
 	}
-	printf("\n");
+	puts("\n");
 
 	timer_init();
 #if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
@@ -328,7 +328,7 @@ static int s5pc110_sleep(int mode)
 	unsigned int value;
 	int i;
 
-	printf("Entering s5pc110_sleep();\n");
+	puts("Entering s5pc110_sleep();\n");
 
 	board_sleep_init();
 
@@ -380,7 +380,7 @@ static int s5pc110_sleep(int mode)
 	value &= ~S5PC110_CFG_STANDBYWFI_MASK;
 	if (mode == SLEEP_WFI) {
 		if (s5pc1xx_get_cpu_rev() == 0) {
-			printf("ERRATA MODE\n");
+			puts("ERRATA MODE\n");
 			value |= S5PC110_CFG_STANDBYWFI_IGNORE;
 		} else {
 			value |= S5PC110_CFG_STANDBYWFI_SLEEP;
@@ -438,9 +438,9 @@ static int s5pc110_sleep(int mode)
 
 		if (mode == SLEEP_WFI) {
 			if (s5pc1xx_get_cpu_rev() == 0) {
-				printf("Warn: Entering SLEEP_WFI mode with"
+				puts("Warn: Entering SLEEP_WFI mode with"
 					"EVT0_ERRATA. \n");
-				printf("Warn: This sleep will probably fail\n");
+				puts("Warn: This sleep will probably fail\n");
 			}
 
 			value = readl(S5PC110_PWR_CFG);
