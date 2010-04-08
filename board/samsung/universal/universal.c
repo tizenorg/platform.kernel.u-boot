@@ -239,6 +239,11 @@ static int board_is_limo_real(void)
 	return mach_is_aquila() && (board_rev & LIMO_REAL_BOARD);
 }
 
+static int board_is_bamboo(void)
+{
+	return mach_is_aquila() && (board_rev & BAMBOO_BOARD);
+}
+
 static int board_is_media(void)
 {
 	return mach_is_aquila() && (board_rev & MEDIA_BOARD);
@@ -685,6 +690,8 @@ static void show_hw_revision(void)
 			if ((board_rev & 0xf) < 8)
 				s5pc1xx_set_cpu_rev(0);
 		}
+		else if (board_is_bamboo())
+			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_kessler()) {
 		if (board_is_neptune() && hwrevision(2))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
