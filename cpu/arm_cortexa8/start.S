@@ -34,7 +34,7 @@
 
 .globl _start
 _start: b	reset
-#ifndef CONFIG_ONENAND_IPL
+#if !defined(CONFIG_ONENAND_IPL)
 	ldr	pc, _undefined_instruction
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
@@ -112,7 +112,7 @@ reset:
 	orr	r0, r0, #0xd3
 	msr	cpsr,r0
 
-#ifndef CONFIG_ONENAND_IPL
+#if !defined(CONFIG_ONENAND_IPL)
 #if (CONFIG_OMAP34XX)
 	/* Copy vectors to mask ROM indirect addr */
 	adr	r0, _start		@ r0 <- current position of code
@@ -164,7 +164,7 @@ copy_loop:				@ copy 32 bytes at a time
 	/* Set up the stack */
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
-#ifdef CONFIG_ONENAND_IPL
+#if defined(CONFIG_ONENAND_IPL)
 	sub	sp, r0, #128		@ leave 32 words for abort-stack
 #else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area
@@ -176,7 +176,7 @@ stack_setup:
 #endif	/* CONFIG_ONENAND_IPL */
 	and	sp, sp, #~7		@ 8 byte alinged for (ldr/str)d
 
-#ifndef CONFIG_ONENAND_IPL
+#if !defined(CONFIG_ONENAND_IPL)
 	/* Clear BSS (if any). Is below tx (watch load addr - need space) */
 clear_bss:
 	ldr	r0, _bss_start		@ find start of bss segment
@@ -191,7 +191,7 @@ clbss_l:
 
 	ldr	pc, _start_armboot	@ jump to C code
 
-#ifdef CONFIG_ONENAND_IPL
+#if defined(CONFIG_ONENAND_IPL)
 _start_armboot: .word start_oneboot
 #else
 _start_armboot: .word start_armboot
@@ -235,7 +235,7 @@ cpu_init_crit:
 	mov	lr, ip			@ restore link
 	mov	pc, lr			@ back to my caller
 
-#ifndef CONFIG_ONENAND_IPL
+#if !defined(CONFIG_ONENAND_IPL)
 /*
  *************************************************************************
  *
