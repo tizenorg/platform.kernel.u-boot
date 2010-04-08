@@ -286,6 +286,12 @@ U_BOOT_ONENAND = $(obj)u-boot-onenand.bin
 ONENAND_BIN ?= $(obj)onenand_ipl/onenand-ipl-2k.bin
 endif
 
+ifeq ($(CONFIG_RECOVERY_U_BOOT),y)
+RECOVERY_BLOCK = recovery
+U_BOOT_RECOVERY = $(obj)u-boot-recovery.bin
+RECOVERY_BIN ?= $(obj)recovery/recovery.bin
+endif
+
 __OBJS := $(subst $(obj),,$(OBJS))
 __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 
@@ -293,7 +299,7 @@ __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 #########################################################################
 
 # Always append ALL so that arch config.mk's can add custom ones
-ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND)
+ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND) $(U_BOOT_RECOVERY)
 
 all:		$(ALL)
 
@@ -382,6 +388,12 @@ $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
+
+$(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
+		$(MAKE) -C recovery/board/$(BOARDDIR) all
+
+$(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(ONENAND_IPL)
+		cat $(RECOVERY_BIN) $(obj)u-boot.bin > $(obj)u-boot-recovery.bin
 
 $(VERSION_FILE):
 		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
@@ -3179,6 +3191,7 @@ s5pc1xx_universal_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
+	@echo "CONFIG_RECOVERY_U_BOOT = y" >> $(obj)include/config.mk
 
 s5pc1xx_p1p2_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
@@ -3767,6 +3780,7 @@ clean:
 	@rm -f $(obj)onenand_ipl/onenand-{ipl,ipl.bin,ipl.map}
 	@rm -f $(ONENAND_BIN)
 	@rm -f $(obj)onenand_ipl/u-boot.lds
+	@rm -f $(obj)recovery/{recovery,recovery.map}
 	@rm -f $(TIMESTAMP_FILE) $(VERSION_FILE)
 	@find $(OBJTREE) -type f \
 		\( -name 'core' -o -name '*.bak' -o -name '*~' \
@@ -3788,6 +3802,7 @@ clobber:	clean
 	@rm -f $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)onenand_ipl ] || find $(obj)onenand_ipl -name "*" -type l -print | xargs rm -f
+	@[ ! -d $(obj)recovery ] || find $(obj)recovery -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)api_examples ] || find $(obj)api_examples -name "*" -type l -print | xargs rm -f
 
 ifeq ($(OBJTREE),$(SRCTREE))
