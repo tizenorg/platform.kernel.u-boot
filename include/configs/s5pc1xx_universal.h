@@ -143,6 +143,8 @@
 #if 0
 #define CONFIG_CMD_UBI
 #define CONFIG_RBTREE
+#define CONFIG_CMD_UBIFS
+#define CONFIG_LZO
 #endif
 
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
