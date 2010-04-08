@@ -845,7 +845,7 @@ static int process_data(struct usbd_ops *usbd)
 			param_id = get_part_id("params");
 
 			if (param_id == -1) {
-				sprintf(offset, "%x", CONFIG_ENV_OFFSET);
+				sprintf(offset, "%x", CONFIG_ENV_ADDR);
 				sprintf(length, "%x", CONFIG_ENV_SIZE);
 			} else {
 				sprintf(offset, "%x", parts[param_id]->offset);
