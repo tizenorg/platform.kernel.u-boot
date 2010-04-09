@@ -389,10 +389,10 @@ $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 
-$(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
+$(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk $(ONENAND_IPL)
 		$(MAKE) -C recovery/board/$(BOARDDIR) all
 
-$(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(ONENAND_IPL)
+$(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(obj)u-boot.bin
 		cat $(RECOVERY_BIN) $(obj)u-boot.bin > $(obj)u-boot-recovery.bin
 
 $(VERSION_FILE):
