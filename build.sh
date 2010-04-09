@@ -50,12 +50,20 @@ make_evt_image()
 	cp u-boot-onenand.bin u-boot-onenand-evt1.bin
 }
 
+make_recovery_image()
+{
+	cat recovery/recovery-evt0.bin u-boot.bin > u-boot-recovery-evt0.bin
+	cat recovery/recovery-fused.bin u-boot.bin > u-boot-recovery-evt1-fused.bin
+	cp u-boot-recovery.bin u-boot-recovery-evt1.bin
+}
+
 check_ccache
 check_users
 
 build_uboot $*
 
 make_evt_image
+make_recovery_image
 
 size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
 if [ "$size" -ge "262144" ]; then
@@ -82,5 +90,8 @@ elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
 	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot_recovery_evt0.tar u-boot-recovery-evt0.bin
+	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
+	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
 	mv -f system_uboot* /home/share/Work/bin
 fi
