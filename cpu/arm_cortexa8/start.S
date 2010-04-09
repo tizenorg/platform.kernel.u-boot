@@ -142,7 +142,7 @@ next:
 	bl	cpu_init_crit
 #endif
 
-#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL) || !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL)
 relocate:				@ relocate U-Boot to RAM
 	adr	r0, _start		@ r0 <- current position of code
 	ldr	r1, _TEXT_BASE		@ test if we run from flash or RAM
@@ -164,7 +164,7 @@ copy_loop:				@ copy 32 bytes at a time
 	/* Set up the stack */
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
-#if defined(CONFIG_ONENAND_IPL) && defined(CONFIG_RECOVERY_BLOCK)
+#if defined(CONFIG_ONENAND_IPL) || defined(CONFIG_RECOVERY_BLOCK)
 	sub	sp, r0, #128		@ leave 32 words for abort-stack
 #else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area
