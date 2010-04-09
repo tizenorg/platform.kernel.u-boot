@@ -139,10 +139,12 @@ next:
 #endif	/* CONFIG_ONENAND_IPL || CONFIG_RECOVERY_BLOCK */
 	/* the mask ROM code should have PLL and others stable */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
+#if !defined(CONFIG_RECOVERY_BLOCK)
 	bl	cpu_init_crit
 #endif
+#endif
 
-#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL)
+#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL) || !defined(CONFIG_RECOVERY_BLOCK)
 relocate:				@ relocate U-Boot to RAM
 	adr	r0, _start		@ r0 <- current position of code
 	ldr	r1, _TEXT_BASE		@ test if we run from flash or RAM
@@ -209,6 +211,7 @@ _start_armboot: .word start_armboot
  *
  *************************************************************************/
 cpu_init_crit:
+#if !defined(CONFIG_RECOVERY_BLOCK)
 	/*
 	 * Invalidate L1 I/D
 	 */
@@ -226,7 +229,6 @@ cpu_init_crit:
 	orr	r0, r0, #0x00000800	@ set bit 12 (Z---) BTB
 	mcr	p15, 0, r0, c1, c0, 0
 
-#if !defined(CONFIG_RECOVERY_BLOCK)
 	/*
 	 * Jump to board specific initialization...
 	 * The Mask ROM will have already initialized
