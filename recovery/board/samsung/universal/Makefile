@@ -15,9 +15,9 @@ include $(TOPDIR)/config.mk
 
 # Recovery block' size should be 1 block (256K)
 # Recovery block includes the onenand_ipl(16K), so actual size is 240K
-TEXT_BASE 	= 0x34800000
+TEXT_BASE 	= 0x34000000
 # 256K - 16K(IPL Size)
-TEXT_BASE_256K 	= 0x3483C000
+TEXT_BASE_256K 	= 0x3403C000
 
 LDSCRIPT= $(TOPDIR)/recovery/board/$(BOARDDIR)/recovery.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)

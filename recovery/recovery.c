@@ -30,11 +30,11 @@ void start_recovery_boot(void)
 {
 	uchar *buf;
 
-	buf = (uchar *)CONFIG_SYS_SDRAM_BASE;
+	buf = (uchar *)CONFIG_SYS_BOOT_ADDR;
 
 	onenand_read_block(buf);
 
-	((init_fnc_t *)CONFIG_SYS_SDRAM_BASE)();
+	((init_fnc_t *)CONFIG_SYS_BOOT_ADDR)();
 
 	/* should never come here */
 }
