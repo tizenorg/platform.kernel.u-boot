@@ -29,6 +29,13 @@
 /u-boot.ldr.srec
 /u-boot.lds
 /u-boot-onenand.bin
+/u-boot-onenand-evt0.bin
+/u-boot-onenand-evt1.bin
+/u-boot-onenand-evt1-fused.bin
+/u-boot-recovery.bin
+/u-boot-recovery-evt0.bin
+/u-boot-recovery-evt1.bin
+/u-boot-recovery-evt1-fused.bin
 /u-boot-flexonenand.bin
 
 #
@@ -66,3 +73,12 @@ cscope.*
 /onenand_ipl/board/*/*/*.S
 /onenand_ipl/board/*/*/onenand*
 /onenand_ipl/board/*/*/samsung_read*
+
+# Recovery Block files
+/recovery/recovery.bin
+/recovery/recovery.map
+/recovery/recovery
+/recovery/recovery-*
+/recovery/board/*/*/*.S
+/recovery/board/*/*/*.c
+/recovery/board/*/*/*.h
