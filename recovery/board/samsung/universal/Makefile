@@ -15,9 +15,9 @@ include $(TOPDIR)/config.mk
 
 # Recovery block' size should be 1 block (256K)
 # Recovery block includes the onenand_ipl(16K), so actual size is 240K
-TEXT_BASE 	= 0xD0020000
+TEXT_BASE 	= 0x34800000
 # 256K - 16K(IPL Size)
-TEXT_BASE_256K	= 0xD005C000
+TEXT_BASE_256K 	= 0x3483C000
 
 LDSCRIPT= $(TOPDIR)/recovery/board/$(BOARDDIR)/recovery.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -26,7 +26,7 @@ CFLAGS	+= -DCONFIG_RECOVERY_BLOCK -g -D__HAVE_ARCH_MEMCPY32
 OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	+= start.o _memcpy32.o
-COBJS	+= recovery.o onenand_read.o
+COBJS	+= recovery.o onenand.o
 
 SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
@@ -71,13 +71,13 @@ $(obj)recovery.c:
 	ln -s $(SRCTREE)/recovery/recovery.c $@
 
 # from onenand_ipl directory
-$(obj)onenand_ipl.h:
+$(obj)onenand.h:
 	@rm -f $@
-	ln -s $(SRCTREE)/onenand_ipl/onenand_ipl.h $@
+	ln -s $(SRCTREE)/recovery/onenand.h $@
 
-$(obj)onenand_read.c:	$(obj)onenand_ipl.h
+$(obj)onenand.c:	$(obj)onenand.h
 	@rm -f $@
-	ln -s $(SRCTREE)/onenand_ipl/onenand_read.c $@
+	ln -s $(SRCTREE)/recovery/onenand.c $@
 
 $(obj)%.o:	$(obj)%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
@@ -91,5 +91,5 @@ include $(SRCTREE)/rules.mk
 sinclude $(obj).depend
 
 clean:
-	rm recovery.c onenand_read.c
+	rm recovery.c onenand.c
 

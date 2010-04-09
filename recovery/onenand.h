@@ -1,9 +1,6 @@
 /*
- * (C) Copyright 2010 Samsung Electronics
- * Minkyu Kang <mk7.kang@samsung.com>
- *
- * See file CREDITS for list of people who contributed to this
- * project.
+ * (C) Copyright 2005-2008 Samsung Electronics
+ * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,20 +18,25 @@
  * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include "onenand.h"
+#ifndef _ONENAND_IPL_H
+#define _ONENAND_IPL_H
 
-typedef int (init_fnc_t)(void);
+#include <linux/mtd/onenand_regs.h>
 
-void start_recovery_boot(void)
-{
-	uchar *buf;
+#define onenand_readw(a)        readw(THIS_ONENAND(a))
+#define onenand_writew(v, a)    writew(v, THIS_ONENAND(a))
 
-	buf = (uchar *)CONFIG_SYS_SDRAM_BASE;
+#define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
 
-	onenand_read_block(buf);
+#define READ_INTERRUPT()	onenand_readw(ONENAND_REG_INTERRUPT)
 
-	((init_fnc_t *)CONFIG_SYS_SDRAM_BASE)();
+enum {
+	ONENAND_USE_DEFAULT,
+	ONENAND_USE_GENERIC,
+	ONENAND_USE_BOARD,
+};
 
-	/* should never come here */
-}
+extern int (*onenand_read_page)(ulong block, ulong page,
+				u_char *buf, int pagesize);
+extern int onenand_read_block(unsigned char *buf);
+#endif
