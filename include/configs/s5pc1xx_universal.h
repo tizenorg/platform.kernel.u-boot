@@ -193,7 +193,7 @@
 				",7m(kernel)"\
 				",1m(log)"\
 				",12m(modem)"\
-				",32m(qboot)"\
+				",60m(qboot)"\
 				",-(UBI)\0"
 
 #define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:1m(bootloader)"\
@@ -203,7 +203,7 @@
 				",7m(kernel)"\
 				",1m(log)"\
 				",12m(modem)"\
-				",32m(qboot)"\
+				",60m(qboot)"\
 				",-(UBI)\0"
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
