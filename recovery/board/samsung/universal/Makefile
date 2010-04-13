@@ -70,7 +70,6 @@ $(obj)recovery.c:
 	@rm -f $@
 	ln -s $(SRCTREE)/recovery/recovery.c $@
 
-# from onenand_ipl directory
 $(obj)onenand.h:
 	@rm -f $@
 	ln -s $(SRCTREE)/recovery/onenand.h $@
