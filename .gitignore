@@ -80,5 +80,6 @@ cscope.*
 /recovery/recovery
 /recovery/recovery-*
 /recovery/board/*/*/*.S
-/recovery/board/*/*/*.c
-/recovery/board/*/*/*.h
+/recovery/board/*/*/onenand.*
+/recovery/board/*/*/recovery.*
+/recovery/board/*/*/usbd.*
