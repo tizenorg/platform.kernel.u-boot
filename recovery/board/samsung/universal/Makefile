@@ -27,6 +27,7 @@ OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	+= start.o _memcpy32.o
 COBJS	+= recovery.o onenand.o
+COBJS	+= usbd.o usb_downloader.o usb-hs-otg.o
 
 SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
@@ -77,6 +78,14 @@ $(obj)onenand.h:
 $(obj)onenand.c:	$(obj)onenand.h
 	@rm -f $@
 	ln -s $(SRCTREE)/recovery/onenand.c $@
+
+$(obj)usbd.h:
+	@rm -f $@
+	ln -s $(SRCTREE)/recovery/usbd.h $@
+
+$(obj)usbd.c:	$(obj)usbd.h
+	@rm -f $@
+	ln -s $(SRCTREE)/recovery/usbd.c $@
 
 $(obj)%.o:	$(obj)%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
