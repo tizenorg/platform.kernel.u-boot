@@ -512,6 +512,22 @@ system_clock_init:
 #endif
 	b	200f
 110:
+	ldr	r0, =S5PC110_PWR_CFG		@ 0xE010C000
+
+	/* Set OSC_FREQ value */
+	ldr	r1, =0xf
+	str	r1, [r0, #0x100]		@ S5PC110_OSC_FREQ
+
+	/* Set MTC_STABLE value */
+	ldr	r1, =0xffffffff
+	str	r1, [r0, #0x110]		@ S5PC110_MTC_STABLE
+
+	/* Set CLAMP_STABLE value */
+	ldr	r1, =0x3ff03ff
+	str	r1, [r0, #0x114]		@ S5PC110_CLAMP_STABLE
+
+	ldr	r0, =S5PC1XX_CLOCK_BASE		@ 0xE0100000
+
 	/* Set Clock divider */
 	ldr	r1, =0x14131330			@ 1:1:4:4, 1:4:5
 	str	r1, [r0, #0x300]
@@ -519,8 +535,9 @@ system_clock_init:
 	str	r1, [r0, #0x310]
 
 	/* Set Lock Time */
-	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
+	ldr	r1, =0x2cf			@ Locktime : 30us
 	str	r1, [r0, #0x000]		@ S5PC110_APLL_LOCK
+	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
 	str	r1, [r0, #0x008]		@ S5PC110_MPLL_LOCK
 	str	r1, [r0, #0x010]		@ S5PC110_EPLL_LOCK
 	str	r1, [r0, #0x020]		@ S5PC110_VPLL_LOCK
