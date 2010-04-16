@@ -26,7 +26,7 @@
 #define TX_DATA_LEN	4
 #define RX_DATA_LEN	64
 
-static char tx_data[TX_DATA_LEN] = "MPL";
+static char tx_data[TX_DATA_LEN] = "BSP";
 static char rx_data[RX_DATA_LEN];
 
 extern int s5p_receive_done;
