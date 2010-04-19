@@ -266,7 +266,8 @@
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=9\0" \
 	"ubiblock=8\0" \
-	"ubi=enabled"
+	"ubi=enabled\0" \
+	"opts=always_resume=1"
 
 /*
  * Miscellaneous configurable options
