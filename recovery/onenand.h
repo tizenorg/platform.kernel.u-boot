@@ -17,26 +17,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+ 
+#ifndef _ONENAND_H
+#define _ONENAND_H
 
-#ifndef _ONENAND_IPL_H
-#define _ONENAND_IPL_H
+struct onenand_op {
+	int (*read)(loff_t, ssize_t, ssize_t *, u_char *, int);
+	int (*write)(loff_t, ssize_t, ssize_t *, u_char *);
+	int (*erase)(u32, u32, int);
 
-#include <linux/mtd/onenand_regs.h>
-
-#define onenand_readw(a)        readw(THIS_ONENAND(a))
-#define onenand_writew(v, a)    writew(v, THIS_ONENAND(a))
-
-#define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
-
-#define READ_INTERRUPT()	onenand_readw(ONENAND_REG_INTERRUPT)
-
-enum {
-	ONENAND_USE_DEFAULT,
-	ONENAND_USE_GENERIC,
-	ONENAND_USE_BOARD,
+	struct mtd_info *mtd;
+	struct onenand_chip *this;
 };
 
-extern int (*onenand_read_page)(ulong block, ulong page,
-				u_char *buf, int pagesize);
-extern int onenand_read_block(unsigned char *buf);
+struct onenand_op *onenand_get_interface(void);
+void onenand_init(void);
+
 #endif

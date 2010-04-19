@@ -33,7 +33,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text      :
 	{
-	  start.o	(.text)
+	  board/samsung/universal/start.o	(.text)
 	  *(.text)
 	}
 

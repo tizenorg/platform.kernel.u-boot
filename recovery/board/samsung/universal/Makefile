@@ -13,79 +13,50 @@
 
 include $(TOPDIR)/config.mk
 
-# Recovery block' size should be 1 block (256K)
-# Recovery block includes the onenand_ipl(16K), so actual size is 240K
-TEXT_BASE 	= 0x34000000
-# 256K - 16K(IPL Size)
-TEXT_BASE_256K 	= 0x3403C000
+RECOVERYCFG = config.mk
+include $(RECOVERYCFG)
 
-LDSCRIPT= $(TOPDIR)/recovery/board/$(BOARDDIR)/recovery.lds
-LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
-AFLAGS	+= -DCONFIG_RECOVERY_BLOCK -g -UTEXT_BASE -DTEXT_BASE=$(TEXT_BASE)
-CFLAGS	+= -DCONFIG_RECOVERY_BLOCK -g -D__HAVE_ARCH_MEMCPY32
-OBJCFLAGS += --gap-fill=0x00
+LIB	:= $(obj)lib$(BOARD).a
 
-SOBJS	+= start.o _memcpy32.o
-COBJS	+= recovery.o onenand.o
-COBJS	+= usbd.o usb_downloader.o usb-hs-otg.o
+SOBJS = start.o reset.o _memcpy32.o
+COBJS = string.o dlmalloc.o
+COBJS += usb_downloader.o usb-hs-otg.o
+COBJS += gpio.o
+COBJS += universal.o
 
-SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
-OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))
-__OBJS	:= $(SOBJS) $(COBJS)
-LNDIR	:= $(OBJTREE)/recovery/board/$(BOARDDIR)
+SRCS := $(COBJS:.o=.c)
+OBJS := $(addprefix $(obj),$(COBJS))
 
-recoveryobj	:= $(OBJTREE)/recovery/
+all:	$(LIB)
 
-ALL	= $(recoveryobj)recovery $(recoveryobj)recovery.bin $(recoveryobj)recovery-256k.bin
-
-all:	$(obj).depend $(ALL)
-
-$(recoveryobj)recovery-256k.bin:	$(recoveryobj)recovery
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE_256K) -O binary $< $@
-	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k-evt0.bin $@ > $(recoveryobj)recovery-evt0.bin
-	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k-fused.bin $@ > $(recoveryobj)recovery-fused.bin
-	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k.bin $@ > $(recoveryobj)recovery.bin
-
-$(recoveryobj)recovery.bin:	$(recoveryobj)recovery
-	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
-
-$(recoveryobj)recovery:	$(OBJS)
-	cd $(LNDIR) && $(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
-		-Map $@.map -o $@
+$(LIB):	$(obj).depend $(SOBJS) $(OBJS) $(RECOVERYCFG)
+	$(AR) $(ARFLAGS) $@ $(SOBJS) $(OBJS)
 
 # create symbolic links from common files
 
-# from cpu directory
 $(obj)start.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/start.S $@
+	ln -s $(SRCTREE)/cpu/$(CPU)/$@ $@
 
-# from SoC directory
+$(obj)reset.S:
+	@rm -f $@
+	ln -s $(SRCTREE)/cpu/$(CPU)/s5pc1xx/$@ $@
 
-# from lib_arm
 $(obj)_memcpy32.S:
-	ln -sf $(SRCTREE)/lib_arm/_memcpy32.S $@
+	ln -sf $(SRCTREE)/lib_arm/$@ $@
 
-# from recovery directory
-$(obj)recovery.c:
+$(obj)string.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/recovery/recovery.c $@
+	ln -s $(SRCTREE)/lib_generic/$@ $@
 
-$(obj)onenand.h:
+$(obj)dlmalloc.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/recovery/onenand.h $@
+	ln -s $(SRCTREE)/common/$@ $@
 
-$(obj)onenand.c:	$(obj)onenand.h
-	@rm -f $@
-	ln -s $(SRCTREE)/recovery/onenand.c $@
+clean:
+	@rm -rf ../../../$(BOARDHEADER)
 
-$(obj)usbd.h:
-	@rm -f $@
-	ln -s $(SRCTREE)/recovery/usbd.h $@
-
-$(obj)usbd.c:	$(obj)usbd.h
-	@rm -f $@
-	ln -s $(SRCTREE)/recovery/usbd.c $@
+#########################################################################
 
 $(obj)%.o:	$(obj)%.S
 	$(CC) $(AFLAGS) -c -o $@ $<
@@ -93,11 +64,8 @@ $(obj)%.o:	$(obj)%.S
 $(obj)%.o:	$(obj)$.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-# defines $(obj).depend target
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
 
-clean:
-	rm recovery.c onenand.c
-
+#########################################################################

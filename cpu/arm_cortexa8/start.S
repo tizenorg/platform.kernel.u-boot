@@ -166,7 +166,7 @@ copy_loop:				@ copy 32 bytes at a time
 	/* Set up the stack */
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
-#if defined(CONFIG_ONENAND_IPL) || defined(CONFIG_RECOVERY_BLOCK)
+#if defined(CONFIG_ONENAND_IPL)
 	sub	sp, r0, #128		@ leave 32 words for abort-stack
 #else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area

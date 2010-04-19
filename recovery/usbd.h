@@ -119,6 +119,7 @@ struct usbd_ops {
 	void (*cpu_reset)(void);
 };
 
+int do_usbd_down(void);
 /* This function is interfaced between USB Device Controller and USB Downloader
  * Must Implementation this function at USB Controller!! */
 struct usbd_ops *usbd_set_interface(struct usbd_ops *);
