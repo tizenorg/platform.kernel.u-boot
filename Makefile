@@ -378,19 +378,19 @@ $(obj)u-boot.lds: $(LDSCRIPT)
 		$(CPP) $(CPPFLAGS) $(LDPPFLAGS) -ansi -D__ASSEMBLY__ -P - <$^ >$@
 
 $(NAND_SPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
-		$(MAKE) -C nand_spl/board/$(BOARDDIR) all || exit 1
+		$(MAKE) -C nand_spl/board/$(BOARDDIR) all
 
 $(U_BOOT_NAND):	$(NAND_SPL) $(obj)u-boot.bin
 		cat $(obj)nand_spl/u-boot-spl-16k.bin $(obj)u-boot.bin > $(obj)u-boot-nand.bin
 
 $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
-		$(MAKE) -C onenand_ipl/board/$(BOARDDIR) all || exit 1
+		$(MAKE) -C onenand_ipl/board/$(BOARDDIR) all
 
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 
 $(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk $(ONENAND_IPL)
-		$(MAKE) -C recovery/ all || exit 1
+		$(MAKE) -C recovery/ all
 
 $(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(obj)u-boot.bin
 		cat $(RECOVERY_BIN) $(obj)u-boot.bin > $(obj)u-boot-recovery.bin
