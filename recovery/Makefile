@@ -44,7 +44,7 @@ __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 #########################################################################
 #########################################################################
 
-ALL	= $(recoveryobj)recovery $(recoveryobj)recovery.bin $(recoveryobj)recovery-256k.bin
+ALL	= $(recoveryobj)recovery-256k.bin
 
 all:	$(obj).depend $(ALL)
 
@@ -52,10 +52,7 @@ $(recoveryobj)recovery-256k.bin:	$(recoveryobj)recovery
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE_256K) -O binary $< $@
 	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k-evt0.bin $@ > $(recoveryobj)recovery-evt0.bin
 	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k-fused.bin $@ > $(recoveryobj)recovery-fused.bin
-	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k.bin $@ > $(recoveryobj)recovery-evt1.bin
-
-$(recoveryobj)recovery.bin:	$(recoveryobj)recovery
-	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
+	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k.bin $@ > $(recoveryobj)recovery.bin
 
 $(recoveryobj)recovery:	$(obj).depend $(OBJS) $(LIBS) $(LIBBOARD) $(RECOVERYCFG)
 	$(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
