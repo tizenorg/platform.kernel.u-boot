@@ -14,7 +14,6 @@
 
 extern int board_check_condition(void);
 extern int board_load_uboot(unsigned char *buf);
-extern int board_update_uboot(void);
 extern void board_recovery_init(void);
 
 #endif

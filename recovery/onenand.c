@@ -35,12 +35,12 @@
 #ifdef printk
 #undef printk
 #endif
-#define printk(...)	do{} while(0)
-#define puts(...)	do{} while(0)
+#define printk(...)	do {} while (0)
+#define puts(...)	do {} while (0)
 #ifdef printf
 #undef printf
 #endif
-#define printf(...)	do{} while(0)
+#define printf(...)	do {} while (0)
 
 struct mtd_info onenand_mtd;
 struct onenand_chip onenand_chip;
@@ -52,47 +52,6 @@ static struct mtd_info *mtd = &onenand_mtd;
 static loff_t next_ofs;
 static loff_t skip_ofs;
 
-static inline int str2long(char *p, ulong *num)
-{
-	char *endptr;
-
-	*num = simple_strtoul(p, &endptr, 16);
-	return (*p != '\0' && *endptr == '\0') ? 1 : 0;
-}
-#if 0
-static int arg_off_size(int argc, char *argv[], ulong *off, ssize_t *size)
-{
-	if (argc >= 1) {
-		if (!(str2long(argv[0], off))) {
-			printf("'%s' is not a number\n", argv[0]);
-			return -1;
-		}
-	} else {
-		*off = 0;
-	}
-
-	if (argc >= 2) {
-		if (!(str2long(argv[1], (ulong *)size))) {
-			printf("'%s' is not a number\n", argv[1]);
-			return -1;
-		}
-	} else {
-		*size = mtd->size - *off;
-	}
-
-	if ((*off + *size) > mtd->size) {
-		printf("total chip size (0x%llx) exceeded!\n", mtd->size);
-		return -1;
-	}
-#if 0
-	if (*size == mtd->size)
-		puts("whole chip\n");
-	else
-		printf("offset 0x%lx, size 0x%x\n", *off, *size);
-#endif
-	return 0;
-}
-#endif
 static int onenand_block_read(loff_t from, ssize_t len,
 			      ssize_t *retlen, u_char *buf, int oob)
 {
@@ -111,7 +70,7 @@ static int onenand_block_read(loff_t from, ssize_t len,
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
-			printk("Bad blocks %d at 0x%x\n",
+			printf("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
 			ofs += blocksize;
 			/* FIXME need to check how to handle the 'len' */
@@ -130,7 +89,7 @@ static int onenand_block_read(loff_t from, ssize_t len,
 		ops.retlen = 0;
 		ret = mtd->read_oob(mtd, ofs, &ops);
 		if (ret) {
-			printk("Read failed 0x%x, %d\n", (u32)ofs, ret);
+			printf("Read failed 0x%x, %d\n", (u32)ofs, ret);
 			ofs += thislen;
 			continue;
 		}
@@ -171,7 +130,7 @@ static int onenand_block_write(loff_t to, ssize_t len,
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
-			printk("Bad blocks %d at 0x%x\n",
+			printf("Bad blocks %d at 0x%x\n",
 			       (u32)(ofs >> this->erase_shift), (u32)ofs);
 			skip_ofs += blocksize;
 			goto next;
@@ -182,7 +141,7 @@ static int onenand_block_write(loff_t to, ssize_t len,
 		ops.retlen = 0;
 		ret = mtd->write_oob(mtd, ofs, &ops);
 		if (ret) {
-			printk("Write failed 0x%x, %d", (u32)ofs, ret);
+			printf("Write failed 0x%x, %d", (u32)ofs, ret);
 			skip_ofs += thislen;
 			goto next;
 		}
@@ -230,68 +189,13 @@ static int onenand_block_erase(u32 start, u32 size, int force)
 
 	return 0;
 }
-#if 0
-static int onenand_dump(struct mtd_info *mtd, ulong off, int only_oob)
-{
-	int i;
-	u_char *datbuf, *oobbuf, *p;
-	struct mtd_oob_ops ops;
-	loff_t addr;
 
-	datbuf = malloc(mtd->writesize + mtd->oobsize);
-	oobbuf = malloc(mtd->oobsize);
-	if (!datbuf || !oobbuf) {
-		puts("No memory for page buffer\n");
-		return 1;
-	}
-	off &= ~(mtd->writesize - 1);
-	addr = (loff_t) off;
-	memset(&ops, 0, sizeof(ops));
-	ops.datbuf = datbuf;
-	ops.oobbuf = oobbuf; /* must exist, but oob data will be appended to ops.datbuf */
-	ops.len = mtd->writesize;
-	ops.ooblen = mtd->oobsize;
-	ops.retlen = 0;
-	i = mtd->read_oob(mtd, addr, &ops);
-	if (i < 0) {
-		printf("Error (%d) reading page %08lx\n", i, off);
-		free(datbuf);
-		free(oobbuf);
-		return 1;
-	}
-	printf("Page %08lx dump:\n", off);
-	i = mtd->writesize >> 4;
-	p = datbuf;
-
-	while (i--) {
-		if (!only_oob)
-			printf("\t%02x %02x %02x %02x %02x %02x %02x %02x"
-			       "  %02x %02x %02x %02x %02x %02x %02x %02x\n",
-			       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
-			       p[8], p[9], p[10], p[11], p[12], p[13], p[14],
-			       p[15]);
-		p += 16;
-	}
-	puts("OOB:\n");
-	p = oobbuf;
-	i = mtd->oobsize >> 3;
-	while (i--) {
-		printf("\t%02x %02x %02x %02x %02x %02x %02x %02x\n",
-		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-		p += 8;
-	}
-	free(datbuf);
-	free(oobbuf);
-
-	return 0;
-}
-#endif
 void onenand_set_interface(struct onenand_op *onenand)
 {
 	onenand->read = onenand_block_read;
 	onenand->write = onenand_block_write;
 	onenand->erase = onenand_block_erase;
-	
+
 	onenand->mtd = &onenand_mtd;
 	onenand->this = &onenand_chip;
 }
@@ -314,22 +218,6 @@ void onenand_init(void)
 
 	onenand_scan(&onenand_mtd, 1);
 
-#if 0
-	if (onenand_chip.device_id & DEVICE_IS_FLEXONENAND)
-		puts("Flex-");
-	puts("OneNAND: ");
-	print_size(onenand_chip.chipsize, "\n");
-#endif
-
-#if 0
-	/*
-	 * Add MTD device so that we can reference it later
-	 * via the mtdcore infrastructure (e.g. ubi).
-	 */
-	onenand_mtd.name = dev_name;
-	add_mtd_device(&onenand_mtd);
-#else
 	onenand_set_interface(&onenand_ops);
-#endif
 }
 

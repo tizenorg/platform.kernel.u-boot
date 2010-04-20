@@ -31,7 +31,6 @@ OBJS := $(addprefix $(obj),$(OBJS))
 
 LIBS = drivers/onenand/libonenand.a
 LIBS := $(addprefix $(recoveryobj),$(LIBS))
-# .PHONY : $(LIBS) $(TIMESTAMP_FILE) $(VERSION_FILE)
 
 LIBBOARD = board/$(BOARDDIR)/lib$(BOARD).a
 LIBBOARD := $(addprefix $(recoveryobj),$(LIBBOARD))

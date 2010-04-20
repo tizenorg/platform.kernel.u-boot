@@ -29,7 +29,7 @@
 
 typedef int (init_fnc_t)(void);
 
-void normal_boot(void)
+static void normal_boot(void)
 {
 	uchar *buf;
 
@@ -40,11 +40,11 @@ void normal_boot(void)
 	((init_fnc_t *)CONFIG_SYS_BOOT_ADDR)();
 }
 
-void recovery_boot(void)
+static void recovery_boot(void)
 {
 	/* usb download and write image */
 	do_usbd_down();
-	
+
 	/* reboot */
 	reset_cpu(0);
 }
@@ -52,25 +52,25 @@ void recovery_boot(void)
 void start_recovery_boot(void)
 {
 	/* armboot_start is defined in the board-specific linker script */
-	mem_malloc_init (_armboot_start - CONFIG_SYS_MALLOC_LEN,
+	mem_malloc_init(_armboot_start - CONFIG_SYS_MALLOC_LEN,
 			CONFIG_SYS_MALLOC_LEN);
 
 	onenand_init();
 
 	board_recovery_init();
-	
- 	if (board_check_condition()) {
+
+	if (board_check_condition())
 		recovery_boot();
-	} else {
+	else
 		normal_boot();
-	}
+
 	/* NOTREACHED - no way out of command loop except booting */
 }
 
 /*
  * origin at lib_arm/eabi_compat.c to support EABI
  */
-int raise (int signum)
+int raise(int signum)
 {
 	return 0;
 }

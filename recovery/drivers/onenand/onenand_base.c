@@ -20,7 +20,6 @@
  */
 
 #include <common.h>
-//#include <compiler.h>
 #include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
@@ -32,8 +31,8 @@
 #ifdef printk
 #undef printk
 #endif
-#define printk(...)	do{} while(0)
-#define puts(...)	do{} while(0)
+#define printk(...)	do {} while (0)
+#define puts(...)	do {} while (0)
 
 extern void *memcpy32(void *dst, const void *src, int len);
 

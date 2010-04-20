@@ -41,10 +41,10 @@ static void sdelay(unsigned long usec)
 
 	do {
 		kv = 0x100000;
-		while (kv-- > 0) {
-		}
+		while (kv)
+			kv--;
 		usec--;
-	} while(usec);
+	} while (usec);
 }
 
 static int check_keypad(void)
@@ -62,10 +62,9 @@ static int check_keypad(void)
 	row_num = 2;
 	col_num = 3;
 
-	for (i = 0; i < sizeof(row_state)/sizeof(int); i++) {
+	for (i = 0; i < sizeof(row_state)/sizeof(int); i++)
 		row_state[i] = 0;
-	}
-	
+
 	for (i = 0; i < row_num; i++) {
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
 		gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
@@ -99,9 +98,8 @@ static int check_keypad(void)
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
 	/* check volume up/down */
-	if ((row_state[1] & 0x3) == 0x3) {
+	if ((row_state[1] & 0x3) == 0x3)
 		condition = 1;
-	}
 
 	return condition;
 }
@@ -116,42 +114,39 @@ static int check_block(void)
 	int ret, retlen = 0;
 	ulong blocksize = 1 << this->erase_shift;
 	ulong pagesize = 1 << this->page_shift;
-	u_char *down_ram_addr = (unsigned char *)CONFIG_SYS_DOWN_ADDR;
-	ulong uboot_start_addr = CONFIG_RECOVERY_BOOTSTART_BLOCK << this->erase_shift;
+	u_char *down_ram_addr;
+	ulong uboot_addr;
 	u_char verify_buf[0x10];
 
-	onenand_ops->read(uboot_start_addr, blocksize, &retlen, down_ram_addr, 0);
+	down_ram_addr = (unsigned char *)CONFIG_SYS_DOWN_ADDR;
+	uboot_addr = CONFIG_RECOVERY_UBOOT_BLOCK << this->erase_shift;
+
+	onenand_ops->read(uboot_addr, blocksize, &retlen, down_ram_addr, 0);
 	if (retlen != blocksize)
-	{
 		return 1;
-	}
 
 	memset(verify_buf, 0xFF, sizeof(verify_buf));
 
 	for (i = 0; i < page_to_check; i++) {
-		ret = memcmp(down_ram_addr + pagesize*i, verify_buf, sizeof(verify_buf));
+		ret = memcmp(down_ram_addr + pagesize*i, verify_buf,
+				sizeof(verify_buf));
 		if (ret)
-		{
 			break;
-		}
 	}
 
-	if (i == page_to_check)	{
+	if (i == page_to_check)
 		return 1;
-	}
-	
+
 	return 0;
 }
 
 int board_check_condition(void)
 {
-	if (check_keypad()) {
+	if (check_keypad())
 		return 1;
-	}
-	
-	if (check_block()) {
+
+	if (check_block())
 		return 1;
-	}
 
 	return 0;
 }
@@ -164,20 +159,14 @@ int board_load_uboot(unsigned char *buf)
 	size_t size;
 	size_t ret;
 
-	offset = CONFIG_RECOVERY_BOOTSTART_BLOCK << this->erase_shift;
+	offset = CONFIG_RECOVERY_UBOOT_BLOCK << this->erase_shift;
 	size = CONFIG_SYS_MONITOR_LEN;
 
 	mtd->read(mtd, offset, size, &ret, buf);
 
-	if (size != ret) {
+	if (size != ret)
 		return -1;
-	}
-		
-	return 0;
-}
 
-int board_update_uboot(void)
-{
 	return 0;
 }
 
@@ -186,4 +175,3 @@ void board_recovery_init(void)
 	/* Set Initial global variables */
 	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 }
-
