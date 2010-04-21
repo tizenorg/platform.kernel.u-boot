@@ -10,9 +10,6 @@
 #include "usbd.h"
 #include "onenand.h"
 
-#define OPS_READ	0
-#define OPS_WRITE	1
-
 static struct usbd_ops usbd_ops;
 static unsigned long down_ram_addr;
 
