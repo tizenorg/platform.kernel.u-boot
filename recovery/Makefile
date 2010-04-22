@@ -30,6 +30,7 @@ SRCS := $(OBJS:.o=.c)
 OBJS := $(addprefix $(obj),$(OBJS))
 
 LIBS = drivers/onenand/libonenand.a
+LIBS += drivers/usb/libusb.a
 LIBS := $(addprefix $(recoveryobj),$(LIBS))
 
 LIBBOARD = board/$(BOARDDIR)/lib$(BOARD).a

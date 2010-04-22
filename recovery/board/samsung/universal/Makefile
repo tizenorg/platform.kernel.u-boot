@@ -20,7 +20,6 @@ LIB	:= $(obj)lib$(BOARD).a
 
 SOBJS = start.o reset.o _memcpy32.o
 COBJS = string.o dlmalloc.o
-COBJS += usb_downloader.o usb-hs-otg.o
 COBJS += gpio.o
 COBJS += universal.o
 

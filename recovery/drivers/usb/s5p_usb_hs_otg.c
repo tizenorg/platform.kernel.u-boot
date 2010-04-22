@@ -19,7 +19,7 @@
  */
 
 #include <common.h>
-#include "usb-hs-otg.h"
+#include "s5p_usb_hs_otg.h"
 
 u32 remode_wakeup;
 u16 config_value;

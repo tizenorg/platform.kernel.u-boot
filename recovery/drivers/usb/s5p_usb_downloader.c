@@ -21,7 +21,7 @@
 
 #include <common.h>
 #include "usbd.h"
-#include "usb-hs-otg.h"
+#include "s5p_usb_hs_otg.h"
 
 #define TX_DATA_LEN	4
 #define RX_DATA_LEN	64
