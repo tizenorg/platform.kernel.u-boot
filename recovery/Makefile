@@ -11,16 +11,14 @@
 # the License, or (at your option) any later version.
 #
 
-include $(TOPDIR)/config.mk
+include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 
-recoveryobj := $(OBJTREE)/recovery/
-RECOVERYCFG := $(recoveryobj)board/$(BOARDDIR)/config.mk
-include $(RECOVERYCFG)
+recoveryobj := $(SRCTREE)/$(RECOVERY_BLOCK)/
 
-LDSCRIPT = board/$(BOARDDIR)/recovery.lds
-LDSCRIPT := $(addprefix $(recoveryobj),$(LDSCRIPT))
-LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
-OBJCFLAGS += --gap-fill=0x00
+# Recovery block' size should be 1 block (256K)
+# Recovery block includes the onenand_ipl(16K), so actual size is 240K
+# 256K - 16K(IPL Size)
+TEXT_BASE_256K 	= 0x3403C000
 
 OBJS = recovery.o
 OBJS += onenand.o
@@ -55,7 +53,7 @@ $(recoveryobj)recovery-256k.bin:	$(recoveryobj)recovery
 	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k-fused.bin $@ > $(recoveryobj)recovery-fused.bin
 	cat $(OBJTREE)/onenand_ipl/onenand-ipl-16k.bin $@ > $(recoveryobj)recovery.bin
 
-$(recoveryobj)recovery:	$(obj).depend $(OBJS) $(LIBS) $(LIBBOARD) $(RECOVERYCFG)
+$(recoveryobj)recovery:	$(obj).depend $(OBJS) $(LIBS) $(LIBBOARD)
 	$(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
 		--start-group $(__LIBS) --end-group $(PLATFORM_LIBGCC) \
 		-Map $@.map -o $@

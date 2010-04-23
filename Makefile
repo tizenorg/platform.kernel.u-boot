@@ -290,6 +290,7 @@ ifeq ($(CONFIG_RECOVERY_U_BOOT),y)
 RECOVERY_BLOCK = recovery
 U_BOOT_RECOVERY = $(obj)u-boot-recovery.bin
 RECOVERY_BIN ?= $(obj)recovery/recovery.bin
+export RECOVERY_BLOCK
 endif
 
 __OBJS := $(subst $(obj),,$(OBJS))
@@ -390,7 +391,7 @@ $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 
 $(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk $(ONENAND_IPL)
-		$(MAKE) -C recovery/ all
+		$(MAKE) -C recovery all
 
 $(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(obj)u-boot.bin
 		cat $(RECOVERY_BIN) $(obj)u-boot.bin > $(obj)u-boot-recovery.bin

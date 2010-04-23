@@ -21,11 +21,7 @@
 # MA 02111-1307 USA
 #
 
-include $(TOPDIR)/config.mk
-
-recoveryobj := $(OBJTREE)/recovery/
-RECOVERYCFG := $(recoveryobj)board/$(BOARDDIR)/config.mk
-include $(RECOVERYCFG)
+include $(TOPDIR)/recovery/config.mk
 
 LIB := $(obj)libonenand.a
 

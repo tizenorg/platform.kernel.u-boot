@@ -11,10 +11,7 @@
 # the License, or (at your option) any later version.
 #
 
-include $(TOPDIR)/config.mk
-
-RECOVERYCFG = config.mk
-include $(RECOVERYCFG)
+include $(TOPDIR)/recovery/config.mk
 
 LIB	:= $(obj)lib$(BOARD).a
 
@@ -28,7 +25,7 @@ OBJS := $(addprefix $(obj),$(COBJS))
 
 all:	$(LIB)
 
-$(LIB):	$(obj).depend $(SOBJS) $(OBJS) $(RECOVERYCFG)
+$(LIB):	$(obj).depend $(SOBJS) $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(SOBJS) $(OBJS)
 
 # create symbolic links from common files
@@ -52,16 +49,7 @@ $(obj)dlmalloc.c:
 	@rm -f $@
 	ln -s $(SRCTREE)/common/$@ $@
 
-clean:
-	@rm -rf ../../../$(BOARDHEADER)
-
 #########################################################################
-
-$(obj)%.o:	$(obj)%.S
-	$(CC) $(AFLAGS) -c -o $@ $<
-
-$(obj)%.o:	$(obj)$.c
-	$(CC) $(CFLAGS) -c -o $@ $<
 
 include $(SRCTREE)/rules.mk
 
