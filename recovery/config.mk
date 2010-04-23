@@ -116,12 +116,12 @@ else
 BOARDDIR = $(BOARD)
 endif
 ifdef	BOARD
-sinclude $(TOPDIR)/recovery/board/$(BOARDDIR)/config.mk
+sinclude $(TOPDIR)/$(RECOVERY_BLOCK)/board/$(BOARDDIR)/config.mk
 endif
 
 #########################################################################
 
-# sinclude $(TOPDIR)/recovery/lib_$(ARCH)/config.mk
+# sinclude $(TOPDIR)/lib_$(ARCH)/config.mk
 
 CROSS_COMPILE ?= arm-linux-
 
@@ -155,11 +155,11 @@ ifeq (,$(findstring lib_arm/eabi_compat.o,$(PLATFORM_LIBS)))
 PLATFORM_LIBS += $(OBJTREE)/lib_arm/eabi_compat.o
 endif
 endif
-LDSCRIPT := $(SRCTREE)/recovery/board/$(BOARDDIR)/recovery.lds
+LDSCRIPT := $(SRCTREE)/$(RECOVERY_BLOCK)/board/$(BOARDDIR)/recovery.lds
 
 #########################################################################
 
-# sinclude $(TOPDIR)/recovery/cpu/$(CPU)/config.mk
+# sinclude $(TOPDIR)/cpu/$(CPU)/config.mk
 PLATFORM_RELFLAGS += -fno-strict-aliasing -fno-common -ffixed-r8 \
 		     -msoft-float
 
@@ -172,13 +172,6 @@ PLATFORM_CPPFLAGS += -march=armv5
 # =========================================================================
 PLATFORM_RELFLAGS +=$(call cc-option,-mshort-load-bytes,\
 		    $(call cc-option,-malignment-traps,))
-
-#########################################################################
-
-#########################################################################
-
-#########################################################################
-
 
 #########################################################################
 

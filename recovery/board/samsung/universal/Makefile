@@ -11,7 +11,7 @@
 # the License, or (at your option) any later version.
 #
 
-include $(TOPDIR)/recovery/config.mk
+include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 
 LIB	:= $(obj)lib$(BOARD).a
 

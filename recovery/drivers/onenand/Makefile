@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-include $(TOPDIR)/recovery/config.mk
+include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 
 LIB := $(obj)libonenand.a
 
