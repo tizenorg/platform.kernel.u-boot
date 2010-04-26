@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2010 Samsung Electronics
- * Sanghee Kim <kyungmin.park@samsung.com>
+ * Sanghee Kim <sh0130.kim@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
