@@ -3,20 +3,6 @@
  *
  *  Copyright (C) 2005-2007 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
- *
- *  Credits:
- *      Adrian Hunter <ext-adrian.hunter@nokia.com>:
- *      auto-placement support, read-while load support, various fixes
- *      Copyright (C) Nokia Corporation, 2007
- *
- *      Rohit Hagargundgi <h.rohit at samsung.com>,
- *      Amul Kumar Saha <amul.saha@samsung.com>:
- *      Flex-OneNAND support
- *      Copyright (C) Samsung Electronics, 2009
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #include <common.h>
