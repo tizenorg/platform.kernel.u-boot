@@ -188,6 +188,7 @@ CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 
 CPPFLAGS += -I$(TOPDIR)/$(RECOVERY_BLOCK)
 CPPFLAGS += -DCONFIG_RECOVERY_BLOCK -D__HAVE_ARCH_MEMCPY32
+CPPFLAGS += -DRECOVERY_DEBUG
 
 ifdef BUILD_TAG
 CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes \

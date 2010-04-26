@@ -175,7 +175,7 @@ stack_setup:
 	sub	r0, r0, #(CONFIG_STACKSIZE_IRQ + CONFIG_STACKSIZE_FIQ)
 #endif
 	sub	sp, r0, #12		@ leave 3 words for abort-stack
-#endif	/* CONFIG_ONENAND_IPL || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_ONENAND_IPL */
 	and	sp, sp, #~7		@ 8 byte alinged for (ldr/str)d
 
 #if !defined(CONFIG_ONENAND_IPL) && !defined(CONFIG_RECOVERY_BLOCK)

@@ -23,9 +23,15 @@
 
 #include <common.h>
 #include <malloc.h>
-#include "common.h"
+#include "recovery.h"
 #include "usbd.h"
 #include "onenand.h"
+
+#ifdef RECOVERY_DEBUG
+#define	PUTS(s)	serial_puts (DEBUG_MARK""s)
+#else
+#define PUTS(s)
+#endif
 
 typedef int (init_fnc_t)(void);
 
@@ -42,11 +48,13 @@ static void normal_boot(void)
 
 static void recovery_boot(void)
 {
+	PUTS("Recovery Mode\n");
+
 	/* usb download and write image */
 	do_usbd_down();
 
 	/* reboot */
-	reset_cpu(0);
+	/* reset_cpu(0); */
 }
 
 void start_recovery_boot(void)
@@ -55,10 +63,13 @@ void start_recovery_boot(void)
 	mem_malloc_init(_armboot_start - CONFIG_SYS_MALLOC_LEN,
 			CONFIG_SYS_MALLOC_LEN);
 
-	onenand_init();
-
 	board_recovery_init();
 
+	onenand_init();
+
+	serial_init();
+	serial_puts("\n");
+	
 	if (board_check_condition())
 		recovery_boot();
 	else

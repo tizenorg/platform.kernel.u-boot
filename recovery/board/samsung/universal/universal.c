@@ -21,19 +21,25 @@
  */
 
 #include <common.h>
-#include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
 #include <asm/io.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/keypad.h>
-#include "../../../onenand.h"
+#include "recovery.h"
+#include "onenand.h"
+
+#ifdef RECOVERY_DEBUG
+#define	PUTS(s)	serial_puts (DEBUG_MARK""s)
+#else
+#define PUTS(s)
+#endif
 
 typedef int (init_fnc_t) (void);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct s5pc110_gpio *s5pc110_gpio;
+static struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 static void sdelay(unsigned long usec)
 {
@@ -67,13 +73,13 @@ static int check_keypad(void)
 
 	for (i = 0; i < row_num; i++) {
 		/* Set GPH3[3:0] to KP_ROW[3:0] */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
-		gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&gpio_base->gpio_h3, i, 0x3);
+		gpio_set_pull(&gpio_base->gpio_h3, i, GPIO_PULL_UP);
 	}
 
 	for (i = 0; i < col_num; i++)
 		/* Set GPH2[3:0] to KP_COL[3:0] */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
+		gpio_cfg_pin(&gpio_base->gpio_h2, i, 0x3);
 
 	reg = S5PC110_KEYPAD_BASE;
 	col_mask = S5PC110_KEYIFCOLEN_MASK;
@@ -142,11 +148,15 @@ static int check_block(void)
 
 int board_check_condition(void)
 {
-	if (check_keypad())
+	if (check_keypad()) {
+		PUTS("manual mode\n");
 		return 1;
+	}
 
-	if (check_block())
+	if (check_block()) {
+		PUTS("bootloader image broken\n");
 		return 1;
+	}
 
 	return 0;
 }
@@ -172,6 +182,11 @@ int board_load_uboot(unsigned char *buf)
 
 void board_recovery_init(void)
 {
-	/* Set Initial global variables */
-	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	/* set GPIO to enable UART2 */
+	gpio_cfg_pin(&gpio_base->gpio_a1, 0, 0x2);
+	gpio_cfg_pin(&gpio_base->gpio_a1, 1, 0x2);
+
+	/* UART_SEL MP0_5[7] at S5PC110 */
+	gpio_direction_output(&gpio_base->gpio_mp0_5, 7, 0x1);
+	gpio_set_pull(&gpio_base->gpio_mp0_5, 7, GPIO_PULL_DOWN);
 }

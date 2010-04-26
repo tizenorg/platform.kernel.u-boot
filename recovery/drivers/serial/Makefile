@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2010 Samsung Electronics.
-# Minkyu Kang <mk7.kang@samsung.com>
+# Copyright (C) 2005-2007 Samsung Electronics.
+# Sanghee Kim <sh0130.kim@samsung.com>
 #
 # See file CREDITS for list of people who contributed to this
 # project.
@@ -23,16 +23,17 @@
 
 include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 
-LIB := $(obj)libusb.a
+LIB	:= $(obj)libserial.a
 
-COBJS-$(CONFIG_S5PC1XX) += s5p_usb_hs_otg.o s5p_usb_downloader.o
+COBJS-$(CONFIG_S5PC1XX) += serial_s5pc1xx.o
 
-SRCS := $(COBJS-y:.o=.c)
-OBJS := $(addprefix $(obj),$(COBJS-y))
+COBJS	:= $(sort $(COBJS-y))
+SRCS	:= $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
 
 all:	$(LIB)
 
-$(LIB): $(obj).depend $(OBJS)
+$(LIB):	$(obj).depend $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 #########################################################################

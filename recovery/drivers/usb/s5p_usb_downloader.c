@@ -20,8 +20,15 @@
  */
 
 #include <common.h>
+#include "recovery.h"
 #include "usbd.h"
 #include "s5p_usb_hs_otg.h"
+
+#ifdef RECOVERY_DEBUG
+#define	PUTS(s)	serial_puts (DEBUG_MARK"usb: "s)
+#else
+#define PUTS(s)
+#endif
 
 #define TX_DATA_LEN	4
 #define RX_DATA_LEN	64
@@ -56,10 +63,14 @@ static void s5p_usb_clear_dnfile_info(void)
 /* start the usb controller */
 static void usb_init(void)
 {
-	if (usb_board_init())
+	if (usb_board_init()) {
+		PUTS("Failed to usb_board_init\n");
 		return;
+	}
 
 	s5p_usbctl_init();
+
+	PUTS("USB Start!!\n");
 
 	while (!s5p_usb_connected) {
 		if (s5p_usb_detect_irq()) {
@@ -69,6 +80,8 @@ static void usb_init(void)
 	}
 
 	s5p_usb_clear_dnfile_info();
+
+	PUTS("Connected!!\n");
 }
 
 static void usb_stop(void)

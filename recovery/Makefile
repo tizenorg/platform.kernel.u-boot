@@ -23,12 +23,14 @@ TEXT_BASE_256K 	= 0x3403C000
 OBJS = recovery.o
 OBJS += onenand.o
 OBJS += usbd.o
+OBJS += serial.o
 
 SRCS := $(OBJS:.o=.c)
 OBJS := $(addprefix $(obj),$(OBJS))
 
 LIBS = drivers/onenand/libonenand.a
 LIBS += drivers/usb/libusb.a
+LIBS += drivers/serial/libserial.a
 LIBS := $(addprefix $(recoveryobj),$(LIBS))
 .PHONY : $(LIBS) $(TIMESTAMP_FILE) $(VERSION_FILE)
 
