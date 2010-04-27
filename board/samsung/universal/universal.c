@@ -2338,9 +2338,12 @@ int dram_init(void)
 		 * Aquila Rev0.5 4G3G1G
 		 * Aquila Rev0.8 4G3G1G
 		 * Aquila Rev0.9 4G3G1G
+		 * Neptune Rev 0.2 4G3G1G
 		 */
 		if (mach_is_aquila() || mach_is_kessler()) {
-			if (hwrevision(5) || hwrevision(8) || hwrevision(9)) {
+			if ((!board_is_neptune() && (hwrevision(5) ||
+				hwrevision(8) || hwrevision(9))) ||
+				(board_is_neptune() && hwrevision(2))) {
 				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 				sz = (memconfig1 >> 16) & 0xFF;
