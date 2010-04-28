@@ -10,7 +10,7 @@
 #include "onenand.h"
 
 #ifdef RECOVERY_DEBUG
-#define	PUTS(s)	serial_puts (DEBUG_MARK""s)
+#define	PUTS(s)	serial_puts(DEBUG_MARK""s)
 #else
 #define PUTS(s)
 #endif
@@ -51,7 +51,7 @@ void start_recovery_boot(void)
 
 	serial_init();
 	serial_puts("\n");
-	
+
 	if (board_check_condition())
 		recovery_boot();
 	else

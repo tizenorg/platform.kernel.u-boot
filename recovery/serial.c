@@ -8,44 +8,45 @@
 
 static struct serial_device *serial_current = NULL;
 
-struct serial_device *__default_serial_console (void)
+struct serial_device *__default_serial_console(void)
 {
 	return &s5pc1xx_serial2_device;
 }
 
-struct serial_device *default_serial_console(void) __attribute__((weak, alias("__default_serial_console")));
+struct serial_device *default_serial_console(void)
+	__attribute__((weak, alias("__default_serial_console")));
 
 void serial_putc(const char c)
 {
 	if (!serial_current) {
-		struct serial_device *dev = default_serial_console ();
+		struct serial_device *dev = default_serial_console();
 
-		dev->putc (c);
+		dev->putc(c);
 		return;
 	}
 
-	serial_current->putc (c);
+	serial_current->putc(c);
 }
 
 void serial_puts(const char *s)
 {
 	if (!serial_current) {
-		struct serial_device *dev = default_serial_console ();
+		struct serial_device *dev = default_serial_console();
 
-		dev->puts (s);
+		dev->puts(s);
 		return;
 	}
 
-	serial_current->puts (s);
+	serial_current->puts(s);
 }
 
 int serial_init(void)
 {
 	if (!serial_current) {
-		struct serial_device *dev = default_serial_console ();
+		struct serial_device *dev = default_serial_console();
 
-		return dev->init ();
+		return dev->init();
 	}
 
-	return serial_current->init ();
+	return serial_current->init();
 }

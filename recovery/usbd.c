@@ -12,7 +12,7 @@
 #include "onenand.h"
 
 #ifdef RECOVERY_DEBUG
-#define	PUTS(s)	serial_puts (DEBUG_MARK"usb: "s)
+#define	PUTS(s)	serial_puts(DEBUG_MARK"usb: "s)
 #else
 #define PUTS(s)
 #endif
@@ -74,8 +74,7 @@ static int process_data(struct usbd_ops *usbd)
 		if (recvlen < len) {
 			PUTS("Error: wrong image size\n");
 			*((ulong *) usbd->tx_data) = STATUS_RETRY;
-		}
-		else
+		} else
 			*((ulong *) usbd->tx_data) = STATUS_DONE;
 
 		usbd->send_data(usbd->tx_data, usbd->tx_len);

@@ -12,7 +12,7 @@
 #include "onenand.h"
 
 #ifdef RECOVERY_DEBUG
-#define	PUTS(s)	serial_puts (DEBUG_MARK""s)
+#define	PUTS(s)	serial_puts(DEBUG_MARK""s)
 #else
 #define PUTS(s)
 #endif
@@ -21,7 +21,8 @@ typedef int (init_fnc_t) (void);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+static struct s5pc110_gpio *gpio_base =
+	(struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 static void sdelay(unsigned long usec)
 {
