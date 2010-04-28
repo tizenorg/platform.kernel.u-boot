@@ -64,6 +64,17 @@ lowlevel_init:
 100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	cmp	r7, r8
+
+	beq	skip_check_didle			@Support C110 only
+
+	ldr	r0, =S5PC110_RST_STAT
+	ldr	r1, [r0]
+	and	r1, r1, #S5PC110_RST_STAT_WAKEUP_MODE_MASK
+	cmp	r1, #S5PC110_DEEPIDLE_WAKEUP
+	beq	didle_wakeup
+	cmp	r7, r8
+skip_check_didle:
+
 #ifndef DEBUG_PM_C110
 	addeq	r0, r8, #0x280				@S5PC100_GPIO_J4_OFFSET
 	addne	r0, r8, #0x2C0				@S5PC110_GPIO_J4_OFFSET
@@ -291,6 +302,26 @@ wakeup:
 	ldr	r1, [r0]
 	str	r1, [r0]
 #endif
+	b	1f
+
+didle_wakeup:
+	/* Wait when APLL is locked */
+	ldr	r0, =S5PC110_APLL_CON
+lockloop:
+	ldr	r1, [r0]
+	and	r1, r1, #S5PC110_APLL_CON_LOCKED
+	cmp	r1, #S5PC110_APLL_CON_LOCKED
+	bne	lockloop
+
+	ldr	r0, =S5PC110_INFORM0
+	ldr	r1, [r0]
+	mov	pc, r1
+	nop
+	nop
+	nop
+	nop
+	nop
+
 1:
 	mov	lr, r11
 	mov	pc, lr
