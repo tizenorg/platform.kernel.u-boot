@@ -374,7 +374,7 @@ static const char *board_name[] = {
 	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
-	"Neptune",
+	"Limo SDK",
 };
 
 enum {
@@ -408,7 +408,7 @@ static char *display_features(int board, int board_rev)
 			name = "Bamboo";
 	} else if (board == MACH_KESSLER) {
 		if (board_rev & NEPTUNE_BOARD)
-			name = "Neptune";
+			name = "Limo SDK";
 		if (board_rev & S1_BOARD)
 			name = "S1";
 	}
