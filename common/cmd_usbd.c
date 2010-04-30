@@ -199,6 +199,10 @@ static int nand_cmd(int type, char *p1, char *p2, char *p3)
 		printf("%s %s %s %s %s\n", argv[0], argv[1], argv[2],
 				argv[3], argv[4]);
 		ret = nand_func(NULL, 0, 5, argv);
+	} else if (type == 3) {
+		char *argv[] = {nand_name, "lock", p1, p2};
+		printf("%s %s %s %s\n", argv[0], argv[1], argv[2], argv[3]);
+		ret = nand_func(NULL, 0, 4, argv);
 	}
 
 	if (ret)
@@ -558,7 +562,7 @@ static int write_file_system(char *ramaddr, ulong len, char *offset,
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
-	ulong cmd = 0, arg = 0, len = 0, flag = 0;
+	ulong cmd = 0, arg = 0, ofs = 0, len = 0, flag = 0;
 	char offset[12], length[12], ramaddr[12];
 	int recvlen = 0;
 	unsigned int blocks = 0;
@@ -813,6 +817,69 @@ static int process_data(struct usbd_ops *usbd)
 	/* Erase and Write to NAND */
 	switch (img_type) {
 	case IMG_BOOT:
+		ofs = parts[part_id]->offset;
+#ifdef CONFIG_RECOVERY
+	{
+		/* block is fixed:
+			1m = ipl(16k)+recovery(240k)+bootloader(768k)*/
+		u32 *buf = (long *)down_ram_addr;
+		u32 ofst;
+		u32 bootloader_edge = parts[part_id]->size;
+		u32 bootloader_addr = bootloader_edge >> 2;
+		u32 recovery_edge = bootloader_addr;
+		u32 recovery_addr = recovery_edge >> 4;
+		u32 ipl_edge = recovery_addr;
+		u32 ipl_addr = 0;
+		int ret, retlen;
+
+		if (len > bootloader_addr) {
+			ofst = bootloader_addr/sizeof(buf);
+			if (*(buf + ofst) == 0xea000012) {
+				/* case: ipl + recovery + bootloader */
+				printf("target: ipl + recovery + loader\n");
+				ofs = ipl_addr;
+			} else {
+				/* case: unknown format */
+				printf("target: unknown\n");
+				*((ulong *) usbd->tx_data) = STATUS_ERROR;
+				usbd->send_data(usbd->tx_data, usbd->tx_len);
+				return 0;
+			}
+		} else {
+			ofst = recovery_addr/sizeof(buf);
+			if (*(buf + ofst) == 0xea000012 &&
+				*(buf + ofst - 1) == 0x00000000) {
+				/* case: ipl + bootloader (old type) */
+				printf("target: ipl + bootloader\n");
+				ofs = ipl_addr;
+			} else {
+				/* case: bootloader only */
+				printf("target: bootloader\n");
+				ofs = bootloader_addr;
+
+				/* skip revision check */
+				down_mode = MODE_FORCE;
+			}
+		}
+
+		sprintf(offset, "%x", ofs);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* check block is locked/locked-tight */
+		ret = nand_cmd(3, offset, length, NULL);
+		if (ret) {
+			printf("target is locked%s\n",
+				(ret == 1) ? "-tight" : "");
+			printf("-> try at recovery mode \
+				to update 'system'.\n");
+			printf("   how-to: reset \
+				while pressing volume up and down.\n");
+			*((ulong *) usbd->tx_data) = STATUS_ERROR;
+			usbd->send_data(usbd->tx_data, usbd->tx_len);
+			return 0;
+		}
+	}
+#endif
 #ifdef CONFIG_S5PC1XX
 		/* Workaround: for prevent revision mismatch */
 		if (cpu_is_s5pc110() && (down_mode != MODE_FORCE)) {
@@ -854,7 +921,16 @@ static int process_data(struct usbd_ops *usbd)
 			nand_cmd(0, offset, length, NULL);
 		}
 #endif
-		/* Fall through for write bootloader */
+		sprintf(offset, "%x", ofs);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		nand_cmd(0, offset, length, NULL);
+		/* Write */
+		sprintf(length, "%x", (unsigned int) len);
+		ret = nand_cmd(1, ramaddr, offset, length);
+		break;
+
 	case IMG_KERNEL:
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);

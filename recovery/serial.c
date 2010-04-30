@@ -6,7 +6,7 @@
 #include <common.h>
 #include <serial.h>
 
-static struct serial_device *serial_current = NULL;
+static struct serial_device *serial_current = &s5pc1xx_serial2_device;
 
 struct serial_device *__default_serial_console(void)
 {

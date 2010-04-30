@@ -12,8 +12,11 @@
 
 /* board/.../... */
 
-extern int board_check_condition(void);
-extern int board_load_uboot(unsigned char *buf);
-extern void board_recovery_init(void);
+int board_check_condition(void);
+int board_load_bootloader(unsigned char *buf);
+int board_lock_recoveryblock(void);
+void board_update_init(void);
+int board_update_image(u32 *buf, u32 len);
+void board_recovery_init(void);
 
 #endif

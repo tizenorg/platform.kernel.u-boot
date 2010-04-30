@@ -9,7 +9,6 @@
 #include <common.h>
 #include "recovery.h"
 #include "usbd.h"
-#include "onenand.h"
 
 #ifdef RECOVERY_DEBUG
 #define	PUTS(s)	serial_puts(DEBUG_MARK"usb: "s)
@@ -19,28 +18,6 @@
 
 static struct usbd_ops usbd_ops;
 static unsigned long down_ram_addr;
-
-int update_boot_image(void)
-{
-	struct onenand_op *onenand_ops = onenand_get_interface();
-	ulong len, offset;
-
-#if 1
-	/* case: IPL, Recovery, u-boot are one file */
-	offset = 0;
-	len = CONFIG_RECOVERY_SIZE + CONFIG_RECOVERY_ADDR;
-#else
-	/* case: IPL, Recover are one file and u-boot is another */
-	offset = CONFIG_RECOVERY_ADDR;
-	len = CONFIG_RECOVERY_SIZE;
-#endif
-	/* Erase */
-	onenand_ops->erase(offset, len, 0);
-	/* Write */
-	onenand_ops->write(offset, len, NULL, (u_char *)down_ram_addr);
-
-	return 0;
-}
 
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
@@ -117,7 +94,7 @@ static int process_data(struct usbd_ops *usbd)
 	/* Erase and Write to NAND */
 	switch (img_type) {
 	case IMG_BOOT:
-		update_boot_image();
+		ret = board_update_image((u32 *)down_ram_addr, len);
 		break;
 
 	default:

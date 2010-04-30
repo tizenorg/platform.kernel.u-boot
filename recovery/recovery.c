@@ -20,17 +20,28 @@ typedef int (init_fnc_t)(void);
 static void normal_boot(void)
 {
 	uchar *buf;
+	int ret;
 
 	buf = (uchar *)CONFIG_SYS_BOOT_ADDR;
 
-	board_load_uboot(buf);
+	ret = board_load_bootloader(buf);
+	if (ret)
+		hang();
 
+#if 0
+	/* this will be applied */
+	ret = board_lock_recoveryblock();
+	if (ret)
+		PUTS("fail: lock-tight");
+#endif
 	((init_fnc_t *)CONFIG_SYS_BOOT_ADDR)();
 }
 
 static void recovery_boot(void)
 {
 	PUTS("Recovery Mode\n");
+
+	board_update_init();
 
 	/* usb download and write image */
 	do_usbd_down();
@@ -58,6 +69,12 @@ void start_recovery_boot(void)
 		normal_boot();
 
 	/* NOTREACHED - no way out of command loop except booting */
+}
+
+void hang(void)
+{
+	PUTS("### ERROR ### Please RESET the board ###\n");
+	for (;;);
 }
 
 /*
