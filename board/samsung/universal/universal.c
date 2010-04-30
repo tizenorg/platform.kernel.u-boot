@@ -1763,6 +1763,7 @@ static void setup_power_down_mode_registers(void)
 
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
 extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
+extern void ld9040_set_platform_data(struct spi_platform_data *pd);
 
 struct spi_platform_data spi_pd;
 
@@ -1842,6 +1843,8 @@ void lcd_cfg_gpio(void)
 
 		if (board_is_neptune() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
+		else if (board_is_neptune() && hwrevision(3))
+			ld9040_set_platform_data(&spi_pd);
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
 			if (board_is_media())
@@ -1899,6 +1902,7 @@ void backlight_on(unsigned int onoff)
 	unsigned char addr;
 	unsigned char val[2];
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	printf("%s\n", __func__);
 
 	if (onoff) {
 		if (mach_is_geminus())
@@ -1938,8 +1942,16 @@ void reset_lcd(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus())
+	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+		if (board_is_neptune() && hwrevision(3)) {
+			udelay(10000);
+			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
+			udelay(10000);
+			gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+			udelay(100);
+		}
+	}
 	if (mach_is_cypress())
 		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
 }
@@ -2017,6 +2029,8 @@ extern void s6e63m0_cfg_ldo(void);
 extern void s6e63m0_enable_ldo(unsigned int onoff);
 extern void s6d16a0x_cfg_ldo(void);
 extern void s6d16a0x_enable_ldo(unsigned int onoff);
+extern void ld9040_cfg_ldo(void);
+extern void ld9040_enable_ldo(unsigned int onoff);
 
 int s5p_no_lcd_support(void)
 {
@@ -2122,7 +2136,41 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 1000;
 
 	}
+	if (board_is_neptune() && hwrevision(3)) {
+		vid->vl_freq	= 60;
+		vid->vl_col	= 480;
+		vid->vl_row	= 800;
+		vid->vl_width	= 480;
+		vid->vl_height	= 800;
+		vid->vl_clkp	= CONFIG_SYS_HIGH;
+		vid->vl_hsp	= CONFIG_SYS_HIGH;
+		vid->vl_vsp	= CONFIG_SYS_HIGH;
+		vid->vl_dp	= CONFIG_SYS_HIGH;
 
+		vid->vl_bpix	= 32;
+		/* disable dual lcd mode. */
+		vid->dual_lcd_enabled = 0;
+
+		/* LD9040 LCD Panel */
+		vid->vl_hspw	= 2;
+		vid->vl_hbpd	= 16;
+		vid->vl_hfpd	= 16;
+
+		vid->vl_vspw	= 2;
+		vid->vl_vbpd	= 3;
+		vid->vl_vfpd	= 28;
+
+		vid->cfg_gpio = lcd_cfg_gpio;
+		vid->backlight_on = NULL;
+		vid->lcd_power_on = lcd_power_on;
+		vid->reset_lcd = reset_lcd;
+		vid->cfg_ldo = ld9040_cfg_ldo;
+		vid->enable_ldo = ld9040_enable_ldo;
+
+		vid->init_delay = 0;
+		vid->power_on_delay = 30000;
+		vid->reset_delay = 20000;
+	}
 	if (mach_is_geminus()) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 1024,
@@ -2225,6 +2273,8 @@ int misc_init_r(void)
 	if (mach_is_aquila() || mach_is_kessler()) {
 		if (board_is_neptune() && hwrevision(0))
 			setenv("lcdinfo", "lcd=s6d16a0x");
+		else if (board_is_neptune() && hwrevision(3))
+			setenv("lcdinfo", "lcd=ld9040");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
 		else
