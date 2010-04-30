@@ -10,6 +10,7 @@ struct onenand_op {
 	int (*read)(loff_t, ssize_t, ssize_t *, u_char *, int);
 	int (*write)(loff_t, ssize_t, ssize_t *, u_char *);
 	int (*erase)(u32, u32, int);
+	int (*lock_tight)(u32, u32);
 
 	struct mtd_info *mtd;
 	struct onenand_chip *this;

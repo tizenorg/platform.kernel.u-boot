@@ -12,17 +12,14 @@
 
 #include <asm/io.h>
 
+#include "recovery.h"
 #include "onenand.h"
 
-#ifdef printk
-#undef printk
+#ifdef RECOVERY_DEBUG
+#define	PUTS(s)	serial_puts(DEBUG_MARK"onenand: "s)
+#else
+#define PUTS(s)
 #endif
-#define printk(...)	do {} while (0)
-#define puts(...)	do {} while (0)
-#ifdef printf
-#undef printf
-#endif
-#define printf(...)	do {} while (0)
 
 struct mtd_info onenand_mtd;
 struct onenand_chip onenand_chip;
@@ -49,11 +46,14 @@ static int onenand_block_read(loff_t from, ssize_t len,
 	while (len > 0) {
 		thislen = min_t(ssize_t, len, blocksize);
 		thislen = ALIGN(thislen, mtd->writesize);
+		if (ofs > mtd->size) {
+			PUTS(" range overflow\n");
+			break;
+		}
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
-			printf("Bad blocks %d at 0x%x\n",
-			       (u32)(ofs >> this->erase_shift), (u32)ofs);
+			PUTS("Bad blocks\n");
 			ofs += blocksize;
 			/* FIXME need to check how to handle the 'len' */
 			len -= blocksize;
@@ -71,14 +71,15 @@ static int onenand_block_read(loff_t from, ssize_t len,
 		ops.retlen = 0;
 		ret = mtd->read_oob(mtd, ofs, &ops);
 		if (ret) {
-			printf("Read failed 0x%x, %d\n", (u32)ofs, ret);
+			PUTS("read failed\n");
 			ofs += thislen;
 			continue;
 		}
 		ofs += thislen;
 		buf += thislen;
 		len -= thislen;
-		*retlen += ops.retlen;
+		if (retlen != NULL)
+			*retlen += ops.retlen;
 	}
 
 	return 0;
@@ -90,6 +91,7 @@ static int onenand_block_write(loff_t to, ssize_t len,
 	struct onenand_chip *this = mtd->priv;
 	int blocksize = (1 << this->erase_shift);
 	struct mtd_oob_ops ops = {
+		.mode		= MTD_OOB_PLACE,
 		.retlen		= 0,
 		.oobbuf		= NULL,
 	};
@@ -109,11 +111,14 @@ static int onenand_block_write(loff_t to, ssize_t len,
 	while (len > 0) {
 		thislen = min_t(ssize_t, len, blocksize);
 		thislen = ALIGN(thislen, mtd->writesize);
+		if (ofs > mtd->size) {
+			PUTS(" range overflow\n");
+			break;
+		}
 
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret) {
-			printf("Bad blocks %d at 0x%x\n",
-			       (u32)(ofs >> this->erase_shift), (u32)ofs);
+			PUTS("bad blocks\n");
 			skip_ofs += blocksize;
 			goto next;
 		}
@@ -123,7 +128,7 @@ static int onenand_block_write(loff_t to, ssize_t len,
 		ops.retlen = 0;
 		ret = mtd->write_oob(mtd, ofs, &ops);
 		if (ret) {
-			printf("Write failed 0x%x, %d", (u32)ofs, ret);
+			PUTS("write failed\n");
 			skip_ofs += thislen;
 			goto next;
 		}
@@ -152,8 +157,7 @@ static int onenand_block_erase(u32 start, u32 size, int force)
 	for (ofs = start; ofs < (start + size); ofs += blocksize) {
 		ret = mtd->block_isbad(mtd, ofs);
 		if (ret && !force) {
-			printf("Skip erase bad block %d at 0x%x\n",
-			       (u32)(ofs >> this->erase_shift), (u32)ofs);
+			PUTS("skip erase bad block \n");
 			continue;
 		}
 
@@ -163,13 +167,22 @@ static int onenand_block_erase(u32 start, u32 size, int force)
 		instr.mtd = mtd;
 		ret = mtd->erase(mtd, &instr);
 		if (ret) {
-			printf("erase failed block %d at 0x%x\n",
-			       (u32)(ofs >> this->erase_shift), (u32)ofs);
-			continue;
+			PUTS("erase failed\n");
+			return ret;
 		}
 	}
 
 	return 0;
+}
+
+static int onenand_block_lock_tight(u32 start, u32 size)
+{
+	struct onenand_chip *this = mtd->priv;
+	int ret;
+
+	ret = this->lock_tight(mtd, start, size);
+
+	return ret;
 }
 
 void onenand_set_interface(struct onenand_op *onenand)
@@ -177,6 +190,7 @@ void onenand_set_interface(struct onenand_op *onenand)
 	onenand->read = onenand_block_read;
 	onenand->write = onenand_block_write;
 	onenand->erase = onenand_block_erase;
+	onenand->lock_tight = onenand_block_lock_tight;
 
 	onenand->mtd = &onenand_mtd;
 	onenand->this = &onenand_chip;

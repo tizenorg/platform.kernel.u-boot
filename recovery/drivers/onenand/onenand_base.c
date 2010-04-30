@@ -2051,6 +2051,8 @@ static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int
 
 	if (cmd == ONENAND_CMD_LOCK)
 		wp_status_mask = ONENAND_WP_LS;
+	else if (cmd == ONENAND_CMD_LOCK_TIGHT)
+		wp_status_mask = ONENAND_WP_LTS;
 	else
 		wp_status_mask = ONENAND_WP_US;
 
@@ -2062,11 +2064,11 @@ static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int
 		/* Set end block address */
 		this->write_word(end - 1,
 				 this->base + ONENAND_REG_END_BLOCK_ADDRESS);
-		/* Write unlock command */
+		/* Write lock command */
 		this->command(mtd, cmd, 0, 0);
 
 		/* There's no return value */
-		this->wait(mtd, FL_UNLOCKING);
+		this->wait(mtd, FL_LOCKING);
 
 		/* Sanity check */
 		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
@@ -2075,7 +2077,7 @@ static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int
 
 		/* Check lock status */
 		status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
-		if (!(status & ONENAND_WP_US))
+		if (!(status & wp_status_mask))
 			printk(KERN_ERR "wp status = 0x%x\n", status);
 
 		return 0;
@@ -2093,11 +2095,11 @@ static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int
 		/* Set start block address */
 		this->write_word(block,
 				 this->base + ONENAND_REG_START_BLOCK_ADDRESS);
-		/* Write unlock command */
-		this->command(mtd, ONENAND_CMD_UNLOCK, 0, 0);
+		/* Write lock command */
+		this->command(mtd, cmd, 0, 0);
 
 		/* There's no return value */
-		this->wait(mtd, FL_UNLOCKING);
+		this->wait(mtd, FL_LOCKING);
 
 		/* Sanity check */
 		while (this->read_word(this->base + ONENAND_REG_CTRL_STATUS)
@@ -2106,7 +2108,7 @@ static int onenand_do_lock_cmd(struct mtd_info *mtd, loff_t ofs, size_t len, int
 
 		/* Check lock status */
 		status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
-		if (!(status & ONENAND_WP_US))
+		if (!(status & wp_status_mask))
 			printk(KERN_ERR "block = %d, wp status = 0x%x\n",
 			       block, status);
 	}
@@ -2226,6 +2228,59 @@ static void onenand_unlock_all(struct mtd_info *mtd)
 	onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_UNLOCK);
 }
 
+/**
+ * onenand_lock_tight - [OneNAND Interface] Lock-tight block(s)
+ * @param mtd           MTD device structure
+ * @param ofs           offset relative to mtd start
+ * @param len           number of bytes to lock-tight
+ *
+ * Lock-tight one or more blocks
+ */
+static int onenand_lock_tight(struct mtd_info *mtd, loff_t ofs, size_t len)
+{
+	int ret;
+
+	onenand_get_device(mtd, FL_LOCKING);
+	ret = onenand_do_lock_cmd(mtd, ofs, len, ONENAND_CMD_LOCK_TIGHT);
+	onenand_release_device(mtd);
+	return ret;
+}
+
+/**
+ * onenand_block_islock - [MTD Interface] Check whether the block at the given offset is locked
+ * @param mtd		MTD device structure
+ * @param ofs		offset relative to mtd start
+ *
+ * Check whether the block is bad
+ */
+static int onenand_block_islock(struct mtd_info *mtd, loff_t ofs)
+{
+	struct onenand_chip *this = mtd->priv;
+	int block, value, status;
+
+	/* Check for invalid offset */
+	if (ofs > mtd->size)
+		return -EINVAL;
+
+	onenand_get_device(mtd, FL_READING);
+
+	block = onenand_block(this, ofs);
+	/* Set block address */
+	value = onenand_block_address(this, block);
+	this->write_word(value, this->base + ONENAND_REG_START_ADDRESS1);
+	/* Select DataRAM for DDP */
+	value = onenand_bufferram_address(this, block);
+	this->write_word(value, this->base + ONENAND_REG_START_ADDRESS2);
+	/* Set start block address */
+	this->write_word(block, this->base + ONENAND_REG_START_BLOCK_ADDRESS);
+
+	/* Check lock status */
+	status = this->read_word(this->base + ONENAND_REG_WP_STATUS);
+
+	onenand_release_device(mtd);
+
+	return status;
+}
 
 /**
  * onenand_check_features - Check and set OneNAND features
@@ -2791,6 +2846,10 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 		this->bbt_wait = onenand_bbt_wait;
 	if (!this->unlock_all)
 		this->unlock_all = onenand_unlock_all;
+	if (!this->lock_tight)
+		this->lock_tight = onenand_lock_tight;
+	if (!this->block_islock)
+		this->block_islock = onenand_block_islock;
 
 	if (!this->read_bufferram)
 		this->read_bufferram = onenand_read_bufferram;
@@ -2878,9 +2937,6 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	mtd->oobavail = this->ecclayout->oobavail;
 
 	mtd->ecclayout = this->ecclayout;
-
-	/* Unlock whole block */
-	this->unlock_all(mtd);
 
 	return this->scan_bbt(mtd);
 }
