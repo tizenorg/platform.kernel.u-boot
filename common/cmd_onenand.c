@@ -202,6 +202,26 @@ static int onenand_block_erase(u32 start, u32 size, int force)
 	return 0;
 }
 
+static int onenand_block_islock(u32 start, u32 size)
+{
+	struct onenand_chip *this = mtd->priv;
+	loff_t ofs;
+	int status;
+	int status_mask = ONENAND_WP_LS|ONENAND_WP_LTS;
+
+	for (ofs = start; ofs < (start + size); ofs += mtd->erasesize) {
+		if (this->block_islock != NULL)
+			status = this->block_islock(mtd, ofs);
+		else
+			status = 0;
+
+		if (status & status_mask)
+			return (status & status_mask);
+	}
+
+	return 0;
+}
+
 static int onenand_block_test(u32 start, u32 size)
 {
 	struct onenand_chip *this = mtd->priv;
@@ -483,6 +503,21 @@ int do_onenand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 				ret = onenand_dump(mtd, ofs, 0);
 
 			return ret == 0 ? 1 : 0;
+		}
+
+		if (strncmp(cmd, "lock", 4) == 0) {
+			printf("OneNAND lock: ");
+			if (argc < 4) {
+				ofs = 0x0;
+				len = mtd->size;
+			} else {
+				if (arg_off_size(argc-2, argv+2, &ofs, &len))
+					return 1;
+			}
+
+			ret = onenand_block_islock(ofs, len);
+
+			return ret;
 		}
 
 		break;
