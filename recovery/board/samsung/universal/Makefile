@@ -11,7 +11,7 @@ include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 LIB	:= $(obj)lib$(BOARD).a
 
 SOBJS = start.o reset.o _memcpy32.o
-COBJS = string.o dlmalloc.o
+COBJS = string.o dlmalloc.o cpu_info.o
 COBJS += gpio.o
 COBJS += universal.o
 
@@ -31,7 +31,11 @@ $(obj)start.S:
 
 $(obj)reset.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/s5pc1xx/$@ $@
+	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/$@ $@
+
+$(obj)cpu_info.c:
+	@rm -f $@
+	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/$@ $@
 
 $(obj)_memcpy32.S:
 	ln -sf $(SRCTREE)/lib_arm/$@ $@

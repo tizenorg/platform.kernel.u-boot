@@ -95,6 +95,11 @@ static int process_data(struct usbd_ops *usbd)
 	switch (img_type) {
 	case IMG_BOOT:
 		ret = board_update_image((u32 *)down_ram_addr, len);
+		if (ret) {
+			*((ulong *) usbd->tx_data) = STATUS_ERROR;
+			usbd->send_data(usbd->tx_data, usbd->tx_len);
+			return 0;
+		}
 		break;
 
 	default:

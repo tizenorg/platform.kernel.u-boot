@@ -34,9 +34,9 @@ int arch_cpu_init(void)
 {
 	s5pc1xx_cpu_id = readl(S5PC1XX_PRO_ID);
 	s5pc1xx_cpu_id = 0xC000 | ((s5pc1xx_cpu_id & 0x00FFF000) >> 12);
-
+#ifndef CONFIG_RECOVERY_BLOCK
 	s5pc1xx_clock_init();
-
+#endif
 	return 0;
 }
 #endif
@@ -49,11 +49,12 @@ u32 get_device_type(void)
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
+#ifndef CONFIG_RECOVERY_BLOCK
 	char buf[32];
 
 	printf("CPU:\tS5P%X@%sMHz\n",
 			s5pc1xx_cpu_id, strmhz(buf, get_arm_clk()));
-
+#endif
 	return 0;
 }
 #endif
