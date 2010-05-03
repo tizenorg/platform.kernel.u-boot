@@ -40,6 +40,7 @@ void onenand_board_init(struct mtd_info *mtd)
 	if (cpu_is_s5pc110()) {
 		this->base = (void *) 0xB0000000;
 		this->options |= ONENAND_RUNTIME_BADBLOCK_CHECK;
+		this->chip_probe = s5pc110_chip_probe;
 	} else {
 		struct s5pc100_clock *clk =
 			(struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;

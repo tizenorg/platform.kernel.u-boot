@@ -126,6 +126,7 @@ struct samsung_onenand {
 #define TSRF		(1 << 0)
 
 /* common initialize function */
+extern int s5pc110_chip_probe(struct mtd_info *);
 extern void s3c_onenand_init(struct mtd_info *);
 
 #endif

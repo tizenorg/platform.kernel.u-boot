@@ -590,6 +590,11 @@ static void s3c_set_width_regs(struct onenand_chip *this)
 }
 #endif
 
+int s5pc110_chip_probe(struct mtd_info *mtd)
+{
+	return 0;
+}
+
 void s3c_onenand_init(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
