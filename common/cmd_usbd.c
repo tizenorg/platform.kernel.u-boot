@@ -922,7 +922,10 @@ static int process_data(struct usbd_ops *usbd)
 		}
 #endif
 		sprintf(offset, "%x", ofs);
-		sprintf(length, "%x", parts[part_id]->size);
+		if (ofs != 0)
+			sprintf(length, "%x", parts[part_id]->size - ofs);
+		else
+			sprintf(length, "%x", parts[part_id]->size);
 
 		/* Erase */
 		nand_cmd(0, offset, length, NULL);
