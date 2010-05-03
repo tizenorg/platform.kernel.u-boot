@@ -456,13 +456,13 @@ static int check_keypad(void)
 
 	cpu_rev = s5pc1xx_get_cpu_rev();
 	if (cpu_rev == 1) {
-		if (row_state[1] & 0x6)
+		if ((row_state[1] & 0x6) == 0x6)
 			condition = 1;
 	} else if (cpu_rev == 2) {
-		if (row_state[2] & 0x6)
+		if ((row_state[2] & 0x6) == 0x6)
 			condition = 1;
 	} else {
-		if (row_state[1] & 0x3)
+		if ((row_state[1] & 0x3) == 0x3)
 			condition = 1;
 	}
 
