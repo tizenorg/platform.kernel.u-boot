@@ -47,6 +47,13 @@ static const unsigned char SEQ_ELVSS[] = {
 	DATA_ONLY, 0x16,
 };
 
+static const unsigned char SEQ_GTCON[] = {
+	0xF7, 0x09,
+
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0x00,
+};
+
 static const unsigned char SEQ_GAMMA_SET1[] = {
 	0xF9, 0x18,
 
@@ -301,6 +308,7 @@ void ld9040_cfg_ldo(void)
 	/* SMD power on sequence */
 	ld9040_panel_send_sequence(SEQ_USER_SETTING, ARRAY_SIZE(SEQ_USER_SETTING));
 	ld9040_panel_send_sequence(SEQ_ELVSS, ARRAY_SIZE(SEQ_ELVSS));
+	ld9040_panel_send_sequence(SEQ_GTCON, ARRAY_SIZE(SEQ_GTCON));
 	ld9040_panel_send_sequence(SEQ_GAMMA_SET1, ARRAY_SIZE(SEQ_GAMMA_SET1));
 	ld9040_panel_send_sequence(SEQ_GAMMA_CTRL, ARRAY_SIZE(SEQ_GAMMA_CTRL));
 	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
