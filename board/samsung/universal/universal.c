@@ -1951,7 +1951,7 @@ void reset_lcd(void)
 
 	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_neptune() && (hwrevision(3) || hwrevision(4))) {
+		if (board_is_neptune() && (hwrevision(3))) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
