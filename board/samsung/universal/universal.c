@@ -693,7 +693,8 @@ static void show_hw_revision(void)
 		else if (board_is_bamboo())
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_kessler()) {
-		if (board_is_neptune() && hwrevision(2))
+		if (board_is_neptune() && hwrevision(2) ||
+			board_is_neptune() && hwrevision(4))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
