@@ -869,6 +869,9 @@ static void check_keypad(void)
 		}
 
 		for (i = 0; i < row_num; i++) {
+			if (board_is_neptune() && (hwrevision(3) || hwrevision(4)) && i == 0) {
+				continue;
+			}
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
 			gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
@@ -912,6 +915,10 @@ static void check_keypad(void)
 			if ((row_state[1] & 0x1) && (row_state[1] & 0x2))
 				auto_download = 1;
 		} else if (board_is_neptune() && hwrevision(2)) {
+			/* cam full shot & volume down */
+			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
+				auto_download = 1;
+		} else if (board_is_neptune() && (hwrevision(3) || hwrevision(4))) {
 			/* cam full shot & volume down */
 			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
@@ -1944,7 +1951,7 @@ void reset_lcd(void)
 
 	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_neptune() && hwrevision(3)) {
+		if (board_is_neptune() && (hwrevision(3) || hwrevision(4))) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
