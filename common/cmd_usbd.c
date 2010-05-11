@@ -870,10 +870,10 @@ static int process_data(struct usbd_ops *usbd)
 		if (ret) {
 			printf("target is locked%s\n",
 				(ret == 1) ? "-tight" : "");
-			printf("-> try at recovery mode \
-				to update 'system'.\n");
-			printf("   how-to: reset \
-				while pressing volume up and down.\n");
+			printf("-> try at recovery mode "
+				"to update 'system'.\n");
+			printf("   how-to: reset "
+				"while pressing volume up and down.\n");
 			*((ulong *) usbd->tx_data) = STATUS_ERROR;
 			usbd->send_data(usbd->tx_data, usbd->tx_len);
 			return 0;
