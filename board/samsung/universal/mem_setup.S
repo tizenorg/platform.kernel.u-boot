@@ -222,17 +222,17 @@ swap_memory:
 
 	ldr	r1, =0x14233287
 	str	r1, [r0, #0x034]			@ TIMINGROW_OFFSET
-	ldrne	r1, =0x18344309
+	ldrne	r1, =0x182332c8
 	strne	r1, [r6, #0x034]			@ TIMINGROW_OFFSET
 
 	ldr	r1, =0x12130005
 	str	r1, [r0, #0x038]			@ TIMINGDATA_OFFSET
-	ldrne	r1, =0x12130005
+	ldrne	r1, =0x13130005
 	strne	r1, [r6, #0x038]			@ TIMINGDATA_OFFSET
 
 	ldr	r1, =0x0E140222
 	str	r1, [r0, #0x03C]			@ TIMINGPOWER_OFFSET
-	ldrne	r1, =0x0E190222
+	ldrne	r1, =0x0E180222
 	strne	r1, [r6, #0x03C]			@ TIMINGPOWER_OFFSET
 
 	/* chip0 Deselect */
