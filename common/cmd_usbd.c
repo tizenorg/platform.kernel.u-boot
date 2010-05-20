@@ -947,6 +947,17 @@ static int process_data(struct usbd_ops *usbd)
 
 	/* File Systems */
 	case IMG_FILESYSTEM:
+		/* Erase the qboot also when write ubi image */
+		{
+			int qboot_id;
+			qboot_id = get_part_id("qboot");
+
+			if (qboot_id != -1) {
+				sprintf(offset, "%x", parts[qboot_id]->offset);
+				sprintf(length, "%x", parts[qboot_id]->size);
+				nand_cmd(0, offset, length, NULL);
+			}
+		}
 		ret = write_file_system(ramaddr, len, offset, length,
 				part_id, ubi_update);
 		break;
