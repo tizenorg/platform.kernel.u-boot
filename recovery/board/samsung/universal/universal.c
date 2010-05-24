@@ -559,8 +559,6 @@ int board_update_image(u32 *buf, u32 len)
 	u32 recovery_addr = ipl_edge;
 	u32 recovery_edge = CONFIG_RECOVERY_UBOOT_BLOCK << this->erase_shift;
 	u32 bootloader_addr = recovery_edge;
-	u32 bootloader_edge = CONFIG_RECOVERY_BOOT_BLOCKS << this->erase_shift;
-	int check_rev = 0;
 	int ret, retlen;
 
 	if (len > bootloader_addr) {
