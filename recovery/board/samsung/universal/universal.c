@@ -32,7 +32,7 @@
 /* board is MACH_KESSLER and board is like below */
 #define S1_BOARD		0x1000
 #define KESSLER_BOARD		0x4000
-#define NEPTUNE_BOARD		0x8000
+#define GONI_BOARD		0x8000
 
 #define BOARD_MASK		0xFF00
 
@@ -105,9 +105,9 @@ static int mach_is_kessler(void)
 	return bd.bi_arch_number == MACH_KESSLER;
 }
 
-static int board_is_neptune(void)
+static int board_is_goni(void)
 {
-	return mach_is_kessler() && (board_rev & NEPTUNE_BOARD);
+	return mach_is_kessler() && (board_rev & GONI_BOARD);
 }
 
 static void check_board_revision(int board, int rev)
@@ -131,7 +131,7 @@ static void check_board_revision(int board, int rev)
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & NEPTUNE_BOARD)
+		if (rev & GONI_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & S1_BOARD)
@@ -297,11 +297,11 @@ static void check_hw_revision(void)
 				board = MACH_KESSLER;
 				board_rev |= KESSLER_BOARD;
 
-				/* Neptune MP0_5[4] == 1 */
+				/* goni MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
-					board_rev |= NEPTUNE_BOARD;
+					board_rev |= GONI_BOARD;
 				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
@@ -362,7 +362,7 @@ static void show_hw_revision(void)
 				s5pc1xx_set_cpu_rev(0);
 		}
 	} else if (mach_is_kessler()) {
-		if (board_is_neptune() && hwrevision(2))
+		if (board_is_goni() && hwrevision(2))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
