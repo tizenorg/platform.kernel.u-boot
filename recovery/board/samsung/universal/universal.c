@@ -29,10 +29,10 @@
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
 
-/* board is MACH_KESSLER and board is like below */
+/* board is MACH_GONI and board is like below */
 #define S1_BOARD		0x1000
 #define KESSLER_BOARD		0x4000
-#define NEPTUNE_BOARD		0x8000
+#define SDK_BOARD		0x8000
 
 #define BOARD_MASK		0xFF00
 
@@ -48,7 +48,7 @@ enum {
 
 	MACH_PSEUDO_END,
 
-	MACH_KESSLER	= 3102,
+	MACH_GONI = 3102,
 };
 
 typedef int (init_fnc_t) (void);
@@ -100,14 +100,14 @@ static int board_is_limo_real(void)
 }
 
 /* Kessler */
-static int mach_is_kessler(void)
+static int mach_is_goni(void)
 {
-	return bd.bi_arch_number == MACH_KESSLER;
+	return bd.bi_arch_number == MACH_GONI;
 }
 
-static int board_is_neptune(void)
+static int board_is_sdk(void)
 {
-	return mach_is_kessler() && (board_rev & NEPTUNE_BOARD);
+	return mach_is_goni() && (board_rev & SDK_BOARD);
 }
 
 static void check_board_revision(int board, int rev)
@@ -127,11 +127,11 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-	} else if (board == MACH_KESSLER) {
+	} else if (board == MACH_GONI) {
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & NEPTUNE_BOARD)
+		if (rev & SDK_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & S1_BOARD)
@@ -294,23 +294,23 @@ static void check_hw_revision(void)
 				board = MACH_CYPRESS;
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
-				board = MACH_KESSLER;
+				board = MACH_GONI;
 				board_rev |= KESSLER_BOARD;
 
-				/* Neptune MP0_5[4] == 1 */
+				/* Limo SDK MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
-					board_rev |= NEPTUNE_BOARD;
+					board_rev |= SDK_BOARD;
 				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
 		} else {
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
-			/* Kessler S1 board detection */
+			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
-				board = MACH_KESSLER;
+				board = MACH_GONI;
 				board_rev |= S1_BOARD;
 				hwrev3 = 7;
 			}
@@ -346,7 +346,7 @@ static void show_hw_revision(void)
 		}
 	}
 
-	if (mach_is_kessler() || mach_is_aquila())
+	if (mach_is_goni() || mach_is_aquila())
 		board = bd.bi_arch_number;
 	else if (cpu_is_s5pc110())
 		board = bd.bi_arch_number - C110_MACH_START;
@@ -361,8 +361,8 @@ static void show_hw_revision(void)
 			if ((board_rev & 0xf) < 8)
 				s5pc1xx_set_cpu_rev(0);
 		}
-	} else if (mach_is_kessler()) {
-		if (board_is_neptune() && hwrevision(2))
+	} else if (mach_is_goni()) {
+		if (board_is_sdk() && hwrevision(2))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);

@@ -115,7 +115,7 @@ static struct i2c_gpio_bus_data i2c_gpio6 = {
 };
 
 /*
- * i2c gpio7 - kessler
+ * i2c gpio7 - goni
  * SDA: MP05[1]
  * SCL: MP05[0]
  */
@@ -185,7 +185,7 @@ enum {
 
 	MACH_PSEUDO_END,
 
-	MACH_KESSLER	= 3102,
+	MACH_GONI = 3102,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -197,10 +197,10 @@ enum {
 #define MEDIA_BOARD		0x1000
 #define BAMBOO_BOARD		0x2000
 
-/* board is MACH_KESSLER and board is like below */
+/* board is MACH_GONI and board is like below */
 #define S1_BOARD		0x1000
 #define KESSLER_BOARD		0x4000
-#define NEPTUNE_BOARD		0x8000
+#define SDK_BOARD		0x8000
 
 #define BOARD_MASK		0xFF00
 
@@ -255,19 +255,19 @@ static int board_is_j1b2(void)
 }
 
 /* Kessler */
-static int mach_is_kessler(void)
+static int mach_is_goni(void)
 {
-	return gd->bd->bi_arch_number == MACH_KESSLER;
+	return gd->bd->bi_arch_number == MACH_GONI;
 }
 
-static int board_is_neptune(void)
+static int board_is_sdk(void)
 {
-	return mach_is_kessler() && (board_rev & NEPTUNE_BOARD);
+	return mach_is_goni() && (board_rev & SDK_BOARD);
 }
 
 static int board_is_s1(void)
 {
-	return mach_is_kessler() && (board_rev & S1_BOARD);
+	return mach_is_goni() && (board_rev & S1_BOARD);
 }
 
 /* DLNA Dongle */
@@ -292,7 +292,7 @@ void i2c_init_board(void)
 	if (mach_is_aquila()) {
 		i2c_gpio[I2C_GPIO6].bus->gpio_base = 0;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
-	} else if (mach_is_kessler()) {
+	} else if (mach_is_goni()) {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
 			(unsigned int)&gpio->gpio_mp0_5;
 	} else if (mach_is_cypress()) {
@@ -370,7 +370,7 @@ static void display_device_info(void)
 static const char *board_name[] = {
 	"Universal",
 	"TickerTape",
-	"Kessler",
+	"Goni",
 	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
@@ -406,8 +406,8 @@ static char *display_features(int board, int board_rev)
 			name = "Media";
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
-	} else if (board == MACH_KESSLER) {
-		if (board_rev & NEPTUNE_BOARD)
+	} else if (board == MACH_GONI) {
+		if (board_rev & SDK_BOARD)
 			name = "Limo SDK";
 		if (board_rev & S1_BOARD)
 			name = "S1";
@@ -422,8 +422,8 @@ static char *get_board_name(int board)
 {
 	if (board == MACH_TYPE_AQUILA)
 		return "Aquila";
-	else if (board == MACH_KESSLER)
-		return "Kessler";
+	else if (board == MACH_GONI)
+		return "Goni";
 	else if (board == MACH_WMG160)
 		return "WMG160";
 	return (char *) board_name[board];
@@ -446,11 +446,11 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-	} else if (board == MACH_KESSLER) {
+	} else if (board == MACH_GONI) {
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & NEPTUNE_BOARD)
+		if (rev & SDK_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & S1_BOARD)
@@ -613,23 +613,23 @@ static void check_hw_revision(void)
 				board = MACH_CYPRESS;
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
-				board = MACH_KESSLER;
+				board = MACH_GONI;
 				board_rev |= KESSLER_BOARD;
 
-				/* Neptune MP0_5[4] == 1 */
+				/* Limo SDK MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
-					board_rev |= NEPTUNE_BOARD;
+					board_rev |= SDK_BOARD;
 				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
 		} else {
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
-			/* Kessler S1 board detection */
+			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
-				board = MACH_KESSLER;
+				board = MACH_GONI;
 				board_rev |= S1_BOARD;
 				hwrev3 = 7;
 			}
@@ -675,7 +675,7 @@ static void show_hw_revision(void)
 		}
 	}
 
-	if (mach_is_kessler() || mach_is_aquila())
+	if (mach_is_goni() || mach_is_aquila())
 		board = gd->bd->bi_arch_number;
 	else if (cpu_is_s5pc110())
 		board = gd->bd->bi_arch_number - C110_MACH_START;
@@ -692,8 +692,8 @@ static void show_hw_revision(void)
 		}
 		else if (board_is_bamboo())
 			s5pc1xx_set_cpu_rev(0);
-	} else if (mach_is_kessler()) {
-		if (board_is_neptune() && (hwrevision(2) || hwrevision(4)))
+	} else if (mach_is_goni()) {
+		if (board_is_sdk() && (hwrevision(2) || hwrevision(4)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
@@ -869,7 +869,7 @@ static void check_keypad(void)
 		}
 
 		for (i = 0; i < row_num; i++) {
-			if (board_is_neptune() && (hwrevision(3) || hwrevision(4)) && i == 0) {
+			if (board_is_sdk() && (hwrevision(3) || hwrevision(4)) && i == 0) {
 				continue;
 			}
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
@@ -906,19 +906,19 @@ static void check_keypad(void)
 	/* KEYIFCOL reg clear */
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-	if (mach_is_aquila() || mach_is_kessler()) {
+	if (mach_is_aquila() || mach_is_goni()) {
 		/* volume down */
 		if (row_state[1] & 0x2)
 			display_info = 1;
-		if (board_is_neptune() && hwrevision(0)) {
+		if (board_is_sdk() && hwrevision(0)) {
 			/* home & volume down */
 			if ((row_state[1] & 0x1) && (row_state[1] & 0x2))
 				auto_download = 1;
-		} else if (board_is_neptune() && hwrevision(2)) {
+		} else if (board_is_sdk() && hwrevision(2)) {
 			/* cam full shot & volume down */
 			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
-		} else if (board_is_neptune() && (hwrevision(3) || hwrevision(4))) {
+		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4))) {
 			/* cam full shot & volume down */
 			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
@@ -946,7 +946,7 @@ static void check_battery(int mode)
 	if (mach_is_aquila()) {
 		if (board_is_j1b2())
 			return;
-	} else if (mach_is_kessler()) {
+	} else if (mach_is_goni()) {
 		i2c_set_bus_num(I2C_GPIO7);
 	} else if (mach_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO7);
@@ -1159,7 +1159,7 @@ static unsigned short get_adc_value(int channel)
 	char buf[64];
 	unsigned int loop = 0;
 
-	if (mach_is_kessler())
+	if (mach_is_goni())
 		ldonum = 4;
 	else if (mach_is_geminus())
 		ldonum = 4;
@@ -1201,7 +1201,7 @@ static unsigned short get_adc_value(int channel)
 
 static int adc_get_average_ambient_temperature(void)
 {
-	if (mach_is_kessler()) {
+	if (mach_is_goni()) {
 		unsigned short min = USHRT_MAX;
 		unsigned short max = 0;
 		unsigned int sum = 0;
@@ -1481,7 +1481,7 @@ static int fsa9480_probe(void)
 
 	i2c_set_bus_num(I2C_PMIC);
 
-	if (mach_is_kessler()) {
+	if (mach_is_goni()) {
 		i2c_set_bus_num(I2C_GPIO6);
 	} else if (mach_is_cypress()) {
 		i2c_set_bus_num(I2C_GPIO6);
@@ -1637,7 +1637,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
 
-	if (mach_is_kessler())
+	if (mach_is_goni())
 		val[0] |= MAX8998_LDO7;		/* LDO7: VLCD_1.8V */
 
 	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
@@ -1651,7 +1651,7 @@ static void init_pmic(void)
 	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
 			MAX8998_LDO16 | MAX8998_LDO17);
 
-	if (mach_is_kessler())
+	if (mach_is_goni())
 		val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
 
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
@@ -1679,7 +1679,7 @@ static void setup_power_down_mode_registers(void)
 			/* Support */;
 		else
 			return;
-	} else if (mach_is_kessler()) {
+	} else if (mach_is_goni()) {
 		/* Support */;
 	} else if (mach_is_geminus()) {
 		/* Support */;
@@ -1695,7 +1695,7 @@ static void setup_power_down_mode_registers(void)
 		n_p = ARRAY_SIZE(aquila_powerdown_modes);
 		n_ge = ARRAY_SIZE(aquila_external_powerdown_modes);
 		n_mr = ARRAY_SIZE(aquila_mirror_powerdown_mode);
-	} else if (mach_is_kessler()) {
+	} else if (mach_is_goni()) {
 		/* Aquila rev 0.9 */
 		p = kessler_powerdown_modes;
 		ge = kessler_external_powerdown_modes;
@@ -1824,7 +1824,7 @@ void lcd_cfg_gpio(void)
 	/* LCD_BACKLIGHT_EN */
 	if (mach_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
-	if (board_is_neptune() && hwrevision(0)) {
+	if (board_is_sdk() && hwrevision(0)) {
 		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 4, GPIO_OUTPUT);
 		gpio_direction_output(&gpio_base->gpio_mp0_4, 4, 0);
 	}
@@ -1838,7 +1838,7 @@ void lcd_cfg_gpio(void)
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_INPUT);
 	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
 
-	if (mach_is_aquila() || mach_is_kessler()) {
+	if (mach_is_aquila() || mach_is_goni()) {
 		spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
 		spi_pd.cs_num = 1;
 		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
@@ -1848,9 +1848,9 @@ void lcd_cfg_gpio(void)
 		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.so_num = 2;
 
-		if (board_is_neptune() && hwrevision(0))
+		if (board_is_sdk() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
-		else if (board_is_neptune() && hwrevision(3))
+		else if (board_is_sdk() && hwrevision(3))
 			ld9040_set_platform_data(&spi_pd);
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
@@ -1919,7 +1919,7 @@ void backlight_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
 	}
 
-	if (mach_is_kessler() && board_is_neptune() && hwrevision(0)) {
+	if (mach_is_goni() && board_is_sdk() && hwrevision(0)) {
 		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
@@ -1949,9 +1949,9 @@ void reset_lcd(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
-	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus()) {
+	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_neptune() && (hwrevision(3))) {
+		if (board_is_sdk() && (hwrevision(3))) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
@@ -1974,7 +1974,7 @@ void lcd_power_on(unsigned int onoff)
 		if (mach_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
-		if (mach_is_kessler()) {
+		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
@@ -2009,7 +2009,7 @@ void lcd_power_on(unsigned int onoff)
 		if (mach_is_cypress())
 			gpio_set_value(&gpio->gpio_g2, 2, 0);
 
-		if (mach_is_kessler()) {
+		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 
@@ -2093,7 +2093,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_vbpd	= 3;
 	vid->vl_vfpd	= 28;
 
-	if (mach_is_aquila() || mach_is_kessler()
+	if (mach_is_aquila() || mach_is_goni()
 			|| mach_is_cypress()) {
 		vid->cfg_gpio = lcd_cfg_gpio;
 		vid->reset_lcd = reset_lcd;
@@ -2106,7 +2106,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 120000;
 	}
 
-	if (board_is_neptune() && hwrevision(0)) {
+	if (board_is_sdk() && hwrevision(0)) {
 		vid->vl_freq	= 100;
 		vid->vl_col	= 320;
 		vid->vl_row	= 480;
@@ -2143,7 +2143,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 1000;
 
 	}
-	if (board_is_neptune() && hwrevision(3)) {
+	if (board_is_sdk() && hwrevision(3)) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 480;
 		vid->vl_row	= 800;
@@ -2277,10 +2277,10 @@ int misc_init_r(void)
 	/* It should be located at first */
 	lcd_is_enabled = 0;
 
-	if (mach_is_aquila() || mach_is_kessler()) {
-		if (board_is_neptune() && hwrevision(0))
+	if (mach_is_aquila() || mach_is_goni()) {
+		if (board_is_sdk() && hwrevision(0))
 			setenv("lcdinfo", "lcd=s6d16a0x");
-		else if (board_is_neptune() && hwrevision(3))
+		else if (board_is_sdk() && hwrevision(3))
 			setenv("lcdinfo", "lcd=ld9040");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
@@ -2399,17 +2399,17 @@ int dram_init(void)
 		 * Limo SDK Rev 0.3 4G3G1G
 		 * Limo SDK Rev 0.4 4G3G1G
 		 */
-		if (mach_is_aquila() || mach_is_kessler()) {
-			if ((!board_is_neptune() && (hwrevision(5) ||
+		if (mach_is_aquila() || mach_is_goni()) {
+			if ((!board_is_sdk() && (hwrevision(5) ||
 				hwrevision(8) || hwrevision(9))) ||
-				(board_is_neptune() && !hwrevision(1))) {
+				(board_is_sdk() && !hwrevision(1))) {
 				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 				sz = (memconfig1 >> 16) & 0xFF;
 				sz = ((unsigned char) ~sz) + 1;
 				sz = sz << 4;
 			}
-			if (mach_is_kessler() && board_is_s1())
+			if (mach_is_goni () && board_is_s1())
 				sz = 0;
 		}
 	}
@@ -2448,7 +2448,7 @@ void board_sleep_init(void)
 	if (max8998_probe())
 		return;
 
-	if (mach_is_kessler()) {
+	if (mach_is_goni()) {
 		/* Set ONOFF1 */
 		i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
 		saved_val[0][0] = val[0];
@@ -2683,7 +2683,7 @@ int board_mmc_init(bd_t *bis)
 	int i;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
-	if (mach_is_kessler())
+	if (mach_is_goni())
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
 
 	if (mach_is_wmg160())
