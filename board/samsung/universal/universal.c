@@ -200,7 +200,7 @@ enum {
 /* board is MACH_KESSLER and board is like below */
 #define S1_BOARD		0x1000
 #define KESSLER_BOARD		0x4000
-#define GONI_BOARD		0x8000
+#define NEPTUNE_BOARD		0x8000
 
 #define BOARD_MASK		0xFF00
 
@@ -260,9 +260,9 @@ static int mach_is_kessler(void)
 	return gd->bd->bi_arch_number == MACH_KESSLER;
 }
 
-static int board_is_goni(void)
+static int board_is_neptune(void)
 {
-	return mach_is_kessler() && (board_rev & GONI_BOARD);
+	return mach_is_kessler() && (board_rev & NEPTUNE_BOARD);
 }
 
 static int board_is_s1(void)
@@ -374,7 +374,7 @@ static const char *board_name[] = {
 	"P1P2",		/* Don't remove it */
 	"Geminus",
 	"Cypress",
-	"Goni",
+	"Limo SDK",
 };
 
 enum {
@@ -407,8 +407,8 @@ static char *display_features(int board, int board_rev)
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
 	} else if (board == MACH_KESSLER) {
-		if (board_rev & GONI_BOARD)
-			name = "Goni";
+		if (board_rev & NEPTUNE_BOARD)
+			name = "Limo SDK";
 		if (board_rev & S1_BOARD)
 			name = "S1";
 	}
@@ -450,7 +450,7 @@ static void check_board_revision(int board, int rev)
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
-		if (rev & GONI_BOARD)
+		if (rev & NEPTUNE_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & S1_BOARD)
@@ -616,11 +616,11 @@ static void check_hw_revision(void)
 				board = MACH_KESSLER;
 				board_rev |= KESSLER_BOARD;
 
-				/* Goni MP0_5[4] == 1 */
+				/* Neptune MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
-					board_rev |= GONI_BOARD;
+					board_rev |= NEPTUNE_BOARD;
 				}
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
@@ -693,7 +693,7 @@ static void show_hw_revision(void)
 		else if (board_is_bamboo())
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_kessler()) {
-		if (board_is_goni () && (hwrevision(2) || hwrevision(4)))
+		if (board_is_neptune() && (hwrevision(2) || hwrevision(4)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
@@ -869,7 +869,7 @@ static void check_keypad(void)
 		}
 
 		for (i = 0; i < row_num; i++) {
-			if (board_is_goni () && (hwrevision(3) || hwrevision(4)) && i == 0) {
+			if (board_is_neptune() && (hwrevision(3) || hwrevision(4)) && i == 0) {
 				continue;
 			}
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
@@ -910,15 +910,15 @@ static void check_keypad(void)
 		/* volume down */
 		if (row_state[1] & 0x2)
 			display_info = 1;
-		if (board_is_goni() && hwrevision(0)) {
+		if (board_is_neptune() && hwrevision(0)) {
 			/* home & volume down */
 			if ((row_state[1] & 0x1) && (row_state[1] & 0x2))
 				auto_download = 1;
-		} else if (board_is_goni() && hwrevision(2)) {
+		} else if (board_is_neptune() && hwrevision(2)) {
 			/* cam full shot & volume down */
 			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
-		} else if (board_is_goni() && (hwrevision(3) || hwrevision(4))) {
+		} else if (board_is_neptune() && (hwrevision(3) || hwrevision(4))) {
 			/* cam full shot & volume down */
 			if ((row_state[1] & 0x6) && (row_state[2] & 0x4))
 				auto_download = 1;
@@ -1824,7 +1824,7 @@ void lcd_cfg_gpio(void)
 	/* LCD_BACKLIGHT_EN */
 	if (mach_is_geminus())
 		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
-	if (board_is_goni() && hwrevision(0)) {
+	if (board_is_neptune() && hwrevision(0)) {
 		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 4, GPIO_OUTPUT);
 		gpio_direction_output(&gpio_base->gpio_mp0_4, 4, 0);
 	}
@@ -1848,9 +1848,9 @@ void lcd_cfg_gpio(void)
 		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
 		spi_pd.so_num = 2;
 
-		if (board_is_goni() && hwrevision(0))
+		if (board_is_neptune() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
-		else if (board_is_goni() && hwrevision(3))
+		else if (board_is_neptune() && hwrevision(3))
 			ld9040_set_platform_data(&spi_pd);
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
@@ -1919,7 +1919,7 @@ void backlight_on(unsigned int onoff)
 			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
 	}
 
-	if (mach_is_kessler() && board_is_goni() && hwrevision(0)) {
+	if (mach_is_kessler() && board_is_neptune() && hwrevision(0)) {
 		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
@@ -1951,7 +1951,7 @@ void reset_lcd(void)
 
 	if (mach_is_aquila() || mach_is_kessler() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_goni() && (hwrevision(3))) {
+		if (board_is_neptune() && (hwrevision(3))) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
@@ -2106,7 +2106,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 120000;
 	}
 
-	if (board_is_goni() && hwrevision(0)) {
+	if (board_is_neptune() && hwrevision(0)) {
 		vid->vl_freq	= 100;
 		vid->vl_col	= 320;
 		vid->vl_row	= 480;
@@ -2143,7 +2143,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 1000;
 
 	}
-	if (board_is_goni() && hwrevision(3)) {
+	if (board_is_neptune() && hwrevision(3)) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 480;
 		vid->vl_row	= 800;
@@ -2278,9 +2278,9 @@ int misc_init_r(void)
 	lcd_is_enabled = 0;
 
 	if (mach_is_aquila() || mach_is_kessler()) {
-		if (board_is_goni() && hwrevision(0))
+		if (board_is_neptune() && hwrevision(0))
 			setenv("lcdinfo", "lcd=s6d16a0x");
-		else if (board_is_goni() && hwrevision(3))
+		else if (board_is_neptune() && hwrevision(3))
 			setenv("lcdinfo", "lcd=ld9040");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
@@ -2395,14 +2395,14 @@ int dram_init(void)
 		 * Aquila Rev0.5 4G3G1G
 		 * Aquila Rev0.8 4G3G1G
 		 * Aquila Rev0.9 4G3G1G
-		 * Goni Rev 0.2 4G3G1G
-		 * Goni Rev 0.3 4G3G1G
-		 * Goni Rev 0.4 4G3G1G
+		 * Limo SDK Rev 0.2 4G3G1G
+		 * Limo SDK Rev 0.3 4G3G1G
+		 * Limo SDK Rev 0.4 4G3G1G
 		 */
 		if (mach_is_aquila() || mach_is_kessler()) {
-			if ((!board_is_goni() && (hwrevision(5) ||
+			if ((!board_is_neptune() && (hwrevision(5) ||
 				hwrevision(8) || hwrevision(9))) ||
-				(board_is_goni() && !hwrevision(1))) {
+				(board_is_neptune() && !hwrevision(1))) {
 				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
 				sz = (memconfig1 >> 16) & 0xFF;
