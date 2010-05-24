@@ -822,18 +822,16 @@ static int process_data(struct usbd_ops *usbd)
 	{
 		/* block is fixed:
 			1m = ipl(16k)+recovery(240k)+bootloader(768k)*/
-		u32 *buf = (long *)down_ram_addr;
+		long *buf = (long *)down_ram_addr;
 		u32 ofst;
 		u32 bootloader_edge = parts[part_id]->size;
 		u32 bootloader_addr = bootloader_edge >> 2;
 		u32 recovery_edge = bootloader_addr;
 		u32 recovery_addr = recovery_edge >> 4;
-		u32 ipl_edge = recovery_addr;
 		u32 ipl_addr = 0;
-		int ret, retlen;
 
 		if (len > bootloader_addr) {
-			ofst = bootloader_addr/sizeof(buf);
+			ofst = bootloader_addr / sizeof(buf);
 			if (*(buf + ofst) == 0xea000012) {
 				/* case: ipl + recovery + bootloader */
 				printf("target: ipl + recovery + loader\n");
@@ -862,7 +860,7 @@ static int process_data(struct usbd_ops *usbd)
 			}
 		}
 
-		sprintf(offset, "%x", ofs);
+		sprintf(offset, "%x", (uint)ofs);
 		sprintf(length, "%x", parts[part_id]->size);
 
 		/* check block is locked/locked-tight */
@@ -921,9 +919,9 @@ static int process_data(struct usbd_ops *usbd)
 			nand_cmd(0, offset, length, NULL);
 		}
 #endif
-		sprintf(offset, "%x", ofs);
+		sprintf(offset, "%x", (uint)ofs);
 		if (ofs != 0)
-			sprintf(length, "%x", parts[part_id]->size - ofs);
+			sprintf(length, "%x", parts[part_id]->size - (uint)ofs);
 		else
 			sprintf(length, "%x", parts[part_id]->size);
 
