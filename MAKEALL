@@ -70,6 +70,7 @@ LIST_5xxx="		\
 	motionpro	\
 	munices		\
 	MVBC_P		\
+	MVSMR		\
 	o2dnt		\
 	pcm030		\
 	pf5200		\
@@ -91,6 +92,7 @@ LIST_512x="		\
 	aria		\
 	mecp5123	\
 	mpc5121ads	\
+	pdm360ng	\
 "
 
 #########################################################################
@@ -184,6 +186,7 @@ LIST_4xx="		\
 	ADCIOP		\
 	alpr		\
 	AP1000		\
+	APC405		\
 	AR405		\
 	arches		\
 	ASH405		\
@@ -221,6 +224,7 @@ LIST_4xx="		\
 	hcu5		\
 	HH405		\
 	HUB405		\
+	icon		\
 	intip		\
 	JSE		\
 	KAREF		\
@@ -488,7 +492,7 @@ LIST_TSEC="		\
 	${LIST_86xx}	\
 "
 
-LIST_ppc="		\
+LIST_powerpc="		\
 	${LIST_5xx}	\
 	${LIST_512x}	\
 	${LIST_5xxx}	\
@@ -502,6 +506,12 @@ LIST_ppc="		\
 	${LIST_4xx}	\
 	${LIST_74xx}	\
 	${LIST_7xx}	\
+"
+
+# Alias "ppc" -> "powerpc" to not break compatibility with older scripts
+# still using "ppc" instead of "powerpc"
+LIST_ppc="		\
+	${LIST_powerpc}	\
 "
 
 #########################################################################
@@ -559,8 +569,10 @@ LIST_ARM9="			\
 	edb9312			\
 	edb9315			\
 	edb9315a		\
+	guruplug		\
 	imx27lite		\
 	lpd7a400		\
+	magnesium		\
 	mv88f6281gtw_ge		\
 	mx1ads			\
 	mx1fs2			\
@@ -823,6 +835,7 @@ LIST_nios2="		\
 	EP1S40		\
 	PCI5441		\
 	PK1C20		\
+	nios2-generic	\
 "
 
 #########################################################################
@@ -905,6 +918,7 @@ LIST_blackfin="		\
 	cm-bf548	\
 	cm-bf561	\
 	ibf-dsp561	\
+	ip04		\
 	tcm-bf518	\
 	tcm-bf537	\
 "
@@ -947,8 +961,8 @@ LIST_sparc="gr_xc3s_1500	gr_cpci_ax2000	gr_ep2s60	grsim	grsim_leon2"
 
 #-----------------------------------------------------------------------
 
-#----- for now, just run PPC by default -----
-[ $# = 0 ] && set $LIST_ppc
+#----- for now, just run PowerPC by default -----
+[ $# = 0 ] && set $LIST_powerpc
 
 #-----------------------------------------------------------------------
 
@@ -1004,7 +1018,7 @@ do
 	|microblaze \
 	|mips|mips_el \
 	|nios|nios2 \
-	|ppc|5xx|5xxx|512x|8xx|8220|824x|8260|83xx|85xx|86xx|4xx|7xx|74xx|TSEC \
+	|ppc|powerpc|5xx|5xxx|512x|8xx|8220|824x|8260|83xx|85xx|86xx|4xx|7xx|74xx|TSEC \
 	|sh|sh2|sh3|sh4 \
 	|sparc \
 	|x86|I486 \

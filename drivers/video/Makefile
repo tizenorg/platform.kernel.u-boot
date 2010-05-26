@@ -25,18 +25,18 @@ include $(TOPDIR)/config.mk
 
 LIB	:= $(obj)libvideo.a
 
-COBJS-$(CONFIG_ATI_RADEON_FB) += ati_radeon_fb.o
+COBJS-$(CONFIG_ATI_RADEON_FB) += ati_radeon_fb.o videomodes.o
 COBJS-$(CONFIG_ATMEL_LCD) += atmel_lcdfb.o
 COBJS-$(CONFIG_CFB_CONSOLE) += cfb_console.o
 COBJS-$(CONFIG_S6E63D6) += s6e63d6.o
 COBJS-$(CONFIG_VIDEO_AMBA) += amba.o
-COBJS-$(CONFIG_VIDEO_CT69000) += ct69000.o
-COBJS-$(CONFIG_VIDEO_MB862xx) += mb862xx.o
+COBJS-$(CONFIG_VIDEO_CT69000) += ct69000.o videomodes.o
+COBJS-$(CONFIG_VIDEO_MB862xx) += mb862xx.o videomodes.o
 COBJS-$(CONFIG_VIDEO_MX3) += mx3fb.o
 COBJS-$(CONFIG_VIDEO_SED13806) += sed13806.o
 COBJS-$(CONFIG_SED156X) += sed156x.o
 COBJS-$(CONFIG_VIDEO_SM501) += sm501.o
-COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o
+COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o videomodes.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 COBJS-$(CONFIG_S5PC1XXFB) += s5p-fb.o s5p-fimd.o s5p-spi.o
 COBJS-$(CONFIG_S6E63M0) += s6e63m0.o
@@ -47,7 +47,7 @@ COBJS-$(CONFIG_LD9040) += ld9040.o
 #COBJS-$(CONFIG_S5PC1XXFB) += s5p-dualfb.o s5p-dualfimd.o tl2796_dual.o
 #COBJS-$(CONFIG_S5PC1XXFB) += s5p-dualfb.o s5p_dualfimd_aquila.o tl2796_dual_aquila.o
 #COBJS-$(CONFIG_SUBLCD) += eltz_lcd.o
-COBJS-y += videomodes.o
+#COBJS-y += videomodes.o
 COBJS-$(CONFIG_S5PC1XXFB) += font_8x16.o fbutils.o
 
 COBJS	:= $(COBJS-y)

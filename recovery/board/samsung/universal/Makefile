@@ -27,22 +27,22 @@ $(LIB):	$(obj).depend $(SOBJS) $(OBJS)
 
 $(obj)start.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/$@ $@
+	ln -s $(SRCTREE)/$(CPUDIR)/$@ $@
 
 $(obj)reset.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/$@ $@
+	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/$@ $@
 
 $(obj)cpu_info.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/$@ $@
+	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/$@ $@
 
 $(obj)_memcpy32.S:
-	ln -sf $(SRCTREE)/lib_arm/$@ $@
+	ln -sf $(SRCTREE)/arch/$(ARCH)/lib/$@ $@
 
 $(obj)string.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/lib_generic/$@ $@
+	ln -s $(SRCTREE)/lib/$@ $@
 
 $(obj)dlmalloc.c:
 	@rm -f $@

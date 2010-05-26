@@ -6,11 +6,11 @@
 #include <common.h>
 #include <serial.h>
 
-static struct serial_device *serial_current = &s5pc1xx_serial2_device;
+static struct serial_device *serial_current = &s5p_serial2_device;
 
 struct serial_device *__default_serial_console(void)
 {
-	return &s5pc1xx_serial2_device;
+	return &s5p_serial2_device;
 }
 
 struct serial_device *default_serial_console(void)

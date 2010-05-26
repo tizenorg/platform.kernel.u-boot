@@ -142,7 +142,7 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
-static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
+static unsigned int get_hw_revision(struct s5p_gpio_bank *bank, int hwrev3)
 {
 	unsigned int rev;
 

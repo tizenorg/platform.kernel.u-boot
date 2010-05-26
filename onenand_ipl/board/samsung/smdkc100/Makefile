@@ -59,7 +59,7 @@ $(onenandobj)onenand-ipl:	$(OBJS)
 # from cpu directory
 $(obj)start.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/start.S $@
+	ln -s $(SRCTREE)/$(CPUDIR)/start.S $@
 
 $(obj)mem_setup.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/mem_setup.S $@

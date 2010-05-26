@@ -10,11 +10,11 @@
 #include <asm/arch/clk.h>
 #include <serial.h>
 
-static inline struct s5pc1xx_uart *s5pc1xx_get_base_uart(int dev_index)
+static inline struct s5p_uart *s5pc1xx_get_base_uart(int dev_index)
 {
-	u32 offset = dev_index * sizeof(struct s5pc1xx_uart);
+	u32 offset = dev_index * sizeof(struct s5p_uart);
 
-	return (struct s5pc1xx_uart *)(S5PC110_UART_BASE + offset);
+	return (struct s5p_uart *)(S5PC110_UART_BASE + offset);
 }
 
 /*
@@ -45,7 +45,7 @@ static const int udivslot[] = {
 
 void serial_setbrg_dev(const int dev_index)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 
 	/* baudrate: 115200*/
 	writel(0x23, &uart->ubrdiv);
@@ -58,7 +58,7 @@ void serial_setbrg_dev(const int dev_index)
  */
 int serial_init_dev(const int dev_index)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 
 	/* reset and enable FIFOs, set triggers to the maximum */
 	writel(0, &uart->ufcon);
@@ -75,7 +75,7 @@ int serial_init_dev(const int dev_index)
 
 static int serial_err_check(const int dev_index, int op)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 	unsigned int mask;
 
 	/*
@@ -100,7 +100,7 @@ static int serial_err_check(const int dev_index, int op)
  */
 int serial_getc_dev(const int dev_index)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 
 	/* wait for character to arrive */
 	while (!(readl(&uart->utrstat) & 0x1)) {
@@ -116,7 +116,7 @@ int serial_getc_dev(const int dev_index)
  */
 void serial_putc_dev(const char c, const int dev_index)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 
 	/* wait for room in the tx FIFO */
 	while (!(readl(&uart->utrstat) & 0x2)) {
@@ -136,7 +136,7 @@ void serial_putc_dev(const char c, const int dev_index)
  */
 int serial_tstc_dev(const int dev_index)
 {
-	struct s5pc1xx_uart *const uart = s5pc1xx_get_base_uart(dev_index);
+	struct s5p_uart *const uart = s5pc1xx_get_base_uart(dev_index);
 
 	return (int)(readl(&uart->utrstat) & 0x1);
 }
@@ -160,6 +160,7 @@ void s5p_serial##port##_puts(const char *s) { serial_puts_dev(s, port); }
 	name, \
 	bus, \
 	s5p_serial##port##_init, \
+	NULL, \
 	s5p_serial##port##_setbrg, \
 	s5p_serial##port##_getc, \
 	s5p_serial##port##_tstc, \
@@ -167,14 +168,14 @@ void s5p_serial##port##_puts(const char *s) { serial_puts_dev(s, port); }
 	s5p_serial##port##_puts, }
 
 DECLARE_S5P_SERIAL_FUNCTIONS(0);
-struct serial_device s5pc1xx_serial0_device =
+struct serial_device s5p_serial0_device =
 	INIT_S5P_SERIAL_STRUCTURE(0, "s5pser0", "S5PUART0");
 DECLARE_S5P_SERIAL_FUNCTIONS(1);
-struct serial_device s5pc1xx_serial1_device =
+struct serial_device s5p_serial1_device =
 	INIT_S5P_SERIAL_STRUCTURE(1, "s5pser1", "S5PUART1");
 DECLARE_S5P_SERIAL_FUNCTIONS(2);
-struct serial_device s5pc1xx_serial2_device =
+struct serial_device s5p_serial2_device =
 	INIT_S5P_SERIAL_STRUCTURE(2, "s5pser2", "S5PUART2");
 DECLARE_S5P_SERIAL_FUNCTIONS(3);
-struct serial_device s5pc1xx_serial3_device =
+struct serial_device s5p_serial3_device =
 	INIT_S5P_SERIAL_STRUCTURE(3, "s5pser3", "S5PUART3");

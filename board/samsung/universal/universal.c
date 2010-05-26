@@ -461,7 +461,7 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
-static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank, int hwrev3)
+static unsigned int get_hw_revision(struct s5p_gpio_bank *bank, int hwrev3)
 {
 	unsigned int rev;
 
@@ -1661,7 +1661,7 @@ static void init_pmic(void)
 static void setup_power_down_mode_registers(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-	struct s5pc1xx_gpio_bank *bank;
+	struct s5p_gpio_bank *bank;
 	struct gpio_powermode *p;
 	int n_p;
 	struct gpio_external *ge;

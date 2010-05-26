@@ -712,11 +712,13 @@ static int process_data(struct usbd_ops *usbd)
 		img_type = IMG_MODEM;
 		break;
 
+#ifdef CONFIG_CMD_MMC
 	case COMMAND_WRITE_PART_9:
 		printf("COMMAND_WRITE_MMC\n");
 		img_type = IMG_MMC;
 		mmc_part_write = arg;
 		break;
+#endif
 
 	case COMMAND_WRITE_UBI_INFO:
 		printf("COMMAND_WRITE_UBI_INFO\n");

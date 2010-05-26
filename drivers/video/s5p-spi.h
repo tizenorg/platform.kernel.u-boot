@@ -3,10 +3,10 @@
 #define PACKET_LEN		8
 
 struct spi_platform_data {
-	struct s5pc1xx_gpio_bank *cs_bank;
-	struct s5pc1xx_gpio_bank *clk_bank;
-	struct s5pc1xx_gpio_bank *si_bank;
-	struct s5pc1xx_gpio_bank *so_bank;
+	struct s5p_gpio_bank *cs_bank;
+	struct s5p_gpio_bank *clk_bank;
+	struct s5p_gpio_bank *si_bank;
+	struct s5p_gpio_bank *so_bank;
 
 	unsigned int cs_num;
 	unsigned int clk_num;

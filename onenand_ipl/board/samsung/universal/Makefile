@@ -75,12 +75,12 @@ checksum: checksum.c
 # from cpu directory
 $(obj)start.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/start.S $@
+	ln -s $(SRCTREE)/$(CPUDIR)/start.S $@
 
 # from SoC directory
 $(obj)cache.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/$(CPU)/$(SOC)/cache.S $@
+	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/cache.S $@
 
 $(obj)mem_setup.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/mem_setup.S $@
@@ -90,7 +90,7 @@ $(obj)lowlevel_init.S:
 
 # from lib_arm
 $(obj)_memcpy32.S:
-	ln -sf $(SRCTREE)/lib_arm/_memcpy32.S $@
+	ln -sf $(SRCTREE)/arch/$(ARCH)/lib/_memcpy32.S $@
 
 # from onenand_ipl directory
 $(obj)onenand_ipl.h:

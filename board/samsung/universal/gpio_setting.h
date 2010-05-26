@@ -51,7 +51,7 @@ struct gpio_external {
 /* In mirror mode, it sets "I(PD/PU)" according to the
  * output at the u-boot time. */
 struct s5pc1xx_gpio_item {
-	struct s5pc1xx_gpio_bank *bank;
+	struct s5p_gpio_bank *bank;
 	unsigned int number;
 };
 

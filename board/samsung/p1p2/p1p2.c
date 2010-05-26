@@ -414,7 +414,7 @@ static void check_board_revision(int board, int rev)
 	}
 }
 
-static unsigned int get_hw_revision(struct s5pc1xx_gpio_bank *bank)
+static unsigned int get_hw_revision(struct s5p_gpio_bank *bank)
 {
 	unsigned int rev;
 
@@ -1480,7 +1480,7 @@ static struct gpio_external external_powerdown_modes[] = {
 static void setup_power_down_mode_registers(void)
 {
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
-	struct s5pc1xx_gpio_bank *bank;
+	struct s5p_gpio_bank *bank;
 	struct gpio_powermode *p;
 	struct gpio_external *ge;
 	int i;
@@ -1518,7 +1518,7 @@ static void setup_power_down_mode_registers(void)
 
 #ifdef CONFIG_LCD
 struct s6e63m0_platform_data {
-	struct s5pc1xx_gpio_bank *bank;
+	struct s5p_gpio_bank *bank;
 	unsigned int num;
 };
 
