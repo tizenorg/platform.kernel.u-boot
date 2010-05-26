@@ -44,6 +44,8 @@ void gpio_cfg_pin(struct s5p_gpio_bank *bank, int gpio, int cfg)
 	value &= ~CON_MASK(gpio);
 	value |= CON_SFR(gpio, cfg);
 	writel(value, &bank->con);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->con);
 }
 
 void gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
@@ -57,6 +59,8 @@ void gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
 	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->dat);
 }
 
 void gpio_direction_input(struct s5p_gpio_bank *bank, int gpio)
@@ -73,6 +77,8 @@ void gpio_set_value(struct s5p_gpio_bank *bank, int gpio, int en)
 	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->dat);
 }
 
 unsigned int gpio_get_value(struct s5p_gpio_bank *bank, int gpio)
@@ -96,10 +102,12 @@ void gpio_set_pull(struct s5p_gpio_bank *bank, int gpio, int mode)
 		value |= PULL_MODE(gpio, mode);
 		break;
 	default:
-		return;
+		break;
 	}
 
 	writel(value, &bank->pull);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->pull);
 }
 
 void gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode)
@@ -121,6 +129,8 @@ void gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode)
 	}
 
 	writel(value, &bank->drv);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->drv);
 }
 
 void gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
@@ -140,4 +150,119 @@ void gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
 	}
 
 	writel(value, &bank->drv);
+	if (s5pc1xx_get_cpu_rev() == 0)
+		value = readl(&bank->drv);
 }
+
+#ifdef CONFIG_CMD_GPIO
+static char *gpio_name[] = {
+	"GPA0", "GPA1", "GPB", "GPC0", "GPC1", "GPD0", "GPD1", "GPE0", "GPE1",
+	"GPF0", "GPF1", "GPF2", "GPF3", "GPG0", "GPG1", "GPG2", "GPG3", "GPI",
+	"GPJ0", "GPJ1", "GPJ2", "GPJ3", "GPJ4", "MP01", "MP02", "MP03", "MP04",
+	"MP05", "MP06", "MP07", "MP10", "MP11", "MP12", "MP13", "MP14", "MP15",
+	"MP16", "MP17", "MP18", "MP20", "MP21", "MP22", "MP23", "MP24", "MP25",
+	"MP26", "MP27", "MP28",
+};
+
+static char *gpio_name1[] = {
+	"GPH0", "GPH1", "GPH2", "GPH3",
+};
+
+static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	struct s5pc110_gpio *gpio =
+		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	int i = 0;
+	int j;
+
+	if (argc == 1) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
+
+	if (strcmp(argv[1], "show") == 0) {
+		while (1) {
+			printf("%s\n", gpio_name[i]);
+
+			for (j = 0; j < 8; j++) {
+				printf("[%d] %s", j,
+					gpio_get_value(&gpio->gpio_a0 + i, j) ?
+					"hi" : "lo");
+				if ((j + 1) & (8 - 1))
+					puts("\t");
+				else
+					puts("\n");
+			}
+			puts("\n");
+
+			i++;
+			if ((&gpio->gpio_a0 + i) == &gpio->res1)
+				break;
+		}
+
+		for (i = 0; i < 4; i++) {
+			printf("%s\n", gpio_name1[i]);
+
+			for (j = 0; j < 8; j++) {
+				printf("[%d] %s", j,
+					gpio_get_value(&gpio->gpio_h0 + i, j) ?
+					"hi" : "lo");
+				if ((j + 1) & (8 - 1))
+					puts("\t");
+				else
+					puts("\n");
+			}
+			puts("\n");
+		}
+
+		return 1;
+	} else if (strcmp(argv[1], "set") == 0) {
+		int num, value;
+
+		if (argc != 5) {
+			cmd_usage(cmdtp);
+			return 1;
+		}
+
+		if (strcmp(argv[2], "GPH0") == 0) {
+			i = 48 + 48 + 0;
+		} else if (strcmp(argv[2], "GPH1") == 0) {
+			i = 48 + 48 + 1;
+		} else if (strcmp(argv[2], "GPH2") == 0) {
+			i = 48 + 48 + 2;
+		} else if (strcmp(argv[2], "GPH3") == 0) {
+			i = 48 + 48 + 3;
+		} else {
+			while (1) {
+				if (strcmp(argv[2], gpio_name[i]) == 0)
+					break;
+				i++;
+
+				if ((&gpio->gpio_a0 + i) == &gpio->res1) {
+					printf("Can't found %s bank\n", argv[2]);
+					return 1;
+				}
+			}
+		}
+		num = simple_strtoul(argv[3], NULL, 10);
+		value = simple_strtoul(argv[4], NULL, 10);
+
+		gpio_set_value(&gpio->gpio_a0 + i, num, value);
+
+		printf("%s[%d] set to %s\n", argv[2], num,
+				value ? "hi" : "lo");
+
+		return 1;
+	}
+
+	cmd_usage(cmdtp);
+	return 1;
+}
+
+U_BOOT_CMD(
+	gpio,		CONFIG_SYS_MAXARGS,	1, do_gpio,
+	"GPIO Control",
+	"show - show all banks\n"
+	"gpio set bank num value - set gpio value\n"
+);
+#endif
