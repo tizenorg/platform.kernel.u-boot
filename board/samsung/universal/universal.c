@@ -407,8 +407,17 @@ static char *display_features(int board, int board_rev)
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
 	} else if (board == MACH_GONI) {
-		if (board_rev & SDK_BOARD)
-			name = "Limo SDK";
+		if (board_rev & SDK_BOARD) {
+			if (hwrevision(9)) {
+				name = "Kessler";
+			} else {
+				name = "SLP SDK";
+				if (hwrevision(3))
+					strcat(name, " 4.3inch");
+				else if (hwrevision(4))
+					strcat(name, " 4.5inch");
+			}
+		}
 		if (board_rev & S1_BOARD)
 			name = "S1";
 	}
