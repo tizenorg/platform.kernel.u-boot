@@ -1918,7 +1918,6 @@ void backlight_on(unsigned int onoff)
 	unsigned char addr;
 	unsigned char val[2];
 	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-	printf("%s\n", __func__);
 
 	if (onoff) {
 		if (mach_is_geminus())
