@@ -184,8 +184,6 @@ enum {
 	MACH_WMG160 = 160,
 
 	MACH_PSEUDO_END,
-
-	MACH_GONI = 2862,
 };
 
 #define SPLIT_SCREEN_FEATURE	0x100
@@ -257,7 +255,7 @@ static int board_is_j1b2(void)
 /* Kessler */
 static int mach_is_goni(void)
 {
-	return gd->bd->bi_arch_number == MACH_GONI;
+	return gd->bd->bi_arch_number == MACH_TYPE_GONI;
 }
 
 static int board_is_sdk(void)
@@ -406,7 +404,7 @@ static char *display_features(int board, int board_rev)
 			name = "Media";
 		if (board_rev & BAMBOO_BOARD)
 			name = "Bamboo";
-	} else if (board == MACH_GONI) {
+	} else if (board == MACH_TYPE_GONI) {
 		if (board_rev & SDK_BOARD) {
 			if (hwrevision(9)) {
 				name = "Kessler";
@@ -431,7 +429,7 @@ static char *get_board_name(int board)
 {
 	if (board == MACH_TYPE_AQUILA)
 		return "Aquila";
-	else if (board == MACH_GONI)
+	else if (board == MACH_TYPE_GONI)
 		return "Goni";
 	else if (board == MACH_WMG160)
 		return "WMG160";
@@ -455,7 +453,7 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-	} else if (board == MACH_GONI) {
+	} else if (board == MACH_TYPE_GONI) {
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -622,7 +620,7 @@ static void check_hw_revision(void)
 				board = MACH_CYPRESS;
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
-				board = MACH_GONI;
+				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
 
 				/* Limo SDK MP0_5[4] == 1 */
@@ -638,7 +636,7 @@ static void check_hw_revision(void)
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
-				board = MACH_GONI;
+				board = MACH_TYPE_GONI;
 				board_rev |= S1_BOARD;
 				hwrev3 = 7;
 			}

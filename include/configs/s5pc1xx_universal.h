@@ -37,6 +37,7 @@
 #define CONFIG_S5PC110		1	/* which is in a S5PC110 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
 #define CONFIG_MACH_AQUILA	1	/* working with Aquila */
+#define CONFIG_MACH_GONI	1	/* working with Goni */
 #define CONFIG_RECOVERY		1	/* working with recovery block */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
