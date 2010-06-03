@@ -53,22 +53,11 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (1 << 20))
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes for */
 						/* initial data */
-#if 0
-/*
- * select serial console configuration
- */
-#define CONFIG_SERIAL0			1	/* use SERIAL2 */
-#define CONFIG_SERIAL_MULTI		1
-#define CONFIG_BAUDRATE			115200
-#endif
 
-/*
- * NS16550 Configuration
- */
+/* PL011 Serial */
 #define CONFIG_PL011_SERIAL
 #define CONFIG_PL011_CLOCK	100000000
-#define CONFIG_PL01x_PORTS				\
-			{(void *)CONFIG_SYS_SERIAL0 }
+#define CONFIG_PL01x_PORTS	{(void *)CONFIG_SYS_SERIAL0 }
 #define CONFIG_CONS_INDEX	0
 
 #define CONFIG_BAUDRATE			115200
@@ -91,8 +80,8 @@
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
 
-#define CONFIG_BOOTDELAY		3
-//#define CONFIG_ZERO_BOOTDELAY_CHECK
+#define CONFIG_BOOTDELAY		1
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 
 #define CONFIG_MTD_DEVICE
 #define CONFIG_MTD_PARTITIONS
