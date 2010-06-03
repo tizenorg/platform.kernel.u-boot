@@ -2956,6 +2956,9 @@ davinci_dm365evm_config :	unconfig
 davinci_dm6467evm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm6467evm davinci davinci
 
+ex1_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs ex1 samsung drime3
+
 guruplug_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood
 
