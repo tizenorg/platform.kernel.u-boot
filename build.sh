@@ -36,6 +36,10 @@ check_users()
 		CROSS_COMPILER=/usr/local/arm/arm-2008q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
+	if [ "$USER" = "riverful" ]; then
+		CROSS_COMPILER=/opt/arm-2009q3/bin/arm-none-linux-gnueabi-
+		JOBS="-j 5"
+	fi
 }
 
 build_uboot()
