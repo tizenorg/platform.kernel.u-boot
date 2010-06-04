@@ -102,7 +102,7 @@
 
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 
-#define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
+#define CONFIG_DEFAULT_CONSOLE	"console=ttyS0,115200n8\0"
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
 		" ${console} ${meminfo}"
@@ -113,7 +113,7 @@
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x100000;" \
-			" onenand write 0x32008000 0x0 0x100000\0"
+			" onenand write 0xC2008000 0x0 0x100000\0"
 
 #define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=3 ubi.mtd=6"
 
@@ -125,13 +125,13 @@
 	CONFIG_UPDATEB \
 	"updatek=" \
 		"onenand erase 0xc00000 0x600000;" \
-		"onenand write 0x31008000 0xc00000 0x600000\0" \
+		"onenand write 0xC1008000 0xc00000 0x600000\0" \
 	"updateu=" \
 		"onenand erase 0x01560000 0x1eaa0000;" \
-		"onenand write 0x32000000 0x1260000 0x8C0000\0" \
+		"onenand write 0xC2000000 0x1260000 0x8C0000\0" \
 	"bootk=" \
-		"onenand read 0x30007FC0 0xc00000 0x600000;" \
-		"bootm 0x30007FC0\0" \
+		"onenand read 0xC0007FC0 0xc00000 0x600000;" \
+		"bootm 0xC0007FC0\0" \
 	"flashboot=" \
 		"set bootargs root=/dev/mtdblock${bootblock} " \
 		"rootfstype=${rootfstype}" CONFIG_UBI_MTD " ${opts} " \
@@ -143,11 +143,11 @@
 	"tftpboot=" \
 		"set bootargs root=ubi0!rootfs rootfstype=ubifs " \
 		CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
-		CONFIG_COMMON_BOOT "; tftp 0x30007FC0 uImage; " \
-		"bootm 0x30007FC0\0" \
+		CONFIG_COMMON_BOOT "; tftp 0xC0007FC0 uImage; " \
+		"bootm 0xC0007FC0\0" \
 	"ramboot=" \
 		"set bootargs " CONFIG_RAMDISK_BOOT \
-		" initrd=0x33000000,8M ramdisk=8192\0" \
+		" initrd=0xC3000000,8M ramdisk=8192\0" \
 	"mmcboot=" \
 		"set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
 		CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
@@ -201,8 +201,7 @@
 #define CONFIG_ENV_SIZE			(256 << 10)	/* 256 KiB, 0x40000 */
 #define CONFIG_ENV_ADDR			(1 << 20)	/* 1 MB, 0x100000 */
 
-//#define CONFIG_USE_ONENAND_BOARD_INIT
-#define CONFIG_SYS_ONENAND_BASE		0xB0000000
+#define CONFIG_SYS_ONENAND_BASE		0x00000000
 
 #define CONFIG_DOS_PARTITION		1
 
