@@ -121,13 +121,13 @@
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=" \
-		"onenand erase 0xc00000 0x600000;" \
-		"onenand write 0xC1008000 0xc00000 0x600000\0" \
+		"onenand erase 0x400000 0x600000;" \
+		"onenand write 0xC1008000 0x400000 0x600000\0" \
 	"updateu=" \
-		"onenand erase 0x01560000 0x1eaa0000;" \
-		"onenand write 0xC2000000 0x1260000 0x8C0000\0" \
+		"onenand erase 0x00C00000 0x07400000;" \
+		"onenand write 0xC2000000 0x00C00000 0x8C0000\0" \
 	"bootk=" \
-		"onenand read 0xC0007FC0 0xc00000 0x600000;" \
+		"onenand read 0xC0007FC0 0x400000 0x600000;" \
 		"bootm 0xC0007FC0\0" \
 	"flashboot=" \
 		"set bootargs root=/dev/mtdblock${bootblock} " \
@@ -155,7 +155,7 @@
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
-	"meminfo=mem=80M mem=256M@0x40000000 mem=128M@0x50000000\0" \
+	"meminfo=mem=256M\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=9\0" \
 	"ubiblock=5\0" \
@@ -198,5 +198,11 @@
 #define CONFIG_SYS_ONENAND_BASE		0x00000000
 
 #define CONFIG_DOS_PARTITION		1
+
+/* USB Downloader */
+#define CONFIG_CMD_USBDOWN
+#define CONFIG_SAMSUNG_USB
+#define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
+#define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 #endif	/* __CONFIG_H */
