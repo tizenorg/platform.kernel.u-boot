@@ -559,6 +559,9 @@ system_clock_init:
 	ldr	r1, =0x10001111			@ A, M, E, VPLL Muxing
 	str	r1, [r0, #0x200]		@ S5PC1XX_CLK_SRC0
 
+	ldr	r1, =0x66667777			@ S5PC110_CLK_SRC4 (UART/MMC)
+	str	r1, [r0, #0x210]
+
 	/* OneDRAM(DMC0) clock setting */
 	ldr	r1, =0x01000000			@ ONEDRAM_SEL[25:24] 1 SCLKMPLL
 	str	r1, [r0, #0x218]		@ S5PC110_CLK_SRC6

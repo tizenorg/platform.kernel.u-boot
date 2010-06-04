@@ -642,10 +642,11 @@ static void check_hw_revision(void)
 
 					/* Haydn MP0_4[0] == 1 */
 					gpio_direction_input(&gpio->gpio_mp0_4, 0);
-					if (gpio_get_value(&gpio->gpio_mp0_4, 0) == 1) {
+					if (gpio_get_value(&gpio->gpio_mp0_4, 0) == 1)
 						board_rev |= HAYDN_BOARD;
 					else
 						board_rev |= SDK_BOARD;
+
 				}
 
 			}
@@ -2713,26 +2714,6 @@ int board_mmc_init(bd_t *bis)
 
 	if (mach_is_wmg160())
 		return -1;
-
-	/* MMC0 Clock source = SCLKMPLL */
-	reg = readl(&clk->src4);
-	reg &= ~0xf;
-	reg |= 0x6;
-	writel(reg, &clk->src4);
-
-	reg = readl(&clk->div4);
-	reg &= ~0xf;
-
-	/* set div value near 50MHz */
-	clock = get_pll_clk(MPLL) / 1000000;
-	for (i = 0; i < 0xf; i++) {
-		if ((clock / (i + 1)) <= 50) {
-			reg |= i << 0;
-			break;
-		}
-	}
-
-	writel(reg, &clk->div4);
 
 	/*
 	 * MMC0 GPIO
