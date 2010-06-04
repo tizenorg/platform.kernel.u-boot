@@ -197,6 +197,7 @@ enum {
 
 /* board is MACH_GONI and board is like below */
 #define S1_BOARD		0x1000
+#define HAYDN_BOARD		0x2000
 #define KESSLER_BOARD		0x4000
 #define SDK_BOARD		0x8000
 
@@ -266,6 +267,12 @@ static int board_is_sdk(void)
 static int board_is_s1(void)
 {
 	return mach_is_goni() && (board_rev & S1_BOARD);
+}
+
+
+static int board_is_haydn(void)
+{
+	return mach_is_goni() && (board_rev & HAYDN_BOARD);
 }
 
 /* DLNA Dongle */
@@ -418,6 +425,8 @@ static char *display_features(int board, int board_rev)
 		}
 		if (board_rev & S1_BOARD)
 			name = "S1";
+		if (board_rev & HAYDN_BOARD)
+			name = "Haydn";
 	}
 	if (name)
 		count += sprintf(buf + count, " - %s", name);
@@ -461,6 +470,9 @@ static void check_board_revision(int board, int rev)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
 		if (rev & S1_BOARD)
+			board_rev &= ~(J1_B2_BOARD | LIMO_UNIVERSAL_BOARD |
+					LIMO_REAL_BOARD);
+		if (rev & HAYDN_BOARD)
 			board_rev &= ~(J1_B2_BOARD | LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD);
 	} else {
@@ -627,8 +639,15 @@ static void check_hw_revision(void)
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
-					board_rev |= SDK_BOARD;
+
+					/* Haydn MP0_4[0] == 1 */
+					gpio_direction_input(&gpio->gpio_mp0_4, 0);
+					if (gpio_get_value(&gpio->gpio_mp0_4, 0) == 1) {
+						board_rev |= HAYDN_BOARD;
+					else
+						board_rev |= SDK_BOARD;
 				}
+
 			}
 			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
