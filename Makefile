@@ -2957,7 +2957,10 @@ davinci_dm6467evm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs dm6467evm davinci davinci
 
 ex1_config :	unconfig
+	@mkdir -p $(obj)include
+	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs ex1 samsung drime3
+	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 
 guruplug_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood

@@ -216,8 +216,10 @@ clbss_l:str	r2, [r0]		/* clear loop...                    */
 	ldr	pc, _start_armboot
 
 _start_armboot:
-#ifdef CONFIG_NAND_SPL
+#if defined(CONFIG_NAND_SPL)
 	.word nand_boot
+#elif defined(CONFIG_ONENAND_IPL)
+	.word start_oneboot
 #else
 	.word start_armboot
 #endif /* CONFIG_NAND_SPL */
