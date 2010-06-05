@@ -147,7 +147,7 @@ int onenand_read_block(unsigned char *buf)
 	} while (0);
 #endif
 
-	nblocks = ALIGN(CONFIG_SYS_MONITOR_LEN, (1 << erase_shift));
+	nblocks = (CONFIG_SYS_MONITOR_LEN + (1 << erase_shift) - 1) >> erase_shift;
 
 	/* NOTE: you must read page from page 1 of block 0 */
 	/* read the block page by page */
