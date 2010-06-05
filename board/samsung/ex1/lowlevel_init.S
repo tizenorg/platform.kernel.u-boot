@@ -68,6 +68,10 @@ set_uart_clock:
 
 #ifdef CONFIG_ONENAND_IPL
 set_system_memory:
+	/*
+	 * register usage
+	 * r1 : DRAM base (???)
+	 */
 	/* DQS Offset Value */
 	ldr	r1, =0x80000000
 
@@ -93,6 +97,7 @@ set_system_memory:
 	str	r0, [r1, #0x1C]
 #endif
 
+	/* DDR ZQ Calibration */
 	ldr	r0, =0xE3855731
 	str	r0, [r1, #0x44]
 	ldr	r0, =0xE3855733
@@ -102,13 +107,14 @@ set_system_memory:
 1:	subs	r2, r2, #1
 	bne	1b
 
+	/* LPCON setting for 333MHz */
 	ldr	r0, =0x3FFF205A
-	str	r0, [r1]
+	str	r0, [r1, #0x0]
 	ldr	r0, =0x00202440
 	str	r0, [r1, #0x4]
 	ldr	r0, =0xC0F01313
 	str	r0, [r1, #0x8]
-	ldr	r0, =0xC0001313
+	ldr	r0, =0xC0F00313
 	str	r0, [r1, #0xC]
 	ldr	r0, =0xFF000000
 	str	r0, [r1, #0x14]
@@ -127,48 +133,48 @@ set_system_memory:
 1:	subs	r2, r2, #1
 	bne	1b
 
-	ldr	r1, =0x80000010
+	/* Memory Device Initialization */
 	ldr	r0, =0x07000000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
 
 	ldr	r0, =0x01000000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
 
 	ldr	r0, =0x00020000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00030000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00010000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00000952
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
 
 	ldr	r0, =0x01000000
-	str	r0, [r1]
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x05000000
-	str	r0, [r1]
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00000852
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00010380
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 	ldr	r0, =0x00010000
-	str	r0, [r1]
+	str	r0, [r1, #0x10]
 
-	ldr	r1, =0x80000000
+	/* LPCON normal refresh start */
 	ldr	r0, =0x3FFF207A
 	str	r0, [r1]
 
