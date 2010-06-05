@@ -96,6 +96,7 @@ static int generic_onenand_read_page(ulong block, ulong page,
 #endif
 #define ONENAND_PAGES_PER_BLOCK		64
 
+#ifndef CONFIG_SKIP_ONENAND_BOARD_INIT
 static int onenand_generic_init(int *page_is_4KiB, int *page)
 {
 	int dev_id, density;
@@ -114,6 +115,7 @@ static int onenand_generic_init(int *page_is_4KiB, int *page)
 
 int onenand_board_init(int *page_is_4KiB, int *page)
 	__attribute__((weak, alias("onenand_generic_init")));
+#endif
 
 /**
  * onenand_read_block - Read CONFIG_SYS_MONITOR_LEN from begining
@@ -124,24 +126,28 @@ int onenand_read_block(unsigned char *buf)
 {
 	int block, nblocks;
 	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
-	int pagesize, erasesize, erase_shift;
-	int page_is_4KiB = 0, ret;
+	int pagesize, erase_shift;
 
 	pagesize = 2048; /* OneNAND has 2KiB pagesize */
 	erase_shift = 17;
 	onenand_read_page = generic_onenand_read_page;
 
-	ret = onenand_board_init(&page_is_4KiB, &page);
-	if (ret == ONENAND_USE_GENERIC)
-		onenand_generic_init(&page_is_4KiB, &page);
+#ifndef CONFIG_SKIP_ONENAND_BOARD_INIT
+	do {
+		int page_is_4KiB = 0, ret;
 
-	if (page_is_4KiB) {
-		pagesize = 4096; /* OneNAND has 4KiB pagesize */
-		erase_shift = 18;
-	}
+		ret = onenand_board_init(&page_is_4KiB, &page);
+		if (ret == ONENAND_USE_GENERIC)
+			onenand_generic_init(&page_is_4KiB, &page);
 
-	erasesize = (1 << erase_shift);
-	nblocks = (CONFIG_SYS_MONITOR_LEN + erasesize - 1) >> erase_shift;
+		if (page_is_4KiB) {
+			pagesize = 4096; /* OneNAND has 4KiB pagesize */
+			erase_shift = 18;
+		}
+	} while (0);
+#endif
+
+	nblocks = ALIGN(CONFIG_SYS_MONITOR_LEN, (1 << erase_shift));
 
 	/* NOTE: you must read page from page 1 of block 0 */
 	/* read the block page by page */
