@@ -37,7 +37,12 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
+#ifdef CONFIG_ONENAND_XIP_IPL
+#define ONENAND_READ_PAGE(a,b,c,d)	generic_onenand_read_page(a,b,c,d)
+#else
 int (*onenand_read_page)(ulong block, ulong page, u_char *buf, int pagesize);
+#define ONENAND_READ_PAGE(a,b,c,d)	onenand_read_page(a,b,c,d)
+#endif
 
 /* read a page with ECC */
 static int generic_onenand_read_page(ulong block, ulong page,
@@ -130,7 +135,9 @@ int onenand_read_block(unsigned char *buf)
 
 	pagesize = 2048; /* OneNAND has 2KiB pagesize */
 	erase_shift = 17;
+#ifndef CONFIG_ONENAND_XIP_IPL
 	onenand_read_page = generic_onenand_read_page;
+#endif
 
 #ifndef CONFIG_SKIP_ONENAND_BOARD_INIT
 	do {
@@ -153,7 +160,7 @@ int onenand_read_block(unsigned char *buf)
 	/* read the block page by page */
 	for (block = 0; block < nblocks; block++) {
 		for (; page < ONENAND_PAGES_PER_BLOCK; page++) {
-			if (onenand_read_page(block, page, buf + offset,
+			if (ONENAND_READ_PAGE(block, page, buf + offset,
 						pagesize)) {
 				/* This block is bad. Skip it
 				 * and read next block */
