@@ -72,9 +72,9 @@ set_system_memory:
 	 * register usage
 	 * r1 : DRAM base (???)
 	 */
-	/* DQS Offset Value */
 	ldr	r1, =0x80000000
 
+	/* DQS Offset Value */
 	ldr	r0, =0x58585858
 	str	r0, [r1, #0x20]
 	ldr	r0, =0x03030303
@@ -88,11 +88,13 @@ set_system_memory:
 	ldr	r0, =0x0010100B
 	str	r0, [r1, #0x18]
 
+#if 1
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
+#endif
 
-#if 0
+#if 1
 	ldr	r0, =0x200000F6
 	str	r0, [r1, #0x1C]
 #endif
@@ -103,9 +105,11 @@ set_system_memory:
 	ldr	r0, =0xE3855733
 	str	r0, [r1, #0x44]
 
+#if 0
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
+#endif
 
 	/* LPCON setting for 333MHz */
 	ldr	r0, =0x3FFF205A
@@ -137,16 +141,20 @@ set_system_memory:
 	ldr	r0, =0x07000000
 	str	r0, [r1, #0x10]
 
+#if 1
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
+#endif
 
 	ldr	r0, =0x01000000
 	str	r0, [r1, #0x10]
 
+#if 0
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
+#endif
 
 	ldr	r0, =0x00020000
 	str	r0, [r1, #0x10]
@@ -178,12 +186,14 @@ set_system_memory:
 	ldr	r0, =0x3FFF207A
 	str	r0, [r1]
 
+#if 0
 	mov	r2, #0x10000
 1:	subs	r2, r2, #1
 	bne	1b
 #endif
+#endif
 
-#ifdef CONFIG_ONENAND_IPL
+#ifndef CONFIG_ONENAND_IPL
 set_gpio:
 	ldr	r1, =0x90040000
 	ldr	r0, =0x0
