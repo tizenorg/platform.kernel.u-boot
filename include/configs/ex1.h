@@ -85,8 +85,8 @@
 #define CONFIG_MTD_PARTITIONS
 
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
-#define MTDIDS_DEFAULT		"onenand0=onenand"
-#define MTDPARTS_DEFAULT	"mtdparts=onenand:1m(bootloader)"\
+#define MTDIDS_DEFAULT		"onenand0=onenand-flash"
+#define MTDPARTS_DEFAULT	"mtdparts=onenand-flash:1m(bootloader)"\
 				",256k(params)"\
 				",2816k(config)"\
 				",7m(kernel)"\
