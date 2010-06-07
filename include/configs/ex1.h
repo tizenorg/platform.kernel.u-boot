@@ -97,7 +97,7 @@
 
 #define CONFIG_BOOTCOMMAND	"run ubifsboot"
 
-#define CONFIG_DEFAULT_CONSOLE	"console=ttyS0,115200n8\0"
+#define CONFIG_DEFAULT_CONSOLE	"console=ttyAMA0,115200n8\0"
 
 #define CONFIG_RAMDISK_BOOT	"root=/dev/ram0 rw rootfstype=ext2" \
 		" ${console} ${meminfo}"
