@@ -196,6 +196,7 @@ stack_setup:
 #endif
 #endif /* CONFIG_PRELOADER */
 	sub	sp, r0, #12		/* leave 3 words for abort-stack    */
+#ifndef CONFIG_PRELOADER
 	bic	sp, r0, #7		/* 8-byte align stack for ABI compliance */
 
 clear_bss:
@@ -203,7 +204,6 @@ clear_bss:
 	ldr	r1, _bss_end		/* stop here                        */
 	mov	r2, #0x00000000		/* clear                            */
 
-#ifndef CONFIG_PRELOADER
 clbss_l:str	r2, [r0]		/* clear loop...                    */
 	add	r0, r0, #4
 	cmp	r0, r1
