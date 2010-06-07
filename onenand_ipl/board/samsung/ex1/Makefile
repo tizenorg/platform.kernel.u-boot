@@ -5,11 +5,11 @@ include $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/config.mk
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot.onenand.lds
 LDFLAGS	= -Bstatic -T $(onenandobj)u-boot.lds -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_ONENAND_IPL -DCONFIG_SKIP_RELOCATE_UBOOT
-CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_ONENAND_IPL -DCONFIG_SKIP_ONENAND_BOARD_INIT -DCONFIG_ONENAND_XIP_IPL
+CFLAGS	+= -DCONFIG_PRELOADER -DCONFIG_ONENAND_IPL -DCONFIG_SKIP_ONENAND_BOARD_INIT -DCONFIG_ONENAND_XIP_IPL -D__HAVE_ARCH_MEMCPY32
 OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o
-SOBJS	+= start.o
+SOBJS	+= start.o _memcpy32.o
 COBJS	:= onenand_read.o
 COBJS	+= onenand_boot.o
 
@@ -43,6 +43,10 @@ $(onenandobj)u-boot.lds:	$(LDSCRIPT)
 $(obj)start.S:
 	@rm -f $@
 	ln -s $(SRCTREE)/$(CPUDIR)/start.S $@
+
+# from lib_arm
+$(obj)_memcpy32.S:
+	ln -sf $(SRCTREE)/arch/$(ARCH)/lib/_memcpy32.S $@
 
 # from onenand_ipl directory
 $(obj)onenand_ipl.h:
