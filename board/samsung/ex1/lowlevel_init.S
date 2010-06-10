@@ -60,10 +60,37 @@ set_system_clock:
 	ldr	r0, =0xD6070814
 	str	r0, [r1]
 
-set_uart_clock:
-	ldr	r1, =0x90070414
+set_clock_gating:
+	/* Enable All Clocks */
+	ldr	r1, =0x90070000
+
+	/* AUDIO */
 	ldr	r0, =0x1
-	str	r0, [r1]
+	str	r0, [r1, #0x400]
+
+	/* I2C 0-2 */
+	ldr	r0, =0x7
+	str	r0, [r1, #0x40C]
+
+	/* SDMMC/SDIO */
+	ldr	r0, =0x3
+	str	r0, [r1, #0x410]
+
+	/* UART 0-1 */
+	ldr	r0, =0x3
+	str	r0, [r1, #0x414]
+
+	/* SPI 0-7 */
+	ldr	r0, =0xff
+	str	r0, [r1, #0x418]
+
+	/* PWM 0-2 */
+	ldr	r0, =0x7
+	str	r0, [r1, #0x41C]
+
+	/* GPIO 0-10 */
+	ldr	r0, =0x7ff
+	str	r0, [r1, #0x420]
 #endif
 
 #ifdef CONFIG_ONENAND_IPL
