@@ -634,7 +634,11 @@ static void check_hw_revision(void)
 			} else {
 				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
+#if 0
+				/* workaround: temporarily use sdk rev0.5 */ 
+				board_rev |= SDK_BOARD;
 
+#endif
 				/* Limo SDK MP0_5[4] == 1 */
 				gpio_direction_input(&gpio->gpio_mp0_5, 4);
 				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
@@ -720,7 +724,8 @@ static void show_hw_revision(void)
 		else if (board_is_bamboo())
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_goni()) {
-		if (board_is_sdk() && (hwrevision(2) || hwrevision(4)))
+		if (board_is_sdk() &&
+			(hwrevision(2) || hwrevision(4) || hwrevision(5)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
