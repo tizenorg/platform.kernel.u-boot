@@ -2703,9 +2703,6 @@ int s5p_no_mmc_support(void)
 
 int board_mmc_init(bd_t *bis)
 {
-	unsigned int reg;
-	unsigned int clock;
-	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
 	int i;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
