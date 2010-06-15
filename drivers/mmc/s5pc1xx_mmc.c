@@ -463,7 +463,7 @@ static int s5pc1xx_mmc_initialize(int dev_index)
 	mmc->set_ios = mmc_set_ios;
 	mmc->init = mmc_core_init;
 
-	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34;
+	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
 	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
 	mmc->f_min = 400000;
