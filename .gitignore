@@ -74,6 +74,13 @@ cscope.*
 /onenand_ipl/board/*/*/onenand*
 /onenand_ipl/board/*/*/samsung_read*
 
+# MMC IPL files
+/mmc_ipl/mmc-ipl*
+/mmc_ipl/board/*/*.S
+/mmc_ipl/board/*/mmc*
+/mmc_ipl/board/*/*/*.S
+/mmc_ipl/board/*/*/mmc*
+
 # Recovery Block files
 /recovery/recovery.bin
 /recovery/recovery.map
