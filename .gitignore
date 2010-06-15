@@ -13,6 +13,7 @@
 *~
 *.swp
 *.patch
+*.tar
 
 #
 # Top-level generic files
@@ -32,6 +33,10 @@
 /u-boot-onenand-evt0.bin
 /u-boot-onenand-evt1.bin
 /u-boot-onenand-evt1-fused.bin
+/u-boot-mmc.bin
+/u-boot-mmc-evt0.bin
+/u-boot-mmc-evt1.bin
+/u-boot-mmc-evt1-fused.bin
 /u-boot-recovery.bin
 /u-boot-recovery-evt0.bin
 /u-boot-recovery-evt1.bin
