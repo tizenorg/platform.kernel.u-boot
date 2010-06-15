@@ -53,7 +53,10 @@ check_ipl()
 
 build_uboot()
 {
-	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS
+	if [ "$1" != "mmc" ]; then
+		OPT=$*
+	fi
+	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $OPT
 }
 
 make_evt_image()
@@ -77,7 +80,7 @@ check_ccache
 check_users
 check_ipl $1
 
-build_uboot
+build_uboot $*
 
 make_evt_image
 make_recovery_image
