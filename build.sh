@@ -42,38 +42,52 @@ check_users()
 	fi
 }
 
+check_ipl()
+{
+	if [ "$1" = "mmc" ]; then
+		IPL="mmc"
+	else
+		IPL="onenand"
+	fi
+}
+
 build_uboot()
 {
-	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS $*
+	make ARCH=arm CROSS_COMPILE="$CCACHE $CROSS_COMPILER" $JOBS
 }
 
 make_evt_image()
 {
-	cat onenand_ipl/onenand-ipl-16k-evt0.bin u-boot.bin > u-boot-onenand-evt0.bin
-	cat onenand_ipl/onenand-ipl-16k-fused.bin u-boot.bin > u-boot-onenand-evt1-fused.bin
+	cat "$IPL"_ipl/"$IPL"-ipl-16k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin
+	cat "$IPL"_ipl/"$IPL"-ipl-16k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
 	# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
-	cp u-boot-onenand.bin u-boot-onenand-evt1.bin
+	cp u-boot-"$IPL".bin u-boot-"$IPL"-evt1.bin
 }
 
 make_recovery_image()
 {
-	cat recovery/recovery-evt0.bin u-boot.bin > u-boot-recovery-evt0.bin
-	cat recovery/recovery-fused.bin u-boot.bin > u-boot-recovery-evt1-fused.bin
-	cp u-boot-recovery.bin u-boot-recovery-evt1.bin
+	if [ "$IPL" != "mmc" ]; then
+		cat recovery/recovery-evt0.bin u-boot.bin > u-boot-recovery-evt0.bin
+		cat recovery/recovery-fused.bin u-boot.bin > u-boot-recovery-evt1-fused.bin
+		cp u-boot-recovery.bin u-boot-recovery-evt1.bin
+	fi
 }
 
 check_ccache
 check_users
+check_ipl $1
 
-build_uboot $*
+build_uboot
 
 make_evt_image
 make_recovery_image
 
-size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
-if [ "$size" -ge "262144" ]; then
-	echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
-	exit
+if [ "$IPL" != "mmc" ]; then
+	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
+	if [ "$size" -ge "262144" ]; then
+		echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
+		exit
+	fi
 fi
 
 if [ "$USER" = "kmpark" ]; then

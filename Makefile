@@ -282,6 +282,12 @@ U_BOOT_ONENAND = $(obj)u-boot-onenand.bin
 ONENAND_BIN ?= $(obj)onenand_ipl/onenand-ipl-2k.bin
 endif
 
+ifeq ($(CONFIG_MMC_U_BOOT),y)
+MMC_IPL = mmc_ipl
+U_BOOT_MMC = $(obj)u-boot-mmc.bin
+MMC_BIN ?= $(obj)mmc_ipl/mmc-ipl-16k.bin
+endif
+
 ifeq ($(CONFIG_RECOVERY_U_BOOT),y)
 RECOVERY_BLOCK = recovery
 U_BOOT_RECOVERY = $(obj)u-boot-recovery.bin
@@ -296,7 +302,7 @@ __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 #########################################################################
 
 # Always append ALL so that arch config.mk's can add custom ones
-ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND) $(U_BOOT_RECOVERY)
+ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND) $(U_BOOT_MMC) $(U_BOOT_RECOVERY)
 
 all:		$(ALL)
 
@@ -385,6 +391,12 @@ $(ONENAND_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 
 $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
+
+$(MMC_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
+		$(MAKE) -C mmc_ipl/board/$(BOARDDIR) all
+
+$(U_BOOT_MMC):	$(MMC_IPL) $(obj)u-boot.bin
+		cat $(MMC_BIN) $(obj)u-boot.bin > $(obj)u-boot-mmc.bin
 
 $(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk $(ONENAND_IPL)
 		$(MAKE) -C recovery all
@@ -3211,6 +3223,11 @@ s5pc1xx_universal_config:	unconfig
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 	@echo "CONFIG_RECOVERY_U_BOOT = y" >> $(obj)include/config.mk
 
+#s5pc1xx_universal_config:	unconfig
+#	@echo "#define CONFIG_MMC_U_BOOT" > $(obj)include/config.h
+#	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 universal samsung s5pc1xx
+#	@echo "CONFIG_MMC_U_BOOT = y" >> $(obj)include/config.mk
+
 s5pc1xx_p1p2_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 p1p2 samsung s5pc1xx
@@ -3742,6 +3759,9 @@ clean:
 	@rm -f $(obj)onenand_ipl/onenand-{ipl,ipl.bin,ipl.map}
 	@rm -f $(ONENAND_BIN)
 	@rm -f $(obj)onenand_ipl/u-boot.lds
+	@rm -f $(obj)mmc_ipl/mmc-{ipl,ipl.bin,ipl.map}
+	@rm -f $(MMC_BIN)
+	@rm -f $(obj)mmc_ipl/u-boot.lds
 	@rm -f $(obj)recovery/{recovery,recovery.map}
 	@rm -f $(TIMESTAMP_FILE) $(VERSION_FILE)
 	@find $(OBJTREE) -type f \
@@ -3764,6 +3784,7 @@ clobber:	clean
 	@rm -f $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)onenand_ipl ] || find $(obj)onenand_ipl -name "*" -type l -print | xargs rm -f
+	@[ ! -d $(obj)mmc_ipl ] || find $(obj)mmc_ipl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)recovery ] || find $(obj)recovery -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)api_examples ] || find $(obj)api_examples -name "*" -type l -print | xargs rm -f
 

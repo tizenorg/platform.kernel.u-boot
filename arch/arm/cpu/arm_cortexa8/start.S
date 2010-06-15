@@ -193,8 +193,10 @@ clbss_l:
 
 	ldr	pc, _start_armboot	@ jump to C code
 
-#if defined(CONFIG_PRELOADER)
+#if defined(CONFIG_ONENAND_IPL)
 _start_armboot: .word start_oneboot
+#elif defined(CONFIG_MMC_IPL)
+_start_armboot: .word start_mmcboot
 #elif defined(CONFIG_RECOVERY_BLOCK)
 _start_armboot: .word start_recovery_boot
 #else
