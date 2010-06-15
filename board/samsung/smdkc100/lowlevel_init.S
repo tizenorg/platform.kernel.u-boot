@@ -50,7 +50,7 @@ lowlevel_init:
 	orr	r0, r0, #0x0
 	str	r5, [r0]
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* setting SRAM */
 	ldr	r0, =S5PC100_SROMC_BASE
 	ldr	r1, =0x9
@@ -68,7 +68,7 @@ lowlevel_init:
 	str	r3, [r1, #0x14]				@INTENCLEAR
 	str	r3, [r2, #0x14]				@INTENCLEAR
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* Set all interrupts as IRQ */
 	str	r5, [r0, #0xc]				@INTSELECT
 	str	r5, [r1, #0xc]				@INTSELECT
@@ -80,7 +80,7 @@ lowlevel_init:
 	str	r5, [r2, #0xf00]			@INTADDRESS
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* for UART */
 	bl uart_asm_init
 
@@ -88,7 +88,7 @@ lowlevel_init:
 	bl tzpc_asm_init
 #endif
 
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 	/* init system clock */
 	bl	system_clock_init
 
@@ -106,7 +106,7 @@ lowlevel_init:
 	mov	lr, r9
 	mov	pc, lr
 
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 wakeup_reset:
 
 	/* Clear wakeup status register */
@@ -178,7 +178,7 @@ system_clock_init:
 
 	mov	pc, lr
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */

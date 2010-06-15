@@ -34,7 +34,7 @@
 
 .globl _start
 _start: b	reset
-#if !defined(CONFIG_ONENAND_IPL) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
 	ldr	pc, _undefined_instruction
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
@@ -112,7 +112,7 @@ reset:
 	orr	r0, r0, #0xd3
 	msr	cpsr,r0
 
-#if !defined(CONFIG_ONENAND_IPL) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
 #if (CONFIG_OMAP34XX)
 	/* Copy vectors to mask ROM indirect addr */
 	adr	r0, _start		@ r0 <- current position of code
@@ -136,7 +136,7 @@ next:
 	bl	cpy_clk_code		@ put dpll adjust code behind vectors
 #endif /* NAND Boot */
 #endif
-#endif	/* CONFIG_ONENAND_IPL || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_PRELOADER || CONFIG_RECOVERY_BLOCK */
 	/* the mask ROM code should have PLL and others stable */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 #if !defined(CONFIG_RECOVERY_BLOCK)
@@ -144,7 +144,7 @@ next:
 #endif
 #endif
 
-#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_ONENAND_IPL) || !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_SKIP_RELOCATE_UBOOT) || !defined(CONFIG_PRELOADER) || !defined(CONFIG_RECOVERY_BLOCK)
 relocate:				@ relocate U-Boot to RAM
 	adr	r0, _start		@ r0 <- current position of code
 	ldr	r1, _TEXT_BASE		@ test if we run from flash or RAM
@@ -166,7 +166,7 @@ copy_loop:				@ copy 32 bytes at a time
 	/* Set up the stack */
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
-#if defined(CONFIG_ONENAND_IPL)
+#if defined(CONFIG_PRELOADER)
 	sub	sp, r0, #128		@ leave 32 words for abort-stack
 #else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area
@@ -175,10 +175,10 @@ stack_setup:
 	sub	r0, r0, #(CONFIG_STACKSIZE_IRQ + CONFIG_STACKSIZE_FIQ)
 #endif
 	sub	sp, r0, #12		@ leave 3 words for abort-stack
-#endif	/* CONFIG_ONENAND_IPL */
+#endif	/* CONFIG_PRELOADER */
 	and	sp, sp, #~7		@ 8 byte alinged for (ldr/str)d
 
-#if !defined(CONFIG_ONENAND_IPL) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
 	/* Clear BSS (if any). Is below tx (watch load addr - need space) */
 clear_bss:
 	ldr	r0, _bss_start		@ find start of bss segment
@@ -189,11 +189,11 @@ clbss_l:
 	cmp	r0, r1			@ are we at the end yet
 	add	r0, r0, #4		@ increment clear index pointer
 	bne	clbss_l			@ keep clearing till at end
-#endif	/* CONFIG_ONENAND_IPL || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_PRELOADER || CONFIG_RECOVERY_BLOCK */
 
 	ldr	pc, _start_armboot	@ jump to C code
 
-#if defined(CONFIG_ONENAND_IPL)
+#if defined(CONFIG_PRELOADER)
 _start_armboot: .word start_oneboot
 #elif defined(CONFIG_RECOVERY_BLOCK)
 _start_armboot: .word start_recovery_boot
@@ -241,7 +241,7 @@ cpu_init_crit:
 	mov	pc, lr			@ back to my caller
 #endif
 
-#if !defined(CONFIG_ONENAND_IPL) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
 /*
  *************************************************************************
  *
@@ -438,4 +438,4 @@ fiq:
 	bl	do_fiq
 
 #endif
-#endif	/* CONFIG_ONENAND_IPL || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_PRELOADER || CONFIG_RECOVERY_BLOCK */

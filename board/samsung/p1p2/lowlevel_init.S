@@ -84,7 +84,7 @@ skip_check_didle:
 	str	r1, [r0, #0x0]				@S5PC1XX_GPIO_CON_OFFSET
 
 	ldr	r1, [r0, #0x4]				@S5PC1XX_GPIO_DAT_OFFSET
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 	orr	r1, r1, #(1 << 1)			@ 1 * 1-bit
 #else
 	bic	r1, r1, #(1 << 1)
@@ -101,7 +101,7 @@ skip_check_didle:
 	orr	r1, r1, r2
 	str	r1, [r0]
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* Disable Watchdog */
 	ldreq	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
 	ldrne	r0, =S5PC110_WATCHDOG_BASE		@0xE2700000
@@ -126,7 +126,7 @@ skip_check_didle:
 	str	r3, [r1, #0x14]				@INTENCLEAR
 	str	r3, [r2, #0x14]				@INTENCLEAR
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* Set all interrupts as IRQ */
 	str	r5, [r0, #0xc]				@INTSELECT
 	str	r5, [r1, #0xc]				@INTSELECT
@@ -138,14 +138,14 @@ skip_check_didle:
 	str	r5, [r2, #0xf00]			@INTADDRESS
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* for UART */
 	bl	uart_asm_init
 
 	bl	internal_ram_init
 #endif
 
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 	/* init system clock */
 	bl	system_clock_init
 
@@ -478,7 +478,7 @@ system_clock_init:
 
 	mov	pc, lr
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 internal_ram_init:
 	ldreq	r0, =0xE3800000
 	ldrne	r0, =0xF1500000
@@ -488,7 +488,7 @@ internal_ram_init:
 	mov	pc, lr
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */

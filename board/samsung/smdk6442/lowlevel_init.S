@@ -52,7 +52,7 @@ lowlevel_init:
 	orr	r1, r1, r2
 	str	r1, [r0]
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* Disable Watchdog */
 	ldr	r0, =S5P6442_WATCHDOG_BASE		@0xEA200000
 	orr	r0, r0, #0x0
@@ -75,7 +75,7 @@ lowlevel_init:
 	str	r3, [r1, #0x14]				@INTENCLEAR
 	str	r3, [r2, #0x14]				@INTENCLEAR
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* Set all interrupts as IRQ */
 	str	r5, [r0, #0xc]				@INTSELECT
 	str	r5, [r1, #0xc]				@INTSELECT
@@ -87,12 +87,12 @@ lowlevel_init:
 	str	r5, [r2, #0xf00]			@INTADDRESS
 #endif
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 	/* for UART */
 	bl uart_asm_init
 #endif
 
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 	/* init system clock */
 	bl	system_clock_init
 
@@ -125,7 +125,7 @@ lowlevel_init:
 	mov	lr, r9
 	mov	pc, lr
 
-#ifdef CONFIG_ONENAND_IPL
+#ifdef CONFIG_PRELOADER
 wakeup_reset:
 
 	/* Clear wakeup status register */
@@ -187,7 +187,7 @@ system_clock_init:
 
 	mov	pc, lr
 
-#ifndef CONFIG_ONENAND_IPL
+#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */
