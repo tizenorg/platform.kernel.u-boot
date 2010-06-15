@@ -29,7 +29,7 @@ check_users()
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "jaehoon" ]; then
-		CROSS_COMPILER=/usr/local/arm/arm-2008q3/bin/arm-none-linux-gnueabi-
+		CROSS_COMPILER=/usr/local/arm/arm-2009q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "dh09.lee" ]; then
