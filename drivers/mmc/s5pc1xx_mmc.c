@@ -308,7 +308,7 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	if (clock == 0)
 		goto out;
 	else if (clock <= 400000)
-		div = 0x40;
+		div = 0x80;
 	else if (clock <= 20000000)
 		div = 2;
 	else if (clock <= 26000000)
