@@ -446,8 +446,6 @@ static int mmc_core_init(struct mmc *mmc)
 	writel(0xffffffff, &host->reg->norintstsen);
 	writel(0xffffffff, &host->reg->norintsigen);
 
-	mmc_change_clock(host, 400000);
-
 	return 0;
 }
 
