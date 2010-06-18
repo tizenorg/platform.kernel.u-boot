@@ -24,7 +24,7 @@
 VERSION = 2010
 PATCHLEVEL = 06
 SUBLEVEL =
-EXTRAVERSION = -rc1
+EXTRAVERSION = -rc2
 ifneq "$(SUBLEVEL)" ""
 U_BOOT_VERSION = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 else
@@ -2898,6 +2898,10 @@ otc570_config	:	unconfig
 pm9263_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs pm9263 ronetix at91
 
+pm9g45_config	:	unconfig
+	@mkdir -p $(obj)include
+	@$(MKCONFIG) -a pm9g45 arm arm926ejs pm9g45 ronetix at91
+
 SBC35_A9G20_NANDFLASH_config \
 SBC35_A9G20_EEPROM_config \
 SBC35_A9G20_config	:	unconfig
@@ -2941,8 +2945,9 @@ cp922_XA10_config	\
 cp1026_config: unconfig
 	@board/armltd/integrator/split_by_variant.sh cp $@
 
-da830evm_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) arm arm926ejs da830evm davinci davinci
+da830evm_config		\
+da850evm_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs da8xxevm davinci davinci
 
 davinci_dvevm_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs dvevm davinci davinci
@@ -2973,6 +2978,9 @@ ex1_config :	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs ex1 samsung drime3
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
+
+edminiv2_config: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) LaCie orion5x
 
 guruplug_config: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs $(@:_config=) Marvell kirkwood
@@ -3186,6 +3194,9 @@ SMN42_config	:	unconfig
 ## ARM CORTEX Systems
 #########################################################################
 
+am3517_evm_config :	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 am3517evm logicpd omap3
+
 devkit8000_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 devkit8000 timll omap3
 
@@ -3209,6 +3220,9 @@ omap3_zoom1_config :	unconfig
 
 omap3_zoom2_config :	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 zoom2 logicpd omap3
+
+s5p_goni_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 goni samsung s5pc1xx
 
 smdkc100_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
@@ -3385,6 +3399,9 @@ smdk6442_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1176 smdk6442 samsung s5p64xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-8k.bin" >> $(obj)include/config.mk
+
+tnetv107x_evm_config: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm1176 tnetv107xevm ti tnetv107x
 
 #========================================================================
 # i386
