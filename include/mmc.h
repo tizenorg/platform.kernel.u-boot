@@ -138,8 +138,8 @@
 #define EXT_CSD_REV_1_1		1
 #define EXT_CSD_REV_1_2		2
 #define EXT_CSD_REV_1_3		3
-#define EXT_CSD_REV_1_5		4
-
+#define EXT_CSD_REV_1_4		4
+#define EXT_CSD_REV_1_5		5
 
 /*
  * EXT_CSD field definitions
