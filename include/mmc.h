@@ -128,6 +128,7 @@
  * EXT_CSD fields
  */
 
+#define EXT_CSD_BOOT_CONFIG	179	/* R/W */
 #define EXT_CSD_BUS_WIDTH	183	/* R/W */
 #define EXT_CSD_HS_TIMING	185	/* R/W */
 #define EXT_CSD_CARD_TYPE	196	/* RO */
