@@ -431,19 +431,19 @@ int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version == MMC_VERSION_4) {
 		switch (ext_csd[192]) {
 		case EXT_CSD_REV_1_0:
-			/* MMV v4.0 */
+			/* MMC v4.0 */
 			mmc->version |= EXT_CSD_REV_1_0;
 			break;
 		case EXT_CSD_REV_1_1:
-			/* MMV v4.1 */
+			/* MMC v4.1 */
 			mmc->version |= EXT_CSD_REV_1_1;
 			break;
 		case EXT_CSD_REV_1_2:
-			/* MMV v4.2 */
+			/* MMC v4.2 */
 			mmc->version |= EXT_CSD_REV_1_2;
 			break;
 		case EXT_CSD_REV_1_3:
-			/* MMV v4.3 */
+			/* MMC v4.3 */
 			mmc->version |= EXT_CSD_REV_1_3;
 			break;
 		case EXT_CSD_REV_1_4:
@@ -451,7 +451,7 @@ int mmc_change_freq(struct mmc *mmc)
 			mmc->version |= EXT_CSD_REV_1_4;
 			break;
 		case EXT_CSD_REV_1_5:
-			/* MMV v4.41 */
+			/* MMC v4.41 */
 			mmc->version |= EXT_CSD_REV_1_5;
 			break;
 		}
