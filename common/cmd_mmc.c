@@ -223,6 +223,36 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			printf("%d blocks written: %s\n",
 				n, (n == cnt) ? "OK" : "ERROR");
 			return (n == cnt) ? 0 : 1;
+		} else if (strcmp(argv[1], "boot") == 0) {
+			int dev = simple_strtoul(argv[2], NULL, 10);
+			u8 ack = simple_strtoul(argv[3], NULL, 10) & 0x1;
+			u8 enable = simple_strtoul(argv[4], NULL, 10) & 0x7;
+			u8 access = simple_strtoul(argv[5], NULL, 10) & 0x7;
+			struct mmc *mmc = find_mmc_device(dev);
+
+			if (!mmc)
+				return 1;
+			/*
+			 * BOOT_CONFIG[179]
+			 * BOOT_ACK[6]
+			 * 	0x0: No boot acknowledge sent
+			 * 	0x1: Boot acknowledge sent
+			 * BOOT_PARTITION_ENABLE[5:3]
+			 * 	0x0: Device not boot enabled
+			 * 	0x1: Boot partition 1 enabled for boot
+			 * 	0x2: Boot partition 2 enabled for boot
+			 * 	0x7: User area enabled for boot
+			 * PARTITION_ACCESS[2:0]
+			 * 	0x0: No access to boot partition
+			 * 	0x1: R/W boot partition 1
+			 * 	0x2: R/W boot partition 2
+			 * 	0x3: R/W Replay Protected Memory Block
+			 * 	0x4: Access to General Purpose partition 1
+			 * 	0x5: Access to General Purpose partition 2
+			 * 	0x6: Access to General Purpose partition 3
+			 * 	0x7: Access to General Purpose partition 4
+			 */
+			mmc->boot_config = (ack << 6) | (enable << 3) | access;
 		} else {
 			printf("Usage:\n%s\n", cmdtp->usage);
 			rc = 1;
@@ -238,5 +268,6 @@ U_BOOT_CMD(
 	"read <device num> addr blk# cnt\n"
 	"mmc write <device num> addr blk# cnt\n"
 	"mmc rescan <device num>\n"
-	"mmc list - lists available devices");
+	"mmc list - lists available devices\n"
+	"mmc boot <device num> ack en access");
 #endif

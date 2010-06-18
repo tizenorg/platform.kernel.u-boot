@@ -421,6 +421,13 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		return err;
 
+	/* partition configuration */
+	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+			EXT_CSD_BOOT_CONFIG, mmc->boot_config);
+
+	if (err)
+		return err;
+
 	/* Now check to see that it worked */
 	err = mmc_send_ext_csd(mmc, ext_csd);
 

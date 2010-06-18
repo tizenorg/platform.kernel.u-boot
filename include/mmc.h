@@ -268,6 +268,7 @@ struct mmc {
 	uint write_bl_len;
 	u64 capacity;
 	block_dev_desc_t block_dev;
+	uint boot_config;
 	int (*send_cmd)(struct mmc *mmc,
 			struct mmc_cmd *cmd, struct mmc_data *data);
 	void (*set_ios)(struct mmc *mmc);
