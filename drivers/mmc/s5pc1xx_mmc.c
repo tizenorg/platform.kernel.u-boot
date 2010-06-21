@@ -133,7 +133,7 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	 * CMDINHCMD[0]	: Command Inhibit (CMD)
 	 */
 	mask = (1 << 0);
-	if ((data != NULL) || (cmd->flags & MMC_RSP_BUSY))
+	if ((data != NULL) || (cmd->resp_type & MMC_RSP_BUSY))
 		mask |= (1 << 1);
 
 	/*
