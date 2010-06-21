@@ -25,7 +25,7 @@
 #define S5PC110_MMC_BASE	0xEB000000
 
 #ifndef __ASSEMBLY__
-struct s5pc1xx_mmc {
+struct s5p_mmc {
 	unsigned long	sysad;
 	unsigned short	blksize;
 	unsigned short	blkcnt;
@@ -66,12 +66,12 @@ struct s5pc1xx_mmc {
 };
 
 struct mmc_host {
-	struct s5pc1xx_mmc *reg;
+	struct s5p_mmc *reg;
 	unsigned int version;	/* SDHCI spec. version */
 	unsigned int clock;	/* Current clock (MHz) */
 };
 
-int s5pc1xx_mmc_init(int dev_index);
+int s5p_mmc_init(int dev_index);
 
 #endif	/* __ASSEMBLY__ */
 #endif

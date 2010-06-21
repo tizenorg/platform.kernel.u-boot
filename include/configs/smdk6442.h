@@ -72,7 +72,7 @@
 /* MMC */
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
-#define CONFIG_S5PC1XX_MMC	1
+#define CONFIG_S5P_MMC		1
 #define CONFIG_MMC_INDEX	0
 #endif
 

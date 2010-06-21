@@ -1,6 +1,7 @@
 /*
  * (C) Copyright 2009 SAMSUNG Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
+ * Jaehoon Chung <jh80.chung@samsung.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +23,24 @@
 #include <asm/io.h>
 #include <asm/arch/mmc.h>
 
-#ifdef DEBUG_S3C_HSMMC
+#ifdef DEBUG_S5P_HSMMC
 #define dbg(x...)       printf(x)
 #else
 #define dbg(x...)       do { } while (0)
 #endif
 
-/* s5pc1xx support 4 mmc hosts */
+/* support 4 mmc hosts */
 struct mmc mmc_dev[4];
 struct mmc_host mmc_host[4];
 
-static inline struct s5pc1xx_mmc *s5pc1xx_get_base_mmc(int dev_index)
+static inline struct s5p_mmc *s5p_get_base_mmc(int dev_index)
 {
-	unsigned long offset = dev_index * sizeof(struct s5pc1xx_mmc);
+	unsigned long offset = dev_index * sizeof(struct s5p_mmc);
 
 	if (cpu_is_s5pc100())
-		return (struct s5pc1xx_mmc *)(S5PC100_MMC_BASE + offset);
+		return (struct s5p_mmc *)(S5PC100_MMC_BASE + offset);
 	else
-		return (struct s5pc1xx_mmc *)(S5PC110_MMC_BASE + offset);
+		return (struct s5p_mmc *)(S5PC110_MMC_BASE + offset);
 }
 
 static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
@@ -97,7 +98,8 @@ static void mmc_set_transfer_mode(struct mmc_host *host, struct mmc_data *data)
 	 * TRNMOD
 	 * MUL1SIN0[5]	: Multi/Single Block Select
 	 * RD1WT0[4]	: Data Transfer Direction Select
-	 * 		: 1 = read / 0 = write
+	 *	1 = read
+	 *	0 = write
 	 * ENACMD12[2]	: Auto CMD12 Enable
 	 * ENBLKCNT[1]	: Block Count Enable
 	 * ENDMA[0]	: DMA Enable
@@ -111,10 +113,6 @@ static void mmc_set_transfer_mode(struct mmc_host *host, struct mmc_data *data)
 	writew(mode, &host->reg->trnmod);
 }
 
-/*
- * Sends a command out on the bus.  Takes the mmc pointer,
- * a command pointer, and an optional data pointer.
- */
 static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 			struct mmc_data *data)
 {
@@ -343,7 +341,6 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 
 out:
 	host->clock = clock;
-	return;
 }
 
 static void mmc_set_ios(struct mmc *mmc)
@@ -373,11 +370,11 @@ static void mmc_set_ios(struct mmc *mmc)
 	/*
 	 * FCSEL1[15] FCSEL0[7]
 	 * FCSel[1:0] : Rx Feedback Clock Delay Control
-	 * 		Inverter delay means10ns delay if SDCLK 50MHz setting
-	 *         	'01' = Delay1 (basic delay)
-	 *         	'11' = Delay2 (basic delay + 2ns)
-	 *         	'00' = Delay3 (inverter delay)
-	 *         	'10' = Delay4 (inverter delay + 2ns)
+	 *	Inverter delay means10ns delay if SDCLK 50MHz setting
+	 *	01 = Delay1 (basic delay)
+	 *	11 = Delay2 (basic delay + 2ns)
+	 *	00 = Delay3 (inverter delay)
+	 *	10 = Delay4 (inverter delay + 2ns)
 	 */
 	writel(0x8080, &host->reg->control3);
 
@@ -449,13 +446,13 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5pc1xx_mmc_initialize(int dev_index)
+static int s5p_mmc_initialize(int dev_index)
 {
 	struct mmc *mmc;
 
 	mmc = &mmc_dev[dev_index];
 
-	sprintf(mmc->name, "S5PC1XX SD/MMC");
+	sprintf(mmc->name, "SAMSUNG SD/MMC");
 	mmc->priv = &mmc_host[dev_index];
 	mmc->send_cmd = mmc_send_cmd;
 	mmc->set_ios = mmc_set_ios;
@@ -468,13 +465,13 @@ static int s5pc1xx_mmc_initialize(int dev_index)
 	mmc->f_max = 52000000;
 
 	mmc_host[dev_index].clock = 0;
-	mmc_host[dev_index].reg = s5pc1xx_get_base_mmc(dev_index);
+	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
 	mmc_register(mmc);
 
 	return 0;
 }
 
-int s5pc1xx_mmc_init(int dev_index)
+int s5p_mmc_init(int dev_index)
 {
-	return s5pc1xx_mmc_initialize(dev_index);
+	return s5p_mmc_initialize(dev_index);
 }
