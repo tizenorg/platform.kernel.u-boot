@@ -452,14 +452,15 @@ int mmc_change_freq(struct mmc *mmc)
 		/* MMC v4.3 */
 		mmc->version |= EXT_CSD_REV_1_3;
 		break;
-	case EXT_CSD_REV_1_4:
-		/* Obeolete */
-		mmc->version |= EXT_CSD_REV_1_4;
-		break;
 	case EXT_CSD_REV_1_5:
 		/* MMC v4.41 */
 		mmc->version |= EXT_CSD_REV_1_5;
 		break;
+	case EXT_CSD_REV_1_4:
+		/* Obsolete */
+	default:
+		printf("Unknown revision - %x\n", ext_csd[192]);
+		return 0;
 	}
 
 	/* No high-speed support */
