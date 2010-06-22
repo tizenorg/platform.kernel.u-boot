@@ -48,32 +48,8 @@ static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 	unsigned char ctrl;
 	unsigned int mask;
 
-	writeb(0xe, &host->reg->timeoutcon);	/* TMCLK * 2^27 */
-
-	/*
-	 * NORMAL Interrupt Status Enable Register init
-	 * [5] ENSTABUFRDRDY : Buffer Read Ready Status Enable
-	 * [4] ENSTABUFWTRDY : Buffer write Ready Status Enable
-	 * [1] ENSTASTANSCMPLT : Transfre Complete Status Enable
-	 * [0] ENSTACMDCMPLT : Command Complete Status Enable
-	*/
-	mask = readl(&host->reg->norintstsen);
-	mask &= ~(0xffff);
-	mask |= (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0);
-	writel(mask, &host->reg->norintstsen);
-
-	/*
-	 * NORMAL Interrupt Signal Enable Register init
-	 * [1] ENSTACMDCMPLT : Transfer Complete Signal Enable
-	 */
-	mask = readl(&host->reg->norintsigen);
-	mask &= ~(0xffff);
-	mask |= (1 << 1);
-	writel(mask, &host->reg->norintsigen);
-
 	dbg("data->dest: %08x\n", (u32)data->dest);
 	writel((u32)data->dest, &host->reg->sysad);
-
 	/*
 	 * DMASEL[4:3]
 	 * 00 = Selects SDMA
@@ -306,15 +282,16 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	if (clock == 0)
 		goto out;
 	else if (clock <= 400000)
-		div = 0x80;
+		div = 0x100;
 	else if (clock <= 20000000)
-		div = 2;
+		div = 4;
 	else if (clock <= 26000000)
-		div = 1;
+		div = 2;
 	else
-		div = 0;
+		div = 1;
 	dbg("div: %d\n", div);
 
+	div >>= 1;
 	/*
 	 * CLKCON
 	 * SELFREQ[15:8]	: base clock divied by value
@@ -360,7 +337,10 @@ static void mmc_set_ios(struct mmc *mmc)
 	 */
 	writel(0x3 << 16, &host->reg->control4);
 
-	val =	(1 << 31) |	/* write status clear async mode enable */
+	val = readl(&host->reg->control2);
+	val &= (0x3 << 4);
+
+	val |=	(1 << 31) |	/* write status clear async mode enable */
 		(1 << 30) |	/* command conflict mask enable */
 		(1 << 14) |	/* Feedback Clock Enable for Rx Clock */
 		(1 << 8);	/* SDCLK hold enable */
@@ -432,16 +412,38 @@ static void mmc_reset(struct mmc_host *host)
 static int mmc_core_init(struct mmc *mmc)
 {
 	struct mmc_host *host = (struct mmc_host *)mmc->priv;
+	unsigned int mask;
 
 	mmc_reset(host);
 
 	host->version = readw(&host->reg->hcver);
 
-	mmc_reset(host);
-
 	/* mask all */
 	writel(0xffffffff, &host->reg->norintstsen);
 	writel(0xffffffff, &host->reg->norintsigen);
+
+	writeb(0xe, &host->reg->timeoutcon);	/* TMCLK * 2^27 */
+
+	/*
+	 * NORMAL Interrupt Status Enable Register init
+	 * [5] ENSTABUFRDRDY : Buffer Read Ready Status Enable
+	 * [4] ENSTABUFWTRDY : Buffer write Ready Status Enable
+	 * [1] ENSTASTANSCMPLT : Transfre Complete Status Enable
+	 * [0] ENSTACMDCMPLT : Command Complete Status Enable
+	*/
+	mask = readl(&host->reg->norintstsen);
+	mask &= ~(0xffff);
+	mask |= (1 << 5) | (1 << 4) | (1 << 1) | (1 << 0);
+	writel(mask, &host->reg->norintstsen);
+
+	/*
+	 * NORMAL Interrupt Signal Enable Register init
+	 * [1] ENSTACMDCMPLT : Transfer Complete Signal Enable
+	 */
+	mask = readl(&host->reg->norintsigen);
+	mask &= ~(0xffff);
+	mask |= (1 << 1);
+	writel(mask, &host->reg->norintsigen);
 
 	return 0;
 }
