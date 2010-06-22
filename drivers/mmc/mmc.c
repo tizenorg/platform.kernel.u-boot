@@ -130,6 +130,10 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 		cmd.resp_type = MMC_RSP_R1b;
 		cmd.flags = 0;
 		stoperr = mmc_send_cmd(mmc, &cmd, NULL);
+		if (stoperr) {
+			printf("stop transmission failed\n");
+			return stoperr;
+		}
 	}
 
 	return blkcnt;
