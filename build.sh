@@ -116,4 +116,12 @@ elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
 	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
 	mv -f system_uboot* /home/share/Work/bin
+elif [ "$USER" = "jaehoon" ]; then
+	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
+	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot_recovery_evt0.tar u-boot-recovery-evt0.bin
+	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
+	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
+	mv -f system_uboot* /home/jaehoon/shared/new/
 fi
