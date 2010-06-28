@@ -734,6 +734,11 @@ static void show_hw_revision(void)
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_cypress()) {
 		s5pc1xx_set_cpu_rev(1);
+	} else if (mach_is_wmg160()) {
+		if (hwrevision(5))
+			s5pc1xx_set_cpu_rev(0);
+		else
+			s5pc1xx_set_cpu_rev(2);
 	} else {
 		s5pc1xx_set_cpu_rev(0);
 	}
@@ -2701,7 +2706,7 @@ int usb_board_init(void)
 #ifdef CONFIG_GENERIC_MMC
 int s5p_no_mmc_support(void)
 {
-	if (mach_is_wmg160())
+	if (mach_is_wmg160() && hwrevision(5))
 		return 1;
 	return 0;
 }
@@ -2710,12 +2715,12 @@ int board_mmc_init(bd_t *bis)
 {
 	int i;
 
+	if (s5p_no_mmc_support())
+		return -1;
+
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
 	if (mach_is_goni())
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
-
-	if (mach_is_wmg160())
-		return -1;
 
 	/*
 	 * MMC0 GPIO
