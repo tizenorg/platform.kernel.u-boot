@@ -46,7 +46,6 @@ static inline struct s5p_mmc *s5p_get_base_mmc(int dev_index)
 static void mmc_prepare_data(struct mmc_host *host, struct mmc_data *data)
 {
 	unsigned char ctrl;
-	unsigned int mask;
 
 	dbg("data->dest: %08x\n", (u32)data->dest);
 	writel((u32)data->dest, &host->reg->sysad);
