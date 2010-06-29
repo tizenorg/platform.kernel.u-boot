@@ -47,8 +47,6 @@ enum {
 	MACH_WMG160 = 160,
 
 	MACH_PSEUDO_END,
-
-	MACH_GONI = 3102,
 };
 
 typedef int (init_fnc_t) (void);
@@ -102,12 +100,18 @@ static int board_is_limo_real(void)
 /* Kessler */
 static int mach_is_goni(void)
 {
-	return bd.bi_arch_number == MACH_GONI;
+	return bd.bi_arch_number == MACH_TYPE_GONI;
 }
 
 static int board_is_sdk(void)
 {
 	return mach_is_goni() && (board_rev & SDK_BOARD);
+}
+
+/* DLNA Dongle */
+static int mach_is_wmg160(void)
+{
+	return c110_machine_id() == MACH_WMG160;
 }
 
 static void check_board_revision(int board, int rev)
@@ -127,7 +131,7 @@ static void check_board_revision(int board, int rev)
 					LIMO_UNIVERSAL_BOARD |
 					LIMO_REAL_BOARD |
 					MEDIA_BOARD);
-	} else if (board == MACH_GONI) {
+	} else if (board == MACH_TYPE_GONI) {
 		if (rev & KESSLER_BOARD)
 			board_rev &= ~(J1_B2_BOARD |
 					LIMO_UNIVERSAL_BOARD);
@@ -294,7 +298,7 @@ static void check_hw_revision(void)
 				board = MACH_CYPRESS;
 				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
-				board = MACH_GONI;
+				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
 
 				/* Limo SDK MP0_5[4] == 1 */
@@ -310,7 +314,7 @@ static void check_hw_revision(void)
 			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
-				board = MACH_GONI;
+				board = MACH_TYPE_GONI;
 				board_rev |= S1_BOARD;
 				hwrev3 = 7;
 			}
@@ -362,13 +366,19 @@ static void show_hw_revision(void)
 				s5pc1xx_set_cpu_rev(0);
 		}
 	} else if (mach_is_goni()) {
-		if (board_is_sdk() && hwrevision(2))
+		if (board_is_sdk() &&
+			(hwrevision(2) || hwrevision(4) || hwrevision(5)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
 	} else if (mach_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
 			s5pc1xx_set_cpu_rev(0);
+	} else if (mach_is_wmg160()) {
+		if (hwrevision(5))
+			s5pc1xx_set_cpu_rev(0);
+		else
+			s5pc1xx_set_cpu_rev(2);
 	} else {
 		s5pc1xx_set_cpu_rev(0);
 	}
@@ -412,6 +422,9 @@ static int check_keypad(void)
 	} else {
 		struct s5pc110_gpio *gpio =
 			(struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+
+		if (mach_is_wmg160())
+			return 0;
 
 		if (board_is_limo_real() || board_is_limo_universal()) {
 			row_num = 2;
