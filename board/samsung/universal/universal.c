@@ -650,7 +650,6 @@ static void check_hw_revision(void)
 						board_rev |= HAYDN_BOARD;
 					else
 						board_rev |= SDK_BOARD;
-
 				}
 
 			}
@@ -2401,6 +2400,7 @@ int dram_init(void)
 {
 	unsigned int base, memconfig0, size;
 	unsigned int memconfig1, sz = 0;
+	int mem_3g = 0;
 
 	if (cpu_is_s5pc100()) {
 		/* In mem setup, we swap the bank. So below size is correct */
@@ -2434,19 +2434,25 @@ int dram_init(void)
 		 * Limo SDK Rev 0.2 4G3G1G
 		 * Limo SDK Rev 0.3 4G3G1G
 		 * Limo SDK Rev 0.4 4G3G1G
+		 * WMG160 Rev 0.7 4G3G1G
 		 */
 		if (mach_is_aquila() || mach_is_goni()) {
 			if ((!board_is_sdk() && (hwrevision(5) ||
 				hwrevision(8) || hwrevision(9))) ||
-				(board_is_sdk() && !hwrevision(1))) {
-				memconfig1 = readl(base + MEMCONFIG1_OFFSET);
-
-				sz = (memconfig1 >> 16) & 0xFF;
-				sz = ((unsigned char) ~sz) + 1;
-				sz = sz << 4;
-			}
+				(board_is_sdk() && !hwrevision(1)))
+				mem_3g = 1;
 			if (mach_is_goni () && board_is_s1())
 				sz = 0;
+		} else if (mach_is_wmg160() && !hwrevision(5)) {
+				mem_3g = 1;
+		}
+
+		if (mem_3g) {
+			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
+
+			sz = (memconfig1 >> 16) & 0xFF;
+			sz = ((unsigned char) ~sz) + 1;
+			sz = sz << 4;
 		}
 	}
 	/*
@@ -2719,7 +2725,7 @@ int board_mmc_init(bd_t *bis)
 		return -1;
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
-	if (mach_is_goni())
+	if (mach_is_goni() || mach_is_wmg160())
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
 
 	/*
