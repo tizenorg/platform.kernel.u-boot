@@ -198,6 +198,7 @@ stack_setup:
 	sub	sp, r0, #12		/* leave 3 words for abort-stack    */
 #ifndef CONFIG_PRELOADER
 	bic	sp, r0, #7		/* 8-byte align stack for ABI compliance */
+	bic	sp, sp, #7		/* 8-byte alignment for ABI compliance */
 
 clear_bss:
 	ldr	r0, _bss_start		/* find start of bss segment        */

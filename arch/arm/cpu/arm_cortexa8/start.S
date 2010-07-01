@@ -176,7 +176,7 @@ stack_setup:
 #endif
 	sub	sp, r0, #12		@ leave 3 words for abort-stack
 #endif	/* CONFIG_PRELOADER */
-	and	sp, sp, #~7		@ 8 byte alinged for (ldr/str)d
+	bic	sp, sp, #7		@ 8-byte alignment for ABI compliance
 
 #if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
 	/* Clear BSS (if any). Is below tx (watch load addr - need space) */
