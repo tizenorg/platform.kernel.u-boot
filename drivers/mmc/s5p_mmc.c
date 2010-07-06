@@ -273,7 +273,7 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	ctrl2 = readl(&host->reg->control2);
 	ctrl2 &= ~(3 << 4);
 	ctrl2 |= (2 << 4);
-	writew(ctrl2, &host->reg->control2);
+	writel(ctrl2, &host->reg->control2);
 
 	writew(0, &host->reg->clkcon);
 

@@ -23,18 +23,18 @@
 
 #ifndef __ASSEMBLY__
 struct s5p_mmc {
-	unsigned long	sysad;
+	unsigned int	sysad;
 	unsigned short	blksize;
 	unsigned short	blkcnt;
-	unsigned long	argument;
+	unsigned int	argument;
 	unsigned short	trnmod;
 	unsigned short	cmdreg;
-	unsigned long	rspreg0;
-	unsigned long	rspreg1;
-	unsigned long	rspreg2;
-	unsigned long	rspreg3;
-	unsigned long	bdata;
-	unsigned long	prnsts;
+	unsigned int	rspreg0;
+	unsigned int	rspreg1;
+	unsigned int	rspreg2;
+	unsigned int	rspreg3;
+	unsigned int	bdata;
+	unsigned int	prnsts;
 	unsigned char	hostctl;
 	unsigned char	pwrcon;
 	unsigned char	blkgap;
@@ -42,21 +42,18 @@ struct s5p_mmc {
 	unsigned short	clkcon;
 	unsigned char	timeoutcon;
 	unsigned char	swrst;
-	unsigned short	norintsts;
-	unsigned short	errintsts;
-	unsigned short	norintstsen;
-	unsigned short	errintstsen;
-	unsigned short	norintsigen;
-	unsigned short	errintsigen;
+	unsigned int	norintsts;	/* errintsts */
+	unsigned int	norintstsen;	/* errintstsen */
+	unsigned int	norintsigen;	/* errintsigen */
 	unsigned short	acmd12errsts;
 	unsigned char	res1[2];
-	unsigned long	capareg;
+	unsigned int	capareg;
 	unsigned char	res2[4];
-	unsigned long	maxcurr;
+	unsigned int	maxcurr;
 	unsigned char	res3[0x34];
-	unsigned long	control2;
-	unsigned long	control3;
-	unsigned long	control4;
+	unsigned int	control2;
+	unsigned int	control3;
+	unsigned int	control4;
 	unsigned char	res4[0x6e];
 	unsigned short	hcver;
 	unsigned char	res5[0xFFF00];
