@@ -144,10 +144,10 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	 * ENCMDIDX[4]	: Command Index Check Enable
 	 * ENCMDCRC[3]	: Command CRC Check Enable
 	 * RSPTYP[1:0]
-	 * 00 = No Response
-	 * 01 = Length 136
-	 * 10 = Length 48
-	 * 11 = Length 48 Check busy after response
+	 *	00 = No Response
+	 *	01 = Length 136
+	 *	10 = Length 48
+	 *	11 = Length 48 Check busy after response
 	 */
 	if (!(cmd->resp_type & MMC_RSP_PRESENT))
 		flags = 0;
