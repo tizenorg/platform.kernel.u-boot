@@ -1886,7 +1886,7 @@ void lcd_cfg_gpio(void)
 
 		if (board_is_sdk() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
-		else if (board_is_sdk() && hwrevision(3))
+		else if (board_is_sdk() && (hwrevision(3) || hwrevision(6)))
 			ld9040_set_platform_data(&spi_pd);
 		else {
 			s6e63m0_set_platform_data(&spi_pd);
@@ -1986,7 +1986,7 @@ void reset_lcd(void)
 
 	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_sdk() && (hwrevision(3))) {
+		if (board_is_sdk() && (hwrevision(3)) || hwrevision(6)) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
@@ -2178,7 +2178,7 @@ void init_panel_info(vidinfo_t *vid)
 		vid->reset_delay = 1000;
 
 	}
-	if (board_is_sdk() && hwrevision(3)) {
+	if (board_is_sdk() && (hwrevision(3) || hwrevision(6))) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 480;
 		vid->vl_row	= 800;
@@ -2315,7 +2315,7 @@ int misc_init_r(void)
 	if (mach_is_aquila() || mach_is_goni()) {
 		if (board_is_sdk() && hwrevision(0))
 			setenv("lcdinfo", "lcd=s6d16a0x");
-		else if (board_is_sdk() && hwrevision(3))
+		else if (board_is_sdk() && (hwrevision(3) || hwrevision(6)))
 			setenv("lcdinfo", "lcd=ld9040");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
