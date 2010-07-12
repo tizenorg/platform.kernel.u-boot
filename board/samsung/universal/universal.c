@@ -2441,8 +2441,10 @@ int dram_init(void)
 				hwrevision(8) || hwrevision(9))) ||
 				(board_is_sdk() && !hwrevision(1)))
 				mem_3g = 1;
-			if (mach_is_goni () && board_is_s1())
+			if (mach_is_goni () && board_is_s1()) {
+				mem_3g = 0;
 				sz = 0;
+			}
 		} else if (mach_is_wmg160() && !hwrevision(5)) {
 				mem_3g = 1;
 		}
