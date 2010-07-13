@@ -724,7 +724,7 @@ static void show_hw_revision(void)
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_goni()) {
 		if (board_is_sdk() &&
-			(hwrevision(2) || hwrevision(4) || hwrevision(5)) || hwrevision(6))
+			(hwrevision(2) || hwrevision(4) || hwrevision(5) || hwrevision(6)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
@@ -1986,7 +1986,7 @@ void reset_lcd(void)
 
 	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
-		if (board_is_sdk() && (hwrevision(3)) || hwrevision(6)) {
+		if (board_is_sdk() && (hwrevision(3) || hwrevision(6))) {
 			udelay(10000);
 			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
