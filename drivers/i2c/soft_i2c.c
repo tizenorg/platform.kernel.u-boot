@@ -140,6 +140,28 @@ static void send_start(void)
 }
 
 /*-----------------------------------------------------------------------
+ * REPEATED START: Low -> High -> Low on SDA while SCL is High
+ */
+static void send_repeated_start(void)
+{
+	I2C_SOFT_DECLARATIONS	/* intentional without ';' */
+
+	I2C_DELAY;
+	I2C_SCL(0);
+	I2C_DELAY;
+	I2C_SDA(0);
+	I2C_DELAY;
+
+	I2C_DELAY;
+	I2C_SDA(1);
+	I2C_DELAY;
+	I2C_SCL(1);
+	I2C_DELAY;
+	I2C_SDA(0);
+	I2C_DELAY;
+}
+
+/*-----------------------------------------------------------------------
  * STOP: Low -> High on SDA while SCL is High
  */
 static void send_stop(void)
@@ -380,7 +402,7 @@ int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		 * stop/start sequence.
 		 */
 #ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
-		send_start();
+		send_repeated_start();
 #else
 		send_stop();
 		send_start();
