@@ -402,7 +402,7 @@ int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		 * stop/start sequence.
 		 */
 #ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
-		send_start();
+		send_repeated_start();
 #else
 		send_stop();
 		send_start();
