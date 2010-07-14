@@ -281,6 +281,11 @@ static int mach_is_wmg160(void)
 	return c110_machine_id() == MACH_WMG160;
 }
 
+static int board_has_AVS(void)
+{
+	return board_is_sdk() && hwrevision(6);
+}
+
 static void check_battery(int mode);
 static void check_micro_usb(int intr);
 
@@ -308,7 +313,22 @@ void i2c_init_board(void)
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	}
 
-	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
+	if (board_has_AVS()) { /* no I2C2. it's used by AVS-IEM */
+		static int printed = 0;
+		struct s5p_gpio_bank *bank =
+			(struct s5p_gpio_bank *)(&gpio->gpio_d1);
+		/* set GPD1CON[4], [5] as IEM_SPWI/SCLK */
+		gpio_cfg_pin(bank, 4, 0x2); /* IEM_SCLK */
+		gpio_cfg_pin(bank, 5, 0x2); /* IEM_SPWI */
+
+		i2c_gpio[I2C_2].bus->gpio_base = 0;
+		if (!printed) {
+			puts("(I2C2 Diabled. AVS Mode) ");
+			printed = 1;
+		}
+	} else
+		i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
+
 	i2c_gpio[I2C_GPIO3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
 	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
 	i2c_gpio[I2C_GPIO5].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
@@ -1627,6 +1647,7 @@ static void micro_usb_switch(int path)
 #define MAX8998_REG_ONOFF1	0x11
 #define MAX8998_REG_ONOFF2	0x12
 #define MAX8998_REG_ONOFF3	0x13
+#define MAX8998_REG_ONOFF4	0x14
 #define MAX8998_REG_LDO7	0x21
 #define MAX8998_REG_LDO17	0x29
 /* ONOFF1 */
@@ -2521,12 +2542,12 @@ void board_sleep_init(void)
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 
 		/* Set ONOFF4 */
-		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF4, 1, val, 1);
 		saved_val[3][0] = val[0];
 		saved_val[3][1] = val[1];
 		val[0] &= ~((1 << 6) | (1 << 4));
-		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_write(addr, MAX8998_REG_ONOFF4, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF4, 1, val, 1);
 
 		printf("Turned off regulators with Kessler setting."
 			       " Preparing to sleep. [%s:%d]\n",
@@ -2560,12 +2581,12 @@ void board_sleep_init(void)
 		i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 
 		/* Set ONOFF4 */
-		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF4, 1, val, 1);
 		saved_val[3][0] = val[0];
 		saved_val[3][1] = val[1];
 		val[0] &= ~((1 << 7) | (1 << 6) | (1 << 4));
-		i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
-		i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+		i2c_write(addr, MAX8998_REG_ONOFF4, 1, val, 1);
+		i2c_read(addr, MAX8998_REG_ONOFF4, 1, val, 1);
 
 		printf("Turned off regulators with default(Aquila) setting."
 			       " Preparing to sleep. [%s:%d]\n",
@@ -2594,8 +2615,8 @@ void board_sleep_resume(void)
 	i2c_write(addr, MAX8998_REG_ONOFF3, 1, saved_val[2], 1);
 	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
 	/* Set ONOFF4 */
-	i2c_write(addr, MAX8998_REG_ONOFF3+1, 1, saved_val[3], 1);
-	i2c_read(addr, MAX8998_REG_ONOFF3+1, 1, val, 1);
+	i2c_write(addr, MAX8998_REG_ONOFF4, 1, saved_val[3], 1);
+	i2c_read(addr, MAX8998_REG_ONOFF4, 1, val, 1);
 	puts("Waked up.\n");
 
 	/* check max17040 */
