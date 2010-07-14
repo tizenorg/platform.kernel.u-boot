@@ -281,10 +281,17 @@ static int mach_is_wmg160(void)
 	return c110_machine_id() == MACH_WMG160;
 }
 
+#ifdef CONFIG_AVS_TEST
 static int board_has_AVS(void)
 {
 	return board_is_sdk() && hwrevision(6);
 }
+#else
+static int board_has_AVS(void)
+{
+	return 0;
+}
+#endif
 
 static void check_battery(int mode);
 static void check_micro_usb(int intr);
