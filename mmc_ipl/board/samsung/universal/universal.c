@@ -22,9 +22,28 @@
  */
 
 #include <common.h>
+#include <asm/io.h>
 
 int board_mmc_init(void)
 {
-	/* settings for mmc */
+	unsigned int value;
+
+	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
+	value = readl(0xe0200280);
+	value &= ~(0xf << (7 << 2));
+	value |= (1 << (7 << 2));
+	writel(value, 0xe0200280);
+
+	value = readl(0xe0200284);
+	value |= (1 << 7);
+	writel(value, 0xe0200284);
+
+	/* GPG0[0:6] special function 2 */
+	writel(0x2222022, 0xe02001a0);
+	/* GPG0[0:6] pull disable */
+	writel(0x10, 0xe02001a8);
+	/* GPG0[0:6] drv 4x */
+	writel(0x3fef, 0xe02001ac);
+
 	return 0;
 }
