@@ -429,6 +429,21 @@ int mmc_change_freq(struct mmc *mmc)
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 			EXT_CSD_BOOT_CONFIG, mmc->boot_config);
 
+	/*
+	 * Boot bus width configuration
+	 * Bit [1:0] BOOT_BUS_WIDTH
+	 *	0x0 : default
+	 *	0x1 : 4-bit bus width
+	 *	0x2 : 8-bit bus width
+	 *	0x3 : reserved
+	 */
+	if (mmc->boot_config & 0x7) {
+		err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+				EXT_CSD_BOOT_BUS_WIDTH, 0x1);
+		if (err)
+			return err;
+	}
+
 	if (err)
 		return err;
 
