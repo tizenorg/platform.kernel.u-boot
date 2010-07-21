@@ -30,7 +30,6 @@
 #include <part.h>
 #include <malloc.h>
 #include <linux/list.h>
-#include <mmc.h>
 #include <div64.h>
 
 static struct list_head mmc_devices;
