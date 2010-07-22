@@ -32,8 +32,8 @@ check_users()
 		CROSS_COMPILER=/usr/local/arm/arm-2009q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
-	if [ "$USER" = "dh09.lee" ]; then
-		CROSS_COMPILER=/usr/local/arm/arm-2008q3/bin/arm-none-linux-gnueabi-
+	if [ "$USER" = "leedonghwa" ]; then
+		CROSS_COMPILER=/opt/toolchains/scratchbox/compilers/arm-linux-gnueabi-gcc4.4.1-glibc2.10.1-2009q3-93/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "riverful" ]; then
@@ -124,4 +124,12 @@ elif [ "$USER" = "jaehoon" ]; then
 	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
 	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
 	mv -f system_uboot* /home/jaehoon/shared/new/
+elif [ "$USER" = "leedonghwa" ]; then
+	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
+	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot_recovery_evt0.tar u-boot-recovery-evt0.bin
+	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
+	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
+	mv -f system_uboot* /home/leedonghwa/Build-Binaries/
 fi
