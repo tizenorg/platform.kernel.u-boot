@@ -403,7 +403,7 @@ int mmc_change_freq(struct mmc *mmc)
 	if (mmc->version < MMC_VERSION_4)
 		return 0;
 
-	mmc->card_caps |= MMC_MODE_4BIT;
+	mmc->card_caps |= MMC_MODE_8BIT | MMC_MODE_4BIT;
 
 	err = mmc_send_ext_csd(mmc, ext_csd);
 
@@ -438,7 +438,7 @@ int mmc_change_freq(struct mmc *mmc)
 	 */
 	if (mmc->boot_config & 0x7) {
 		err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-				EXT_CSD_BOOT_BUS_WIDTH, 0x1);
+				EXT_CSD_BOOT_BUS_WIDTH, 0x2);
 		if (err)
 			return err;
 	}
