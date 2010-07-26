@@ -216,7 +216,9 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			printf("\nMMC write: dev # %d, block # %d, count %d ... ",
 				dev, blk, cnt);
 
-			mmc_init(mmc);
+			/* Not initialize mmc in boot mode */
+			if (!(mmc->boot_config & 0x7))
+				mmc_init(mmc);
 
 			n = mmc->block_dev.block_write(dev, blk, cnt, addr);
 
@@ -232,6 +234,9 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 			if (!mmc)
 				return 1;
+
+			mmc_init(mmc);
+
 			/*
 			 * BOOT_CONFIG[179]
 			 * BOOT_ACK[6]
