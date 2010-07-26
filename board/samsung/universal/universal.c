@@ -2776,6 +2776,18 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4X);
 	}
 
+	if (board_is_sdk() && hwrevision(6)) {
+		for (i = 3; i < 7; i++) {
+			/* GPG1[3:6] special function 3 */
+			gpio_cfg_pin(&s5pc110_gpio->gpio_g1, i, 0x3);
+			/* GPG1[3:6] pull disable */
+			gpio_set_pull(&s5pc110_gpio->gpio_g1,
+					i, GPIO_PULL_NONE);
+			/* GPG1[3:6] drv 4x */
+			gpio_set_drv(&s5pc110_gpio->gpio_g1, i, GPIO_DRV_4X);
+		}
+	}
+
 	if (mach_is_geminus()) {
 		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
 		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_NONE);
