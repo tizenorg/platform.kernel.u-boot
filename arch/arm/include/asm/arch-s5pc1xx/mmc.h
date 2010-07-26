@@ -21,6 +21,16 @@
 #ifndef __ASM_ARCH_MMC_H_
 #define __ASM_ARCH_MMC_H_
 
+#define RX_DELAY1	((0 << 15) | (1 << 7))
+#define RX_DELAY2	((1 << 15) | (1 << 7))
+#define RX_DELAY3	((0 << 15) | (0 << 7))
+#define RX_DELAY4	((1 << 15) | (0 << 7))
+
+#define TX_DELAY1	(RX_DELAY1 << 16)
+#define TX_DELAY2	(RX_DELAY2 << 16)
+#define TX_DELAY3	(RX_DELAY3 << 16)
+#define TX_DELAY4	(RX_DELAY4 << 16)
+
 #ifndef __ASSEMBLY__
 struct s5p_mmc {
 	unsigned int	sysad;

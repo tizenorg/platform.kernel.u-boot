@@ -360,18 +360,30 @@ static void mmc_set_ios(struct mmc *mmc)
 	 *	10 = Delay4 (inverter delay + 2ns)
 	 */
 
-	writel(0x80800000, &host->reg->control3);
+	if (mmc->boot_config & 0x7)
+		val = TX_DELAY2 | RX_DELAY2;
+	else
+		val = TX_DELAY2 | RX_DELAY3;
+
+	writel(val, &host->reg->control3);
+
 
 	mmc_change_clock(host, mmc->clock);
 
 	ctrl = readb(&host->reg->hostctl);
 
 	/*
+	 * WIDE8[5]
+	 * 0 = Depend on WIDE4
+	 * 1 = 8-bit mode
+	 *
 	 * WIDE4[1]
 	 * 1 = 4-bit mode
 	 * 0 = 1-bit mode
 	 */
-	if (mmc->bus_width == 4)
+	if (mmc->bus_width == 8)
+		ctrl |= (1 << 5);
+	else if (mmc->bus_width == 4)
 		ctrl |= (1 << 1);
 	else
 		ctrl &= ~(1 << 1);
