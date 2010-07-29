@@ -713,7 +713,7 @@ int fdc_fdos_read (void *buffer, int len)
 /****************************************************************************
  * main routine do_fdcboot
  */
-int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	FD_GEO_STRUCT *pFG = (FD_GEO_STRUCT *)floppy_type;
 	FDC_COMMAND_STRUCT *pCMD = &cmd;
@@ -741,8 +741,7 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		boot_drive=simple_strtoul(argv[2], NULL, 10);
 		break;
 	default:
-		cmd_usage(cmdtp);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 	/* setup FDC and scan for drives  */
 	if(fdc_setup(boot_drive,pCMD,pFG)==FALSE) {

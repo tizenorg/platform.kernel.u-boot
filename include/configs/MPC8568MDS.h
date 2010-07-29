@@ -75,9 +75,6 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_CCSRBAR_PHYS	CONFIG_SYS_CCSRBAR	/* physical addr of CCSRBAR */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_CCSRBAR	/* PQII uses CONFIG_SYS_IMMR */
 
-#define CONFIG_SYS_PCI1_ADDR           (CONFIG_SYS_CCSRBAR+0x8000)
-#define CONFIG_SYS_PCIE1_ADDR          (CONFIG_SYS_CCSRBAR+0xa000)
-
 /* DDR Setup */
 #define CONFIG_FSL_DDR2
 #undef CONFIG_FSL_DDR_INTERACTIVE
@@ -421,6 +418,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_SETEXPR
+#define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI

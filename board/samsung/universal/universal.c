@@ -2930,7 +2930,7 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 U_BOOT_CMD(
-	pmic,		CONFIG_SYS_MAXARGS,	1, do_pmic,
+	pmic,		4,	1, do_pmic,
 	"PMIC LDO & BUCK control",
 	"status - Display PMIC LDO & BUCK status\n"
 	"pmic ldo num on/off - Turn on/off the LDO\n"

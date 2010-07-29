@@ -139,7 +139,7 @@ static int printenv(char *name, int state)
 	return i;
 }
 
-int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 	int rcode = 0;
@@ -173,7 +173,7 @@ int do_printenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  * This function will ONLY work with a in-RAM copy of the environment
  */
 
-int _do_setenv (int flag, int argc, char *argv[])
+int _do_setenv (int flag, int argc, char * const argv[])
 {
 	int   i, len, oldval;
 	int   console = -1;
@@ -390,7 +390,7 @@ int _do_setenv (int flag, int argc, char *argv[])
 
 int setenv (char *varname, char *varvalue)
 {
-	char *argv[4] = { "setenv", varname, varvalue, NULL };
+	char * const argv[4] = { "setenv", varname, varvalue, NULL };
 	if ((varvalue == NULL) || (varvalue[0] == '\0'))
 		return _do_setenv (0, 2, argv);
 	else
@@ -400,17 +400,15 @@ int setenv (char *varname, char *varvalue)
 #ifdef CONFIG_HAS_UID
 void forceenv (char *varname, char *varvalue)
 {
-	char *argv[4] = { "forceenv", varname, varvalue, NULL };
+	char * const argv[4] = { "forceenv", varname, varvalue, NULL };
 	_do_setenv (0xdeaf4add, 3, argv);
 }
 #endif
 
-int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc < 2) {
-		cmd_usage(cmdtp);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	return _do_setenv (flag, argc, argv);
 }
@@ -420,7 +418,7 @@ int do_setenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  */
 
 #if defined(CONFIG_CMD_ASKENV)
-int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	extern char console_buffer[CONFIG_SYS_CBSIZE];
 	char message[CONFIG_SYS_CBSIZE];
@@ -433,15 +431,13 @@ int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	local_args[2] = NULL;
 	local_args[3] = NULL;
 
-	if (argc < 2) {
-		cmd_usage(cmdtp);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
 	/* Check the syntax */
 	switch (argc) {
 	case 1:
-		cmd_usage(cmdtp);
-		return 1;
+		return cmd_usage(cmdtp);
 
 	case 2:		/* askenv envname */
 		sprintf (message, "Please enter '%s':", argv[1]);
@@ -497,16 +493,14 @@ int do_askenv ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  * Interactively edit an environment variable
  */
 #if defined(CONFIG_CMD_EDITENV)
-int do_editenv(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_editenv(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char buffer[CONFIG_SYS_CBSIZE];
 	char *init_val;
 	int len;
 
-	if (argc < 2) {
-		cmd_usage(cmdtp);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	/* Set read buffer to initial value or empty sting */
 	init_val = getenv(argv[1]);
@@ -576,7 +570,7 @@ int getenv_r (char *name, char *buf, unsigned len)
 
 #if defined(CONFIG_CMD_SAVEENV) && !defined(CONFIG_ENV_IS_NOWHERE)
 
-int do_saveenv (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_saveenv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	extern char * env_name_spec;
 
@@ -660,7 +654,7 @@ U_BOOT_CMD(
 #endif
 
 #if defined(CONFIG_CMD_RUN)
-int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+int do_run (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 U_BOOT_CMD(
 	run,	CONFIG_SYS_MAXARGS,	1,	do_run,
 	"run commands in an environment variable",

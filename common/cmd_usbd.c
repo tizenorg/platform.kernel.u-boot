@@ -1023,7 +1023,7 @@ static int process_data(struct usbd_ops *usbd)
 static const char *recv_key = "SAMSUNG";
 static const char *tx_key = "MPL";
 
-int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * argv[])
 {
 	struct usbd_ops *usbd;
 	int err;
@@ -1085,5 +1085,5 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(usbdown, CONFIG_SYS_MAXARGS, 1, do_usbd_down,
 	"Initialize USB device and Run USB Downloader (specific)",
 	"- normal mode\n"
-	"usbdown mode - specific mode (0: NORAML, 1: FORCE)\n"
+	"usbdown mode - specific mode (0: NORAML, 1: FORCE)"
 );

@@ -47,6 +47,7 @@
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
 #define CONFIG_FSL_LAW		1	/* Use common FSL init code */
+#define CONFIG_FSL_ELBC		1
 
 /*
  * Multicore config
@@ -98,8 +99,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_CCSRBAR		0xef000000	/* relocated CCSRBAR */
 #define CONFIG_SYS_CCSRBAR_PHYS	CONFIG_SYS_CCSRBAR	/* physical addr of CCSRBAR */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_CCSRBAR	/* PQII uses CONFIG_SYS_IMMR */
-#define CONFIG_SYS_PCIE1_ADDR		(CONFIG_SYS_CCSRBAR + 0xa000)
-#define CONFIG_SYS_PCIE2_ADDR		(CONFIG_SYS_CCSRBAR + 0x9000)
 
 /*
  * Diagnostics
@@ -396,6 +395,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SAVEENV
 #define CONFIG_CMD_SNTP
+#define CONFIG_CMD_REGINFO
 
 /*
  * Miscellaneous configurable options

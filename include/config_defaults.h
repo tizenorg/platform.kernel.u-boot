@@ -16,7 +16,5 @@
 
 #define CONFIG_GZIP 1
 #define CONFIG_ZLIB 1
-#define CONFIG_CRC16 1
-#define CONFIG_XYZMODEM 1
 
 #endif

@@ -428,7 +428,7 @@ void check_env(void)
 
 #endif /* #if !defined(CONFIG_PATI) */
 
-int do_mplcommon(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_mplcommon(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong size,src,ld_addr;
 	int result;
@@ -528,8 +528,7 @@ int do_mplcommon(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return 0;
 	}
 #endif
-	cmd_usage(cmdtp);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 

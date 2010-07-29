@@ -221,6 +221,7 @@ LIBS += drivers/power/libpower.a
 LIBS += drivers/spi/libspi.a
 ifeq ($(CPU),mpc83xx)
 LIBS += drivers/qe/qe.a
+LIBS += arch/powerpc/cpu/mpc8xxx/lib8xxx.a
 endif
 ifeq ($(CPU),mpc85xx)
 LIBS += drivers/qe/qe.a
@@ -244,6 +245,13 @@ LIBS += common/libcommon.a
 LIBS += lib/libfdt/libfdt.a
 LIBS += api/libapi.a
 LIBS += post/libpost.a
+
+ifeq ($(SOC),omap3)
+LIBS += $(CPUDIR)/omap-common/libomap-common.a
+endif
+ifeq ($(SOC),omap4)
+LIBS += $(CPUDIR)/omap-common/libomap-common.a
+endif
 
 LIBS := $(addprefix $(obj),$(LIBS))
 .PHONY : $(LIBS) $(TIMESTAMP_FILE) $(VERSION_FILE)
@@ -2183,12 +2191,12 @@ versatilepb_config :	unconfig
 	@board/armltd/versatile/split_by_variant.sh $@
 
 #########################################################################
-## ARM CORTEX Systems
+## ARMv7 Systems
 #########################################################################
 
 smdkc100_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 smdkc100 samsung s5pc1xx
+	@$(MKCONFIG) $(@:_config=) arm armv7 smdkc100 samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
@@ -2199,7 +2207,7 @@ s5pc1xx_universal_config:	unconfig
 	else \
 		echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h ; \
 	fi;
-	@$(MKCONFIG) -a s5pc1xx_universal arm arm_cortexa8 universal samsung s5pc1xx
+	@$(MKCONFIG) -a s5pc1xx_universal arm armv7 universal samsung s5pc1xx
 	@if [ "$(findstring mmc,$@)" ] ; then \
 		echo "CONFIG_MMC_U_BOOT = y" >> $(obj)include/config.mk ; \
 	else \
@@ -2210,7 +2218,7 @@ s5pc1xx_universal_config:	unconfig
 
 s5pc1xx_p1p2_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
-	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 p1p2 samsung s5pc1xx
+	@$(MKCONFIG) $(@:_config=) arm armv7 p1p2 samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
@@ -2233,6 +2241,15 @@ trizepsiv_config	:	unconfig
 		echo "#define CONFIG_POLARIS 1"	>>$(obj)include/config.h ; \
 	fi;
 	@$(MKCONFIG) -n $@ -a trizepsiv arm pxa trizepsiv
+
+vpac270_nor_config \
+vpac270_onenand_config	: unconfig
+	@mkdir -p $(obj)include
+	@if [ "$(findstring onenand,$@)" ] ; then \
+		echo "#define CONFIG_ONENAND_U_BOOT" \
+			>>$(obj)include/config.h ; \
+	fi;
+	@$(MKCONFIG) -n $@ -a vpac270 arm pxa vpac270
 
 #########################################################################
 ## ARM1136 Systems
@@ -2505,7 +2522,6 @@ clean:
 	       $(obj)board/netstar/{eeprom,crcek,crcit,*.srec,*.bin}	  \
 	       $(obj)board/trab/trab_fkt   $(obj)board/voiceblue/eeprom   \
 	       $(obj)board/armltd/{integratorap,integratorcp}/u-boot.lds  \
-	       $(obj)arch/blackfin/lib/u-boot.lds				  \
 	       $(obj)u-boot.lds						  \
 	       $(obj)arch/blackfin/cpu/bootrom-asm-offsets.[chs]
 	@rm -f $(obj)include/bmp_logo.h

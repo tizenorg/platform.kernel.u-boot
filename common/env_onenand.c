@@ -40,7 +40,6 @@ extern uchar default_environment[];
 char *env_name_spec = "OneNAND";
 
 #define ONENAND_MAX_ENV_SIZE	4096
-
 #define ONENAND_ENV_SIZE(mtd)	(ONENAND_MAX_ENV_SIZE - ENV_HEADER_SIZE)
 
 #ifdef ENV_IS_EMBEDDED

@@ -1728,7 +1728,7 @@ static struct part_info* mtd_part_info(struct mtd_device *dev, unsigned int part
  * @param argv arguments list
  * @return 0 on success, 1 otherwise
  */
-int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 /* command line only */
 	struct mtd_device *dev;
@@ -1767,7 +1767,7 @@ int do_chpart(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  * @param argv arguments list
  * @return 0 on success, 1 otherwise
  */
-int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 #ifndef CONFIG_CMD_MTDPARTS_LITE
 	if (argc == 2) {
@@ -1865,8 +1865,7 @@ int do_mtdparts(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	}
 #endif
 
-	cmd_usage(cmdtp);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 /***************************************************/
