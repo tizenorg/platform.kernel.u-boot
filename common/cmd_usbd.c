@@ -1023,7 +1023,7 @@ static int process_data(struct usbd_ops *usbd)
 static const char *recv_key = "SAMSUNG";
 static const char *tx_key = "MPL";
 
-int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * argv[])
+int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct usbd_ops *usbd;
 	int err;

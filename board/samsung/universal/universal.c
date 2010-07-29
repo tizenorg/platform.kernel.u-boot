@@ -2893,7 +2893,7 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	return 0;
 }
 
-static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int buck = 0, ldo = 0, safeout = 0, on = -1;
 
@@ -2940,7 +2940,7 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_CMD_DEVICE_POWER
-static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:

@@ -528,7 +528,7 @@ static int do_onenand_markbad(cmd_tbl_t * cmdtp, int flag, int argc, char * cons
 	return ret;
 }
 
-static int do_onenand_lock(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_onenand_lock(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	ulong start;
 	ssize_t size;
@@ -570,7 +570,7 @@ static cmd_tbl_t cmd_onenand_sub[] = {
 	U_BOOT_CMD_MKENT(lock, 3, 0, do_onenand_lock, "", ""),
 };
 
-int do_onenand(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_onenand(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	cmd_tbl_t *c;
 

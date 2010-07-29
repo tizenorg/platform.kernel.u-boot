@@ -483,7 +483,7 @@ static int s5pc110_sleep(int mode)
 	return value;
 }
 
-int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int mode = SLEEP_WFI;
 
