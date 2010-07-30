@@ -230,8 +230,6 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			if (!mmc)
 				return 1;
 
-			mmc_init(mmc);
-
 			/*
 			 * BOOT_CONFIG[179]
 			 * BOOT_ACK[6]
@@ -253,6 +251,8 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			 * 	0x7: Access to General Purpose partition 4
 			 */
 			mmc->boot_config = (ack << 6) | (enable << 3) | access;
+
+			mmc_init(mmc);
 		} else {
 			printf("Usage:\n%s\n", cmdtp->usage);
 			rc = 1;

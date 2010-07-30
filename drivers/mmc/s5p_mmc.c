@@ -361,7 +361,7 @@ static void mmc_set_ios(struct mmc *mmc)
 	 */
 
 	if (mmc->boot_config & 0x7)
-		val = TX_DELAY2 | RX_DELAY2;
+		val = TX_DELAY2 | RX_DELAY1;
 	else
 		val = TX_DELAY2 | RX_DELAY3;
 
