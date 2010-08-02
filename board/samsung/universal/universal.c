@@ -898,10 +898,7 @@ static int power_key_check(void)
 
 	/* power_key check */
 	i2c_read(addr, 0x00, 1, val, 1);
-	if (val[0] & ( 1 << 7))
-		return 1;
-	else
-		return 0;
+	return val[0] & (1 << 7);
 }
 
 #define KBR3		(1 << 3)
@@ -952,9 +949,10 @@ static void check_keypad(void)
 		}
 
 		for (i = 0; i < row_num; i++) {
-			if (board_is_sdk() && (hwrevision(3) || hwrevision(4)) && i == 0) {
+			if (board_is_sdk() &&
+				(hwrevision(3) || hwrevision(4)) && i == 0)
 				continue;
-			}
+
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
 			gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
 			gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
@@ -995,24 +993,33 @@ static void check_keypad(void)
 		if (row_state[1] & 0x2)
 			display_info = 1;
 		if (board_is_sdk() && hwrevision(0)) {
-			/* home & volume down or hold key & volume down*/
-			if ((power_key || (row_state[1] & 0x1)) && (row_state[1] & 0x2))
+			/* home & volume down
+			 * or hold key & volume down*/
+			if ((power_key || (row_state[1] & 0x1))
+						&& (row_state[1] & 0x2))
 				auto_download = 1;
 		} else if (board_is_sdk() && hwrevision(2)) {
-			/* cam full shot & volume down  or hold key & volume down */
-			if ((power_key || (row_state[1] & 0x6)) && (row_state[2] & 0x4))
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[1] & 0x6))
+						&& (row_state[2] & 0x4))
 				auto_download = 1;
-		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4) || hwrevision(6))) {
-			/* cam full shot & volume down or hold key & volume down */
-			if ((power_key || (row_state[1] & 0x6)) && (row_state[2] & 0x4))
+		} else if (board_is_sdk() &&
+				(hwrevision(3) || hwrevision(4)	|| hwrevision(6))) {
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[1] & 0x6))
+						&& (row_state[2] & 0x4))
 				auto_download = 1;
 		} else {
-			/* cam full shot & volume down or hold key & volume down */
-			if ((power_key || (row_state[0] & 0x1)) && (row_state[1] & 0x2))
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[0] & 0x1))
+						&& (row_state[1] & 0x2))
 				auto_download = 1;
 		}
 	} else if (mach_is_geminus())
-		/* volume down & home  or hold key & volume down */
+		/* volume down & home or hold key & volume down */
 		if ((row_state[1] & 0x2) && ((power_key || row_state[2] & 0x1)))
 			auto_download = 1;
 
