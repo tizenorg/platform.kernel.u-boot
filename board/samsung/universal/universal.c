@@ -985,8 +985,6 @@ static void check_keypad(void)
 
 		value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
 		row_state[i] = ~value & ((1 << row_num) - 1);
-		if (row_state[i])
-			printf("[%d col] row_state: 0x%x\n", i, row_state[i]);
 	}
 
 	/* KEYIFCOL reg clear */
@@ -1004,7 +1002,7 @@ static void check_keypad(void)
 			/* cam full shot & volume down  or hold key & volume down */
 			if ((power_key || (row_state[1] & 0x6)) && (row_state[2] & 0x4))
 				auto_download = 1;
-		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4))) {
+		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4) || hwrevision(6))) {
 			/* cam full shot & volume down or hold key & volume down */
 			if ((power_key || (row_state[1] & 0x6)) && (row_state[2] & 0x4))
 				auto_download = 1;
