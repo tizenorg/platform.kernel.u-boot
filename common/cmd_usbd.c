@@ -559,6 +559,28 @@ static int write_file_system(char *ramaddr, ulong len, char *offset,
 	return ret;
 }
 
+static int qboot_erase = 0;
+
+/* Erase the qboot */
+static void erase_qboot_area(void)
+{
+	char offset[12], length[12];
+	int qboot_id;
+
+	if (qboot_erase)
+		return;
+
+	qboot_id = get_part_id("qboot");
+
+	if (qboot_id != -1) {
+		printf("\nCOMMAND_ERASE_QBOOT\n");
+		sprintf(offset, "%x", parts[qboot_id]->offset);
+		sprintf(length, "%x", parts[qboot_id]->size);
+		nand_cmd(0, offset, length, NULL);
+		qboot_erase = 1;
+	}
+}
+
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
@@ -943,23 +965,16 @@ static int process_data(struct usbd_ops *usbd)
 		/* Write */
 		sprintf(length, "%x", (unsigned int) len);
 		ret = nand_cmd(1, ramaddr, offset, length);
+
+		erase_qboot_area();
 		break;
 
 	/* File Systems */
 	case IMG_FILESYSTEM:
-		/* Erase the qboot also when write ubi image */
-		{
-			int qboot_id;
-			qboot_id = get_part_id("qboot");
-
-			if (qboot_id != -1) {
-				sprintf(offset, "%x", parts[qboot_id]->offset);
-				sprintf(length, "%x", parts[qboot_id]->size);
-				nand_cmd(0, offset, length, NULL);
-			}
-		}
 		ret = write_file_system(ramaddr, len, offset, length,
 				part_id, ubi_update);
+
+		erase_qboot_area();
 		break;
 
 	case IMG_MODEM:
@@ -981,12 +996,15 @@ static int process_data(struct usbd_ops *usbd)
 
 #ifdef CONFIG_CMD_MMC
 	case IMG_MMC:
+
 		if (mmc_part_write)
 			ret = write_file_mmc_part(usbd, ramaddr,
 						len, offset, length);
 		else
 			ret = write_file_mmc(usbd, ramaddr,
 						len, offset, length);
+
+		erase_qboot_area();
 		break;
 #endif
 
