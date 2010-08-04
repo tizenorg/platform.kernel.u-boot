@@ -853,9 +853,6 @@ static void setup_limo_real_gpios(void)
 	/*
 	 * Note: Please write GPIO alphabet order
 	 */
-	/* CODEC_LDO_EN: XVVSYNC_LDI: GPF3[4] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_f3, 4, 1);
-
 	if (hwrevision(0))
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
 		gpio_direction_output(&s5pc110_gpio->gpio_mp0_2, 1, 1);
