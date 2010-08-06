@@ -68,6 +68,8 @@
 /* Command definition */
 #include <config_cmd_default.h>
 
+#undef CONFIG_CMD_LOADB
+#undef CONFIG_CMD_LOADS
 #undef CONFIG_CMD_FPGA
 #undef CONFIG_CMD_MISC
 #undef CONFIG_CMD_NET
