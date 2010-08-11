@@ -52,7 +52,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 static unsigned int board_rev;
 static unsigned int battery_soc;
-static struct s5pc110_gpio *s5pc110_gpio;
+static struct s5pc110_gpio *gpio;
 
 enum {
 	I2C_2,
@@ -310,11 +310,11 @@ void i2c_init_board(void)
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	} else if (mach_is_goni()) {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&s5pc110_gpio->gpio_mp0_5;
+			(unsigned int)&gpio->gpio_mp0_5;
 	} else if (mach_is_cypress()) {
 		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&s5pc110_gpio->gpio_mp0_5;
+			(unsigned int)&gpio->gpio_mp0_5;
 	} else {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	}
@@ -322,7 +322,7 @@ void i2c_init_board(void)
 	if (board_has_AVS()) { /* no I2C2. it's used by AVS-IEM */
 		static int printed = 0;
 		struct s5p_gpio_bank *bank =
-			(struct s5p_gpio_bank *)(&s5pc110_gpio->gpio_d1);
+			(struct s5p_gpio_bank *)(&gpio->gpio_d1);
 		/* set GPD1CON[4], [5] as IEM_SPWI/SCLK */
 		gpio_cfg_pin(bank, 4, 0x2); /* IEM_SCLK */
 		gpio_cfg_pin(bank, 5, 0x2); /* IEM_SPWI */
@@ -334,17 +334,17 @@ void i2c_init_board(void)
 		}
 	} else {
 		i2c_gpio[I2C_2].bus->gpio_base =
-			(unsigned int)&s5pc110_gpio->gpio_d1;
+			(unsigned int)&gpio->gpio_d1;
 	}
 
 	i2c_gpio[I2C_GPIO3].bus->gpio_base =
-		(unsigned int)&s5pc110_gpio->gpio_j3;
+		(unsigned int)&gpio->gpio_j3;
 	i2c_gpio[I2C_PMIC].bus->gpio_base =
-		(unsigned int)&s5pc110_gpio->gpio_j4;
+		(unsigned int)&gpio->gpio_j4;
 	i2c_gpio[I2C_GPIO5].bus->gpio_base =
-		(unsigned int)&s5pc110_gpio->gpio_mp0_5;
+		(unsigned int)&gpio->gpio_mp0_5;
 	i2c_gpio[I2C_GPIO6].bus->gpio_base =
-		(unsigned int)&s5pc110_gpio->gpio_j3;
+		(unsigned int)&gpio->gpio_j3;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
 
@@ -577,26 +577,26 @@ static void check_hw_revision(void)
 		 */
 
 		/* C110 Aquila */
-		if (gpio_get_value(&s5pc110_gpio->gpio_j1, 4) == 0) {
+		if (gpio_get_value(&gpio->gpio_j1, 4) == 0) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= J1_B2_BOARD;
 
-			gpio_set_pull(&s5pc110_gpio->gpio_j2, 6, GPIO_PULL_NONE);
-			gpio_direction_input(&s5pc110_gpio->gpio_j2, 6);
+			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j2, 6);
 
 			/* Check board */
-			if (gpio_get_value(&s5pc110_gpio->gpio_h1, 2) == 0)
+			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			if (gpio_get_value(&s5pc110_gpio->gpio_h3, 2) == 0)
+			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 
-			if (gpio_get_value(&s5pc110_gpio->gpio_j2, 6) == 1)
+			if (gpio_get_value(&gpio->gpio_j2, 6) == 1)
 				board_rev |= MEDIA_BOARD;
 
 			/* set gpio to default value. */
-			gpio_set_pull(&s5pc110_gpio->gpio_j2, 6, GPIO_PULL_DOWN);
-			gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, 0);
+			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
+			gpio_direction_output(&gpio->gpio_j2, 6, 0);
 		}
 
 		/* Workaround: C110 Aquila Rev0.6 */
@@ -606,14 +606,14 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Aquila Bamboo */
-		if (gpio_get_value(&s5pc110_gpio->gpio_j2, 0) == 1) {
+		if (gpio_get_value(&gpio->gpio_j2, 0) == 1) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= BAMBOO_BOARD;
 		}
 
 		/* C110 TickerTape */
-		if (gpio_get_value(&s5pc110_gpio->gpio_d1, 0) == 0 &&
-				gpio_get_value(&s5pc110_gpio->gpio_d1, 1) == 0)
+		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
+				gpio_get_value(&gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
 		/* WMG160 - GPH3[0:4] = 0x00 */
@@ -621,7 +621,7 @@ static void check_hw_revision(void)
 			int i, wmg160 = 1;
 
 			for (i = 0; i < 4; i++) {
-				if (gpio_get_value(&s5pc110_gpio->gpio_h3, i) != 0) {
+				if (gpio_get_value(&gpio->gpio_h3, i) != 0) {
 					wmg160 = 0;
 					break;
 				}
@@ -633,60 +633,62 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Geminus for rev0.0 */
-		gpio_set_pull(&s5pc110_gpio->gpio_j1, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&s5pc110_gpio->gpio_j1, 2);
-		if (gpio_get_value(&s5pc110_gpio->gpio_j1, 2) == 1) {
+		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j1, 2);
+		if (gpio_get_value(&gpio->gpio_j1, 2) == 1) {
 			board = MACH_GEMINUS;
 			if ((board_rev & ~BOARD_MASK) == 3)
 				board_rev &= ~0xff;
 		}
-		gpio_set_pull(&s5pc110_gpio->gpio_j1, 2, GPIO_PULL_DOWN);
-		gpio_direction_output(&s5pc110_gpio->gpio_j1, 2, 0);
+		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
+		gpio_direction_output(&gpio->gpio_j1, 2, 0);
 
 		/* C110 Geminus for rev0.1 ~ */
-		gpio_set_pull(&s5pc110_gpio->gpio_j0, 6, GPIO_PULL_NONE);
-		gpio_direction_input(&s5pc110_gpio->gpio_j0, 6);
-		if (gpio_get_value(&s5pc110_gpio->gpio_j0, 6) == 1) {
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->gpio_j0, 6);
+		if (gpio_get_value(&gpio->gpio_j0, 6) == 1) {
 			board = MACH_GEMINUS;
 			hwrev3 = 7;
 		}
-		gpio_set_pull(&s5pc110_gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 
 		/* Kessler MP0_5[6] == 1 */
-		gpio_direction_input(&s5pc110_gpio->gpio_mp0_5, 6);
-		if (gpio_get_value(&s5pc110_gpio->gpio_mp0_5, 6) == 1) {
+		gpio_direction_input(&gpio->gpio_mp0_5, 6);
+		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
 			/* Cypress: Do this for cypress */
-			gpio_set_pull(&s5pc110_gpio->gpio_j2, 2, GPIO_PULL_NONE);
-			gpio_direction_input(&s5pc110_gpio->gpio_j2, 2);
-			if (gpio_get_value(&s5pc110_gpio->gpio_j2, 2) == 1) {
+			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->gpio_j2, 2);
+			if (gpio_get_value(&gpio->gpio_j2, 2) == 1) {
 				board = MACH_CYPRESS;
-				gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 6, 0);
+				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			} else {
 				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
 #if 0
-				/* workaround: temporarily use sdk rev0.5 */ 
+				/* workaround: temporarily use sdk rev0.5 */
 				board_rev |= SDK_BOARD;
 
 #endif
 				/* Limo SDK MP0_5[4] == 1 */
-				gpio_direction_input(&s5pc110_gpio->gpio_mp0_5, 4);
-				if (gpio_get_value(&s5pc110_gpio->gpio_mp0_5, 4) == 1) {
+				gpio_direction_input(&gpio->gpio_mp0_5, 4);
+				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
 
 					/* Haydn MP0_4[0] == 1 */
-					gpio_direction_input(&s5pc110_gpio->gpio_mp0_4, 0);
-					if (gpio_get_value(&s5pc110_gpio->gpio_mp0_4, 0) == 1)
+					gpio_direction_input(
+						&gpio->gpio_mp0_4, 0);
+					if (gpio_get_value(
+						&gpio->gpio_mp0_4, 0) == 1)
 						board_rev |= HAYDN_BOARD;
 					else
 						board_rev |= SDK_BOARD;
 				}
 
 			}
-			gpio_set_pull(&s5pc110_gpio->gpio_j2, 2, GPIO_PULL_DOWN);
+			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
 		} else {
-			gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 6, 0);
+			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
 			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
 				board = MACH_TYPE_GONI;
@@ -695,7 +697,7 @@ static void check_hw_revision(void)
 			}
 		}
 
-		board_rev |= get_hw_revision(&s5pc110_gpio->gpio_j0, hwrev3);
+		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
 	}
 
 	/* Set machine id */
@@ -749,12 +751,11 @@ static void show_hw_revision(void)
 		if (board_is_limo_real()) {
 			if ((board_rev & 0xf) < 8)
 				s5pc1xx_set_cpu_rev(0);
-		}
-		else if (board_is_bamboo())
+		} else if (board_is_bamboo())
 			s5pc1xx_set_cpu_rev(0);
 	} else if (mach_is_goni()) {
-		if (board_is_sdk() &&
-			(hwrevision(2) || hwrevision(4) || hwrevision(5) || hwrevision(6)))
+		if (board_is_sdk() && (hwrevision(2) || hwrevision(4) ||
+					hwrevision(5) || hwrevision(6)))
 			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
 		else
 			s5pc1xx_set_cpu_rev(1);
@@ -826,8 +827,8 @@ static void pmic_pin_init(void)
 	writel(value, reg);
 
 	/* nPOWER: XEINT_22: GPH2[6] interrupt mode */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_h2, 6, GPIO_IRQ);
-	gpio_set_pull(&s5pc110_gpio->gpio_h2, 6, GPIO_PULL_UP);
+	gpio_cfg_pin(&gpio->gpio_h2, 6, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h2, 6, GPIO_PULL_UP);
 }
 
 static void enable_ldos(void)
@@ -836,7 +837,7 @@ static void enable_ldos(void)
 		return;
 
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_g3, 6, 1);
+	gpio_direction_output(&gpio->gpio_g3, 6, 1);
 }
 
 static void enable_t_flash(void)
@@ -845,7 +846,7 @@ static void enable_t_flash(void)
 		return;
 
 	/* T_FLASH_EN : XM0ADDR_13: MP0_5[4] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 4, 1);
+	gpio_direction_output(&gpio->gpio_mp0_5, 4, 1);
 }
 
 static void setup_limo_real_gpios(void)
@@ -858,14 +859,14 @@ static void setup_limo_real_gpios(void)
 	 */
 	if (hwrevision(0))
 		/* RESET_REQ_N: XM0BEN_1: MP0_2[1] output high */
-		gpio_direction_output(&s5pc110_gpio->gpio_mp0_2, 1, 1);
+		gpio_direction_output(&gpio->gpio_mp0_2, 1, 1);
 	else
 		/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
-		gpio_direction_output(&s5pc110_gpio->gpio_mp0_1, 2, 1);
+		gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_h3, 4, GPIO_IRQ);
-	gpio_set_pull(&s5pc110_gpio->gpio_h3, 4, GPIO_PULL_UP);
+	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
 static void setup_media_gpios(void)
@@ -877,11 +878,11 @@ static void setup_media_gpios(void)
 	 * Note: Please write GPIO alphabet order
 	 */
 	/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_1, 2, 1);
+	gpio_direction_output(&gpio->gpio_mp0_1, 2, 1);
 
 	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_h3, 4, GPIO_IRQ);
-	gpio_set_pull(&s5pc110_gpio->gpio_h3, 4, GPIO_PULL_UP);
+	gpio_cfg_pin(&gpio->gpio_h3, 4, GPIO_IRQ);
+	gpio_set_pull(&gpio->gpio_h3, 4, GPIO_PULL_UP);
 }
 
 static int power_key_check(void)
@@ -954,13 +955,13 @@ static void check_keypad(void)
 				continue;
 
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
-			gpio_cfg_pin(&s5pc110_gpio->gpio_h3, i, 0x3);
-			gpio_set_pull(&s5pc110_gpio->gpio_h3, i, GPIO_PULL_UP);
+			gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
+			gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
 		}
 
 		for (i = 0; i < col_num; i++)
 			/* Set GPH2[3:0] to KP_COL[3:0] */
-			gpio_cfg_pin(&s5pc110_gpio->gpio_h2, i, 0x3);
+			gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
 
 		reg = S5PC110_KEYPAD_BASE;
 		col_mask = S5PC110_KEYIFCOLEN_MASK;
@@ -1004,8 +1005,8 @@ static void check_keypad(void)
 			if ((power_key || (row_state[1] & 0x6))
 						&& (row_state[2] & 0x4))
 				auto_download = 1;
-		} else if (board_is_sdk() &&
-				(hwrevision(3) || hwrevision(4)	|| hwrevision(6))) {
+		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4) ||
+						hwrevision(6))) {
 			/* cam full shot & volume down
 			 * or hold key & volume down */
 			if ((power_key || (row_state[1] & 0x6))
@@ -1071,16 +1072,16 @@ static void check_mhl(void)
 
 	/* MHL Power enable */
 	/* HDMI_EN : GPJ2[2] XMSMDATA_2 output mode */
-	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, 1);
+	gpio_direction_output(&gpio->gpio_j2, 2, 1);
 
 	/* MHL_RST : MP0_4[7] XM0ADDR_7 output mode */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 7, 0);
+	gpio_direction_output(&gpio->gpio_mp0_4, 7, 0);
 
 	/* 10ms required after reset */
 	udelay(10000);
 
 	/* output enable */
-	gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 7, 1);
+	gpio_set_value(&gpio->gpio_mp0_4, 7, 1);
 
 	i2c_set_bus_num(I2C_GPIO5);
 
@@ -1387,11 +1388,12 @@ static void charger_en(int enable)
 }
 
 void lcd_power_on(unsigned int onoff);
-extern int do_sleep (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-extern int drv_lcd_init_resume (void);
+extern int do_sleep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+extern int drv_lcd_init_resume(void);
 
 static void into_charge_mode(void)
 {
+	struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
 	unsigned int level;
 	int i, j;
 	bmp_image_t *bmp;
@@ -1447,7 +1449,6 @@ static void into_charge_mode(void)
 #endif
 
 	do {
-		struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
 		unsigned int org, org_ip3;
 		enum temperature_level  previous_state = _TEMP_OK;
 
@@ -1825,7 +1826,7 @@ static void setup_power_down_mode_registers(void)
 		}
 	}
 
-	bank = &s5pc110_gpio->gpio_a0;
+	bank = &gpio->gpio_a0;
 
 	for (i = 0; i < n_p; i++, p++, bank++) {
 		writel(p->conpdn, &bank->pdn_con);
@@ -1835,7 +1836,7 @@ static void setup_power_down_mode_registers(void)
 	writel(0xff0022b0, (unsigned int *)0xF0000000);
 	writel(0xff0022b0, (unsigned int *)0xF1400000);
 
-	bank = &s5pc110_gpio->gpio_h0;
+	bank = &gpio->gpio_h0;
 
 	for (i = 0; i < n_ge; i++) {
 		writel(ge->con, &bank->con);
@@ -1871,21 +1872,21 @@ void lcd_cfg_gpio(void)
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_f0, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&s5pc110_gpio->gpio_f1, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&s5pc110_gpio->gpio_f2, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio->gpio_f2, i, GPIO_FUNC(2));
 		/* pull-up/down disable */
-		gpio_set_pull(&s5pc110_gpio->gpio_f0, i, GPIO_PULL_NONE);
-		gpio_set_pull(&s5pc110_gpio->gpio_f1, i, GPIO_PULL_NONE);
-		gpio_set_pull(&s5pc110_gpio->gpio_f2, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f2, i, GPIO_PULL_NONE);
 
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&s5pc110_gpio->gpio_f0, i, GPIO_DRV_4X);
-		gpio_set_rate(&s5pc110_gpio->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&s5pc110_gpio->gpio_f1, i, GPIO_DRV_4X);
-		gpio_set_rate(&s5pc110_gpio->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&s5pc110_gpio->gpio_f2, i, GPIO_DRV_4X);
-		gpio_set_rate(&s5pc110_gpio->gpio_f2, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f0, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f1, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f2, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio->gpio_f2, i, GPIO_DRV_SLOW);
 	}
 
 	/* set DISPLAY_DE_B pin for dual rgb mode. */
@@ -1894,47 +1895,47 @@ void lcd_cfg_gpio(void)
 
 	for (i = 0; i < f3_end; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_f3, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&gpio->gpio_f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
-		gpio_set_pull(&s5pc110_gpio->gpio_f3, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_f3, i, GPIO_PULL_NONE);
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&s5pc110_gpio->gpio_f3, i, GPIO_DRV_4X);
-		gpio_set_rate(&s5pc110_gpio->gpio_f3, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio->gpio_f3, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio->gpio_f3, i, GPIO_DRV_SLOW);
 	}
 	/* display output path selection (only [1:0] valid) */
 	writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
 
 	/* gpio pad configuration for LCD ON. */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_j1, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_j1, 3, GPIO_OUTPUT);
 
 	/* LCD_BACKLIGHT_EN */
 	if (mach_is_geminus())
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_mp0_5, 0, GPIO_OUTPUT);
 	if (board_is_sdk() && hwrevision(0)) {
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 4, GPIO_OUTPUT);
-		gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 4, 0);
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 4, GPIO_OUTPUT);
+		gpio_direction_output(&gpio->gpio_mp0_4, 4, 0);
 	}
 
 	/*
 	 * gpio pad configuration for
 	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
 	 */
-	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 2, GPIO_INPUT);
-	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_INPUT);
+	gpio_cfg_pin(&gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (mach_is_aquila() || mach_is_goni()) {
-		spi_pd.cs_bank = &s5pc110_gpio->gpio_mp0_1;
+		spi_pd.cs_bank = &gpio->gpio_mp0_1;
 		spi_pd.cs_num = 1;
-		spi_pd.clk_bank = &s5pc110_gpio->gpio_mp0_4;
+		spi_pd.clk_bank = &gpio->gpio_mp0_4;
 		spi_pd.clk_num = 1;
-		spi_pd.si_bank = &s5pc110_gpio->gpio_mp0_4;
+		spi_pd.si_bank = &gpio->gpio_mp0_4;
 		spi_pd.si_num = 3;
-		spi_pd.so_bank = &s5pc110_gpio->gpio_mp0_4;
+		spi_pd.so_bank = &gpio->gpio_mp0_4;
 		spi_pd.so_num = 2;
 
 		if (board_is_sdk() && hwrevision(0))
@@ -1954,24 +1955,24 @@ void lcd_cfg_gpio(void)
 		gpio_cfg_pin(&gpio_base->gpio_mp0_1, 0, GPIO_OUTPUT);
 #endif
 		/* FLCD_CS_S */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 1, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_mp0_5, 1, GPIO_OUTPUT);
 		/* FLCD_CLK */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 0, GPIO_OUTPUT);
 		/* FLCD_SDI */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 2, GPIO_OUTPUT);
 		/* FLCD_RST_S */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 5, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_mp0_4, 5, GPIO_OUTPUT);
 		/* FLCD_ON_S */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_g2, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&gpio->gpio_g2, 2, GPIO_OUTPUT);
 #if 0		/* universal cypress */
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
 #endif
-		spi_pd.cs_bank = &s5pc110_gpio->gpio_mp0_5;
+		spi_pd.cs_bank = &gpio->gpio_mp0_5;
 		spi_pd.cs_num = 1;
-		spi_pd.clk_bank = &s5pc110_gpio->gpio_mp0_4;
+		spi_pd.clk_bank = &gpio->gpio_mp0_4;
 		spi_pd.clk_num = 0;
-		spi_pd.si_bank = &s5pc110_gpio->gpio_mp0_4;
+		spi_pd.si_bank = &gpio->gpio_mp0_4;
 		spi_pd.si_num = 2;
 
 		spi_pd.set_rev = 1;
@@ -2000,14 +2001,14 @@ void backlight_on(unsigned int onoff)
 
 	if (onoff) {
 		if (mach_is_geminus())
-			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 0, 1);
+			gpio_set_value(&gpio->gpio_mp0_5, 0, 1);
 	} else {
 		if (mach_is_geminus())
-			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 0, 0);
+			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
 	}
 
 	if (mach_is_goni() && board_is_sdk() && hwrevision(0)) {
-		gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 4, 1);
+		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
 		i2c_set_bus_num(I2C_GPIO5);
@@ -2035,17 +2036,17 @@ void backlight_on(unsigned int onoff)
 void reset_lcd(void)
 {
 	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
-		gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 1);
+		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 		if (board_is_sdk() && (hwrevision(3) || hwrevision(6))) {
 			udelay(10000);
-			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 0);
+			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
-			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 1);
+			gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 			udelay(100);
 		}
 	}
 	if (mach_is_cypress())
-		gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 5, 1);
+		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
 }
 
 void lcd_power_on(unsigned int onoff)
@@ -2053,17 +2054,17 @@ void lcd_power_on(unsigned int onoff)
 	if (onoff) {
 		/* TSP_LDO_ON */
 		if (mach_is_aquila() || mach_is_geminus())
-			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 1);
+			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
 		if (mach_is_cypress())
-			gpio_set_value(&s5pc110_gpio->gpio_g2, 2, 1);
+			gpio_set_value(&gpio->gpio_g2, 2, 1);
 
 		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
 
-			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 1);
+			gpio_set_value(&gpio->gpio_j1, 3, 1);
 
 			addr = 0xCC >> 1;	/* max8998 */
 			if (max8998_probe())
@@ -2088,16 +2089,16 @@ void lcd_power_on(unsigned int onoff)
 		}
 	} else {
 		if (mach_is_aquila() || mach_is_geminus())
-			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 0);
+			gpio_set_value(&gpio->gpio_j1, 3, 0);
 
 		if (mach_is_cypress())
-			gpio_set_value(&s5pc110_gpio->gpio_g2, 2, 0);
+			gpio_set_value(&gpio->gpio_g2, 2, 0);
 
 		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 
-			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 0);
+			gpio_set_value(&gpio->gpio_j1, 3, 0);
 
 			addr = 0xCC >> 1;	/* max8998 */
 			if (max8998_probe())
@@ -2423,13 +2424,13 @@ int misc_init_r(void)
 int board_init(void)
 {
 	/* Set Initial global variables */
-	s5pc110_gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
+	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	gd->bd->bi_arch_number = MACH_TYPE_AQUILA;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 #ifdef CONFIG_LCD
-	/* 
+	/*
 	 * set reserved memory region for framebuffer.
 	 *
 	 * this region wouldn't be rewrited by kernel so
@@ -2490,7 +2491,7 @@ int dram_init(void)
 				hwrevision(8) || hwrevision(9))) ||
 				(board_is_sdk() && !hwrevision(1)))
 				mem_3g = 1;
-			if (mach_is_goni () && board_is_s1()) {
+			if (mach_is_goni() && board_is_s1()) {
 				mem_3g = 0;
 				sz = 0;
 			}
@@ -2519,17 +2520,17 @@ static unsigned char saved_val[4][2];
 void board_sleep_init_late(void)
 {
 	/* CODEC_LDO_EN: GPF3[4] */
-	gpio_direction_output(&s5pc110_gpio->gpio_f3, 4, 0);
+	gpio_direction_output(&gpio->gpio_f3, 4, 0);
 	/* CODEC_XTAL_EN: GPH3[2] */
-	gpio_direction_output(&s5pc110_gpio->gpio_h3, 2, 0);
+	gpio_direction_output(&gpio->gpio_h3, 2, 0);
 
 	/* MMC T_FLASH off */
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 4, 0);
+	gpio_direction_output(&gpio->gpio_mp0_5, 4, 0);
 	/* MHL off */
-	gpio_direction_output(&s5pc110_gpio->gpio_j2, 2, 0);
-	gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 7, 0);
+	gpio_direction_output(&gpio->gpio_j2, 2, 0);
+	gpio_direction_output(&gpio->gpio_mp0_4, 7, 0);
 	/* MHL_ON for REV02 or higher */
-	gpio_direction_output(&s5pc110_gpio->gpio_j2, 3, 0);
+	gpio_direction_output(&gpio->gpio_j2, 3, 0);
 }
 
 void board_sleep_init(void)
@@ -2675,7 +2676,7 @@ static int s5pc1xx_phy_control(int on)
 
 		if (mach_is_tickertape())
 			/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
-			gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 0, 0);
+			gpio_direction_output(&gpio->gpio_mp0_4, 0, 0);
 
 		/* USB Path to AP */
 		micro_usb_switch(0);
@@ -2751,7 +2752,7 @@ int usb_board_init(void)
 
 	if (mach_is_tickertape())
 		/* USB_SEL: XM0ADDR_0: MP04[0] output mode */
-		gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 0, 0);
+		gpio_direction_output(&gpio->gpio_mp0_4, 0, 0);
 
 	/* USB Path to AP */
 	micro_usb_switch(0);
@@ -2777,7 +2778,7 @@ int board_mmc_init(bd_t *bis)
 
 	/* MASSMEMORY_EN: XMSMDATA7: GPJ2[7] output high */
 	if (mach_is_goni() || mach_is_wmg160())
-		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
+		gpio_direction_output(&gpio->gpio_j2, 7, 1);
 
 	/*
 	 * MMC0 GPIO
@@ -2790,28 +2791,28 @@ int board_mmc_init(bd_t *bis)
 		if (i == 2)
 			continue;
 		/* GPG0[0:6] special function 2 */
-		gpio_cfg_pin(&s5pc110_gpio->gpio_g0, i, 0x2);
+		gpio_cfg_pin(&gpio->gpio_g0, i, 0x2);
 		/* GPG0[0:6] pull disable */
-		gpio_set_pull(&s5pc110_gpio->gpio_g0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio->gpio_g0, i, GPIO_PULL_NONE);
 		/* GPG0[0:6] drv 4x */
-		gpio_set_drv(&s5pc110_gpio->gpio_g0, i, GPIO_DRV_4X);
+		gpio_set_drv(&gpio->gpio_g0, i, GPIO_DRV_4X);
 	}
 
 	if (board_is_sdk() && hwrevision(6)) {
 		for (i = 3; i < 7; i++) {
 			/* GPG1[3:6] special function 3 */
-			gpio_cfg_pin(&s5pc110_gpio->gpio_g1, i, 0x3);
+			gpio_cfg_pin(&gpio->gpio_g1, i, 0x3);
 			/* GPG1[3:6] pull disable */
-			gpio_set_pull(&s5pc110_gpio->gpio_g1,
+			gpio_set_pull(&gpio->gpio_g1,
 					i, GPIO_PULL_NONE);
 			/* GPG1[3:6] drv 4x */
-			gpio_set_drv(&s5pc110_gpio->gpio_g1, i, GPIO_DRV_4X);
+			gpio_set_drv(&gpio->gpio_g1, i, GPIO_DRV_4X);
 		}
 	}
 
 	if (mach_is_geminus()) {
-		gpio_direction_output(&s5pc110_gpio->gpio_j2, 7, 1);
-		gpio_set_pull(&s5pc110_gpio->gpio_j2, 7, GPIO_PULL_NONE);
+		gpio_direction_output(&gpio->gpio_j2, 7, 1);
+		gpio_set_pull(&gpio->gpio_j2, 7, GPIO_PULL_NONE);
 	}
 
 	return s5p_mmc_init(0);
@@ -2961,7 +2962,7 @@ U_BOOT_CMD(
 #endif
 
 #ifdef CONFIG_CMD_DEVICE_POWER
-static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	switch (argc) {
 	case 2:
