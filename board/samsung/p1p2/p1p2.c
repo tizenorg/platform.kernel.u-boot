@@ -253,7 +253,7 @@ static void enable_battery(void);
 
 void i2c_init_board(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 	int num_bus;
 
 	if (cpu_is_s5pc100())
@@ -442,7 +442,7 @@ static void check_hw_revision(void)
 		
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
-			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+			(struct s5pc100_gpio *)samsung_get_base_gpio();
 
 		board_rev = get_hw_revision(&gpio->gpio_j0);
 
@@ -451,7 +451,7 @@ static void check_hw_revision(void)
 			board = MACH_TICKERTAPE;
 	} else {
 		struct s5pc110_gpio *gpio =
-			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+			(struct s5pc110_gpio *)samsung_get_base_gpio();
 
 		board_rev = get_hw_revision(&gpio->gpio_j0);
 
@@ -831,7 +831,7 @@ static void check_keypad(void)
 
 	if (cpu_is_s5pc100()) {
 		struct s5pc100_gpio *gpio =
-				(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+				(struct s5pc100_gpio *)samsung_get_base_gpio();
 		row_num = 3;
 		col_num = 3;
 	/* Set GPH2[2:0] to KP_COL[2:0] */
@@ -1479,7 +1479,7 @@ static struct gpio_external external_powerdown_modes[] = {
 
 static void setup_power_down_mode_registers(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 	struct s5p_gpio_bank *bank;
 	struct gpio_powermode *p;
 	struct gpio_external *ge;
@@ -1527,7 +1527,7 @@ extern void s6e63m0_set_spi_interface(struct s6e63m0_platform_data *cs,
 	struct s6e63m0_platform_data *so);
 
 struct s6e63m0_platform_data pd_cs, pd_clk, pd_si, pd_so;
-struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 int s5p_no_lcd_support(void)
 {
@@ -1642,7 +1642,7 @@ void lcd_cfg_gpio(void)
 
 void backlight_on(unsigned int onoff)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	if (onoff) {
 		if (machine_is_geminus())
@@ -1655,7 +1655,7 @@ void backlight_on(unsigned int onoff)
 
 void reset_lcd(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	if (machine_is_aquila() || machine_is_geminus())
 		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
@@ -1673,7 +1673,7 @@ void reset_lcd(void)
 }
 void lcd_set_RST(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
 	udelay(1400000);
@@ -1685,7 +1685,7 @@ void lcd_set_RST(void)
 
 void lcd_power_on(unsigned int onoff)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	if (onoff) {
 		if (machine_is_aquila() || machine_is_geminus() || machine_is_p1p2())
@@ -1923,7 +1923,7 @@ int misc_init_r(void)
 int board_init(void)
 {
 	/* Set Initial global variables */
-	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	s5pc110_gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -2142,7 +2142,8 @@ int board_mmc_init(bd_t *bis)
 {
 	unsigned int reg;
 	unsigned int clock;
-	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
+	struct s5pc110_clock *clk =
+			(struct s5pc110_clock *)samsung_get_base_clock();
 	int i;
 
 	/* MMC0 Clock source = SCLKMPLL */

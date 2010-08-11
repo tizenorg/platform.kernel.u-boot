@@ -298,7 +298,6 @@ static void check_micro_usb(int intr);
 
 void i2c_init_board(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 	int num_bus;
 
 	if (cpu_is_s5pc100())
@@ -311,11 +310,11 @@ void i2c_init_board(void)
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	} else if (mach_is_goni()) {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&gpio->gpio_mp0_5;
+			(unsigned int)&s5pc110_gpio->gpio_mp0_5;
 	} else if (mach_is_cypress()) {
 		i2c_gpio[I2C_GPIO7].bus = &i2c_cypress_gpio7;
 		i2c_gpio[I2C_GPIO7].bus->gpio_base =
-			(unsigned int)&gpio->gpio_mp0_5;
+			(unsigned int)&s5pc110_gpio->gpio_mp0_5;
 	} else {
 		i2c_gpio[I2C_GPIO7].bus->gpio_base = 0;
 	}
@@ -323,7 +322,7 @@ void i2c_init_board(void)
 	if (board_has_AVS()) { /* no I2C2. it's used by AVS-IEM */
 		static int printed = 0;
 		struct s5p_gpio_bank *bank =
-			(struct s5p_gpio_bank *)(&gpio->gpio_d1);
+			(struct s5p_gpio_bank *)(&s5pc110_gpio->gpio_d1);
 		/* set GPD1CON[4], [5] as IEM_SPWI/SCLK */
 		gpio_cfg_pin(bank, 4, 0x2); /* IEM_SCLK */
 		gpio_cfg_pin(bank, 5, 0x2); /* IEM_SPWI */
@@ -333,13 +332,19 @@ void i2c_init_board(void)
 			puts("(I2C2 Diabled. AVS Mode) ");
 			printed = 1;
 		}
-	} else
-		i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio->gpio_d1;
+	} else {
+		i2c_gpio[I2C_2].bus->gpio_base =
+			(unsigned int)&s5pc110_gpio->gpio_d1;
+	}
 
-	i2c_gpio[I2C_GPIO3].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
-	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio->gpio_j4;
-	i2c_gpio[I2C_GPIO5].bus->gpio_base = (unsigned int)&gpio->gpio_mp0_5;
-	i2c_gpio[I2C_GPIO6].bus->gpio_base = (unsigned int)&gpio->gpio_j3;
+	i2c_gpio[I2C_GPIO3].bus->gpio_base =
+		(unsigned int)&s5pc110_gpio->gpio_j3;
+	i2c_gpio[I2C_PMIC].bus->gpio_base =
+		(unsigned int)&s5pc110_gpio->gpio_j4;
+	i2c_gpio[I2C_GPIO5].bus->gpio_base =
+		(unsigned int)&s5pc110_gpio->gpio_mp0_5;
+	i2c_gpio[I2C_GPIO6].bus->gpio_base =
+		(unsigned int)&s5pc110_gpio->gpio_j3;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
 
@@ -543,8 +548,6 @@ static void check_hw_revision(void)
 		if (board_rev == 3)
 			board = MACH_TICKERTAPE;
 	} else {
-		struct s5pc110_gpio *gpio =
-			(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 		int hwrev3 = 1;
 
 		board_rev = 0;
@@ -574,26 +577,26 @@ static void check_hw_revision(void)
 		 */
 
 		/* C110 Aquila */
-		if (gpio_get_value(&gpio->gpio_j1, 4) == 0) {
+		if (gpio_get_value(&s5pc110_gpio->gpio_j1, 4) == 0) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= J1_B2_BOARD;
 
-			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->gpio_j2, 6);
+			gpio_set_pull(&s5pc110_gpio->gpio_j2, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&s5pc110_gpio->gpio_j2, 6);
 
 			/* Check board */
-			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
+			if (gpio_get_value(&s5pc110_gpio->gpio_h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
+			if (gpio_get_value(&s5pc110_gpio->gpio_h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_j2, 6) == 1)
+			if (gpio_get_value(&s5pc110_gpio->gpio_j2, 6) == 1)
 				board_rev |= MEDIA_BOARD;
 
 			/* set gpio to default value. */
-			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
-			gpio_direction_output(&gpio->gpio_j2, 6, 0);
+			gpio_set_pull(&s5pc110_gpio->gpio_j2, 6, GPIO_PULL_DOWN);
+			gpio_direction_output(&s5pc110_gpio->gpio_j2, 6, 0);
 		}
 
 		/* Workaround: C110 Aquila Rev0.6 */
@@ -603,14 +606,14 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Aquila Bamboo */
-		if (gpio_get_value(&gpio->gpio_j2, 0) == 1) {
+		if (gpio_get_value(&s5pc110_gpio->gpio_j2, 0) == 1) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= BAMBOO_BOARD;
 		}
 
 		/* C110 TickerTape */
-		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
-				gpio_get_value(&gpio->gpio_d1, 1) == 0)
+		if (gpio_get_value(&s5pc110_gpio->gpio_d1, 0) == 0 &&
+				gpio_get_value(&s5pc110_gpio->gpio_d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
 		/* WMG160 - GPH3[0:4] = 0x00 */
@@ -618,7 +621,7 @@ static void check_hw_revision(void)
 			int i, wmg160 = 1;
 
 			for (i = 0; i < 4; i++) {
-				if (gpio_get_value(&gpio->gpio_h3, i) != 0) {
+				if (gpio_get_value(&s5pc110_gpio->gpio_h3, i) != 0) {
 					wmg160 = 0;
 					break;
 				}
@@ -630,34 +633,34 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Geminus for rev0.0 */
-		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j1, 2);
-		if (gpio_get_value(&gpio->gpio_j1, 2) == 1) {
+		gpio_set_pull(&s5pc110_gpio->gpio_j1, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&s5pc110_gpio->gpio_j1, 2);
+		if (gpio_get_value(&s5pc110_gpio->gpio_j1, 2) == 1) {
 			board = MACH_GEMINUS;
 			if ((board_rev & ~BOARD_MASK) == 3)
 				board_rev &= ~0xff;
 		}
-		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
-		gpio_direction_output(&gpio->gpio_j1, 2, 0);
+		gpio_set_pull(&s5pc110_gpio->gpio_j1, 2, GPIO_PULL_DOWN);
+		gpio_direction_output(&s5pc110_gpio->gpio_j1, 2, 0);
 
 		/* C110 Geminus for rev0.1 ~ */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j0, 6);
-		if (gpio_get_value(&gpio->gpio_j0, 6) == 1) {
+		gpio_set_pull(&s5pc110_gpio->gpio_j0, 6, GPIO_PULL_NONE);
+		gpio_direction_input(&s5pc110_gpio->gpio_j0, 6);
+		if (gpio_get_value(&s5pc110_gpio->gpio_j0, 6) == 1) {
 			board = MACH_GEMINUS;
 			hwrev3 = 7;
 		}
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+		gpio_set_pull(&s5pc110_gpio->gpio_j0, 6, GPIO_PULL_DOWN);
 
 		/* Kessler MP0_5[6] == 1 */
-		gpio_direction_input(&gpio->gpio_mp0_5, 6);
-		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
+		gpio_direction_input(&s5pc110_gpio->gpio_mp0_5, 6);
+		if (gpio_get_value(&s5pc110_gpio->gpio_mp0_5, 6) == 1) {
 			/* Cypress: Do this for cypress */
-			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->gpio_j2, 2);
-			if (gpio_get_value(&gpio->gpio_j2, 2) == 1) {
+			gpio_set_pull(&s5pc110_gpio->gpio_j2, 2, GPIO_PULL_NONE);
+			gpio_direction_input(&s5pc110_gpio->gpio_j2, 2);
+			if (gpio_get_value(&s5pc110_gpio->gpio_j2, 2) == 1) {
 				board = MACH_CYPRESS;
-				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+				gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 6, 0);
 			} else {
 				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
@@ -667,23 +670,23 @@ static void check_hw_revision(void)
 
 #endif
 				/* Limo SDK MP0_5[4] == 1 */
-				gpio_direction_input(&gpio->gpio_mp0_5, 4);
-				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
+				gpio_direction_input(&s5pc110_gpio->gpio_mp0_5, 4);
+				if (gpio_get_value(&s5pc110_gpio->gpio_mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
 
 					/* Haydn MP0_4[0] == 1 */
-					gpio_direction_input(&gpio->gpio_mp0_4, 0);
-					if (gpio_get_value(&gpio->gpio_mp0_4, 0) == 1)
+					gpio_direction_input(&s5pc110_gpio->gpio_mp0_4, 0);
+					if (gpio_get_value(&s5pc110_gpio->gpio_mp0_4, 0) == 1)
 						board_rev |= HAYDN_BOARD;
 					else
 						board_rev |= SDK_BOARD;
 				}
 
 			}
-			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
+			gpio_set_pull(&s5pc110_gpio->gpio_j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
 		} else {
-			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+			gpio_direction_output(&s5pc110_gpio->gpio_mp0_5, 6, 0);
 			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
 				board = MACH_TYPE_GONI;
@@ -692,7 +695,7 @@ static void check_hw_revision(void)
 			}
 		}
 
-		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
+		board_rev |= get_hw_revision(&s5pc110_gpio->gpio_j0, hwrev3);
 	}
 
 	/* Set machine id */
@@ -1749,7 +1752,6 @@ static void init_pmic(void)
 
 static void setup_power_down_mode_registers(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
 	struct s5p_gpio_bank *bank;
 	struct gpio_powermode *p;
 	int n_p;
@@ -1823,7 +1825,7 @@ static void setup_power_down_mode_registers(void)
 		}
 	}
 
-	bank = &gpio->gpio_a0;
+	bank = &s5pc110_gpio->gpio_a0;
 
 	for (i = 0; i < n_p; i++, p++, bank++) {
 		writel(p->conpdn, &bank->pdn_con);
@@ -1833,7 +1835,7 @@ static void setup_power_down_mode_registers(void)
 	writel(0xff0022b0, (unsigned int *)0xF0000000);
 	writel(0xff0022b0, (unsigned int *)0xF1400000);
 
-	bank = &gpio->gpio_h0;
+	bank = &s5pc110_gpio->gpio_h0;
 
 	for (i = 0; i < n_ge; i++) {
 		writel(ge->con, &bank->con);
@@ -1863,29 +1865,27 @@ extern void ld9040_set_platform_data(struct spi_platform_data *pd);
 
 struct spi_platform_data spi_pd;
 
-struct s5pc110_gpio *gpio_base = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 void lcd_cfg_gpio(void)
 {
 	unsigned int i, f3_end = 4;
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio_base->gpio_f0, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio_base->gpio_f1, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio_base->gpio_f2, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&s5pc110_gpio->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&s5pc110_gpio->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&s5pc110_gpio->gpio_f2, i, GPIO_FUNC(2));
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio_base->gpio_f0, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio_base->gpio_f1, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio_base->gpio_f2, i, GPIO_PULL_NONE);
+		gpio_set_pull(&s5pc110_gpio->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&s5pc110_gpio->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&s5pc110_gpio->gpio_f2, i, GPIO_PULL_NONE);
 
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio_base->gpio_f0, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio_base->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio_base->gpio_f1, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio_base->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio_base->gpio_f2, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio_base->gpio_f2, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&s5pc110_gpio->gpio_f0, i, GPIO_DRV_4X);
+		gpio_set_rate(&s5pc110_gpio->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&s5pc110_gpio->gpio_f1, i, GPIO_DRV_4X);
+		gpio_set_rate(&s5pc110_gpio->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&s5pc110_gpio->gpio_f2, i, GPIO_DRV_4X);
+		gpio_set_rate(&s5pc110_gpio->gpio_f2, i, GPIO_DRV_SLOW);
 	}
 
 	/* set DISPLAY_DE_B pin for dual rgb mode. */
@@ -1894,47 +1894,47 @@ void lcd_cfg_gpio(void)
 
 	for (i = 0; i < f3_end; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio_base->gpio_f3, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio_base->gpio_f3, i, GPIO_PULL_NONE);
+		gpio_set_pull(&s5pc110_gpio->gpio_f3, i, GPIO_PULL_NONE);
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio_base->gpio_f3, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio_base->gpio_f3, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&s5pc110_gpio->gpio_f3, i, GPIO_DRV_4X);
+		gpio_set_rate(&s5pc110_gpio->gpio_f3, i, GPIO_DRV_SLOW);
 	}
 	/* display output path selection (only [1:0] valid) */
 	writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&gpio_base->gpio_mp0_5, 5, GPIO_OUTPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 5, GPIO_OUTPUT);
 
 	/* gpio pad configuration for LCD ON. */
-	gpio_cfg_pin(&gpio_base->gpio_j1, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_j1, 3, GPIO_OUTPUT);
 
 	/* LCD_BACKLIGHT_EN */
 	if (mach_is_geminus())
-		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 0, GPIO_OUTPUT);
 	if (board_is_sdk() && hwrevision(0)) {
-		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 4, GPIO_OUTPUT);
-		gpio_direction_output(&gpio_base->gpio_mp0_4, 4, 0);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 4, GPIO_OUTPUT);
+		gpio_direction_output(&s5pc110_gpio->gpio_mp0_4, 4, 0);
 	}
 
 	/*
 	 * gpio pad configuration for
 	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
 	 */
-	gpio_cfg_pin(&gpio_base->gpio_mp0_1, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_INPUT);
-	gpio_cfg_pin(&gpio_base->gpio_mp0_4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_1, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 2, GPIO_INPUT);
+	gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 3, GPIO_OUTPUT);
 
 	if (mach_is_aquila() || mach_is_goni()) {
-		spi_pd.cs_bank = &gpio_base->gpio_mp0_1;
+		spi_pd.cs_bank = &s5pc110_gpio->gpio_mp0_1;
 		spi_pd.cs_num = 1;
-		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.clk_bank = &s5pc110_gpio->gpio_mp0_4;
 		spi_pd.clk_num = 1;
-		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.si_bank = &s5pc110_gpio->gpio_mp0_4;
 		spi_pd.si_num = 3;
-		spi_pd.so_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.so_bank = &s5pc110_gpio->gpio_mp0_4;
 		spi_pd.so_num = 2;
 
 		if (board_is_sdk() && hwrevision(0))
@@ -1954,24 +1954,24 @@ void lcd_cfg_gpio(void)
 		gpio_cfg_pin(&gpio_base->gpio_mp0_1, 0, GPIO_OUTPUT);
 #endif
 		/* FLCD_CS_S */
-		gpio_cfg_pin(&gpio_base->gpio_mp0_5, 1, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_5, 1, GPIO_OUTPUT);
 		/* FLCD_CLK */
-		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 0, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 0, GPIO_OUTPUT);
 		/* FLCD_SDI */
-		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 2, GPIO_OUTPUT);
 		/* FLCD_RST_S */
-		gpio_cfg_pin(&gpio_base->gpio_mp0_4, 5, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_mp0_4, 5, GPIO_OUTPUT);
 		/* FLCD_ON_S */
-		gpio_cfg_pin(&gpio_base->gpio_g2, 2, GPIO_OUTPUT);
+		gpio_cfg_pin(&s5pc110_gpio->gpio_g2, 2, GPIO_OUTPUT);
 #if 0		/* universal cypress */
 		pd_cs.bank = &gpio_base->gpio_mp0_1;
 		pd_cs.num = 0;
 #endif
-		spi_pd.cs_bank = &gpio_base->gpio_mp0_5;
+		spi_pd.cs_bank = &s5pc110_gpio->gpio_mp0_5;
 		spi_pd.cs_num = 1;
-		spi_pd.clk_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.clk_bank = &s5pc110_gpio->gpio_mp0_4;
 		spi_pd.clk_num = 0;
-		spi_pd.si_bank = &gpio_base->gpio_mp0_4;
+		spi_pd.si_bank = &s5pc110_gpio->gpio_mp0_4;
 		spi_pd.si_num = 2;
 
 		spi_pd.set_rev = 1;
@@ -1997,18 +1997,17 @@ void backlight_on(unsigned int onoff)
 
 	unsigned char addr;
 	unsigned char val[2];
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 	if (onoff) {
 		if (mach_is_geminus())
-			gpio_set_value(&gpio->gpio_mp0_5, 0, 1);
+			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 0, 1);
 	} else {
 		if (mach_is_geminus())
-			gpio_set_value(&gpio->gpio_mp0_5, 0, 0);
+			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 0, 0);
 	}
 
 	if (mach_is_goni() && board_is_sdk() && hwrevision(0)) {
-		gpio_set_value(&gpio->gpio_mp0_4, 4, 1);
+		gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 4, 1);
 		udelay(6);
 
 		i2c_set_bus_num(I2C_GPIO5);
@@ -2035,39 +2034,36 @@ void backlight_on(unsigned int onoff)
 
 void reset_lcd(void)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
-
 	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
-		gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+		gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 1);
 		if (board_is_sdk() && (hwrevision(3) || hwrevision(6))) {
 			udelay(10000);
-			gpio_set_value(&gpio->gpio_mp0_5, 5, 0);
+			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 0);
 			udelay(10000);
-			gpio_set_value(&gpio->gpio_mp0_5, 5, 1);
+			gpio_set_value(&s5pc110_gpio->gpio_mp0_5, 5, 1);
 			udelay(100);
 		}
 	}
 	if (mach_is_cypress())
-		gpio_set_value(&gpio->gpio_mp0_4, 5, 1);
+		gpio_set_value(&s5pc110_gpio->gpio_mp0_4, 5, 1);
 }
 
 void lcd_power_on(unsigned int onoff)
 {
-	struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 	if (onoff) {
 		/* TSP_LDO_ON */
 		if (mach_is_aquila() || mach_is_geminus())
-			gpio_set_value(&gpio->gpio_j1, 3, 1);
+			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 1);
 
 		if (mach_is_cypress())
-			gpio_set_value(&gpio->gpio_g2, 2, 1);
+			gpio_set_value(&s5pc110_gpio->gpio_g2, 2, 1);
 
 		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 			unsigned char val2[2];
 
-			gpio_set_value(&gpio->gpio_j1, 3, 1);
+			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 1);
 
 			addr = 0xCC >> 1;	/* max8998 */
 			if (max8998_probe())
@@ -2092,16 +2088,16 @@ void lcd_power_on(unsigned int onoff)
 		}
 	} else {
 		if (mach_is_aquila() || mach_is_geminus())
-			gpio_set_value(&gpio->gpio_j1, 3, 0);
+			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 0);
 
 		if (mach_is_cypress())
-			gpio_set_value(&gpio->gpio_g2, 2, 0);
+			gpio_set_value(&s5pc110_gpio->gpio_g2, 2, 0);
 
 		if (mach_is_goni()) {
 			unsigned char addr;
 			unsigned char val[2];
 
-			gpio_set_value(&gpio->gpio_j1, 3, 0);
+			gpio_set_value(&s5pc110_gpio->gpio_j1, 3, 0);
 
 			addr = 0xCC >> 1;	/* max8998 */
 			if (max8998_probe())
@@ -2427,7 +2423,7 @@ int misc_init_r(void)
 int board_init(void)
 {
 	/* Set Initial global variables */
-	s5pc110_gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+	s5pc110_gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	gd->bd->bi_arch_number = MACH_TYPE_AQUILA;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;

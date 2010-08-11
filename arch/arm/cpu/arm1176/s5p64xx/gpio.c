@@ -158,7 +158,7 @@ static char *gpio_name1[] = {
 static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	struct s5pc110_gpio *gpio =
-		(struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+		(struct s5pc110_gpio *)samsung_get_base_gpio();
 	int i = 0;
 	int j;
 

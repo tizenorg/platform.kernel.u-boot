@@ -135,7 +135,8 @@ static void s5pc_fimd_set_clock(void)
 	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0,
 		     remainder, remainder_div;
 	unsigned long pixel_clock, src_clock, max_clock;
-	struct s5pc110_clock *clk = (struct s5pc110_clock *)S5PC1XX_CLOCK_BASE;
+	struct s5pc110_clock *clk =
+		(struct s5pc110_clock *)samsung_get_base_clock();
 	u64 div64;
 
 	s5pc1xx_clock_init();

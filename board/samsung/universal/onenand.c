@@ -43,7 +43,7 @@ void onenand_board_init(struct mtd_info *mtd)
 		this->chip_probe = s5pc110_chip_probe;
 	} else {
 		struct s5pc100_clock *clk =
-			(struct s5pc100_clock *)S5PC1XX_CLOCK_BASE;
+			(struct s5pc100_clock *)samsung_get_base_clock();
 		struct samsung_onenand *onenand;
 
 		this->base = (void *) S5PC100_ONENAND_BASE;

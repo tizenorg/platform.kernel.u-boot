@@ -54,7 +54,7 @@ lowlevel_init:
 	ldr	r7, =S5PC100_GPIO_BASE
 	ldr	r8, =S5PC100_GPIO_BASE
 	/* Read CPU ID */
-	ldr	r2, =S5PC1XX_PRO_ID
+	ldr	r2, =S5PC100_PRO_ID
 	ldr	r0, [r2]
 	mov	r1, #0x00010000
 	and	r0, r0, r1
@@ -442,7 +442,7 @@ lockloop:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r0, =S5PC1XX_CLOCK_BASE		@ 0xE0100000
+	ldr	r0, =S5PC100_CLOCK_BASE		@ 0xE0100000
 
 	/* Check S5PC100 */
 	cmp	r7, r8
@@ -526,7 +526,7 @@ system_clock_init:
 	ldr	r1, =0x3ff03ff
 	str	r1, [r0, #0x114]		@ S5PC110_CLAMP_STABLE
 
-	ldr	r0, =S5PC1XX_CLOCK_BASE		@ 0xE0100000
+	ldr	r0, =S5PC100_CLOCK_BASE		@ 0xE0100000
 
 	/* Set Clock divider */
 	ldr	r1, =0x14131330			@ 1:1:4:4, 1:4:5

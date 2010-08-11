@@ -25,7 +25,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
 
-struct s5pc110_gpio *gpio = (struct s5pc110_gpio *) S5PC110_GPIO_BASE;
+struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 #define SLEEPMSEC		0x1000
 #define ENDDEF			0x2000

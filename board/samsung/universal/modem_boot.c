@@ -43,7 +43,8 @@
 #define CRC_ERR				0xff
 
 extern struct serial_device s5pc1xx_serial3_device;
-static struct s5pc110_gpio *gpio = (struct s5pc110_gpio *)S5PC110_GPIO_BASE;
+static struct s5pc110_gpio *gpio =
+		(struct s5pc110_gpio *)samsung_get_base_gpio();
 
 int uart_serial_pollc(struct serial_device *uart, int retry)
 {
