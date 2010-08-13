@@ -27,6 +27,8 @@
 #include <i2c-gpio.h>
 #include <i2c.h>
 
+#ifdef CONFIG_SOFT_I2C
+
 static struct i2c_gpio_bus *i2c_gpio;
 
 void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
@@ -108,3 +110,5 @@ void i2c_gpio_dir(int dir)
 				i2c_gpio[bus_index].bus->sda_pin);
 	}
 }
+
+#endif	/* CONFIG_SOFT_I2C */

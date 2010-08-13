@@ -367,6 +367,7 @@
 #define CONFIG_SYS_I2C_0	1
 #else
 #include <i2c-gpio.h>
+#define CONFIG_S5P_GPIO_I2C	1
 #define CONFIG_SOFT_I2C		1
 #define CONFIG_SYS_I2C_INIT_BOARD
 #define CONFIG_SYS_I2C_SPEED	50000

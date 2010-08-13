@@ -37,7 +37,6 @@ COBJS-y		+= sromc.o
 COBJS-y		+= timer.o
 COBJS-$(CONFIG_CMD_SLEEP)	+= sleep.o
 COBJS-$(CONFIG_CMD_SLEEP)	+= sleep_asm.o
-COBJS-$(CONFIG_SOFT_I2C)	+= i2c-gpio.o
 COBJS-$(CONFIG_CMD_USBDOWN)	+= usb-hs-otg.o usb_downloader.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
