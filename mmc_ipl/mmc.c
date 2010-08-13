@@ -29,7 +29,7 @@ int board_mmc_init(void) __attribute__((weak, alias("__board_mmc_init")));
 
 int mmc_init(void)
 {
-	if (board_mmc_init)
+	if (board_mmc_init())
 		return 1;
 
 	return 0;
