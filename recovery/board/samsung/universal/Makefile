@@ -35,7 +35,7 @@ $(obj)reset.S:
 
 $(obj)cpu_info.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/$@ $@
+	ln -s $(SRCTREE)/$(CPUDIR)/s5p-common/$@ $@
 
 $(obj)_memcpy32.S:
 	ln -sf $(SRCTREE)/arch/$(ARCH)/lib/$@ $@

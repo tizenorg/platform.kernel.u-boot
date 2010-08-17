@@ -26,16 +26,10 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(SOC).a
+LIB	= $(obj)libs5p-common.a
 
-SOBJS	= cache.o
-SOBJS	+= reset.o
-
-COBJS-y		+= clock.o
-COBJS-y		+= sromc.o
-COBJS-$(CONFIG_CMD_SLEEP)	+= sleep.o
-COBJS-$(CONFIG_CMD_SLEEP)	+= sleep_asm.o
-COBJS-$(CONFIG_CMD_USBDOWN)	+= usb-hs-otg.o usb_downloader.o
+COBJS-y		+= cpu_info.o
+COBJS-y		+= timer.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))

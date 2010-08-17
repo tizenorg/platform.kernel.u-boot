@@ -62,12 +62,17 @@
 
 #ifndef __ASSEMBLY__
 /* CPU detection macros */
-extern unsigned int s5pc1xx_cpu_id;
+extern unsigned int s5p_cpu_id;
+
+static inline void s5p_set_cpu_id(unsigned int id)
+{
+	s5p_cpu_id = 0xC000 | ((id & 0x00FFF000) >> 12);
+}
 
 #define IS_SAMSUNG_TYPE(type, id)			\
 static inline int cpu_is_##type(void)			\
 {							\
-	return s5pc1xx_cpu_id == id ? 1 : 0;		\
+	return s5p_cpu_id == id ? 1 : 0;		\
 }
 
 IS_SAMSUNG_TYPE(s5pc100, 0xc100)
@@ -92,16 +97,16 @@ SAMSUNG_BASE(sromc, SROMC_BASE)
 SAMSUNG_BASE(timer, PWMTIMER_BASE)
 SAMSUNG_BASE(uart, UART_BASE)
 
-extern unsigned int s5pc1xx_cpu_rev;
+extern unsigned int s5p_cpu_rev;
 
 static inline int s5pc1xx_get_cpu_rev(void)
 {
-	return s5pc1xx_cpu_rev;
+	return s5p_cpu_rev;
 }
 
 static inline void s5pc1xx_set_cpu_rev(unsigned int rev)
 {
-	s5pc1xx_cpu_rev = rev;
+	s5p_cpu_rev = rev;
 }
 #endif
 
