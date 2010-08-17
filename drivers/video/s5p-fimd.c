@@ -139,8 +139,6 @@ static void s5pc_fimd_set_clock(void)
 		(struct s5pc110_clock *)samsung_get_base_clock();
 	u64 div64;
 
-	s5pc1xx_clock_init();
-
 	max_clock = 86 * 1000000;
 
 	if (pvid->dual_lcd_enabled)
