@@ -363,28 +363,28 @@ static void show_hw_revision(void)
 	if (mach_is_aquila()) {
 		if (board_is_limo_real()) {
 			if ((board_rev & 0xf) < 8)
-				s5pc1xx_set_cpu_rev(0);
+				s5p_set_cpu_rev(0);
 		}
 	} else if (mach_is_goni()) {
 		if (board_is_sdk() &&
 			(hwrevision(2) || hwrevision(4) || hwrevision(5)))
-			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
+			s5p_set_cpu_rev(2);	/* EVT1-Fused */
 		else
-			s5pc1xx_set_cpu_rev(1);
+			s5p_set_cpu_rev(1);
 	} else if (mach_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
-			s5pc1xx_set_cpu_rev(0);
+			s5p_set_cpu_rev(0);
 	} else if (mach_is_wmg160()) {
 		if (hwrevision(5))
-			s5pc1xx_set_cpu_rev(0);
+			s5p_set_cpu_rev(0);
 		else
-			s5pc1xx_set_cpu_rev(2);
+			s5p_set_cpu_rev(2);
 	} else {
-		s5pc1xx_set_cpu_rev(0);
+		s5p_set_cpu_rev(0);
 	}
 
 	if (cpu_is_s5pc110())
-		writel(0xc1100000 | (0xffff & (s5pc1xx_get_cpu_rev() ? 1 : 0)),
+		writel(0xc1100000 | (0xffff & (s5p_get_cpu_rev() ? 1 : 0)),
 				S5PC110_INFORM3);
 }
 
@@ -467,7 +467,7 @@ static int check_keypad(void)
 	/* KEYIFCOL reg clear */
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
-	cpu_rev = s5pc1xx_get_cpu_rev();
+	cpu_rev = s5p_get_cpu_rev();
 	if (cpu_rev == 1) {
 		if ((row_state[1] & 0x6) == 0x6)
 			condition = 1;
@@ -612,12 +612,12 @@ int board_update_image(u32 *buf, u32 len)
 		else
 			img_rev = 1;
 
-		if (img_rev != s5pc1xx_get_cpu_rev()) {
+		if (img_rev != s5p_get_cpu_rev()) {
 			PUTS("target check: CPU revision mismatch!\n");
 			PUTS("target check: system is ");
-			if (s5pc1xx_get_cpu_rev() == 1)
+			if (s5p_get_cpu_rev() == 1)
 				serial_puts("EVT1\n");
-			else if (s5pc1xx_get_cpu_rev() == 2)
+			else if (s5p_get_cpu_rev() == 2)
 				serial_puts("EVT1-Fused\n");
 			else
 				serial_puts("EVT0\n");

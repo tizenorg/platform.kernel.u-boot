@@ -29,10 +29,7 @@ void gpio_cfg_pin(struct s5p_gpio_bank *bank, int gpio, int cfg)
 	value &= ~CON_MASK(gpio);
 	value |= CON_SFR(gpio, cfg);
 	writel(value, &bank->con);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->con);
+	value = readl(&bank->con);
 }
 
 void gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
@@ -46,10 +43,7 @@ void gpio_direction_output(struct s5p_gpio_bank *bank, int gpio, int en)
 	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->dat);
+	value = readl(&bank->dat);
 }
 
 void gpio_direction_input(struct s5p_gpio_bank *bank, int gpio)
@@ -66,10 +60,7 @@ void gpio_set_value(struct s5p_gpio_bank *bank, int gpio, int en)
 	if (en)
 		value |= DAT_SET(gpio);
 	writel(value, &bank->dat);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->dat);
+	value = readl(&bank->dat);
 }
 
 unsigned int gpio_get_value(struct s5p_gpio_bank *bank, int gpio)
@@ -97,10 +88,7 @@ void gpio_set_pull(struct s5p_gpio_bank *bank, int gpio, int mode)
 	}
 
 	writel(value, &bank->pull);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->pull);
+	value = readl(&bank->pull);
 }
 
 void gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode)
@@ -122,10 +110,7 @@ void gpio_set_drv(struct s5p_gpio_bank *bank, int gpio, int mode)
 	}
 
 	writel(value, &bank->drv);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->drv);
+	value = readl(&bank->drv);
 }
 
 void gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
@@ -145,9 +130,5 @@ void gpio_set_rate(struct s5p_gpio_bank *bank, int gpio, int mode)
 	}
 
 	writel(value, &bank->drv);
-#if 0
-	if (s5pc1xx_get_cpu_rev() == 0)
-#endif
-		value = readl(&bank->drv);
+	value = readl(&bank->drv);
 }
-

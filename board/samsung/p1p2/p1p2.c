@@ -650,7 +650,7 @@ static void show_hw_revision(void)
 
 	/* Set CPU Revision */
 	if ((board_rev & 0xf) > 2) {
-		s5pc1xx_set_cpu_rev(0);
+		s5p_set_cpu_rev(0);
 	}
 
 	dprintf("HW Revision:\t%x (%s%s)\n", board_rev, board_name[board],
@@ -1144,7 +1144,7 @@ static void into_charge_mode(void)
 #endif
 
 	/* EVT0: sleep 1, EVT1: sleep */
-	if (s5pc1xx_get_cpu_rev() == 0) {
+	if (s5p_get_cpu_rev() == 0) {
 		run_command("sleep 1", 0);
 		return;
 	}

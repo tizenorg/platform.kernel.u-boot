@@ -913,12 +913,12 @@ static int process_data(struct usbd_ops *usbd)
 			else if (*(img_header + 0x400) == 0xea000012)
 				img_rev = 2;
 
-			if (img_rev != s5pc1xx_get_cpu_rev()) {
+			if (img_rev != s5p_get_cpu_rev()) {
 				printf("CPU revision mismatch!\n"
 					"bootloader is %s%s\n"
 					"download image is %s%s\n",
-					s5pc1xx_get_cpu_rev() ? "EVT1" : "EVT0",
-					s5pc1xx_get_cpu_rev() == 2 ? "-Fused" : "",
+					s5p_get_cpu_rev() ? "EVT1" : "EVT0",
+					s5p_get_cpu_rev() == 2 ? "-Fused" : "",
 					img_rev ? "EVT1" : "EVT0",
 					img_rev == 2 ? "-Fused" : "");
 				*((ulong *) usbd->tx_data) = STATUS_ERROR;

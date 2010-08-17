@@ -99,12 +99,12 @@ SAMSUNG_BASE(uart, UART_BASE)
 
 extern unsigned int s5p_cpu_rev;
 
-static inline int s5pc1xx_get_cpu_rev(void)
+static inline int s5p_get_cpu_rev(void)
 {
 	return s5p_cpu_rev;
 }
 
-static inline void s5pc1xx_set_cpu_rev(unsigned int rev)
+static inline void s5p_set_cpu_rev(unsigned int rev)
 {
 	s5p_cpu_rev = rev;
 }

@@ -750,38 +750,38 @@ static void show_hw_revision(void)
 	if (mach_is_aquila()) {
 		if (board_is_limo_real()) {
 			if ((board_rev & 0xf) < 8)
-				s5pc1xx_set_cpu_rev(0);
+				s5p_set_cpu_rev(0);
 		} else if (board_is_bamboo())
-			s5pc1xx_set_cpu_rev(0);
+			s5p_set_cpu_rev(0);
 	} else if (mach_is_goni()) {
 		if (board_is_sdk() && (hwrevision(2) || hwrevision(4) ||
 					hwrevision(5) || hwrevision(6)))
-			s5pc1xx_set_cpu_rev(2);	/* EVT1-Fused */
+			s5p_set_cpu_rev(2);	/* EVT1-Fused */
 		else
-			s5pc1xx_set_cpu_rev(1);
+			s5p_set_cpu_rev(1);
 	} else if (mach_is_geminus()) {
 		if ((board_rev & 0xf) < 1)
-			s5pc1xx_set_cpu_rev(0);
+			s5p_set_cpu_rev(0);
 	} else if (mach_is_cypress()) {
-		s5pc1xx_set_cpu_rev(1);
+		s5p_set_cpu_rev(1);
 	} else if (mach_is_wmg160()) {
 		if (hwrevision(5))
-			s5pc1xx_set_cpu_rev(0);
+			s5p_set_cpu_rev(0);
 		else
-			s5pc1xx_set_cpu_rev(2);
+			s5p_set_cpu_rev(2);
 	} else {
-		s5pc1xx_set_cpu_rev(0);
+		s5p_set_cpu_rev(0);
 	}
 
 	if (cpu_is_s5pc110())
-		writel(0xc1100000 | (0xffff & (s5pc1xx_get_cpu_rev() ? 1 : 0)),
+		writel(0xc1100000 | (0xffff & (s5p_get_cpu_rev() ? 1 : 0)),
 				S5PC110_INFORM3);
 
 	empty_device_info_buffer();
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
 		board_rev, get_board_name(board),
 		display_features(board, board_rev),
-		s5pc1xx_get_cpu_rev() ? "" : "EVT0");
+		s5p_get_cpu_rev() ? "" : "EVT0");
 }
 
 static void check_auto_burn(void)
@@ -1490,7 +1490,7 @@ static void into_charge_mode(void)
 			ctt.usage = usage;
 			ctt.help = help;
 
-			if (s5pc1xx_get_cpu_rev() == 0) {
+			if (s5p_get_cpu_rev() == 0) {
 				char *argv[] = {"1", "1"};
 				wakeup_stat = do_sleep(&ctt, 0, 2, argv);
 			} else {

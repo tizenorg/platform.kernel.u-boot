@@ -235,7 +235,7 @@ void s5pc110_restore_reg(struct regs_to_save *list,
 			writel(*buf, (unsigned int *)
 					(list[i].start_address+j * 4));
 
-			if (s5pc1xx_get_cpu_rev() == 0) {
+			if (s5p_get_cpu_rev() == 0) {
 				unsigned int tmp;
 				tmp = readl((unsigned int *)
 						(list[i].start_address+j * 4));
@@ -379,7 +379,7 @@ static int s5pc110_sleep(int mode)
 	value = readl(S5PC110_PWR_CFG);
 	value &= ~S5PC110_CFG_STANDBYWFI_MASK;
 	if (mode == SLEEP_WFI) {
-		if (s5pc1xx_get_cpu_rev() == 0) {
+		if (s5p_get_cpu_rev() == 0) {
 			puts("ERRATA MODE\n");
 			value |= S5PC110_CFG_STANDBYWFI_IGNORE;
 		} else {
@@ -437,7 +437,7 @@ static int s5pc110_sleep(int mode)
 		invalidate_dcache(get_device_type());
 
 		if (mode == SLEEP_WFI) {
-			if (s5pc1xx_get_cpu_rev() == 0) {
+			if (s5p_get_cpu_rev() == 0) {
 				puts("Warn: Entering SLEEP_WFI mode with"
 					"EVT0_ERRATA. \n");
 				puts("Warn: This sleep will probably fail\n");
