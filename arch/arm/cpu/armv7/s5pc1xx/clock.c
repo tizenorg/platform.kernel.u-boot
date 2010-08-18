@@ -38,6 +38,7 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
+unsigned long (*get_uclk)(void);
 unsigned long (*get_pclk)(void);
 unsigned long (*get_arm_clk)(void);
 unsigned long (*get_pll_clk)(int);
@@ -303,9 +304,11 @@ void s5p_clock_init(void)
 		get_pll_clk = s5pc110_get_pll_clk;
 		get_arm_clk = s5pc110_get_arm_clk;
 		get_pclk = s5pc110_get_pclk;
+		get_uclk = s5pc110_get_pclk;	/* use PCLK */
 	} else {
 		get_pll_clk = s5pc100_get_pll_clk;
 		get_arm_clk = s5pc100_get_arm_clk;
 		get_pclk = s5pc100_get_pclk;
+		get_uclk = s5pc100_get_pclk;	/* use PCLK */
 	}
 }
