@@ -24,6 +24,11 @@
 #include <common.h>
 #include <asm/io.h>
 
+#include "mmc_ipl.h"
+
+typedef u32(*copy_emmc_to_mem)
+	(u32 ack, u32 number_of_block, u32 *buf, int buswidth);
+
 int board_mmc_init(void)
 {
 	unsigned int value;
@@ -46,4 +51,12 @@ int board_mmc_init(void)
 	writel(0x3fef, 0xe02001ac);
 
 	return 0;
+}
+
+void board_mmc_read_block(unsigned char *buf)
+{
+	copy_emmc_to_mem copy_bl2 =
+		(copy_emmc_to_mem) (*(u32 *) EMMC_COPY_TO_MEM_ADDR);
+
+	copy_bl2(0, 512, (u32 *) buf, 8);
 }

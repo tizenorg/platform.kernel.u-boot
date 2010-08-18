@@ -23,7 +23,10 @@
 #ifndef _MMC_IPL_H
 #define _MMC_IPL_H
 
+#define EMMC_COPY_TO_MEM_ADDR	0xD0037F9C
+
 extern int mmc_init(void);
 extern void mmc_read_block(unsigned char *buf);
+extern void board_mmc_read_block(unsigned char *buf);
 
 #endif

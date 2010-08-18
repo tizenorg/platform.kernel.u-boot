@@ -2217,6 +2217,7 @@ s5pc1xx_universal_config:	unconfig
 	@$(MKCONFIG) -a s5pc1xx_universal arm armv7 universal samsung s5pc1xx
 	@if [ "$(findstring mmc,$@)" ] ; then \
 		echo "CONFIG_MMC_U_BOOT = y" >> $(obj)include/config.mk ; \
+		echo "MMC_BIN = $(obj)mmc_ipl/mmc-ipl-12k-fused.bin" >> $(obj)include/config.mk ; \
 	else \
 		echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk ; \
 		echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk ; \

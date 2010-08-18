@@ -20,6 +20,8 @@
  * MA 02111-1307 USA
  */
 
+#include "mmc_ipl.h"
+
 static int __board_mmc_init(void)
 {
 	return 0;
@@ -37,4 +39,5 @@ int mmc_init(void)
 
 void mmc_read_block(unsigned char *buf)
 {
+	board_mmc_read_block(buf);
 }

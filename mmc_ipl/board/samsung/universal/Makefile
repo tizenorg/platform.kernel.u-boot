@@ -12,17 +12,10 @@
 #
 
 include $(TOPDIR)/config.mk
-# S5PC100 loads at 0x34000
-# S5PC110 loads at 0x30000 (EVT0)
 # S5PC110 loads at 0x20010 (EVT1)
-# Now it uses the S5PC100 as default
-# If you use the S5PC110, the load address is relocated at start.S
-# XXX Never set it S5PC110 it don't relocate it
-# FIXME BL1 header uses 16 bytes at S5PC110 EVT1
-TEXT_BASE		= 0xD0034000
-TEXT_BASE16K_EVT0	= 0xD0038000
-TEXT_BASE16K_EVT1	= 0xD0037ff0
-TEXT_BASE16K_EVT1_SEC	= 0xD0037000
+# BL2 loads at 0x21000 (EVT1)
+TEXT_BASE		= 0xD0021000
+TEXT_BASE8K_EVT1_SEC	= 0xD0023000
 
 LDSCRIPT= $(TOPDIR)/mmc_ipl/board/$(BOARDDIR)/u-boot-mmc.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -44,22 +37,13 @@ LNDIR	:= $(OBJTREE)/mmc_ipl/board/$(BOARDDIR)
 
 mmcobj	:= $(OBJTREE)/mmc_ipl/
 
-ALL	= $(mmcobj)mmc-ipl $(mmcobj)mmc-ipl.bin $(mmcobj)mmc-ipl-16k-evt0.bin $(mmcobj)mmc-ipl-16k-evt1.bin $(mmcobj)mmc-ipl-fused.bin
+ALL	= $(mmcobj)mmc-ipl $(mmcobj)mmc-ipl.bin $(mmcobj)mmc-ipl-fused.bin
 
 all:	$(obj).depend $(ALL)
 
-$(mmcobj)mmc-ipl-16k-evt0.bin:	$(mmcobj)mmc-ipl checksum
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT0) -O binary $< $@
-	$(mmcobj)/board/$(BOARDDIR)/checksum $@ 0
-
-$(mmcobj)mmc-ipl-16k-evt1.bin:	$(mmcobj)mmc-ipl checksum
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT1) -O binary $< $@
-	$(mmcobj)/board/$(BOARDDIR)/checksum $@ 1
-	cat $(mmcobj)/board/$(BOARDDIR)/header.bin $@ > $(mmcobj)mmc-ipl-16k.bin
-
-$(mmcobj)mmc-ipl-fused.bin:	$(mmcobj)mmc-ipl checksum
-	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT1_SEC) -O binary $< $@
-	cat $(mmcobj)/board/$(BOARDDIR)/bl1.img $@ > $(mmcobj)mmc-ipl-16k-fused.bin
+$(mmcobj)mmc-ipl-fused.bin:	$(mmcobj)mmc-ipl
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE8K_EVT1_SEC) -O binary $< $@
+	cat $(mmcobj)/board/$(BOARDDIR)/bl1.img $@ > $(mmcobj)mmc-ipl-12k-fused.bin
 
 $(mmcobj)mmc-ipl.bin:	$(mmcobj)mmc-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
@@ -67,9 +51,6 @@ $(mmcobj)mmc-ipl.bin:	$(mmcobj)mmc-ipl
 $(mmcobj)mmc-ipl:	$(OBJS)
 	cd $(LNDIR) && $(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
 		-Map $@.map -o $@
-
-checksum: checksum.c
-	$(HOSTCC) -o $@ $<
 
 # create symbolic links from common files
 
