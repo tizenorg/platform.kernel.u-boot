@@ -1,0 +1,1 @@
+/home/kmpark/workspaces/s5pc1xx/u-boot-s5pc1xx/arch/arm/cpu/armv7/s5p-common/cpu_info.c
