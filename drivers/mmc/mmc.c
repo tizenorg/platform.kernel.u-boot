@@ -424,6 +424,10 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		return err;
 
+	/* set previous value to mmc->boot_config */
+	if (!mmc->boot_config)
+		mmc->boot_config = ext_csd[179];
+
 	/* partition configuration */
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
 			EXT_CSD_BOOT_CONFIG, mmc->boot_config);
