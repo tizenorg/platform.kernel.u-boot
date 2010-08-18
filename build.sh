@@ -63,6 +63,7 @@ make_evt_image()
 {
 	cat "$IPL"_ipl/"$IPL"-ipl-16k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin
 	cat "$IPL"_ipl/"$IPL"-ipl-16k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
+	cat "$IPL"_ipl/"$IPL"-ipl-8k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
 	# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
 	cp u-boot-"$IPL".bin u-boot-"$IPL"-evt1.bin
 }
