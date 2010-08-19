@@ -75,6 +75,9 @@ lowlevel_init:
 	add	r1, r0, r3
 	str	r2, [r1]
 
+	/* init system clock */
+	bl	system_clock_init
+
 	/* UART */
 	bl	uart_asm_init
 
@@ -95,14 +98,6 @@ uart_asm_init:
 	str	r1, [r0, #0x00]			@ S5PC210_GPIO_A0_OFFSET
 	ldr	r1, =0x00223322
 	str	r1, [r0, #0x20]			@ S5PC210_GPIO_A1_OFFSET
-
-	ldr	r0, =0x10030000
-	ldr	r1, =0x666666
-	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
-	str	r1, [r0, r2]
-	ldr	r1, =0x777777
-	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0_OFFSET
-	str	r1, [r0, r2]
 
 	/* UART_SEL GPY4[7] (part2) at S5PC210 */
 	add	r0, r8, #0x1A0			@ S5PC210_GPIO_Y4_OFFSET
@@ -139,5 +134,20 @@ uart_asm_init:
 	tst	r3, #(1 << 2)
 	beq     1001b
 #endif
+
+	mov	pc, lr
+
+system_clock_init:
+	ldr	r0, =S5PC210_CLOCK_BASE
+
+	ldr	r1, =0x6666666
+	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
+	str	r1, [r0, r2]
+	ldr	r1, =0x777777
+	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0_OFFSET
+	str	r1, [r0, r2]
+	ldr	r1, =0x8
+	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3_OFFSET
+	str	r1, [r0, r2]
 
 	mov	pc, lr
