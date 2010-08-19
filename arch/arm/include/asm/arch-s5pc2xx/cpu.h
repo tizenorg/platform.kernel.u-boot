@@ -77,6 +77,7 @@ SAMSUNG_BASE(timer, PWMTIMER_BASE)
 SAMSUNG_BASE(uart, UART_BASE)
 SAMSUNG_BASE(usb_phy, USBPHY_BASE)
 SAMSUNG_BASE(usb_otg, USBOTG_BASE)
+SAMSUNG_BASE(watchdog, WATCHDOG_BASE)
 
 extern unsigned int s5p_cpu_rev;
 

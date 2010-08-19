@@ -49,12 +49,7 @@ extern void s5pc_fimd_window_off(unsigned int win_id);
 
 void s5pc1xx_wdt_reset(void)
 {
-	unsigned long wdt_base;
-
-	if (cpu_is_s5pc110())
-		wdt_base = S5PC110_WATCHDOG_BASE;
-	else
-		wdt_base = S5PC100_WATCHDOG_BASE;
+	unsigned long wdt_base = samsung_get_base_watchdog();
 
 	/*
 	 * WTCON
