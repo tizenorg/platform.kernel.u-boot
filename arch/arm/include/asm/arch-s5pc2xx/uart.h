@@ -40,7 +40,7 @@ struct s5p_uart {
 	unsigned int	ubrdiv;
 	unsigned short	udivslot;
 	unsigned char	res3[2];
-	unsigned char	res4[0x3d0];
+	unsigned char	res4[0xffd0];
 };
 #endif	/* __ASSEMBLY__ */
 
