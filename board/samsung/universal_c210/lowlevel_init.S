@@ -50,6 +50,31 @@ lowlevel_init:
 	ldr	r7, =S5PC210_GPIO_PART1_BASE
 	ldr	r8, =S5PC210_GPIO_PART2_BASE
 
+	/* IO retension release */
+	ldr	r0, =0x10020000
+	ldr	r2, =(1 << 28)
+	ldr	r3, =0x3108
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x3108
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x3128
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x3148
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x3168
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x3188
+	add	r1, r0, r3
+	str	r2, [r1]
+	ldr	r3, =0x31A8
+	add	r1, r0, r3
+	str	r2, [r1]
+
 	/* UART */
 	bl	uart_asm_init
 
@@ -61,11 +86,11 @@ lowlevel_init:
  */
 uart_asm_init:
 	/*
-	 * setup UART0-UART4 GPIOs
+	 * setup UART0-UART4 GPIOs (part1)
 	 * GPA1CON[3] = I2C_3_SCL (3)
 	 * GPA1CON[2] = I2C_3_SDA (3)
 	 */
-	mov	r0, r7		/* Part 1 */
+	mov	r0, r7
 	ldr	r1, =0x22222222
 	str	r1, [r0, #0x00]			@ S5PC210_GPIO_A0_OFFSET
 	ldr	r1, =0x00223322
@@ -80,11 +105,31 @@ uart_asm_init:
 
 	ldr	r1, [r0, #0x8]
 	bic	r1, r1, #(0x3 << 14)		@ 14 = 7 * 2-bit
-	orr	r1, r1, #(0x2 << 14)		@ Pull-up enabled
+	orr	r1, r1, #(0x3 << 14)		@ Pull-up enabled
 	str	r1, [r0, #0x8]
 
 	ldr	r1, [r0, #0x4]
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #0x4]
+
+#if 0
+	ldr	r0, =0x13800000                 @ S5PC210_PA_UART
+	orr     r0, r0, #0x20000		@ UART2
+	mov     r1, #0x3
+	str     r1, [r0, #0x000]                @ ULCON
+	ldr     r1, =0x245
+	str     r1, [r0, #0x004]                @ UCON
+	mov     r1, #0x20
+	str     r1, [r0, #0x028]                @ UBRDIV
+	mov     r1, #0xB
+	str     r1, [r0, #0x02C]                @ UFRACVAL
+
+	mov     r2, #'W'
+	strb    r2, [r0, #0x020]                @ UTXH
+1001:
+	ldrb    r3, [r0, #0x010]                @ UTRSTAT
+	tst	r3, #(1 << 2)
+	beq     1001b
+#endif
 
 	mov	pc, lr
