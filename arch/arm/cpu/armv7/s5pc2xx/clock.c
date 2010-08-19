@@ -30,7 +30,7 @@
 #define CONFIG_SYS_CLK_FREQ_C210	24000000
 #endif
 
-unsigned long (*get_uclk)(void);
+unsigned long (*get_uclk)(int dev_index);
 unsigned long (*get_pclk)(void);
 unsigned long (*get_arm_clk)(void);
 unsigned long (*get_pll_clk)(int);
@@ -131,7 +131,6 @@ static unsigned long s5pc210_get_uclk(int dev_index)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
-	unsigned long div;
 	unsigned long uclk, sclk;
 	unsigned int uart_sel;
 	unsigned int uart_ratio;
