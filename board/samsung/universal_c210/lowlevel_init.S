@@ -96,6 +96,14 @@ uart_asm_init:
 	ldr	r1, =0x00223322
 	str	r1, [r0, #0x20]			@ S5PC210_GPIO_A1_OFFSET
 
+	ldr	r0, =0x10030000
+	ldr	r1, =0x666666
+	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
+	str	r1, [r0, r2]
+	ldr	r1, =0x777777
+	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0_OFFSET
+	str	r1, [r0, r2]
+
 	/* UART_SEL GPY4[7] (part2) at S5PC210 */
 	add	r0, r8, #0x1A0			@ S5PC210_GPIO_Y4_OFFSET
 	ldr	r1, [r0, #0x0]
@@ -112,16 +120,16 @@ uart_asm_init:
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #0x4]
 
-#if 0
+#if 1
 	ldr	r0, =0x13800000                 @ S5PC210_PA_UART
 	orr     r0, r0, #0x20000		@ UART2
 	mov     r1, #0x3
 	str     r1, [r0, #0x000]                @ ULCON
-	ldr     r1, =0x245
+	ldr     r1, =0x3c5
 	str     r1, [r0, #0x004]                @ UCON
-	mov     r1, #0x20
+	mov     r1, #0x2B
 	str     r1, [r0, #0x028]                @ UBRDIV
-	mov     r1, #0xB
+	mov     r1, #0xC
 	str     r1, [r0, #0x02C]                @ UFRACVAL
 
 	mov     r2, #'W'
