@@ -31,7 +31,7 @@
  * (easy to change)
  */
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
-#define CONFIG_S5P64XX		1	/* which is in a S5P64XX Family */
+#define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5P6442		1	/* which is in a S5P6442 */
 #define CONFIG_S5P6442_EVT1	1	/* which is in a S5P6442 EVT1 */
 
