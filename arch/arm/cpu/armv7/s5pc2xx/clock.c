@@ -30,8 +30,8 @@
 #define CONFIG_SYS_CLK_FREQ_C210	24000000
 #endif
 
-unsigned long (*get_uclk)(int dev_index);
-unsigned long (*get_pclk)(void);
+unsigned long (*get_uart_clk)(int dev_index);
+unsigned long (*get_pwm_clk)(void);
 unsigned long (*get_arm_clk)(void);
 unsigned long (*get_pll_clk)(int);
 
@@ -40,7 +40,7 @@ static unsigned long s5pc210_get_pll_clk(int pllreg)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
-	unsigned long r, m, p, s, k, mask, fout;
+	unsigned long r, m, p, s, k = 0, mask, fout;
 	unsigned int freq;
 
 	switch (pllreg) {
@@ -120,37 +120,60 @@ static unsigned long s5pc210_get_arm_clk(void)
 	return dout_apll;
 }
 
-/* s5pc210: return peripheral clock frequency */
-static unsigned long s5pc210_get_pclk(void)
-{
-	return get_pll_clk(MPLL);
-}
-
-/* s5pc210: return uart clock frequency */
-static unsigned long s5pc210_get_uclk(int dev_index)
+/* s5pc210: return pwm clock frequency */
+static unsigned long s5pc210_get_pwm_clk(void)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
-	unsigned long uclk, sclk;
-	unsigned int uart_sel;
-	unsigned int uart_ratio;
+	unsigned long pclk, sclk;
+	unsigned int sel;
+	unsigned int ratio;
 
-	uart_sel = readl(&clk->src_peril0);
-	uart_sel = (uart_sel >> (dev_index << 2)) & 0xf;
+	sel = readl(&clk->src_peril0);
+	sel = (sel >> 24) & 0xf;
 
-	if (uart_sel == 0x6)
+	if (sel == 0x6)
 		sclk = get_pll_clk(MPLL);
-	else if (uart_sel == 0x7)
+	else if (sel == 0x7)
 		sclk = get_pll_clk(EPLL);
-	else if (uart_sel == 0x8)
+	else if (sel == 0x8)
 		sclk = get_pll_clk(VPLL);
 	else
 		return 0;
 
-	uart_ratio = readl(&clk->div_peril0);
-	uart_ratio = (uart_ratio >> (dev_index << 2)) & 0xf;
+	ratio = readl(&clk->div_peril3);
+	ratio = ratio & 0xf;
 
-	uclk = sclk / (uart_ratio + 1);
+	pclk = sclk / (ratio + 1);
+
+	return pclk;
+}
+
+/* s5pc210: return uart clock frequency */
+static unsigned long s5pc210_get_uart_clk(int dev_index)
+{
+	struct s5pc210_clock *clk =
+		(struct s5pc210_clock *)samsung_get_base_clock();
+	unsigned long uclk, sclk;
+	unsigned int sel;
+	unsigned int ratio;
+
+	sel = readl(&clk->src_peril0);
+	sel = (sel >> (dev_index << 2)) & 0xf;
+
+	if (sel == 0x6)
+		sclk = get_pll_clk(MPLL);
+	else if (sel == 0x7)
+		sclk = get_pll_clk(EPLL);
+	else if (sel == 0x8)
+		sclk = get_pll_clk(VPLL);
+	else
+		return 0;
+
+	ratio = readl(&clk->div_peril0);
+	ratio = (ratio >> (dev_index << 2)) & 0xf;
+
+	uclk = sclk / (ratio + 1);
 
 	return uclk;
 }
@@ -160,7 +183,7 @@ void s5p_clock_init(void)
 	if (cpu_is_s5pc210()) {
 		get_pll_clk = s5pc210_get_pll_clk;
 		get_arm_clk = s5pc210_get_arm_clk;
-		get_pclk = s5pc210_get_pclk;
-		get_uclk = s5pc210_get_uclk;
+		get_uart_clk = s5pc210_get_uart_clk;
+		get_pwm_clk = s5pc210_get_pwm_clk;
 	}
 }

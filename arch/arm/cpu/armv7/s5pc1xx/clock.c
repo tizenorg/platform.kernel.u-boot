@@ -38,8 +38,8 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
-unsigned long (*get_uclk)(int dev_index);
-unsigned long (*get_pclk)(void);
+unsigned long (*get_uart_clk)(int dev_index);
+unsigned long (*get_pwm_clk)(void);
 unsigned long (*get_arm_clk)(void);
 unsigned long (*get_pll_clk)(int);
 
@@ -299,9 +299,21 @@ static unsigned long s5pc100_get_pclk(void)
 }
 
 /* s5pc1xx: return uart clock frequency */
-static unsigned long s5pc1xx_get_uclk(int dev_index)
+static unsigned long s5pc1xx_get_uart_clk(int dev_index)
 {
-	return get_pclk();
+	if (cpu_is_s5pc110())
+		return s5pc110_get_pclk();
+	else
+		return s5pc100_get_pclk();
+}
+
+/* s5pc1xx: return pwm clock frequency */
+static unsigned long s5pc1xx_get_pwm_clk(void)
+{
+	if (cpu_is_s5pc110())
+		return s5pc110_get_pclk();
+	else
+		return s5pc100_get_pclk();
 }
 
 void s5p_clock_init(void)
@@ -309,11 +321,10 @@ void s5p_clock_init(void)
 	if (cpu_is_s5pc110()) {
 		get_pll_clk = s5pc110_get_pll_clk;
 		get_arm_clk = s5pc110_get_arm_clk;
-		get_pclk = s5pc110_get_pclk;
 	} else {
 		get_pll_clk = s5pc100_get_pll_clk;
 		get_arm_clk = s5pc100_get_arm_clk;
-		get_pclk = s5pc100_get_pclk;
 	}
-	get_uclk = s5pc1xx_get_uclk;
+	get_uart_clk = s5pc1xx_get_uart_clk;
+	get_pwm_clk = s5pc1xx_get_pwm_clk;
 }

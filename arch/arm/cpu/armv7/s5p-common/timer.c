@@ -74,7 +74,7 @@ int timer_init(void)
 	if (count_value == 0) {
 		/* reset initial value */
 		/* count_value = 2085937.5(HZ) (per 1 sec)*/
-		count_value = get_pclk() / ((PRESCALER_1 + 1) *
+		count_value = get_pwm_clk() / ((PRESCALER_1 + 1) *
 				(MUX_DIV_2 + 1));
 
 		/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
