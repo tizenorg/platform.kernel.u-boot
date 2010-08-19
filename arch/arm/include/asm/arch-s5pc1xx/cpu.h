@@ -65,11 +65,13 @@
 /* Chip ID */
 
 #ifndef __ASSEMBLY__
+#include <asm/io.h>
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
 
-static inline void s5p_set_cpu_id(unsigned int id)
+static inline void s5p_set_cpu_id(void)
 {
+	s5p_cpu_id = readl(S5PC100_PRO_ID);
 	s5p_cpu_id = 0xC000 | ((id & 0x00FFF000) >> 12);
 }
 
@@ -91,7 +93,7 @@ static inline unsigned int samsung_get_base_##device(void)	\
 		return S5PC110_##base;				\
 	else							\
 		return 0;					\
-}								\
+}
 
 SAMSUNG_BASE(clock, CLOCK_BASE)
 SAMSUNG_BASE(gpio, GPIO_BASE)

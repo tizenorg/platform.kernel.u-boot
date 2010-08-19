@@ -32,7 +32,7 @@ unsigned int s5p_cpu_rev = 1;
 #ifdef CONFIG_ARCH_CPU_INIT
 int arch_cpu_init(void)
 {
-	s5p_set_cpu_id(readl(samsung_get_base_pro_id()));
+	s5p_set_cpu_id();
 #ifndef CONFIG_RECOVERY_BLOCK
 	s5p_clock_init();
 #endif

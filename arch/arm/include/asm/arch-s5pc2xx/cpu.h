@@ -41,12 +41,14 @@
 #define S5PC210_PWMTIMER_BASE	0x139D0000
 
 #ifndef __ASSEMBLY__
+#include <asm/io.h>
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
 
-static inline void s5p_set_cpu_id(unsigned int id)
+static inline void s5p_set_cpu_id(void)
 {
-	s5p_cpu_id = (0xC000 | ((id & 0x00FFF000) >> 12)) + 0x10;
+	s5p_cpu_id = readl(S5PC210_PRO_ID);
+	s5p_cpu_id = (0xC000 | ((s5p_cpu_id & 0x00FFF000) >> 12)) + 0x10;
 }
 
 #define IS_SAMSUNG_TYPE(type, id)			\
