@@ -7,7 +7,7 @@ include $(TOPDIR)/$(RECOVERY_BLOCK)/config.mk
 
 LIB	:= $(obj)libserial.a
 
-COBJS-$(CONFIG_S5PC1XX) += serial_s5pc1xx.o
+COBJS-$(CONFIG_S5P) += serial_s5pc1xx.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)

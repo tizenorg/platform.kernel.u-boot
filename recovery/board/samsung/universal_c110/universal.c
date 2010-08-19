@@ -600,7 +600,7 @@ int board_update_image(u32 *buf, u32 len)
 		}
 	}
 
-#ifdef CONFIG_S5PC1XX
+#ifdef CONFIG_S5P
 	/* Workaround: for prevent revision mismatch */
 	if (cpu_is_s5pc110() && (ofs == 0)) {
 		int img_rev;
