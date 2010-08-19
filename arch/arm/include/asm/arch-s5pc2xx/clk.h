@@ -1,7 +1,6 @@
 /*
- * (C) Copyright 2009 Samsung Electronics
+ * (C) Copyright 2010 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
- * Heungjun Kim <riverful.kim@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -29,7 +28,7 @@
 #define HPLL	3
 #define VPLL	4
 
-void s5pc1xx_clock_init(void);
+void s5p_clock_init(void);
 
 extern unsigned long (*get_pll_clk)(int pllreg);
 extern unsigned long (*get_arm_clk)(void);

@@ -22,15 +22,6 @@
 #ifndef __ASM_ARCH_USB_HS_OTG_H_
 #define __ASM_ARCH_USB_HS_OTG_H_
 
-/*
- * USB2.0 HS OTG
- */
-#define S5PC100_OTG_BASE	0xED200000
-#define S5PC100_PHY_BASE	0xED300000
-
-#define S5PC110_OTG_BASE	0xEC000000
-#define S5PC110_PHY_BASE	0xEC100000
-
 /* Core Global Registers */
 #define OTG_GOTGCTL		0x000
 #define OTG_GOTGINT		0x004
@@ -85,16 +76,16 @@
 #define OTG_DCFG		0x800
 #define OTG_DCTL		0x804
 #define OTG_DSTS		0x808
-#define OTG_DIEPMSK 		0x810
-#define OTG_DOEPMSK 		0x814
+#define OTG_DIEPMSK		0x810
+#define OTG_DOEPMSK		0x814
 #define OTG_DAINT		0x818
 #define OTG_DAINTMSK		0x81C
-#define OTG_DTKNQR1 		0x820
-#define OTG_DTKNQR2 		0x824
+#define OTG_DTKNQR1		0x820
+#define OTG_DTKNQR2		0x824
 #define OTG_DVBUSDIS		0x828
 #define OTG_DVBUSPULSE		0x82C
-#define OTG_DTKNQR3 		0x830
-#define OTG_DTKNQR4 		0x834
+#define OTG_DTKNQR3		0x830
+#define OTG_DTKNQR4		0x834
 
 /* Device Logical IN Endpoint-Specific Registers */
 #define OTG_DIEPCTL0		0x900
@@ -118,5 +109,14 @@
 #define OTG_PHYPWR		0x0
 #define OTG_PHYCTRL		0x4
 #define OTG_RSTCON		0x8
+
+/* register for power control on PMU */
+static inline unsigned int s5p_get_usb_power_reg(void)
+{
+	if (cpu_is_s5pc210())
+		return 0x10020704;
+
+	return 0;
+}
 
 #endif

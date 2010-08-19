@@ -22,8 +22,4 @@
 #ifndef __ASM_ARM_ARCH_POWER_H_
 #define __ASM_ARM_ARCH_POWER_H_
 
-/*
- * Power control
- */
-
 #endif

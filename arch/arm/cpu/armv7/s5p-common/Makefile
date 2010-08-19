@@ -1,9 +1,6 @@
 #
-# (C) Copyright 2000-2003
-# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
-#
-# (C) Copyright 2008
-# Guennadi Liakhovetki, DENX Software Engineering, <lg@denx.de>
+# Copyright (C) 2009 Samsung Electronics
+# Minkyu Kang <mk7.kang@samsung.com>
 #
 # See file CREDITS for list of people who contributed to this
 # project.

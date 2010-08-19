@@ -1,7 +1,6 @@
 /*
- * (C) Copyright 2009 Samsung Electronics
+ * (C) Copyright 2010 Samsung Electronics
  * Minkyu Kang <mk7.kang@samsung.com>
- * Heungjun Kim <riverful.kim@samsung.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

@@ -33,8 +33,10 @@
 #define S5PC210_DMC1_BASE	0x10410000
 #define S5PC210_GPIO_PART2_BASE	0x11000000
 #define S5PC210_GPIO_PART1_BASE	0x11400000
+#define S5PC210_USBOTG_BASE	0x12480000
 #define S5PC210_MMC_BASE	0x12510000
 #define S5PC210_SROMC_BASE	0x12570000
+#define S5PC210_USBPHY_BASE	0x125B0000
 #define S5PC210_UART_BASE	0x13800000
 #define S5PC210_PWMTIMER_BASE	0x139D0000
 
@@ -73,18 +75,20 @@ SAMSUNG_BASE(mmc, MMC_BASE)
 SAMSUNG_BASE(sromc, SROMC_BASE)
 SAMSUNG_BASE(timer, PWMTIMER_BASE)
 SAMSUNG_BASE(uart, UART_BASE)
+SAMSUNG_BASE(usb_phy, USBPHY_BASE)
+SAMSUNG_BASE(usb_otg, USBOTG_BASE)
 
 extern unsigned int s5p_cpu_rev;
 
 static inline int s5p_get_cpu_rev(void)
 {
-	return s5pc1xx_cpu_rev;
+	return s5p_cpu_rev;
 }
 
 static inline void s5p_set_cpu_rev(unsigned int rev)
 {
-	s5pc1xx_cpu_rev = rev;
+	s5p_cpu_rev = rev;
 }
 #endif
 
-#endif	/* _S5PC1XX_CPU_H */
+#endif	/* _S5PC2XX_CPU_H */
