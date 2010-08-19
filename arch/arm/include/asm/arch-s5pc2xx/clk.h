@@ -34,5 +34,6 @@ void s5pc1xx_clock_init(void);
 extern unsigned long (*get_pll_clk)(int pllreg);
 extern unsigned long (*get_arm_clk)(void);
 extern unsigned long (*get_pclk)(void);
+extern unsigned long (*get_uclk)(int dev_index);
 
 #endif
