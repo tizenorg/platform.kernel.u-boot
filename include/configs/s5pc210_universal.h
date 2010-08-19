@@ -81,7 +81,7 @@
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC210 */
 
 /* MMC */
-#if 0
+#if 1
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
 #define CONFIG_S5P_MMC		1
@@ -123,7 +123,7 @@
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_MTDPARTS_LITE
 //#define CONFIG_CMD_I2C
-//#define CONFIG_CMD_MMC
+#define CONFIG_CMD_MMC
 #define CONFIG_CMD_SLEEP
 #define CONFIG_CMD_PMIC
 #define CONFIG_CMD_DEVICE_POWER
