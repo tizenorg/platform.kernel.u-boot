@@ -44,14 +44,14 @@ static unsigned long long timestamp;	/* Monotonic incrementing timer */
 static unsigned long lastdec;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
-static inline struct s5p_timer *s5pc1xx_get_base_timer(void)
+static inline struct s5p_timer *s5p_get_base_timer(void)
 {
 	return (struct s5p_timer *)samsung_get_base_timer();
 }
 
 int timer_init(void)
 {
-	struct s5p_timer *const timer = s5pc1xx_get_base_timer();
+	struct s5p_timer *const timer = s5p_get_base_timer();
 	u32 val;
 
 	/*
@@ -162,7 +162,7 @@ void __udelay(unsigned long usec)
 
 void reset_timer_masked(void)
 {
-	struct s5p_timer *const timer = s5pc1xx_get_base_timer();
+	struct s5p_timer *const timer = s5p_get_base_timer();
 
 	/* reset time */
 	lastdec = readl(&timer->tcnto4);
@@ -171,7 +171,7 @@ void reset_timer_masked(void)
 
 unsigned long get_timer_masked(void)
 {
-	struct s5p_timer *const timer = s5pc1xx_get_base_timer();
+	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long now = readl(&timer->tcnto4);
 
 	if (lastdec >= now)
