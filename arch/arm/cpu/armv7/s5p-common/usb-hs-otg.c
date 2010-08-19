@@ -327,8 +327,11 @@ static void s5p_usb_init_phy(void)
 #else
 		s5p_phy_write_reg(0x2, OTG_PHYCTRL);
 #endif
-	} else {
+	} else if (s5p_cpu_id == 0xc110) {
 		s5p_phy_write_reg(0xA0, OTG_PHYPWR);
+		s5p_phy_write_reg(0x3, OTG_PHYCTRL);
+	} else if (s5p_cpu_id == 0xc210) {
+		s5p_phy_write_reg(0x1f80, OTG_PHYPWR);
 		s5p_phy_write_reg(0x3, OTG_PHYCTRL);
 	}
 
