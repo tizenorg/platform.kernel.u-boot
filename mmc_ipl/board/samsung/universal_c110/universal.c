@@ -29,7 +29,7 @@
 #define EMMC_COPY_TO_MEM_ADDR	0xD0037F9C
 
 #define BLK_COUNT		512
-#define 8BIT_BUS_WIDTH		8
+#define BUS_WIDTH_8BIT		8
 
 typedef u32(*copy_emmc_to_mem)
 	(u32 ack, u32 number_of_block, u32 *buf, int buswidth);
@@ -63,5 +63,5 @@ void board_mmc_read_block(unsigned char *buf)
 	copy_emmc_to_mem copy_bl2 =
 		(copy_emmc_to_mem) (*(u32 *) EMMC_COPY_TO_MEM_ADDR);
 
-	copy_bl2(0, BLK_COUNT, (u32 *) buf, 8BIT_BUS_WIDTH);
+	copy_bl2(0, BLK_COUNT, (u32 *) buf, BUS_WIDTH_8BIT);
 }
