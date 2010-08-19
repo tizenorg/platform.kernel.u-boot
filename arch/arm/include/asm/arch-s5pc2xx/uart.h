@@ -37,10 +37,11 @@ struct s5p_uart {
 	unsigned char	res1[3];
 	unsigned char	urxh;
 	unsigned char	res2[3];
-	unsigned int	ubrdiv;
-	unsigned short	udivslot;
+	unsigned short	ubrdiv;
 	unsigned char	res3[2];
-	unsigned char	res4[0xffd0];
+	unsigned char	udivslot;	/* ufracval */
+	unsigned char	res4[3];
+	unsigned char	res5[0xffd0];
 };
 #endif	/* __ASSEMBLY__ */
 
