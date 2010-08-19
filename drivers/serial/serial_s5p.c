@@ -70,12 +70,11 @@ void serial_setbrg_dev(const int dev_index)
 	val = uclk / baudrate;
 
 	writel(val / 16 - 1, &uart->ubrdiv);
-#ifdef CONFIG_S5PC210
-	if (cpu_is_s5pc210())
-		writew(val & 15, &uart->udivslot);
-	else
-#endif
+
+	if (use_divslot)
 		writew(udivslot[val % 16], &uart->udivslot);
+	else
+		writew(val & 16, &uart->udivslot);	/* ufracval */
 }
 
 /*

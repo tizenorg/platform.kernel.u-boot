@@ -43,6 +43,9 @@ struct s5p_uart {
 	unsigned char	res4[3];
 	unsigned char	res5[0xffd0];
 };
+
+static int use_divslot = 0;
+
 #endif	/* __ASSEMBLY__ */
 
 #endif
