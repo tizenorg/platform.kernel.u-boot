@@ -35,7 +35,6 @@
 #define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC210		1	/* which is in a S5PC210 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
-#define CONFIG_MACH_GONI	1	/* working with Goni */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -63,7 +62,7 @@
 /*
  * Architecture magic and machine type
  */
-#define MACH_TYPE	3000
+#define MACH_TYPE	2989
 
 #define CONFIG_DISPLAY_CPUINFO
 
@@ -79,7 +78,7 @@
  * select serial console configuration
  */
 #define CONFIG_SERIAL_MULTI	1
-#define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
+#define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC210 */
 
 /* MMC */
 #if 0
@@ -299,33 +298,12 @@
  */
 #define CONFIG_STACKSIZE	(256 << 10)	/* regular stack 256KB */
 
-/*******************************
- Support Clock Settings(APLL)
- *******************************
- ARMCLK		HCLKD0		PCLKD0
- -------------------------------
- 667		166			83
- 600		150			75
- 533		133			66
- 500		166			66
- 467		117			59
- 400		100			50
- *******************************/
-
-#define CONFIG_CLK_667_166_83
-/*#define CONFIG_CLK_666_166_66*/
-/*#define CONFIG_CLK_600_150_75*/
-/*#define CONFIG_CLK_533_133_66*/
-/*#define CONFIG_CLK_500_166_66*/
-/*#define CONFIG_CLK_467_117_59*/
-/*#define CONFIG_CLK_400_100_50*/
-
 /* Universal has 2 banks of DRAM, but swap the bank */
 #define CONFIG_NR_DRAM_BANKS	2
-#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
-#define PHYS_SDRAM_1_SIZE	(80 << 20)		/* 80 MB in Bank #0 */
-#define PHYS_SDRAM_2		0x50000000		/* mDDR DMC1 Bank #0 */
-#define PHYS_SDRAM_2_SIZE	(128 << 20)		/* 128 MB in Bank #1 */
+#define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* LDDDR2 DMC 0 */
+#define PHYS_SDRAM_1_SIZE	(256 << 20)		/* 256 MB in CS 0 */
+#define PHYS_SDRAM_2		0x50000000		/* LPDDR2 DMC 1 */
+#define PHYS_SDRAM_2_SIZE	(256 << 20)		/* 256 MB in CS 0 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -350,7 +328,7 @@
 #define CONFIG_RECOVERY_ADDR		(256 << 10)	/* 256 KiB, 0x40000 */
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
-#define CONFIG_SYS_ONENAND_BASE		0xB0000000
+#define CONFIG_SYS_ONENAND_BASE		0x07000000
 
 #define CONFIG_DOS_PARTITION	1
 
