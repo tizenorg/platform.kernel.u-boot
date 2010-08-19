@@ -277,9 +277,8 @@ static unsigned int otg_base;
 
 static inline void s5p_usb_init_base(void)
 {
-	/* support s5pc110 only */
-	phy_base = S5PC110_PHY_BASE;
-	otg_base = S5PC110_OTG_BASE;
+	phy_base = samsung_get_base_usb_phy();
+	otg_base = samsung_get_base_usb_otg();
 }
 
 static inline int s5pc1xx_phy_read_reg(int offset)

@@ -30,6 +30,7 @@ LIB	= $(obj)libs5p-common.a
 
 COBJS-y		+= cpu_info.o
 COBJS-y		+= timer.o
+COBJS-$(CONFIG_CMD_USBDOWN)	+= usb-hs-otg.o usb_downloader.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y) $(SOBJS))
