@@ -30,7 +30,7 @@
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_ARMCORTEXA8	1	/* This is an ARM V7 CPU core */
+#define CONFIG_ARMCORTEXA9	1	/* This is an ARM V7 CPU core */
 #define CONFIG_SAMSUNG		1	/* in a SAMSUNG core */
 #define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC210		1	/* which is in a S5PC210 */
@@ -319,7 +319,7 @@
 
 #define CONFIG_DOS_PARTITION	1
 
-//#define CONFIG_MISC_INIT_R
+#define CONFIG_MISC_INIT_R
 
 /* I2C */
 #if 0

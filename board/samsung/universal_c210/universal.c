@@ -83,6 +83,37 @@ int dram_init(void)
 	return 0;
 }
 
+static void check_auto_burn(void)
+{
+	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
+	unsigned int count = 0;
+	char buf[64];
+
+	if (readl(magic_base) == 0x426f6f74) {		/* ASICC: Boot */
+		puts("Auto buring bootloader\n");
+		count += sprintf(buf + count, "run updateb; ");
+	}
+	if (readl(magic_base + 0x4) == 0x4b65726e) {	/* ASICC: Kern */
+		puts("Auto buring kernel\n");
+		count += sprintf(buf + count, "run updatek; ");
+	}
+
+	if (count) {
+		count += sprintf(buf + count, "reset");
+		setenv("bootcmd", buf);
+	}
+
+	/* Clear the magic value */
+	memset(magic_base, 0, 2);
+}
+
+#ifdef CONFIG_MISC_INIT_R
+int misc_init_r(void)
+{
+	check_auto_burn();
+}
+#endif
+
 #ifdef CONFIG_GENERIC_MMC
 int s5p_no_mmc_support(void)
 {
