@@ -33,6 +33,7 @@
  * Register usages:
  *
  * r5 has zero always
+ * r6 is used at memory configuration
  * r7 has GPIO part1 base 0x11400000
  * r8 has GPIO part2 base 0x11000000
  */
@@ -50,6 +51,7 @@ lowlevel_init:
 	ldr	r7, =S5PC210_GPIO_PART1_BASE
 	ldr	r8, =S5PC210_GPIO_PART2_BASE
 
+#if 0
 	/* IO retension release */
 	ldr	r0, =0x10020000
 	ldr	r2, =(1 << 28)
@@ -74,6 +76,7 @@ lowlevel_init:
 	ldr	r3, =0x31A8
 	add	r1, r0, r3
 	str	r2, [r1]
+#endif
 
 #ifdef CONFIG_PRELOADER
 	bl	mem_ctrl_asm_init
@@ -123,7 +126,7 @@ uart_asm_init:
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #0x4]
 
-#if 1
+#if 0
 	ldr	r0, =0x13800000                 @ S5PC210_PA_UART
 	orr     r0, r0, #0x20000		@ UART2
 	mov     r1, #0x3
