@@ -40,8 +40,10 @@ void i2c_gpio_init(struct i2c_gpio_bus *bus, int len, int index)
 
 	/* init all i2c gpio buses */
 	for (i = 0; i < len; i++) {
-		bank = (struct s5p_gpio_bank *)i2c_gpio[i].bus->gpio_base;
+		if (!i2c_gpio[i].bus)
+			continue;
 
+		bank = (struct s5p_gpio_bank *)i2c_gpio[i].bus->gpio_base;
 		if (!bank)
 			continue;
 
@@ -65,6 +67,9 @@ void i2c_gpio_set(int line, int value)
 
 	bus_index = i2c_get_bus_num();
 
+	if (!i2c_gpio[bus_index].bus)
+		return;
+
 	bank = (struct s5p_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 	if (!bank)
 		return;
@@ -83,6 +88,8 @@ int i2c_gpio_get(void)
 	unsigned int bus_index;
 
 	bus_index = i2c_get_bus_num();
+	if (!i2c_gpio[bus_index].bus)
+		return 0;
 
 	bank = (struct s5p_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 	if (!bank)
@@ -97,6 +104,8 @@ void i2c_gpio_dir(int dir)
 	unsigned int bus_index;
 
 	bus_index = i2c_get_bus_num();
+	if (!i2c_gpio[bus_index].bus)
+		return;
 
 	bank = (struct s5p_gpio_bank *)i2c_gpio[bus_index].bus->gpio_base;
 	if (!bank)
