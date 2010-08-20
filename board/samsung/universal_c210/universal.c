@@ -201,7 +201,21 @@ static int lp3974_probe(void)
 	return 0;
 }
 
-static void init_pmic(void)
+static int max8952_probe(void)
+{
+	unsigned char addr = 0xC0 >> 1;
+
+	i2c_set_bus_num(I2C_5);
+
+	if (i2c_probe(addr)) {
+		puts("Cannot find MAX8952\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static void init_pmic_lp3974(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
@@ -247,13 +261,49 @@ static void init_pmic(void)
 	i2c_read(addr, LP3974_REG_ONOFF3, 1, val, 1);
 }
 
+static void init_pmic_max8952(void)
+{
+	unsigned char addr;
+	unsigned char val[2];
+	char buf[4];
+
+	addr = 0xC0 >> 1; /* MAX8952 */
+	if (max8952_probe())
+		return;
+
+	/* VARM_OUTPUT_SEL_A / VID_0 / XEINT_3 (GPX0[3]) = default 0 */
+	gpio_direction_output(&gpio2->gpio_x0, 3, 0);
+	/* VARM_OUTPUT_SEL_B / VID_1 / XEINT_4 (GPX0[4]) = default 0 */
+	gpio_direction_output(&gpio2->gpio_x0, 4, 0);
+
+	/* MODE0: 1.25V */
+	val[0] = 48;
+	i2c_write(addr, 0x00, 1, val, 1);
+	/* MODE1: 1.20V */
+	val[0] = 32;
+	i2c_write(addr, 0x01, 1, val, 1);
+	/* MODE2: 1.05V */
+	val[0] = 28;
+	i2c_write(addr, 0x02, 1, val, 1);
+	/* MODE3: 0.95V */
+	val[0] = 18;
+	i2c_write(addr, 0x03, 1, val, 1);
+
+	/* CONTROL: Disable PULL_DOWN */
+	val[0] = 0;
+	i2c_write(addr, 0x04, 1, val, 1);
+
+	/* SYNC: Do Nothing */
+	/* RAMP: As Fast As Possible: Default: Do Nothing */
+}
+
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
 	check_auto_burn();
 
-	/* check lp3974 */
-	init_pmic();
+	init_pmic_lp3974();
+	init_pmic_max8952();
 
 	return 0;
 }
