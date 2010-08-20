@@ -225,12 +225,9 @@ static void init_pmic_lp3974(void)
 		return;
 
 	/* ONOFF1 */
-#if 0
-	/* disable for usb.. will be enabled */
 	i2c_read(addr, LP3974_REG_ONOFF1, 1, val, 1);
 	val[0] &= ~LP3974_LDO3;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
-#endif
 
 	/* ONOFF2 */
 	i2c_read(addr, LP3974_REG_ONOFF2, 1, val, 1);
@@ -305,6 +302,16 @@ int misc_init_r(void)
 	init_pmic_lp3974();
 	init_pmic_max8952();
 
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_CMD_USBDOWN
+int usb_board_init(void)
+{
+#ifdef CONFIG_CMD_PMIC
+	run_command("pmic ldo 3 on", 0);
+#endif
 	return 0;
 }
 #endif
