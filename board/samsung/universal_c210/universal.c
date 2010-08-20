@@ -32,14 +32,10 @@ static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
 enum {
-	I2C_0,
-	I2C_1,
-	I2C_2,
-	I2C_3,
-	I2C_4,
-	I2C_5,
-	I2C_6,
-	I2C_7,
+	I2C_0, I2C_1, I2C_2, I2C_3,
+	I2C_4, I2C_5, I2C_6, I2C_7,
+	I2C_8, I2C_9, I2C_10, I2C_11,
+	I2C_12, I2C_13,
 };
 
 /* i2c0 (CAM)	SDA: GPD1[0] SCL: GPD1[1] */
@@ -54,11 +50,13 @@ static struct i2c_gpio_bus_data i2c_1 = {
 	.scl_pin	= 3,
 };
 
+#if 0
 /* i2c2		SDA: GPA0[6] SCL: GPA0[7] */
 static struct i2c_gpio_bus_data i2c_2 = {
 	.sda_pin	= 6,
 	.scl_pin	= 7,
 };
+#endif
 
 /* i2c3 (TSP)	SDA: GPA1[2] SCL: GPA1[3] */
 static struct i2c_gpio_bus_data i2c_3 = {
@@ -90,15 +88,45 @@ static struct i2c_gpio_bus_data i2c_7 = {
 	.scl_pin	= 3,
 };
 
+/* i2c9		SDA: SPY4[0] SCL: SPY4[1] */
+static struct i2c_gpio_bus_data i2c_9 = {
+	.sda_pin	= 0,
+	.scl_pin	= 1,
+};
+
+/* i2c10	SDA: SPE1[0] SCL: SPE1[1] */
+static struct i2c_gpio_bus_data i2c_10 = {
+	.sda_pin	= 0,
+	.scl_pin	= 1,
+};
+
+/* i2c12	SDA: SPE4[0] SCL: SPE4[1] */
+static struct i2c_gpio_bus_data i2c_12 = {
+	.sda_pin	= 0,
+	.scl_pin	= 1,
+};
+
+/* i2c13	SDA: SPE4[2] SCL: SPE4[3] */
+static struct i2c_gpio_bus_data i2c_13 = {
+	.sda_pin	= 2,
+	.scl_pin	= 3,
+};
+
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{ .bus	= &i2c_0, },
 	{ .bus	= &i2c_1, },
-	{ .bus	= &i2c_2, },
+	{ .bus	= NULL, },		/* Not used */
 	{ .bus	= &i2c_3, },
 	{ .bus	= &i2c_4, },
 	{ .bus	= &i2c_5, },
 	{ .bus	= &i2c_6, },
 	{ .bus	= &i2c_7, },
+	{ .bus	= NULL, },		/* For dedicated HDMI */
+	{ .bus	= &i2c_9, },
+	{ .bus	= &i2c_10, },
+	{ .bus	= NULL, },		/* Not used */
+	{ .bus	= &i2c_12, },
+	{ .bus	= &i2c_13, },
 };
 
 void i2c_init_board(void)
@@ -109,12 +137,15 @@ void i2c_init_board(void)
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->gpio_d1;
 	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->gpio_d1;
-	i2c_gpio[I2C_2].bus->gpio_base = (unsigned int)&gpio1->gpio_a0;
 	i2c_gpio[I2C_3].bus->gpio_base = (unsigned int)&gpio1->gpio_a1;
 	i2c_gpio[I2C_4].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
 	i2c_gpio[I2C_5].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
 	i2c_gpio[I2C_6].bus->gpio_base = (unsigned int)&gpio1->gpio_c1;
 	i2c_gpio[I2C_7].bus->gpio_base = (unsigned int)&gpio1->gpio_d0;
+	i2c_gpio[I2C_9].bus->gpio_base = (unsigned int)&gpio2->gpio_y4;
+	i2c_gpio[I2C_10].bus->gpio_base = (unsigned int)&gpio1->gpio_e1;
+	i2c_gpio[I2C_12].bus->gpio_base = (unsigned int)&gpio1->gpio_e4;
+	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->gpio_e4;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
 }
@@ -225,9 +256,12 @@ static void init_pmic_lp3974(void)
 		return;
 
 	/* ONOFF1 */
+	/* Please remove it when bootloader works are finised */
+#if 0
 	i2c_read_r(addr, LP3974_REG_ONOFF1, 1, val, 1);
 	val[0] &= ~LP3974_LDO3;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
+#endif
 
 	/* ONOFF2 */
 	i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
