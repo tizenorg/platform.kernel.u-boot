@@ -140,12 +140,15 @@ uart_asm_init:
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
 
+	/* UART[0:5], PWM: SCLKMPLL(6) */
 	ldr	r1, =0x6666666
 	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
 	str	r1, [r0, r2]
+	/* UART[0:5] */
 	ldr	r1, =0x777777
 	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0_OFFSET
 	str	r1, [r0, r2]
+	/* SLIMBUS: ???, PWM */
 	ldr	r1, =0x8
 	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3_OFFSET
 	str	r1, [r0, r2]
