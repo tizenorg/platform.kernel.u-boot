@@ -164,10 +164,98 @@ static void check_auto_burn(void)
 	memset(magic_base, 0, 2);
 }
 
+#define MAX8998_REG_ONOFF1	0x11
+#define MAX8998_REG_ONOFF2	0x12
+#define MAX8998_REG_ONOFF3	0x13
+#define MAX8998_REG_ONOFF4	0x14
+#define MAX8998_REG_LDO7	0x21
+#define MAX8998_REG_LDO17	0x29
+/* ONOFF1 */
+#define MAX8998_LDO3		(1 << 2)
+/* ONOFF2 */
+#define MAX8998_LDO6		(1 << 7)
+#define MAX8998_LDO7		(1 << 6)
+#define MAX8998_LDO8		(1 << 5)
+#define MAX8998_LDO9		(1 << 4)
+#define MAX8998_LDO10		(1 << 3)
+#define MAX8998_LDO11		(1 << 2)
+#define MAX8998_LDO12		(1 << 1)
+#define MAX8998_LDO13		(1 << 0)
+/* ONOFF3 */
+#define MAX8998_LDO14		(1 << 7)
+#define MAX8998_LDO15		(1 << 6)
+#define MAX8998_LDO16		(1 << 5)
+#define MAX8998_LDO17		(1 << 4)
+
+static int max8998_probe(void)
+{
+	unsigned char addr = 0xCC >> 1;
+
+	i2c_set_bus_num(I2C_5);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max8998\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static void init_pmic(void)
+{
+	unsigned char addr;
+	unsigned char val[2];
+
+	addr = 0xCC >> 1;	/* max8998 */
+	if (max8998_probe())
+		return;
+
+	/* ONOFF1 */
+#if 0
+	/* disable for usb.. will be enabled */
+	i2c_read(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+	val[0] &= ~MAX8998_LDO3;
+	i2c_write(addr, MAX8998_REG_ONOFF1, 1, val, 1);
+#endif
+
+	/* ONOFF2 */
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+	/*
+	 * Disable LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
+	 * LDO12(CAM_ISP_1.2V), LDO13(CAM_A_2.8V)
+	 */
+	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
+			MAX8998_LDO12 | MAX8998_LDO13);
+
+	val[0] |= MAX8998_LDO7;		/* LDO7: VLCD_1.8V */
+
+	i2c_write(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
+
+	/* ONOFF3 */
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	/*
+	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
+	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
+	 */
+	val[0] &= ~(MAX8998_LDO14 | MAX8998_LDO15 |
+			MAX8998_LDO16 | MAX8998_LDO17);
+
+	val[0] |= MAX8998_LDO17;	/* LDO17: VCC_3.0V_LCD */
+
+	i2c_write(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+	i2c_read(addr, MAX8998_REG_ONOFF3, 1, val, 1);
+}
+
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
 	check_auto_burn();
+
+	/* check max8998 */
+	init_pmic();
+
+	return 0;
 }
 #endif
 
