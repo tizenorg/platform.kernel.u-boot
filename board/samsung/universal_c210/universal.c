@@ -32,6 +32,13 @@ DECLARE_GLOBAL_DATA_PTR;
 static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
+static unsigned int board_rev;
+
+u32 get_board_rev(void)
+{
+	return board_rev;
+}
+
 enum {
 	I2C_0, I2C_1, I2C_2, I2C_3,
 	I2C_4, I2C_5, I2C_6, I2C_7,
@@ -361,6 +368,34 @@ static unsigned short get_adc_value(int channel)
 	return ret;
 }
 
+static unsigned int get_hw_revision(void)
+{
+	int hwrev = 0, mode0, mode1;
+
+	mode0 = get_adc_value(1);		/* HWREV_MODE0 */
+	mode1 = get_adc_value(2);		/* HWREV_MODE1 */
+
+#define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
+	if (IS_RANGE(mode0, 80, 100) && IS_RANGE(mode1, 80, 100))
+		hwrev = 0x0;
+#undef IS_RANGE
+
+	printf("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
+
+	return hwrev;
+}
+
+static void check_hw_revision(void)
+{
+	int hwrev;
+
+	hwrev = get_hw_revision();
+
+	board_rev |= hwrev;
+
+	printf("HW Revision:\t0x%x\n", board_rev);
+}
+
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
@@ -368,6 +403,8 @@ int misc_init_r(void)
 
 	init_pmic_lp3974();
 	init_pmic_max8952();
+
+	check_hw_revision();
 
 	return 0;
 }
