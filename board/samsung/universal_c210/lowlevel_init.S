@@ -94,6 +94,11 @@ lowlevel_init:
 	bl	uart_asm_init
 #endif
 
+#ifndef CONFIG_PRELOADER
+	/* PMU init */
+	bl	system_power_init
+#endif
+
 	mov	lr, r11
 	mov	pc, lr
 
@@ -258,3 +263,15 @@ system_clock_init:
 	str	r1, [r0, r2]
 
 	mov	pc, lr
+
+#ifndef CONFIG_PRELOADER
+system_power_init:
+	ldr	r0, =S5PC210_POWER_BASE
+
+	ldr	r2, =0x330C			@ PS_HOLD_CONTROL
+	ldr	r1, [r0, r2]
+	orr	r1, r1, #(0x3 << 8)		@ Data High, Output En
+	str	r1, [r0, r2]
+
+	mov	pc, lr
+#endif
