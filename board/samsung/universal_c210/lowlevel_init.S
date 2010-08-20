@@ -89,12 +89,15 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init2
 #endif
 
+#ifndef CONFIG_PRELOADER
 	/* UART */
 	bl	uart_asm_init
+#endif
 
 	mov	lr, r11
 	mov	pc, lr
 
+#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */
@@ -147,6 +150,7 @@ uart_asm_init:
 #endif
 
 	mov	pc, lr
+#endif
 
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
