@@ -25,6 +25,7 @@
 #include <common.h>
 #include <i2c.h>
 #include <asm/arch/gpio.h>
+#include <asm/arch/adc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -328,6 +329,38 @@ static void init_pmic_max8952(void)
 	/* RAMP: As Fast As Possible: Default: Do Nothing */
 }
 
+static unsigned short get_adc_value(int channel)
+{
+	struct s5pc210_adc *adc = (struct s5pc210_adc *) S5PC210_ADC_BASE;
+	unsigned short ret = 0;
+	unsigned int reg;
+	int ldonum = 4;
+	char buf[64];
+	unsigned int loop = 0;
+
+	sprintf(buf, "pmic ldo %d on", ldonum);
+	run_command(buf, 0);
+
+	writel(channel & 0xF, &adc->adcmux);
+	writel((1 << 14) | (49 << 6), &adc->adccon);
+	writel(1000 & 0xffff, &adc->adcdly);
+	writel(readl(&adc->adccon) | (1 << 16), &adc->adccon); /* 12 bit */
+	udelay(10);
+	writel(readl(&adc->adccon) | (1 << 0), &adc->adccon); /* Enable */
+	udelay(10);
+
+	do {
+		udelay(1);
+		reg = readl(&adc->adccon);
+	} while (!(reg & (1 << 15)) && (loop++ < 1000));
+
+	ret = readl(&adc->adcdat0) & 0xFFF;
+	sprintf(buf, "pmic ldo %d off", ldonum);
+	run_command(buf, 0);
+
+	return ret;
+}
+
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
@@ -545,3 +578,4 @@ U_BOOT_CMD(
 	"pmic safeout num on/off - Turn on/off the SAFEOUT\n"
 );
 #endif
+
