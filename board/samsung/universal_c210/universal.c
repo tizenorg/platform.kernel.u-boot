@@ -32,22 +32,22 @@ static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
 enum {
-	I2C_PMIC,
+	I2C_5,
 };
 
 /*
- * i2c pmic
- * SDA: GPJ4[0]
- * SCL: GPJ4[3]
+ * i2c5 (PMIC)
+ * SDA: GPB[6]
+ * SCL: GPB[7]
  */
-static struct i2c_gpio_bus_data i2c_pmic = {
+static struct i2c_gpio_bus_data i2c_5 = {
 	.sda_pin	= 6,
 	.scl_pin	= 7,
 };
 
 static struct i2c_gpio_bus i2c_gpio[] = {
 	{
-		.bus	= &i2c_pmic,
+		.bus	= &i2c_5,
 	},
 };
 
@@ -57,9 +57,9 @@ void i2c_init_board(void)
 
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
-	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
+	i2c_gpio[I2C_5].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
 
-	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
+	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
 }
 
 int board_init(void)
