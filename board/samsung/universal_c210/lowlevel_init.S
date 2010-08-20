@@ -75,8 +75,16 @@ lowlevel_init:
 	add	r1, r0, r3
 	str	r2, [r1]
 
+#ifdef CONFIG_PRELOADER
+	bl	mem_ctrl_asm_init
+#endif
+
 	/* init system clock */
 	bl	system_clock_init
+
+#ifdef CONFIG_PRELOADER
+	bl	mem_ctrl_asm_init2
+#endif
 
 	/* UART */
 	bl	uart_asm_init

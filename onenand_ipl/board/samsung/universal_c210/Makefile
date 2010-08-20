@@ -15,8 +15,8 @@ include $(TOPDIR)/config.mk
 # S5PC210 loads at 0x02020000 (EVT0)
 # S5PC210 loads at 0xxxxxxxxx (EVT1)
 # Header (16 bytes) are added after more
-TEXT_BASE		= 0x02021000
-TEXT_BASE16K_EVT0	= 0x02024ff0
+TEXT_BASE		= 0x02028000
+TEXT_BASE16K_EVT0	= 0x0202c000
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -26,7 +26,7 @@ OBJCFLAGS += --gap-fill=0x00
 
 SOBJS	:= lowlevel_init.o mem_setup.o
 SOBJS	+= start.o _memcpy32.o
-SOBJS	+= cache.o
+#SOBJS	+= cache.o
 COBJS	+= onenand_read.o
 COBJS	+= onenand_boot.o
 
@@ -37,14 +37,16 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k-evt0.bin
+ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k.bin $(onenandobj)onenand-ipl-16k-evt0.bin
 
 all:	$(obj).depend $(ALL)
 
+$(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl-16k-evt0.bin
+	cp $< $@
+
 $(onenandobj)onenand-ipl-16k-evt0.bin:	$(onenandobj)onenand-ipl checksum
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT0) -O binary $< $@
-	$(onenandobj)/board/$(BOARDDIR)/checksum $@ 1
-	cat $(onenandobj)/board/$(BOARDDIR)/header.bin $@ > $(onenandobj)onenand-ipl-16k.bin
+	$(onenandobj)/board/$(BOARDDIR)/checksum $@ 0
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 	$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
@@ -64,9 +66,9 @@ $(obj)start.S:
 	ln -s $(SRCTREE)/$(CPUDIR)/start.S $@
 
 # from SoC directory
-$(obj)cache.S:
-	@rm -f $@
-	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/cache.S $@
+#$(obj)cache.S:
+#	@rm -f $@
+#	ln -s $(SRCTREE)/$(CPUDIR)/$(SOC)/cache.S $@
 
 $(obj)mem_setup.S:
 	ln -sf $(SRCTREE)/board/$(BOARDDIR)/mem_setup.S $@
