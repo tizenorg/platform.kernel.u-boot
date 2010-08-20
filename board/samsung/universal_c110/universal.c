@@ -2772,6 +2772,7 @@ int s5p_no_mmc_support(void)
 int board_mmc_init(bd_t *bis)
 {
 	int i;
+	int buswidth = 4;
 
 	if (s5p_no_mmc_support())
 		return -1;
@@ -2808,6 +2809,8 @@ int board_mmc_init(bd_t *bis)
 			/* GPG1[3:6] drv 4x */
 			gpio_set_drv(&gpio->gpio_g1, i, GPIO_DRV_4X);
 		}
+
+		buswidth = 8 /* 8-bit buswidth */
 	}
 
 	if (mach_is_geminus()) {
@@ -2815,7 +2818,7 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_pull(&gpio->gpio_j2, 7, GPIO_PULL_NONE);
 	}
 
-	return s5p_mmc_init(0);
+	return s5p_mmc_init(0, buswidth);
 }
 #endif
 

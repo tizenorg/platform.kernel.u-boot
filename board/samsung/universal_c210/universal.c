@@ -101,6 +101,6 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_drv(&gpio2->gpio_k1, i, GPIO_DRV_4X);
 	}
 
-	return s5p_mmc_init(0);
+	return s5p_mmc_init(0, 8);
 }
 #endif

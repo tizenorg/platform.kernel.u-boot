@@ -454,7 +454,7 @@ static int mmc_core_init(struct mmc *mmc)
 	return 0;
 }
 
-static int s5p_mmc_initialize(int dev_index)
+static int s5p_mmc_initialize(int dev_index, int bus_width)
 {
 	struct mmc *mmc;
 
@@ -467,7 +467,12 @@ static int s5p_mmc_initialize(int dev_index)
 	mmc->init = mmc_core_init;
 
 	mmc->voltages = MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
-	mmc->host_caps = MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS;
+
+	if (bus_width == 8)
+		mmc->host_caps = MMC_MODE_8BIT;
+	else
+		mmc->host_caps = MMC_MODE_4BIT;
+	mmc->host_caps |= MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
 	mmc->f_min = 400000;
 	mmc->f_max = 52000000;
@@ -479,7 +484,7 @@ static int s5p_mmc_initialize(int dev_index)
 	return 0;
 }
 
-int s5p_mmc_init(int dev_index)
+int s5p_mmc_init(int dev_index, int bus_width)
 {
-	return s5p_mmc_initialize(dev_index);
+	return s5p_mmc_initialize(dev_index, bus_width);
 }
