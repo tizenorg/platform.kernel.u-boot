@@ -1,6 +1,7 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;	<S5PC210 cmm file for Universal>	;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;	<Orion cmm file >	;;;;;;;;;;;;;;
+;;;;;;;;;;;	     FPGA 	        ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;----------------------------------------------------------------------;
 ; Configuring Option
@@ -245,7 +246,7 @@ d.s SD:0x10410004 %LE %LONG 0x00202500
 ; ----------
 if &IS_INTERLEAVED_MAPPING==0
 (
-	d.s SD:0x10410008 %LE %LONG 0x40f00223	;MemConfig0
+	d.s SD:0x10410008 %LE %LONG 0x50f00223	;MemConfig0
 )
 else
 (
@@ -440,18 +441,31 @@ print "Loading ..."
 
 &UBOOT_CODE="j:\u-boot-s5pc1xx\u-boot"	
 &UBOOT_IMAGE="j:\u-boot-s5pc1xx\u-boot.bin"
-&ONENAND_IPL="j:\u-boot-s5pc1xx\u-boot-onenand-evt1.bin"
+&ONENAND_IPL="j:\u-boot-s5pc1xx\u-boot-onenand.bin"
 &ONENAND_IPL_IMAGE="j:\u-boot-s5pc1xx\onenand_ipl\onenand-ipl.bin"
 &ONENAND_CODE="j:\u-boot-s5pc1xx\onenand_ipl\onenand-ipl"
 
-&IPL_LOAD_ADDRESS=0xD0030000
+;&IPL_LOAD_ADDRESS=0x02020000
 &UBOOT_EXECUTED_ADDRESS=0x44800000
 
 Data.LOAD.Binary	&UBOOT_IMAGE &UBOOT_EXECUTED_ADDRESS
 Data.Load.Elf		&UBOOT_CODE /ABSLIFETIMES /gnu /nocode /STRIPPART 6
+
+Data.load.binary	&ONENAND_IPL 0x42008000
+Data.Load.Elf		&ONENAND_CODE /ABSLIFETIMES /gnu /nocode /STRIPPART 7
 
 ; Break & Run
 Register.Set pc &UBOOT_EXECUTED_ADDRESS
 go
 
 data.list
+
+
+
+
+
+
+
+
+
+
