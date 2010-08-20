@@ -140,9 +140,26 @@ uart_asm_init:
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
 
+	/* SATA: SCLKMPLL(0), MMC[0:4]: SCLKMPLL(6) */
+	ldr	r1, =0x0066666
+	ldr	r2, =0x0C240			@ CLK_SRC_FSYS
+	str	r1, [r0, r2]
 	/* UART[0:5], PWM: SCLKMPLL(6) */
 	ldr	r1, =0x6666666
 	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
+	str	r1, [r0, r2]
+
+	/* MMC[0:1] */
+	ldr	r1, =0x000d000d			/* FIXME check the value */
+	ldr	r2, =0x0C544			@ CLK_DIV_FSYS1
+	str	r1, [r0, r2]
+	/* MMC[2:3] */
+	ldr	r1, =0x000d000d			/* FIXME check the value */
+	ldr	r2, =0x0C548			@ CLK_DIV_FSYS2
+	str	r1, [r0, r2]
+	/* MMC4 */
+	ldr	r1, =0x000d			/* FIXME check the value */
+	ldr	r2, =0x0C54C			@ CLK_DIV_FSYS3
 	str	r1, [r0, r2]
 	/* UART[0:5] */
 	ldr	r1, =0x777777
