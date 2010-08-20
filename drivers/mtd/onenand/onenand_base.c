@@ -355,8 +355,11 @@ static int onenand_command(struct mtd_info *mtd, int cmd, loff_t addr,
 
 	default:
 		block = onenand_block(this, addr);
-		page = (int) (addr
-			- onenand_addr(this, block)) >> this->page_shift;
+		if (FLEXONENAND(this))
+			page = (int) (addr - onenand_addr(this, block)) >>
+				this->page_shift;
+		else
+			page = (int) (addr >> this->page_shift);
 		page &= this->page_mask;
 		break;
 	}
