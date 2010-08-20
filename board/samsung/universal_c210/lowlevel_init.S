@@ -89,6 +89,33 @@ lowlevel_init:
 	bl	mem_ctrl_asm_init2
 #endif
 
+#ifdef CONFIG_PRELOADER
+#if 0
+	/*
+	 * OneNAND Sync Read Support
+         * RM[15]       : Sync Read
+         * BRWL[14:12]  : 7 CLK
+         * BL[11:9]     : Continuous
+         * VHF[3]       : Very High Frequency Enable (Over 83MHz)
+         * HF[2]        : High Frequency Enable (Over 66MHz)
+         * WM[1]        : Sync Write
+         */
+        ldr	r1, =0xE006
+        ldr	r0, =0x0C01E442
+        strh	r1, [r0]
+
+        /*
+         * GCE[26]      : Gated Clock Enable
+         * RPE[17]      : Enables Read Prefetch
+         */
+        ldr	r1, =((1 << 26) | (1 << 17) | 0xE006)
+        ldr	r0, =0x0C600000
+        str	r1, [r0, #0x100]                        @ ONENAND_IF_CTRL
+        ldr	r1, =0x1212
+        str	r1, [r0, #0x108]
+#endif
+#endif
+
 #ifndef CONFIG_PRELOADER
 	/* UART */
 	bl	uart_asm_init
