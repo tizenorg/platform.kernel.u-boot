@@ -61,8 +61,9 @@ int board_mmc_init(bd_t *bis)
 {
 	int i;
 
-	if (s5p_no_mmc_support())
-		return -1;
+	/* Workaround: set the low to enable LDO_EN */
+	/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
+	gpio_direction_output(&gpio1->gpio_e3, 6, 0);
 
 	/*
 	 * eMMC GPIO:
