@@ -187,17 +187,8 @@
 
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
-#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:1m(bootloader)"\
-				",128k(params)"\
-				",2816k(config)"\
-				",8m(csa)"\
-				",7m(kernel)"\
-				",1m(log)"\
-				",12m(modem)"\
-				",60m(qboot)"\
-				",-(UBI)\0"
 
-#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:1m(bootloader)"\
+#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:1m(bootloader)"\
 				",256k(params)"\
 				",2816k(config)"\
 				",8m(csa)"\
@@ -261,7 +252,7 @@
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
-	"mtdparts=" MTDPARTS_DEFAULT_4KB \
+	"mtdparts=" MTDPARTS_DEFAULT \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
