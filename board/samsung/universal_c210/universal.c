@@ -35,7 +35,7 @@ int board_init(void)
 	gpio1 = (struct s5pc210_gpio_part1 *) S5PC210_GPIO_PART1_BASE;
 	gpio2 = (struct s5pc210_gpio_part2 *) S5PC210_GPIO_PART2_BASE;
 
-	gd->bd->bi_arch_number = MACH_TYPE_GONI;
+	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
