@@ -23,7 +23,7 @@
 
 #include <asm/arch/cpu.h>
 
-#define S5PC210_SWRESET			0x10020000
+#define S5PC210_SWRESET			0x10020400
 
 .globl reset_cpu
 reset_cpu:
