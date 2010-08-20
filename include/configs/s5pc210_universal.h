@@ -261,7 +261,7 @@
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
-	"mtdparts=" MTDPARTS_DEFAULT \
+	"mtdparts=" MTDPARTS_DEFAULT_4KB \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
