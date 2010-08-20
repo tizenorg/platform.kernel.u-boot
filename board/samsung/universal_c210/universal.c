@@ -341,12 +341,7 @@ static unsigned short get_adc_value(int channel)
 	struct s5pc210_adc *adc = (struct s5pc210_adc *) S5PC210_ADC_BASE;
 	unsigned short ret = 0;
 	unsigned int reg;
-	int ldonum = 4;
-	char buf[64];
 	unsigned int loop = 0;
-
-	sprintf(buf, "pmic ldo %d on", ldonum);
-	run_command(buf, 0);
 
 	writel(channel & 0xF, &adc->adcmux);
 	writel((1 << 14) | (49 << 6), &adc->adccon);
@@ -362,8 +357,6 @@ static unsigned short get_adc_value(int channel)
 	} while (!(reg & (1 << 15)) && (loop++ < 1000));
 
 	ret = readl(&adc->adcdat0) & 0xFFF;
-	sprintf(buf, "pmic ldo %d off", ldonum);
-	run_command(buf, 0);
 
 	return ret;
 }
@@ -372,8 +365,12 @@ static unsigned int get_hw_revision(void)
 {
 	int hwrev = 0, mode0, mode1;
 
+	run_command("pmic ldo 4 on", 0);
+
 	mode0 = get_adc_value(1);		/* HWREV_MODE0 */
 	mode1 = get_adc_value(2);		/* HWREV_MODE1 */
+
+	run_command("pmic ldo 4 off", 0);
 
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
 	if (IS_RANGE(mode0, 80, 100) && IS_RANGE(mode1, 80, 100))
