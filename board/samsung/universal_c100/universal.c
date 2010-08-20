@@ -2810,7 +2810,7 @@ int board_mmc_init(bd_t *bis)
 			gpio_set_drv(&gpio->gpio_g1, i, GPIO_DRV_4X);
 		}
 
-		buswidth = 8 /* 8-bit buswidth */
+		buswidth = 8; /* 8-bit buswidth */
 	}
 
 	if (mach_is_geminus()) {
