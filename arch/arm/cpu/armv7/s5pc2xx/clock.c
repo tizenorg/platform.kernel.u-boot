@@ -89,8 +89,8 @@ static unsigned long s5pc210_get_pll_clk(int pllreg)
 		fout = (m + k / 65536) * (freq / (p * (1 << s)));
 	} else if (pllreg == VPLL) {
 		k = k & 0xfff;
-		/* FOUT = (MDIV + K / 10) * FIN / (PDIV * 2^SDIV) */
-		fout = (m + k / 10) * (freq / (p * (1 << s)));
+		/* FOUT = (MDIV + K / 1024) * FIN / (PDIV * 2^SDIV) */
+		fout = (m + k / 1024) * (freq / (p * (1 << s)));
 	} else {
 		if (s < 1)
 			s = 1;
