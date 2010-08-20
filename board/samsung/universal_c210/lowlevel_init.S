@@ -140,6 +140,10 @@ uart_asm_init:
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
 
+	/* APLL(1), MPLL(0), CORE(1), HPM(0) */
+	ldr	r1, =0x0101
+	ldr	r2, =0x14200			@ CLK_SRC_CPU
+	str	r1, [r0, r2]
 	/* SATA: SCLKMPLL(0), MMC[0:4]: SCLKMPLL(6) */
 	ldr	r1, =0x0066666
 	ldr	r2, =0x0C240			@ CLK_SRC_FSYS
@@ -149,6 +153,34 @@ system_clock_init:
 	ldr	r2, =0x0C250			@ CLK_SRC_PERIL0_OFFSET
 	str	r1, [r0, r2]
 
+	/* CPU0: CORE, COREM0, COREM1, PERI, ATB, PCLK_DBG, APLL */
+	ldr	r1, =0x0133730
+	ldr	r2, =0x14500			@ CLK_DIV_CPU0
+	str	r1, [r0, r2]
+	/* CPU1: COPY, HPM */
+	ldr	r1, =0x03
+	ldr	r2, =0x14504			@ CLK_DIV_CPU1
+	str	r1, [r0, r2]
+	/* DMC0: ACP, ACP_PCLK, DPHY, DMC, DMCD, DMCP, COPY2 CORE_TIMER */
+	ldr	r1, =0x13111113
+	ldr	r2, =0x10500			@ CLK_DIV_DMC0
+	str	r1, [r0, r2]
+	/* DMC1: PWI, DVSEM, DPM */
+	ldr	r1, =0x01010100
+	ldr	r2, =0x10504			@ CLK_DIV_DMC1
+	str	r1, [r0, r2]
+	/* LEFTBUS: GDL, GPL */
+	ldr	r1, =0x13
+	ldr	r2, =0x04500			@ CLK_DIV_LEFTBUS
+	str	r1, [r0, r2]
+	/* RIGHHTBUS: GDR, GPR */
+	ldr	r1, =0x13
+	ldr	r2, =0x08500			@ CLK_DIV_RIGHTBUS
+	str	r1, [r0, r2]
+	/* TOP: ACLK_200, ACLK_100, ACLK_160, ACLK_133, ONENAND */
+	ldr	r1, =0x15473
+	ldr	r2, =0x0C510			@ CLK_DIV_TOP
+	str	r1, [r0, r2]
 	/* MMC[0:1] */
 	ldr	r1, =0x000d000d			/* FIXME check the value */
 	ldr	r2, =0x0C544			@ CLK_DIV_FSYS1
@@ -163,11 +195,51 @@ system_clock_init:
 	str	r1, [r0, r2]
 	/* UART[0:5] */
 	ldr	r1, =0x777777
-	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0_OFFSET
+	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0
 	str	r1, [r0, r2]
 	/* SLIMBUS: ???, PWM */
 	ldr	r1, =0x8
-	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3_OFFSET
+	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3
+	str	r1, [r0, r2]
+
+	/* PLL Setting */
+	ldr	r1, =0x1C20
+	ldr	r2, =0x14000			@ APLL_LOCK
+	str	r1, [r0, r2]
+	ldr	r2, =0x14008			@ MPLL_LOCK
+	str	r1, [r0, r2]
+	ldr	r2, =0x0C010			@ EPLL_LOCK
+	str	r1, [r0, r2]
+	ldr	r2, =0x0C020			@ VPLL_LOCK
+	str	r1, [r0, r2]
+
+	/* APLL */
+	ldr	r1, =0x8000001c
+	ldr	r2, =0x14104			@ APLL_CON1
+	str	r1, [r0, r2]
+	ldr	r1, =0x80c80601			@ 800MHz
+	ldr	r2, =0x14100			@ APLL_CON0
+	str	r1, [r0, r2]
+	/* MPLL */
+	ldr	r1, =0x8000000d
+	ldr	r2, =0x1410C			@ MPLL_CON1
+	str	r1, [r0, r2]
+	ldr	r1, =0x806e0401			@ 660MHz
+	ldr	r2, =0x14108			@ MPLL_CON0
+	str	r1, [r0, r2]
+	/* EPLL */
+	ldr	r1, =0x0
+	ldr	r2, =0x0C114			@ EPLL_CON1
+	str	r1, [r0, r2]
+	ldr	r1, =0x80300302			@ 96MHz
+	ldr	r2, =0x0C110			@ EPLL_CON0
+	str	r1, [r0, r2]
+	/* VPLL */
+	ldr	r1, =0x11000400
+	ldr	r2, =0x0C124			@ VPLL_CON1
+	str	r1, [r0, r2]
+	ldr	r1, =0x80350302			@ 108MHz
+	ldr	r2, =0x0C120			@ VPLL_CON0
 	str	r1, [r0, r2]
 
 	mov	pc, lr
