@@ -51,6 +51,20 @@ lowlevel_init:
 	ldr	r7, =S5PC210_GPIO_PART1_BASE
 	ldr	r8, =S5PC210_GPIO_PART2_BASE
 
+#ifndef CONFIG_PRELOADER
+	/* Workaround: PMIC manual reset */
+	/* nPOWER: XEINT_23: GPX2[7] */
+	add	r0, r8, #0xC40			@ S5PC210_GPIO_X2_OFFSET
+	ldr	r1, [r0, #0x0]
+	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
+	orr	r1, r1, #(0x1 << 28)		@ Output
+	str	r1, [r0, #0x0]
+
+	ldr	r1, [r0, #0x4]
+	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
+	str	r1, [r0, #0x4]
+#endif
+
 #if 0
 	/* IO retension release */
 	ldr	r0, =0x10020000
