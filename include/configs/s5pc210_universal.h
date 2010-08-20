@@ -55,10 +55,6 @@
 #define CONFIG_INITRD_TAG
 //#define CONFIG_REVISION_TAG
 
-/* Clock Defines */
-#define V_OSCK		26000000	/* Clock output from T2 */
-#define V_SCLK		(V_OSCK >> 1)
-
 /*
  * Architecture magic and machine type
  */
@@ -253,7 +249,7 @@
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
-	"meminfo=mem=80M mem=128M@0x40000000\0" \
+	"meminfo=mem=512M\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=9\0" \
