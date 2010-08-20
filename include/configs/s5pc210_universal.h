@@ -118,7 +118,7 @@
 #define CONFIG_CMD_ONENAND
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_MTDPARTS_LITE
-//#define CONFIG_CMD_I2C
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_MMC
 #define CONFIG_CMD_SLEEP
 #define CONFIG_CMD_PMIC
@@ -321,7 +321,6 @@
 
 //#define CONFIG_MISC_INIT_R
 
-#if 0
 /* I2C */
 #if 0
 #define CONFIG_DRIVER_S5PC1XX_I2C
@@ -337,7 +336,6 @@
 #define CONFIG_SYS_I2C_SPEED	50000
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_SYS_MAX_I2C_BUS	7
-#endif
 #endif
 
 /* USB Downloader */

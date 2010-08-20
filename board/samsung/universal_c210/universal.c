@@ -23,12 +23,44 @@
  */
 
 #include <common.h>
+#include <i2c.h>
 #include <asm/arch/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
+
+enum {
+	I2C_PMIC,
+};
+
+/*
+ * i2c pmic
+ * SDA: GPJ4[0]
+ * SCL: GPJ4[3]
+ */
+static struct i2c_gpio_bus_data i2c_pmic = {
+	.sda_pin	= 6,
+	.scl_pin	= 7,
+};
+
+static struct i2c_gpio_bus i2c_gpio[] = {
+	{
+		.bus	= &i2c_pmic,
+	},
+};
+
+void i2c_init_board(void)
+{
+	int num_bus;
+
+	num_bus = ARRAY_SIZE(i2c_gpio);
+
+	i2c_gpio[I2C_PMIC].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
+
+	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
+}
 
 int board_init(void)
 {
