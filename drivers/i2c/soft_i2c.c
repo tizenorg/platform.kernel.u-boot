@@ -191,6 +191,7 @@ static void send_start(void)
 	I2C_DELAY;
 }
 
+#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
 /*-----------------------------------------------------------------------
  * REPEATED START: Low -> High -> Low on SDA while SCL is High
  */
@@ -212,6 +213,7 @@ static void send_repeated_start(void)
 	I2C_SDA(0);
 	I2C_DELAY;
 }
+#endif
 
 /*-----------------------------------------------------------------------
  * STOP: Low -> High on SDA while SCL is High
@@ -453,12 +455,8 @@ int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		 * only a start.  Default behaviour is to send the
 		 * stop/start sequence.
 		 */
-#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
-		send_repeated_start();
-#else
 		send_stop();
 		send_start();
-#endif
 	}
 	/*
 	 * Send the chip address again, this time for a read cycle.
@@ -472,6 +470,77 @@ int  i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 	send_stop();
 	return(0);
 }
+
+#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
+/*-----------------------------------------------------------------------
+ * Read bytes repeated
+ */
+int  i2c_read_r(uchar chip, uint addr, int alen, uchar *buffer, int len)
+{
+	int shift;
+	PRINTD("i2c_read: chip %02X addr %02X alen %d buffer %p len %d\n",
+		chip, addr, alen, buffer, len);
+
+#ifdef CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW
+	/*
+	 * EEPROM chips that implement "address overflow" are ones
+	 * like Catalyst 24WC04/08/16 which has 9/10/11 bits of
+	 * address and the extra bits end up in the "chip address"
+	 * bit slots. This makes a 24WC08 (1Kbyte) chip look like
+	 * four 256 byte chips.
+	 *
+	 * Note that we consider the length of the address field to
+	 * still be one byte because the extra address bits are
+	 * hidden in the chip address.
+	 */
+	chip |= ((addr >> (alen * 8)) & CONFIG_SYS_I2C_EEPROM_ADDR_OVERFLOW);
+
+	PRINTD("i2c_read: fix addr_overflow: chip %02X addr %02X\n",
+		chip, addr);
+#endif
+
+	/*
+	 * Do the addressing portion of a write cycle to set the
+	 * chip's address pointer.  If the address length is zero,
+	 * don't do the normal write cycle to set the address pointer,
+	 * there is no address pointer in this chip.
+	 */
+	send_start();
+	if(alen > 0) {
+		if(write_byte(chip << 1)) {	/* write cycle */
+			send_stop();
+			PRINTD("i2c_read, no chip responded %02X\n", chip);
+			return(1);
+		}
+		shift = (alen-1) * 8;
+		while(alen-- > 0) {
+			if(write_byte(addr >> shift)) {
+				PRINTD("i2c_read, address not <ACK>ed\n");
+				return(1);
+			}
+			shift -= 8;
+		}
+
+		/* Some I2C chips need a stop/start sequence here,
+		 * other chips don't work with a full stop and need
+		 * only a start.  Default behaviour is to send the
+		 * stop/start sequence.
+		 */
+		send_repeated_start();
+	}
+	/*
+	 * Send the chip address again, this time for a read cycle.
+	 * Then read the data.  On the last byte, we do a NACK instead
+	 * of an ACK(len == 0) to terminate the read.
+	 */
+	write_byte((chip << 1) | 1);	/* read cycle */
+	while(len-- > 0) {
+		*buffer++ = read_byte(len == 0);
+	}
+	send_stop();
+	return(0);
+}
+#endif
 
 /*-----------------------------------------------------------------------
  * Write bytes

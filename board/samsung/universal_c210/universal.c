@@ -225,12 +225,12 @@ static void init_pmic_lp3974(void)
 		return;
 
 	/* ONOFF1 */
-	i2c_read(addr, LP3974_REG_ONOFF1, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_ONOFF1, 1, val, 1);
 	val[0] &= ~LP3974_LDO3;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
 
 	/* ONOFF2 */
-	i2c_read(addr, LP3974_REG_ONOFF2, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	/*
 	 * Disable LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
 	 * LDO12(CAM_ISP_1.2V), LDO13(CAM_A_2.8V)
@@ -241,10 +241,10 @@ static void init_pmic_lp3974(void)
 	val[0] |= LP3974_LDO7;		/* LDO7: VLCD_1.8V */
 
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
-	i2c_read(addr, LP3974_REG_ONOFF2, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
 	/* ONOFF3 */
-	i2c_read(addr, LP3974_REG_ONOFF3, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
 	/*
 	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
 	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
@@ -255,7 +255,7 @@ static void init_pmic_lp3974(void)
 	val[0] |= LP3974_LDO17;	/* LDO17: VCC_3.0V_LCD */
 
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
-	i2c_read(addr, LP3974_REG_ONOFF3, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
 }
 
 static void init_pmic_max8952(void)
@@ -382,7 +382,7 @@ static int pmic_status(void)
 		return -1;
 
 	reg = 0x11;
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
 		printf("BUCK%d %s\n", 7 - i + 1,
 			val[0] & (1 << i) ? "on" : "off");
@@ -390,18 +390,18 @@ static int pmic_status(void)
 		printf("LDO%d %s\n", 5 - i,
 			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x12;
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 	for (i = 7; i >= 0; i--)
 		printf("LDO%d %s\n", 7 - i + 6,
 			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x13;
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
 		printf("LDO%d %s\n", 7 - i + 14,
 			val[0] & (1 << i) ? "on" : "off");
 
 	reg = 0xd;
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 	for (i = 7; i >= 6; i--)
 		printf("SAFEOUT%d %s\n", 7 - i + 1,
 			val[0] & (1 << i) ? "on" : "off");
@@ -445,13 +445,13 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	if (lp3974_probe())
 		return -1;
 
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 	if (on)
 		val[0] |= (1 << shift);
 	else
 		val[0] &= ~(1 << shift);
 	i2c_write(addr, reg, 1, val, 1);
-	i2c_read(addr, reg, 1, val, 1);
+	i2c_read_r(addr, reg, 1, val, 1);
 
 	if (ldo)
 		printf("ldo %d value 0x%x, %s\n", ldo, val[0],
