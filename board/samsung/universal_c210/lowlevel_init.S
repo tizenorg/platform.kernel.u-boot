@@ -104,30 +104,42 @@ lowlevel_init:
 #endif
 
 #ifdef CONFIG_PRELOADER
-#if 0
+	ldr	r0, =0x0C600000
+1:	ldr	r1, [r0, #0x10C]			@ ONENAND_IF_STATUS
+	and	r1, r1, #1
+	cmp	r1, #1
+	beq	1b
+
 	/*
 	 * OneNAND Sync Read Support
-         * RM[15]       : Sync Read
-         * BRWL[14:12]  : 7 CLK
-         * BL[11:9]     : Continuous
-         * VHF[3]       : Very High Frequency Enable (Over 83MHz)
-         * HF[2]        : High Frequency Enable (Over 66MHz)
-         * WM[1]        : Sync Write
-         */
+	 * RM[15]	: Sync Read
+	 * BRWL[14:12]	: 4 CLK
+	 * BL[11:9]	: Continuous
+	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
+	 * HF[2]	: High Frequency Enable (Over 66MHz)
+	 * WM[1]	: Sync Write
+	 */
         ldr	r1, =0xE006
-        ldr	r0, =0x0C01E442
-        strh	r1, [r0]
+        ldr	r2, =0x0C01E442
+        strh	r1, [r2]
+	/* Dummy read required */
+	ldr	r2, =0x0C000000
+	ldrh	r1, [r2]
 
-        /*
-         * GCE[26]      : Gated Clock Enable
-         * RPE[17]      : Enables Read Prefetch
-         */
-        ldr	r1, =((1 << 26) | (1 << 17) | 0xE006)
-        ldr	r0, =0x0C600000
-        str	r1, [r0, #0x100]                        @ ONENAND_IF_CTRL
-        ldr	r1, =0x1212
-        str	r1, [r0, #0x108]
-#endif
+	/*
+	 * GCE[26]	: Gated Clock Enable
+	 * RPE[17]	: Enables Read Prefetch
+	 * HF[2]	: High Frequency
+	 */
+	/* XXX: need some time to access OneNAND SFR */
+	mov	r1, #0x10000
+1:	subs	r1, r1, #1
+	bne	1b
+
+	ldr	r1, =((1 << 26) | (1 << 17) | 0xE006)
+	str	r1, [r0, #0x100]                        @ ONENAND_IF_CTRL
+	ldr	r1, =0x1212
+	str	r1, [r0, #0x108]
 #endif
 
 #ifndef CONFIG_PRELOADER
@@ -239,7 +251,7 @@ system_clock_init:
 	ldr	r2, =0x08500			@ CLK_DIV_RIGHTBUS
 	str	r1, [r0, r2]
 	/* TOP: ACLK_200, ACLK_100, ACLK_160, ACLK_133, ONENAND */
-	ldr	r1, =0x15473
+	ldr	r1, =0x05473
 	ldr	r2, =0x0C510			@ CLK_DIV_TOP
 	str	r1, [r0, r2]
 	/* MMC[0:1] */
