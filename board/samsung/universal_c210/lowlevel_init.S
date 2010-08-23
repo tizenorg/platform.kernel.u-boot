@@ -105,6 +105,10 @@ lowlevel_init:
 
 #ifdef CONFIG_PRELOADER
 	ldr	r0, =0x0C600000
+
+	ldr	r1, =0x1212
+	str	r1, [r0, #0x108]
+
 1:	ldr	r1, [r0, #0x10C]			@ ONENAND_IF_STATUS
 	and	r1, r1, #1
 	cmp	r1, #1
@@ -126,20 +130,17 @@ lowlevel_init:
 	ldr	r2, =0x0C000000
 	ldrh	r1, [r2]
 
+	/* XXX: Must insert 2 nop */
+	nop
+	nop
+
 	/*
 	 * GCE[26]	: Gated Clock Enable
 	 * RPE[17]	: Enables Read Prefetch
 	 * HF[2]	: High Frequency
 	 */
-	/* XXX: need some time to access OneNAND SFR */
-	mov	r1, #0x10000
-1:	subs	r1, r1, #1
-	bne	1b
-
 	ldr	r1, =((1 << 26) | (1 << 17) | 0xE006)
 	str	r1, [r0, #0x100]                        @ ONENAND_IF_CTRL
-	ldr	r1, =0x1212
-	str	r1, [r0, #0x108]
 #endif
 
 #ifndef CONFIG_PRELOADER
