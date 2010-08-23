@@ -74,7 +74,7 @@ void serial_setbrg_dev(const int dev_index)
 	if (use_divslot)
 		writew(udivslot[val % 16], &uart->udivslot);
 	else
-		writew(val & 16, &uart->udivslot);	/* ufracval */
+		writew(val % 16, &uart->udivslot);	/* ufracval */
 }
 
 /*
