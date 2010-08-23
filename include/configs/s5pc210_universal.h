@@ -347,10 +347,10 @@
 #define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
-#if 0		/* For LCD test */
+#if 1		/* For LCD test */
 #define CONFIG_LCD		1
 #define CONFIG_FB_RESERVED_MEM	0x42504000
-#define CONFIG_S5PC1XXFB	1
+#define CONFIG_S5PC210FB	1
 #define CONFIG_S6E63M0		1
 #define CONFIG_S6D16A0X		1
 #define CONFIG_LD9040		1
@@ -363,7 +363,7 @@
 #endif
 
 /* Insert bmp animation compressed */
-#if 0
+#if 1
 #define CONFIG_VIDEO_BMP_GZIP
 #ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)

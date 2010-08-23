@@ -24,6 +24,9 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <lcd.h>
+#include <asm/io.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/adc.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
@@ -284,6 +287,10 @@ static void init_pmic_lp3974(void)
 	val[0] = 0xF0;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
+	/* LDO7: 1.8V */
+	val[0] = 0x02;
+	i2c_write(addr, LP3974_REG_LDO7, 1, val, 1);
+
 	/*
 	 * ONOFF3
 	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 ON
@@ -292,6 +299,9 @@ static void init_pmic_lp3974(void)
 	val[0] = 0x10;
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
 
+	/* LDO17: 3.0V */
+	val[0] = 0x0E;
+	i2c_write(addr, LP3974_REG_LDO17, 1, val, 1);
 	/*
 	 * ONOFF4
 	 * EN32kAP ON, EN32kCP ON, ENVICHG ON, ENRAMP ON,
@@ -300,13 +310,6 @@ static void init_pmic_lp3974(void)
 	val[0] = 0xFB;
 	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
 
-	/* LDO7: 1.8V */
-	val[0] = 0x02;
-	i2c_write(addr, LP3974_REG_LDO7, 1, val, 1);
-
-	/* LDO17: 3.0V */
-	val[0] = 0x0E;
-	i2c_write(addr, LP3974_REG_LDO17, 1, val, 1);
 }
 
 static void init_pmic_max8952(void)
@@ -342,6 +345,208 @@ static void init_pmic_max8952(void)
 
 	/* SYNC: Do Nothing */
 	/* RAMP: As Fast As Possible: Default: Do Nothing */
+}
+
+void fimd_clk_set()
+{
+	/* workaround */
+	unsigned long clk_gate_lcd = 0x1003c934;
+	unsigned long mpll_sel_addr = 0x10044200;
+	unsigned long clk_mux_addr = 0x10044400;
+	unsigned long clk_src_lcd = 0x1003c234;
+	unsigned long clk_div_lcd = 0x1003c534;
+	unsigned long display_ctrl = 0x10010210;
+	unsigned int cfg = 0;
+
+	cfg = readl(display_ctrl);
+	cfg |= (1 << 9);
+	writel(cfg, display_ctrl);
+
+	cfg = 0;
+
+	cfg = readl(display_ctrl);
+	cfg &= ~(1 << 9);
+	cfg |= (1 << 1);
+	writel(cfg, display_ctrl);
+
+	cfg = 0;
+	cfg = readl(mpll_sel_addr);
+	cfg |= (1 << 8);
+	writel(cfg, mpll_sel_addr);
+
+	cfg = 0;
+	cfg = readl(clk_mux_addr);
+	cfg |= (0x2 << 8);
+	writel(cfg, clk_mux_addr);
+
+	cfg = 0;
+	cfg = readl(clk_src_lcd);
+	cfg |= (0x6 << 0);
+	writel(cfg, clk_src_lcd);
+
+	cfg = 0;
+	cfg = readl(clk_div_lcd);
+	cfg |= (0x3 << 0);
+	writel(cfg, clk_div_lcd);
+
+	cfg = 0;
+	cfg = readl(clk_gate_lcd);
+	cfg |= (1 << 0);
+	writel(cfg, clk_gate_lcd);
+}
+
+#include "../../../drivers/video/s5p-spi.h"
+
+extern void ld9040_set_platform_data(struct spi_platform_data *pd);
+
+struct spi_platform_data spi_pd;
+
+void lcd_cfg_gpio(void)
+{
+	unsigned int i, f3_end = 4;
+
+	for (i = 0; i < 8; i++) {
+		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio1->gpio_f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio1->gpio_f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio1->gpio_f2, i, GPIO_FUNC(2));
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio1->gpio_f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->gpio_f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->gpio_f2, i, GPIO_PULL_NONE);
+
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio1->gpio_f0, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->gpio_f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->gpio_f1, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->gpio_f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->gpio_f2, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->gpio_f2, i, GPIO_DRV_SLOW);
+	}
+
+	for (i = 0; i < f3_end; i++) {
+		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
+		gpio_cfg_pin(&gpio1->gpio_f3, i, GPIO_PULL_UP);
+		/* pull-up/down disable */
+		gpio_set_pull(&gpio1->gpio_f3, i, GPIO_PULL_NONE);
+		/* drive strength to max (24bit) */
+		gpio_set_drv(&gpio1->gpio_f3, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->gpio_f3, i, GPIO_DRV_SLOW);
+	}
+	/* display output path selection (only [1:0] valid) */
+	//writel(0x2, 0xE0107008);
+
+	/* gpio pad configuration for LCD reset. */
+	gpio_cfg_pin(&gpio2->gpio_y4, 5, GPIO_OUTPUT);
+
+	/*
+ 	 * gpio pad configuration for
+ 	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
+ 	 */
+
+	gpio_cfg_pin(&gpio2->gpio_y4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->gpio_y3, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->gpio_y3, 3, GPIO_OUTPUT);
+
+	spi_pd.cs_bank = &gpio2->gpio_y4;
+	spi_pd.cs_num = 3;
+	spi_pd.clk_bank = &gpio2->gpio_y3;
+	spi_pd.clk_num = 1;
+	spi_pd.si_bank = &gpio2->gpio_y3;
+	spi_pd.si_num = 3;
+
+	ld9040_set_platform_data(&spi_pd);
+
+	return;
+}
+
+void reset_lcd(void)
+{
+	gpio_set_value(&gpio2->gpio_y4, 5, 1);
+	udelay(10000);
+	gpio_set_value(&gpio2->gpio_y4, 5, 0);
+	udelay(10000);
+	gpio_set_value(&gpio2->gpio_y4, 5, 1);
+	udelay(100);
+}
+
+void lcd_power_on(unsigned int onoff)
+{
+	unsigned char addr;
+	unsigned char val[2];
+	unsigned char val2[2];
+
+	addr = 0xCC >> 1;	/* lp3974 */
+	if (lp3974_probe())
+		return;
+
+	if (onoff) {
+		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+		val[0] &= ~(LP3974_LDO17);
+		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
+
+		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+		val[0] |= LP3974_LDO17;
+		val2[0] = 0xE;
+		i2c_write(addr, LP3974_REG_LDO17, 1, val2, 1);
+		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
+
+		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+
+		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
+		val[0] |= LP3974_LDO7;
+		val2[0] = 0x2;
+		i2c_write(addr, LP3974_REG_LDO7, 1, val2, 1);
+		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
+	} else {
+	}
+}
+
+extern void ld9040_cfg_ldo(void);
+extern void ld9040_enable_ldo(unsigned int onoff);
+
+int s5p_no_lcd_support(void)
+{
+
+	return 0;
+}
+
+void init_panel_info(vidinfo_t *vid)
+{
+	vid->vl_freq	= 60;
+	vid->vl_col	= 480;
+	vid->vl_row	= 800;
+	vid->vl_width	= 480;
+	vid->vl_height	= 800;
+	vid->vl_clkp	= CONFIG_SYS_HIGH;
+	vid->vl_hsp	= CONFIG_SYS_HIGH;
+	vid->vl_vsp	= CONFIG_SYS_HIGH;
+	vid->vl_dp	= CONFIG_SYS_HIGH;
+
+	vid->vl_bpix	= 32;
+	/* disable dual lcd mode. */
+	vid->dual_lcd_enabled = 0;
+
+	/* LD9040 LCD Panel */
+	vid->vl_hspw	= 2;
+	vid->vl_hbpd	= 16;
+	vid->vl_hfpd	= 16;
+
+	vid->vl_vspw	= 2;
+	vid->vl_vbpd	= 3;
+	vid->vl_vfpd	= 28;
+
+	vid->cfg_gpio = lcd_cfg_gpio;
+	vid->backlight_on = NULL;
+	vid->lcd_power_on = lcd_power_on;
+	vid->lcd_power_on = lcd_power_on;
+	vid->reset_lcd = reset_lcd;
+	vid->cfg_ldo = ld9040_cfg_ldo;
+	vid->enable_ldo = ld9040_enable_ldo;
+
+	vid->init_delay = 0;
+	vid->power_on_delay = 30000;
+	vid->reset_delay = 20000;
 }
 
 static unsigned short get_adc_value(int channel)

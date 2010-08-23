@@ -222,6 +222,47 @@ typedef struct vidinfo {
 	unsigned int dual_lcd_enabled;
 } vidinfo_t;
 
+#elif defined(CONFIG_S5PC210FB)
+
+typedef struct vidinfo {
+	ushort	vl_col;		/* Number of columns (i.e. 640) */
+	ushort	vl_row;		/* Number of rows (i.e. 480) */
+	ushort	vl_width;	/* Width of display area in millimeters */
+	ushort	vl_height;	/* Height of display area in millimeters */
+
+	/* LCD configuration register */
+	u_char	vl_freq;	/* Frequency */
+	u_char	vl_clkp;	/* Clock polarity */
+	u_char	vl_oep;		/* Output Enable polarity */
+	u_char	vl_hsp;		/* Horizontal Sync polarity */
+	u_char	vl_vsp;		/* Vertical Sync polarity */
+	u_char	vl_dp;		/* Data polarity */
+	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
+
+	/* Horizontal control register. Timing from data sheet */
+	u_char	vl_hspw;	/* Horz sync pulse width */
+	u_char	vl_hfpd;	/* Wait before of line */
+	u_char	vl_hbpd;	/* Wait end of line */
+
+	/* Vertical control register. */
+	u_char	vl_vspw;	/* Vertical sync pulse width */
+	u_char	vl_vfpd;	/* Wait before of frame */
+	u_char	vl_vbpd;	/* Wait end of frame */
+
+	void (*cfg_gpio)(void);
+	void (*backlight_on)(unsigned int onoff);
+	void (*reset_lcd)(void);
+	void (*lcd_power_on)(unsigned int onoff);
+	void (*cfg_ldo)(void);
+	void (*enable_ldo)(unsigned int onoff);
+
+	unsigned int init_delay;
+	unsigned int power_on_delay;
+	unsigned int reset_delay;
+
+	unsigned int dual_lcd_enabled;
+} vidinfo_t;
+
 #else
 
 typedef struct vidinfo {

@@ -39,6 +39,7 @@ COBJS-$(CONFIG_VIDEO_SM501) += sm501.o
 COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o videomodes.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
 COBJS-$(CONFIG_S5PC1XXFB) += s5p-fb.o s5p-fimd.o s5p-spi.o
+COBJS-$(CONFIG_S5PC210FB) += s5pc210-fb.o s5pc210-fimd.o s5p-spi.o
 COBJS-$(CONFIG_S6E63M0) += s6e63m0.o
 COBJS-$(CONFIG_S6D16A0X) += s6d16a0x.o
 COBJS-$(CONFIG_AMS701KA) += ams701ka.o

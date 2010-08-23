@@ -296,6 +296,10 @@ static void ld9040_spi_write(unsigned char address, unsigned char command)
 static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int size_cmd)
 {
 	int i = 0;
+
+	/* workaround */
+	udelay(10);
+
 	while (i < size_cmd) {
 		ld9040_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
