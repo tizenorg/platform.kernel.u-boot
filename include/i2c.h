@@ -154,6 +154,7 @@ int i2c_probe(uchar chip);
  *
  *   Returns: 0 on success, not 0 on failure
  */
+int i2c_read_r(uchar chip, uint addr, int alen, uchar *buffer, int len);
 int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len);
 int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len);
 
