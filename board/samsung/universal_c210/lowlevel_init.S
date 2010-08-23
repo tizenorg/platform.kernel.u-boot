@@ -218,6 +218,14 @@ system_clock_init:
 	ldr	r1, =0x0101
 	ldr	r2, =0x14200			@ CLK_SRC_CPU
 	str	r1, [r0, r2]
+	/*
+	 * CLK_SRC_TOP0
+	 * MUX_ONENAND_SEL[28]	0: DOUT133, 1: DOUT166
+	 */
+	ldr	r1, =0x10000000
+	ldr	r2, =0x0C210			@ CLK_SRC_TOP
+	str	r1, [r0, r2]
+
 	/* SATA: SCLKMPLL(0), MMC[0:4]: SCLKMPLL(6) */
 	ldr	r1, =0x0066666
 	ldr	r2, =0x0C240			@ CLK_SRC_FSYS
@@ -251,8 +259,12 @@ system_clock_init:
 	ldr	r1, =0x13
 	ldr	r2, =0x08500			@ CLK_DIV_RIGHTBUS
 	str	r1, [r0, r2]
-	/* TOP: ACLK_200, ACLK_100, ACLK_160, ACLK_133, ONENAND */
-	ldr	r1, =0x05473
+	/*
+	 * CLK_DIV_TOP
+	 * ONENAND_RATIOD[18:16]: 0 SCLK_ONENAND = MOUTONENAND / (n + 1)
+	 * ACLK_200, ACLK_100, ACLK_160, ACLK_133,
+	 */
+	ldr	r1, =0x00005473
 	ldr	r2, =0x0C510			@ CLK_DIV_TOP
 	str	r1, [r0, r2]
 	/* MMC[0:1] */
