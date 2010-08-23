@@ -49,7 +49,7 @@ void serial_setbrg_dev(const int dev_index)
 
 	/* baudrate: 115200*/
 	writel(0x23, &uart->ubrdiv);
-	writew(udivslot[2], &uart->udivslot);
+	writew(udivslot[2], &uart->rest.slot);
 }
 
 /*
