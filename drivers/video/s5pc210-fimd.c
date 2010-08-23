@@ -32,7 +32,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
 #include <asm/arch/gpio.h>
-#include "s5pc210-fb.h"
+#include "s5p-fb.h"
 
 /* LCD CONTROLLER REGISTER BASE */
 #define S5PC210_LCRB		0x11C00000
@@ -198,7 +198,6 @@ static void s5pc_fimd_set_clock(void)
 		div--;
 
 	cfg |= S5P_VIDCON0_CLKVAL_F(div - 1);
-	printf("VIDCON0: %x\n", cfg);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
 	udebug("fimd_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
@@ -224,7 +223,7 @@ static void s5pc_fimd_window_on(unsigned int win_id)
 
 	/* enable window */
 	cfg = readl(ctrl_base + S5P_WINCON(win_id));
-	cfg |= (0x3 << 23);
+//	cfg |= (0x3 << 23);
 	cfg |= S5P_WINCON_ENWIN_ENABLE;
 	writel(cfg, ctrl_base + S5P_WINCON(win_id));
 	udebug("wincon%d=%x\n", win_id, cfg);
