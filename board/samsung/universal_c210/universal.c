@@ -24,8 +24,9 @@
 
 #include <common.h>
 #include <i2c.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/adc.h>
+#include <asm/arch/gpio.h>
+#include <asm/arch/mmc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -181,7 +182,7 @@ int dram_init(void)
 
 static void check_auto_burn(void)
 {
-	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
+	unsigned int magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;
 	unsigned int count = 0;
 	char buf[64];
 
@@ -200,7 +201,7 @@ static void check_auto_burn(void)
 	}
 
 	/* Clear the magic value */
-	memset(magic_base, 0, 2);
+	memset((void *)magic_base, 0, 2);
 }
 
 #define LP3974_REG_ONOFF1	0x11
@@ -304,7 +305,6 @@ static void init_pmic_max8952(void)
 {
 	unsigned char addr;
 	unsigned char val[2];
-	char buf[4];
 
 	addr = 0xC0 >> 1; /* MAX8952 */
 	if (max8952_probe())
