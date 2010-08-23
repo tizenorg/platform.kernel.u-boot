@@ -338,7 +338,7 @@ static void init_pmic_max8952(void)
 
 static unsigned short get_adc_value(int channel)
 {
-	struct s5pc210_adc *adc = (struct s5pc210_adc *) S5PC210_ADC_BASE;
+	struct s5p_adc *adc = (struct s5p_adc *)S5PC210_ADC_BASE;
 	unsigned short ret = 0;
 	unsigned int reg;
 	unsigned int loop = 0;

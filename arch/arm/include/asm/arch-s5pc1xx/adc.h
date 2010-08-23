@@ -18,13 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *                      
- */                     
+ */
 
 #ifndef __ASM_ARM_ARCH_ADC_H_
 #define __ASM_ARM_ARCH_ADC_H_
 
 #ifndef __ASSEMBLY__
-struct s5pc110_adc {
+struct s5p_adc {
 	unsigned int adccon; /* starts at 0xE1700000 */
 	unsigned int adctsc;
 	unsigned int adcdly;
@@ -34,7 +34,7 @@ struct s5pc110_adc {
 	unsigned int adcclrint;
 	unsigned int adcmux;
 	unsigned int adcclrintpndnup;
-};                      
-#endif                  
+};
+#endif
 
 #endif /* __ASM_ARM_ARCH_ADC_H_ */

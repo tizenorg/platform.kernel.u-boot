@@ -24,7 +24,7 @@
 #define __ASM_ARM_ARCH_ADC_H_
 
 #ifndef __ASSEMBLY__
-struct s5pc210_adc {
+struct s5p_adc {
 	unsigned int adccon; /* starts at 0x13910000 */
 	unsigned int adctsc;
 	unsigned int adcdly;

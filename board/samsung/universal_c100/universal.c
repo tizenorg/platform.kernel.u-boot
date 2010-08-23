@@ -1244,7 +1244,7 @@ static int adc_to_temperature_centigrade(unsigned short adc)
 
 static unsigned short get_adc_value(int channel)
 {
-	struct s5pc110_adc *adc = (struct s5pc110_adc *) S5PC110_ADC_BASE;
+	struct s5p_adc *adc = (struct s5p_adc *)S5PC110_ADC_BASE;
 	unsigned short ret = 0;
 	unsigned int reg;
 	int ldonum = 8;
