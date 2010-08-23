@@ -259,45 +259,45 @@ static void init_pmic_lp3974(void)
 	unsigned char addr;
 	unsigned char val[2];
 
-	addr = 0xCC >> 1;	/* lp3974 */
+	addr = 0xCC >> 1; /* LP3974 */
 	if (lp3974_probe())
 		return;
 
-	/* ONOFF1 */
-	/* Please remove it when bootloader works are finised */
-#if 0
-	i2c_read_r(addr, LP3974_REG_ONOFF1, 1, val, 1);
-	val[0] &= ~LP3974_LDO3;
+	/*
+	 * Because the data sheet of LP3974 does NOT mention default
+	 * register values of ONOFF1~4 (ENABLE1~4), we ignore the given
+	 * default values and set as we want
+	 *
+	 * ONOFF1
+	 * Buck1 ON, Buck2 ON, Buck3 OFF, Buck4 Off
+	 * LDO2 ON, LDO3 OFF, LDO4 OFF, LDO5 ON
+	 */
+	val[0] = 0xE9;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
-#endif
 
-	/* ONOFF2 */
-	i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	/*
-	 * Disable LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
-	 * LDO12(CAM_ISP_1.2V), LDO13(CAM_A_2.8V)
+	 * ONOFF2
+	 * LDO6 ON, LDO7 ON, LDO8 ON, LDO9 ON,
+	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
 	 */
-	val[0] &= ~(LP3974_LDO10 | LP3974_LDO11 |
-			LP3974_LDO12 | LP3974_LDO13);
-
-	val[0] |= LP3974_LDO7;		/* LDO7: VLCD_1.8V */
-
+	val[0] = 0xF0;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
-	i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
-	/* ONOFF3 */
-	i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
 	/*
-	 * Disable LDO14(CAM_CIF_1.8), LDO15(CAM_AF_3.3V),
-	 * LDO16(VMIPI_1.8V), LDO17(CAM_8M_1.8V)
+	 * ONOFF3
+	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 ON
+	 * EPWRHOLD OFF, EBATTMON OFF, ELBCNFG2 OFF, ELBCNFG1 OFF
 	 */
-	val[0] &= ~(LP3974_LDO14 | LP3974_LDO15 |
-			LP3974_LDO16 | LP3974_LDO17);
-
-	val[0] |= LP3974_LDO17;	/* LDO17: VCC_3.0V_LCD */
-
+	val[0] = 0x10;
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
-	i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+
+	/*
+	 * ONOFF4
+	 * EN32kAP ON, EN32kCP ON, ENVICHG ON, ENRAMP ON,
+	 * RAMP 12mV/us (fastest)
+	 */
+	val[0] = 0xFB;
+	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
 }
 
 static void init_pmic_max8952(void)
