@@ -299,6 +299,14 @@ static void init_pmic_lp3974(void)
 	 */
 	val[0] = 0xFB;
 	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
+
+	/* LDO7: 1.8V */
+	val[0] = 0x02;
+	i2c_write(addr, LP3974_REG_LDO7, 1, val, 1);
+
+	/* LDO17: 3.0V */
+	val[0] = 0x0E;
+	i2c_write(addr, LP3974_REG_LDO17, 1, val, 1);
 }
 
 static void init_pmic_max8952(void)
