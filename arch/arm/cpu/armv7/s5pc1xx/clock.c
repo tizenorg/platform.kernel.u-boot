@@ -38,6 +38,7 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
+unsigned long (*get_lcd_clk)(void);
 unsigned long (*get_uart_clk)(int dev_index);
 unsigned long (*get_pwm_clk)(void);
 unsigned long (*get_arm_clk)(void);
@@ -316,14 +317,45 @@ static unsigned long s5pc1xx_get_pwm_clk(void)
 		return s5pc100_get_pclk();
 }
 
+/* s5pc110: return lcd clock frequency */
+static unsigned long s5pc110_get_lcd_clk(void)
+{
+	struct s5pc110_clock *clk =
+		(struct s5pc110_clock *)samsung_get_base_clock();
+	unsigned long pclk, sclk;
+	unsigned int sel;
+	unsigned int ratio;
+
+	sel = readl(&clk->src1);
+	sel = (sel >> 20) & 0xf;
+
+	if (sel == 0x6)
+		sclk = get_pll_clk(MPLL);
+	else if (sel == 0x7)
+		sclk = get_pll_clk(EPLL);
+	else if (sel == 0x8)
+		sclk = get_pll_clk(VPLL);
+	else
+		return 0;
+
+	ratio = readl(&clk->div1);
+	ratio = (ratio >> 20) & 0xf;
+
+	pclk = sclk / (ratio + 1);
+
+	return pclk;
+}
+
 void s5p_clock_init(void)
 {
 	if (cpu_is_s5pc110()) {
 		get_pll_clk = s5pc110_get_pll_clk;
 		get_arm_clk = s5pc110_get_arm_clk;
+		get_lcd_clk = s5pc110_get_lcd_clk;
 	} else {
 		get_pll_clk = s5pc100_get_pll_clk;
 		get_arm_clk = s5pc100_get_arm_clk;
+		get_lcd_clk = NULL;
 	}
 	get_uart_clk = s5pc1xx_get_uart_clk;
 	get_pwm_clk = s5pc1xx_get_pwm_clk;
