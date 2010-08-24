@@ -34,10 +34,6 @@
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
-/* LCD CONTROLLER REGISTER BASE */
-#define S5PC100_LCRB		0xEE000000
-#define S5PC110_LCRB		0xF8000000
-
 #define MPLL 1
 
 static unsigned int ctrl_base;
@@ -134,10 +130,7 @@ static void s5pc_fimd_set_clock(void)
 {
 	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0,
 		     remainder, remainder_div;
-	unsigned long pixel_clock, src_clock, max_clock;
-	struct s5pc110_clock *clk =
-		(struct s5pc110_clock *)samsung_get_base_clock();
-	u64 div64;
+	unsigned long pixel_clock, src_clock, max_clock, div64;
 
 	max_clock = 86 * 1000000;
 
@@ -166,22 +159,7 @@ static void s5pc_fimd_set_clock(void)
 	if (pixel_clock > max_clock)
 		pixel_clock = max_clock;
 
-	/* set source clock to SCLKMPLL. */
-	temp = readl(&clk->src1);
-	writel((temp & ~0xf00000) | 0x600000, &clk->src1);
-	temp = 0;
-
-	/* set fimd ratio to 3. */
-	temp = readl(&clk->div1);
-	writel((temp & ~0xf00000) | 0x200000, &clk->div1);
-	temp = 0;
-
-	/* get mpll ratio */
-	temp = readl(&clk->div1);
-	fimd_ratio = (temp & 0xf00000) >> 20;
-	temp = 0;
-
-	div64 = ((u64)src_clock) / (fimd_ratio + 1);
+	div64 = get_lcd_clk();
 
 	/* get quotient and remainder. */
 	remainder = do_div(div64, pixel_clock);
@@ -265,10 +243,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	pvid = vid;
 
 	/* select register base according to cpu type */
-	if (cpu_is_s5pc110())
-		ctrl_base = S5PC110_LCRB;
-	else
-		ctrl_base = S5PC100_LCRB;
+	ctrl_base = samsung_get_base_fimd();
 
 	/* set output to RGB */
 	rgb_mode = MODE_RGB_P;

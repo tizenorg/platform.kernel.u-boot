@@ -1858,6 +1858,26 @@ static void setup_power_down_mode_registers(void)
 }
 
 #ifdef CONFIG_LCD
+
+void fimd_clk_set()
+{
+	struct s5pc110_clock *clk =
+		(struct s5pc110_clock *)samsung_get_base_clock();
+	unsigned int cfg = 0;
+
+	/* set lcd src clock */
+	cfg = readl(&clk->src1);
+	cfg &= ~(0xf << 20);
+	cfg |= (0x6 << 20);
+	writel(cfg, &clk->src1);
+
+	/* set fimd ratio */
+	cfg = readl(&clk->div1);
+	cfg &= ~(0xf << 20);
+	cfg |= (0x2 << 20);
+	writel(cfg, &clk->div1);
+}
+
 #include "../../../drivers/video/s5p-spi.h"
 
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);

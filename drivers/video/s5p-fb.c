@@ -258,6 +258,7 @@ static void lcd_panel_on(vidinfo_t *vid)
 /* extern void init_onenand_ext2(void); */
 extern void init_panel_info(vidinfo_t *vid);
 extern int s5p_no_lcd_support(void);
+extern int fimd_clk_set(void);
 
 void lcd_ctrl_init(void *lcdbase)
 {
@@ -265,6 +266,8 @@ void lcd_ctrl_init(void *lcdbase)
 
 	if (s5p_no_lcd_support())
 		return;
+
+	fimd_clk_set();
 
 	s5pc_lcd_init_mem(lcdbase, &panel_info);
 

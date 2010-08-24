@@ -349,50 +349,37 @@ static void init_pmic_max8952(void)
 
 void fimd_clk_set()
 {
+	struct s5pc210_clock *clk =
+		(struct s5pc210_clock *)samsung_get_base_clock();
+
 	/* workaround */
-	unsigned long clk_gate_lcd = 0x1003c934;
-	unsigned long mpll_sel_addr = 0x10044200;
-	unsigned long clk_mux_addr = 0x10044400;
-	unsigned long clk_src_lcd = 0x1003c234;
-	unsigned long clk_div_lcd = 0x1003c534;
 	unsigned long display_ctrl = 0x10010210;
 	unsigned int cfg = 0;
 
+	/* LCD0_BLK FIFO S/W reset */
 	cfg = readl(display_ctrl);
 	cfg |= (1 << 9);
 	writel(cfg, display_ctrl);
 
 	cfg = 0;
 
+	/* FIMD of LBLK0 Bypass Selection */
 	cfg = readl(display_ctrl);
 	cfg &= ~(1 << 9);
 	cfg |= (1 << 1);
 	writel(cfg, display_ctrl);
 
-	cfg = 0;
-	cfg = readl(mpll_sel_addr);
-	cfg |= (1 << 8);
-	writel(cfg, mpll_sel_addr);
+	/* set lcd src clock */
+	cfg = readl(&clk->src_lcd0);
+	cfg &= ~(0xf);
+	cfg |= 0x6;
+	writel(cfg, &clk->src_lcd0);
 
-	cfg = 0;
-	cfg = readl(clk_mux_addr);
-	cfg |= (0x2 << 8);
-	writel(cfg, clk_mux_addr);
-
-	cfg = 0;
-	cfg = readl(clk_src_lcd);
-	cfg |= (0x6 << 0);
-	writel(cfg, clk_src_lcd);
-
-	cfg = 0;
-	cfg = readl(clk_div_lcd);
-	cfg |= (0x3 << 0);
-	writel(cfg, clk_div_lcd);
-
-	cfg = 0;
-	cfg = readl(clk_gate_lcd);
-	cfg |= (1 << 0);
-	writel(cfg, clk_gate_lcd);
+	/* set fimd ratio */
+	cfg = readl(&clk->div_lcd0);
+	cfg &= ~(0xf);
+	cfg |= 0x2;
+	writel(cfg, &clk->div_lcd0);
 }
 
 #include "../../../drivers/video/s5p-spi.h"
