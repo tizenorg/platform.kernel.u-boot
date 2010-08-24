@@ -617,7 +617,8 @@ int usb_board_init(void)
 }
 #endif
 
-void mmc_clk_set()
+#ifdef CONFIG_GENERIC_MMC
+static void mmc_clk_set(void)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
@@ -629,7 +630,6 @@ void mmc_clk_set()
 	writel(cfg, &clk->div_fsys1);
 }
 
-#ifdef CONFIG_GENERIC_MMC
 int s5p_no_mmc_support(void)
 {
 	return 0;
@@ -639,7 +639,11 @@ int board_mmc_init(bd_t *bis)
 {
 	int i;
 
-	/* Workaround: set the low to enable LDO_EN */
+	/*
+	 * Set the low to enable LDO_EN
+	 * But when you use the test board for eMMC booting
+	 * you should set it HIGH since it removes the inverter
+	 */
 	/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
 	gpio_direction_output(&gpio1->gpio_e3, 6, 0);
 
