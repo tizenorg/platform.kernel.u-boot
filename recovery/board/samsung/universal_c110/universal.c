@@ -176,7 +176,7 @@ static void check_hw_revision(void)
 		struct s5pc100_gpio *gpio =
 			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
 
-		board_rev = get_hw_revision(&gpio->gpio_j0, 0);
+		board_rev = get_hw_revision(&gpio->j0, 0);
 
 		/* C100 TickerTape */
 		if (board_rev == 3)
@@ -213,26 +213,26 @@ static void check_hw_revision(void)
 		 */
 
 		/* C110 Aquila */
-		if (gpio_get_value(&gpio->gpio_j1, 4) == 0) {
+		if (gpio_get_value(&gpio->j1, 4) == 0) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= J1_B2_BOARD;
 
-			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->gpio_j2, 6);
+			gpio_set_pull(&gpio->j2, 6, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->j2, 6);
 
 			/* Check board */
-			if (gpio_get_value(&gpio->gpio_h1, 2) == 0)
+			if (gpio_get_value(&gpio->h1, 2) == 0)
 				board_rev |= LIMO_UNIVERSAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_h3, 2) == 0)
+			if (gpio_get_value(&gpio->h3, 2) == 0)
 				board_rev |= LIMO_REAL_BOARD;
 
-			if (gpio_get_value(&gpio->gpio_j2, 6) == 1)
+			if (gpio_get_value(&gpio->j2, 6) == 1)
 				board_rev |= MEDIA_BOARD;
 
 			/* set gpio to default value. */
-			gpio_set_pull(&gpio->gpio_j2, 6, GPIO_PULL_DOWN);
-			gpio_direction_output(&gpio->gpio_j2, 6, 0);
+			gpio_set_pull(&gpio->j2, 6, GPIO_PULL_DOWN);
+			gpio_direction_output(&gpio->j2, 6, 0);
 		}
 
 		/* Workaround: C110 Aquila Rev0.6 */
@@ -242,14 +242,14 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Aquila Bamboo */
-		if (gpio_get_value(&gpio->gpio_j2, 0) == 1) {
+		if (gpio_get_value(&gpio->j2, 0) == 1) {
 			board = MACH_TYPE_AQUILA;
 			board_rev |= BAMBOO_BOARD;
 		}
 
 		/* C110 TickerTape */
-		if (gpio_get_value(&gpio->gpio_d1, 0) == 0 &&
-				gpio_get_value(&gpio->gpio_d1, 1) == 0)
+		if (gpio_get_value(&gpio->d1, 0) == 0 &&
+				gpio_get_value(&gpio->d1, 1) == 0)
 			board = MACH_TICKERTAPE;
 
 		/* WMG160 - GPH3[0:4] = 0x00 */
@@ -257,7 +257,7 @@ static void check_hw_revision(void)
 			int i, wmg160 = 1;
 
 			for (i = 0; i < 4; i++) {
-				if (gpio_get_value(&gpio->gpio_h3, i) != 0) {
+				if (gpio_get_value(&gpio->h3, i) != 0) {
 					wmg160 = 0;
 					break;
 				}
@@ -269,49 +269,49 @@ static void check_hw_revision(void)
 		}
 
 		/* C110 Geminus for rev0.0 */
-		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j1, 2);
-		if (gpio_get_value(&gpio->gpio_j1, 2) == 1) {
+		gpio_set_pull(&gpio->j1, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->j1, 2);
+		if (gpio_get_value(&gpio->j1, 2) == 1) {
 			board = MACH_GEMINUS;
 			if ((board_rev & ~BOARD_MASK) == 3)
 				board_rev &= ~0xff;
 		}
-		gpio_set_pull(&gpio->gpio_j1, 2, GPIO_PULL_DOWN);
-		gpio_direction_output(&gpio->gpio_j1, 2, 0);
+		gpio_set_pull(&gpio->j1, 2, GPIO_PULL_DOWN);
+		gpio_direction_output(&gpio->j1, 2, 0);
 
 		/* C110 Geminus for rev0.1 ~ */
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->gpio_j0, 6);
-		if (gpio_get_value(&gpio->gpio_j0, 6) == 1) {
+		gpio_set_pull(&gpio->j0, 6, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->j0, 6);
+		if (gpio_get_value(&gpio->j0, 6) == 1) {
 			board = MACH_GEMINUS;
 			hwrev3 = 7;
 		}
-		gpio_set_pull(&gpio->gpio_j0, 6, GPIO_PULL_DOWN);
+		gpio_set_pull(&gpio->j0, 6, GPIO_PULL_DOWN);
 
 		/* Kessler MP0_5[6] == 1 */
-		gpio_direction_input(&gpio->gpio_mp0_5, 6);
-		if (gpio_get_value(&gpio->gpio_mp0_5, 6) == 1) {
+		gpio_direction_input(&gpio->mp0_5, 6);
+		if (gpio_get_value(&gpio->mp0_5, 6) == 1) {
 			/* Cypress: Do this for cypress */
-			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->gpio_j2, 2);
-			if (gpio_get_value(&gpio->gpio_j2, 2) == 1) {
+			gpio_set_pull(&gpio->j2, 2, GPIO_PULL_NONE);
+			gpio_direction_input(&gpio->j2, 2);
+			if (gpio_get_value(&gpio->j2, 2) == 1) {
 				board = MACH_CYPRESS;
-				gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+				gpio_direction_output(&gpio->mp0_5, 6, 0);
 			} else {
 				board = MACH_TYPE_GONI;
 				board_rev |= KESSLER_BOARD;
 
 				/* Limo SDK MP0_5[4] == 1 */
-				gpio_direction_input(&gpio->gpio_mp0_5, 4);
-				if (gpio_get_value(&gpio->gpio_mp0_5, 4) == 1) {
+				gpio_direction_input(&gpio->mp0_5, 4);
+				if (gpio_get_value(&gpio->mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
 					board_rev |= SDK_BOARD;
 				}
 			}
-			gpio_set_pull(&gpio->gpio_j2, 2, GPIO_PULL_DOWN);
+			gpio_set_pull(&gpio->j2, 2, GPIO_PULL_DOWN);
 			hwrev3 = 7;
 		} else {
-			gpio_direction_output(&gpio->gpio_mp0_5, 6, 0);
+			gpio_direction_output(&gpio->mp0_5, 6, 0);
 			/* Goni S1 board detection */
 			if (board == MACH_TICKERTAPE) {
 				board = MACH_TYPE_GONI;
@@ -320,7 +320,7 @@ static void check_hw_revision(void)
 			}
 		}
 
-		board_rev |= get_hw_revision(&gpio->gpio_j0, hwrev3);
+		board_rev |= get_hw_revision(&gpio->j0, hwrev3);
 	}
 
 	/* Set machine id */
@@ -407,14 +407,14 @@ static int check_keypad(void)
 		col_num = 3;
 
 		/* Set GPH2[2:0] to KP_COL[2:0] */
-		gpio_cfg_pin(&gpio->gpio_h2, 0, 0x3);
-		gpio_cfg_pin(&gpio->gpio_h2, 1, 0x3);
-		gpio_cfg_pin(&gpio->gpio_h2, 2, 0x3);
+		gpio_cfg_pin(&gpio->h2, 0, 0x3);
+		gpio_cfg_pin(&gpio->h2, 1, 0x3);
+		gpio_cfg_pin(&gpio->h2, 2, 0x3);
 
 		/* Set GPH3[2:0] to KP_ROW[2:0] */
-		gpio_cfg_pin(&gpio->gpio_h3, 0, 0x3);
-		gpio_cfg_pin(&gpio->gpio_h3, 1, 0x3);
-		gpio_cfg_pin(&gpio->gpio_h3, 2, 0x3);
+		gpio_cfg_pin(&gpio->h3, 0, 0x3);
+		gpio_cfg_pin(&gpio->h3, 1, 0x3);
+		gpio_cfg_pin(&gpio->h3, 2, 0x3);
 
 		reg = S5PC100_KEYPAD_BASE;
 		col_mask = S5PC1XX_KEYIFCOL_MASK;
@@ -436,13 +436,13 @@ static int check_keypad(void)
 
 		for (i = 0; i < row_num; i++) {
 			/* Set GPH3[3:0] to KP_ROW[3:0] */
-			gpio_cfg_pin(&gpio->gpio_h3, i, 0x3);
-			gpio_set_pull(&gpio->gpio_h3, i, GPIO_PULL_UP);
+			gpio_cfg_pin(&gpio->h3, i, 0x3);
+			gpio_set_pull(&gpio->h3, i, GPIO_PULL_UP);
 		}
 
 		for (i = 0; i < col_num; i++)
 			/* Set GPH2[3:0] to KP_COL[3:0] */
-			gpio_cfg_pin(&gpio->gpio_h2, i, 0x3);
+			gpio_cfg_pin(&gpio->h2, i, 0x3);
 
 		reg = S5PC110_KEYPAD_BASE;
 		col_mask = S5PC110_KEYIFCOLEN_MASK;
@@ -649,7 +649,7 @@ int board_update_image(u32 *buf, u32 len)
 
 void board_recovery_init(void)
 {
-	struct s5pc110_gpio *gpio_base =
+	struct s5pc110_gpio *gpio =
 		(struct s5pc110_gpio *) S5PC110_GPIO_BASE;
 
 	/* basic arch cpu dependent setup */
@@ -661,10 +661,10 @@ void board_recovery_init(void)
 	show_hw_revision();
 
 	/* set GPIO to enable UART2 */
-	gpio_cfg_pin(&gpio_base->gpio_a1, 0, 0x2);
-	gpio_cfg_pin(&gpio_base->gpio_a1, 1, 0x2);
+	gpio_cfg_pin(&gpio->a1, 0, 0x2);
+	gpio_cfg_pin(&gpio->a1, 1, 0x2);
 
 	/* UART_SEL MP0_5[7] at S5PC110 */
-	gpio_direction_output(&gpio_base->gpio_mp0_5, 7, 0x1);
-	gpio_set_pull(&gpio_base->gpio_mp0_5, 7, GPIO_PULL_DOWN);
+	gpio_direction_output(&gpio->mp0_5, 7, 0x1);
+	gpio_set_pull(&gpio->mp0_5, 7, GPIO_PULL_DOWN);
 }

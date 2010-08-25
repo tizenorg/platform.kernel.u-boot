@@ -33,50 +33,50 @@ struct s5p_gpio_bank {
 };
 
 struct s5pc210_gpio_part1 {
-	struct s5p_gpio_bank gpio_a0;
-	struct s5p_gpio_bank gpio_a1;
-	struct s5p_gpio_bank gpio_b;
-	struct s5p_gpio_bank gpio_c0;
-	struct s5p_gpio_bank gpio_c1;
-	struct s5p_gpio_bank gpio_d0;
-	struct s5p_gpio_bank gpio_d1;
-	struct s5p_gpio_bank gpio_e0;
-	struct s5p_gpio_bank gpio_e1;
-	struct s5p_gpio_bank gpio_e2;
-	struct s5p_gpio_bank gpio_e3;
-	struct s5p_gpio_bank gpio_e4;
-	struct s5p_gpio_bank gpio_f0;
-	struct s5p_gpio_bank gpio_f1;
-	struct s5p_gpio_bank gpio_f2;
-	struct s5p_gpio_bank gpio_f3;
+	struct s5p_gpio_bank a0;
+	struct s5p_gpio_bank a1;
+	struct s5p_gpio_bank b;
+	struct s5p_gpio_bank c0;
+	struct s5p_gpio_bank c1;
+	struct s5p_gpio_bank d0;
+	struct s5p_gpio_bank d1;
+	struct s5p_gpio_bank e0;
+	struct s5p_gpio_bank e1;
+	struct s5p_gpio_bank e2;
+	struct s5p_gpio_bank e3;
+	struct s5p_gpio_bank e4;
+	struct s5p_gpio_bank f0;
+	struct s5p_gpio_bank f1;
+	struct s5p_gpio_bank f2;
+	struct s5p_gpio_bank f3;
 };
 
 struct s5pc210_gpio_part2 {
-	struct s5p_gpio_bank gpio_j0;
-	struct s5p_gpio_bank gpio_j1;
-	struct s5p_gpio_bank gpio_k0;
-	struct s5p_gpio_bank gpio_k1;
-	struct s5p_gpio_bank gpio_k2;
-	struct s5p_gpio_bank gpio_k3;
-	struct s5p_gpio_bank gpio_l0;
-	struct s5p_gpio_bank gpio_l1;
-	struct s5p_gpio_bank gpio_l2;
-	struct s5p_gpio_bank gpio_y0;
-	struct s5p_gpio_bank gpio_y1;
-	struct s5p_gpio_bank gpio_y2;
-	struct s5p_gpio_bank gpio_y3;
-	struct s5p_gpio_bank gpio_y4;
-	struct s5p_gpio_bank gpio_y5;
-	struct s5p_gpio_bank gpio_y6;
+	struct s5p_gpio_bank j0;
+	struct s5p_gpio_bank j1;
+	struct s5p_gpio_bank k0;
+	struct s5p_gpio_bank k1;
+	struct s5p_gpio_bank k2;
+	struct s5p_gpio_bank k3;
+	struct s5p_gpio_bank l0;
+	struct s5p_gpio_bank l1;
+	struct s5p_gpio_bank l2;
+	struct s5p_gpio_bank y0;
+	struct s5p_gpio_bank y1;
+	struct s5p_gpio_bank y2;
+	struct s5p_gpio_bank y3;
+	struct s5p_gpio_bank y4;
+	struct s5p_gpio_bank y5;
+	struct s5p_gpio_bank y6;
 	struct s5p_gpio_bank res1[50];
-	struct s5p_gpio_bank gpio_x0;
-	struct s5p_gpio_bank gpio_x1;
-	struct s5p_gpio_bank gpio_x2;
-	struct s5p_gpio_bank gpio_x3;
+	struct s5p_gpio_bank x0;
+	struct s5p_gpio_bank x1;
+	struct s5p_gpio_bank x2;
+	struct s5p_gpio_bank x3;
 };
 
 struct s5pc210_gpio_part3 {
-	struct s5p_gpio_bank gpio_z;
+	struct s5p_gpio_bank z;
 };
 
 /* functions */

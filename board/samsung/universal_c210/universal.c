@@ -147,17 +147,17 @@ void i2c_init_board(void)
 
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
-	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->gpio_d1;
-	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->gpio_d1;
-	i2c_gpio[I2C_3].bus->gpio_base = (unsigned int)&gpio1->gpio_a1;
-	i2c_gpio[I2C_4].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
-	i2c_gpio[I2C_5].bus->gpio_base = (unsigned int)&gpio1->gpio_b;
-	i2c_gpio[I2C_6].bus->gpio_base = (unsigned int)&gpio1->gpio_c1;
-	i2c_gpio[I2C_7].bus->gpio_base = (unsigned int)&gpio1->gpio_d0;
-	i2c_gpio[I2C_9].bus->gpio_base = (unsigned int)&gpio2->gpio_y4;
-	i2c_gpio[I2C_10].bus->gpio_base = (unsigned int)&gpio1->gpio_e1;
-	i2c_gpio[I2C_12].bus->gpio_base = (unsigned int)&gpio1->gpio_e4;
-	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->gpio_e4;
+	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
+	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->d1;
+	i2c_gpio[I2C_3].bus->gpio_base = (unsigned int)&gpio1->a1;
+	i2c_gpio[I2C_4].bus->gpio_base = (unsigned int)&gpio1->b;
+	i2c_gpio[I2C_5].bus->gpio_base = (unsigned int)&gpio1->b;
+	i2c_gpio[I2C_6].bus->gpio_base = (unsigned int)&gpio1->c1;
+	i2c_gpio[I2C_7].bus->gpio_base = (unsigned int)&gpio1->d0;
+	i2c_gpio[I2C_9].bus->gpio_base = (unsigned int)&gpio2->y4;
+	i2c_gpio[I2C_10].bus->gpio_base = (unsigned int)&gpio1->e1;
+	i2c_gpio[I2C_12].bus->gpio_base = (unsigned int)&gpio1->e4;
+	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
 }
@@ -322,9 +322,9 @@ static void init_pmic_max8952(void)
 		return;
 
 	/* VARM_OUTPUT_SEL_A / VID_0 / XEINT_3 (GPX0[3]) = default 0 */
-	gpio_direction_output(&gpio2->gpio_x0, 3, 0);
+	gpio_direction_output(&gpio2->x0, 3, 0);
 	/* VARM_OUTPUT_SEL_B / VID_1 / XEINT_4 (GPX0[4]) = default 0 */
-	gpio_direction_output(&gpio2->gpio_x0, 4, 0);
+	gpio_direction_output(&gpio2->x0, 4, 0);
 
 	/* MODE0: 1.25V */
 	val[0] = 48;
@@ -394,52 +394,52 @@ void lcd_cfg_gpio(void)
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio1->gpio_f0, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio1->gpio_f1, i, GPIO_FUNC(2));
-		gpio_cfg_pin(&gpio1->gpio_f2, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio1->f0, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio1->f1, i, GPIO_FUNC(2));
+		gpio_cfg_pin(&gpio1->f2, i, GPIO_FUNC(2));
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio1->gpio_f0, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio1->gpio_f1, i, GPIO_PULL_NONE);
-		gpio_set_pull(&gpio1->gpio_f2, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->f0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->f1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->f2, i, GPIO_PULL_NONE);
 
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio1->gpio_f0, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio1->gpio_f0, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio1->gpio_f1, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio1->gpio_f1, i, GPIO_DRV_SLOW);
-		gpio_set_drv(&gpio1->gpio_f2, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio1->gpio_f2, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->f0, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->f0, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->f1, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->f1, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->f2, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->f2, i, GPIO_DRV_SLOW);
 	}
 
 	for (i = 0; i < f3_end; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
-		gpio_cfg_pin(&gpio1->gpio_f3, i, GPIO_PULL_UP);
+		gpio_cfg_pin(&gpio1->f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
-		gpio_set_pull(&gpio1->gpio_f3, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio1->f3, i, GPIO_PULL_NONE);
 		/* drive strength to max (24bit) */
-		gpio_set_drv(&gpio1->gpio_f3, i, GPIO_DRV_4X);
-		gpio_set_rate(&gpio1->gpio_f3, i, GPIO_DRV_SLOW);
+		gpio_set_drv(&gpio1->f3, i, GPIO_DRV_4X);
+		gpio_set_rate(&gpio1->f3, i, GPIO_DRV_SLOW);
 	}
 	/* display output path selection (only [1:0] valid) */
 	//writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&gpio2->gpio_y4, 5, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y4, 5, GPIO_OUTPUT);
 
 	/*
  	 * gpio pad configuration for
  	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
  	 */
 
-	gpio_cfg_pin(&gpio2->gpio_y4, 3, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio2->gpio_y3, 1, GPIO_OUTPUT);
-	gpio_cfg_pin(&gpio2->gpio_y3, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y3, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y3, 3, GPIO_OUTPUT);
 
-	spi_pd.cs_bank = &gpio2->gpio_y4;
+	spi_pd.cs_bank = &gpio2->y4;
 	spi_pd.cs_num = 3;
-	spi_pd.clk_bank = &gpio2->gpio_y3;
+	spi_pd.clk_bank = &gpio2->y3;
 	spi_pd.clk_num = 1;
-	spi_pd.si_bank = &gpio2->gpio_y3;
+	spi_pd.si_bank = &gpio2->y3;
 	spi_pd.si_num = 3;
 
 	ld9040_set_platform_data(&spi_pd);
@@ -449,11 +449,11 @@ void lcd_cfg_gpio(void)
 
 void reset_lcd(void)
 {
-	gpio_set_value(&gpio2->gpio_y4, 5, 1);
+	gpio_set_value(&gpio2->y4, 5, 1);
 	udelay(10000);
-	gpio_set_value(&gpio2->gpio_y4, 5, 0);
+	gpio_set_value(&gpio2->y4, 5, 0);
 	udelay(10000);
-	gpio_set_value(&gpio2->gpio_y4, 5, 1);
+	gpio_set_value(&gpio2->y4, 5, 1);
 	udelay(100);
 }
 
@@ -645,7 +645,7 @@ int board_mmc_init(bd_t *bis)
 	 * you should set it HIGH since it removes the inverter
 	 */
 	/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
-	gpio_direction_output(&gpio1->gpio_e3, 6, 0);
+	gpio_direction_output(&gpio1->e3, 6, 0);
 
 	mmc_clk_set();
 	/*
@@ -668,20 +668,20 @@ int board_mmc_init(bd_t *bis)
 		if (i == 2)
 			continue;
 		/* GPK0[0:6] special function 2 */
-		gpio_cfg_pin(&gpio2->gpio_k0, i, 0x2);
+		gpio_cfg_pin(&gpio2->k0, i, 0x2);
 		/* GPK0[0:6] pull disable */
-		gpio_set_pull(&gpio2->gpio_k0, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio2->k0, i, GPIO_PULL_NONE);
 		/* GPK0[0:6] drv 4x */
-		gpio_set_drv(&gpio2->gpio_k0, i, GPIO_DRV_4X);
+		gpio_set_drv(&gpio2->k0, i, GPIO_DRV_4X);
 	}
 
 	for (i = 3; i < 7; i++) {
 		/* GPK1[3:6] special function 3 */
-		gpio_cfg_pin(&gpio2->gpio_k1, i, 0x3);
+		gpio_cfg_pin(&gpio2->k1, i, 0x3);
 		/* GPK1[3:6] pull disable */
-		gpio_set_pull(&gpio2->gpio_k1, i, GPIO_PULL_NONE);
+		gpio_set_pull(&gpio2->k1, i, GPIO_PULL_NONE);
 		/* GPK1[3:6] drv 4x */
-		gpio_set_drv(&gpio2->gpio_k1, i, GPIO_DRV_4X);
+		gpio_set_drv(&gpio2->k1, i, GPIO_DRV_4X);
 	}
 
 	return s5p_mmc_init(0, 8);
