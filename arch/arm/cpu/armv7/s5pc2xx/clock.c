@@ -131,6 +131,10 @@ static unsigned long s5pc210_get_pwm_clk(void)
 	unsigned int sel;
 	unsigned int ratio;
 
+	/*
+	 * CLK_SRC_PERIL0
+	 * PWM_SEL [27:24]
+	 */
 	sel = readl(&clk->src_peril0);
 	sel = (sel >> 24) & 0xf;
 
@@ -143,6 +147,10 @@ static unsigned long s5pc210_get_pwm_clk(void)
 	else
 		return 0;
 
+	/*
+	 * CLK_DIV_PERIL3
+	 * PWM_RATIO [3:0]
+	 */
 	ratio = readl(&clk->div_peril3);
 	ratio = ratio & 0xf;
 
@@ -160,6 +168,15 @@ static unsigned long s5pc210_get_uart_clk(int dev_index)
 	unsigned int sel;
 	unsigned int ratio;
 
+	/*
+	 * CLK_SRC_PERIL0
+	 * UART0_SEL [3:0]
+	 * UART1_SEL [7:4]
+	 * UART2_SEL [8:11]
+	 * UART3_SEL [12:15]
+	 * UART4_SEL [16:19]
+	 * UART5_SEL [23:20]
+	 */
 	sel = readl(&clk->src_peril0);
 	sel = (sel >> (dev_index << 2)) & 0xf;
 
@@ -172,6 +189,15 @@ static unsigned long s5pc210_get_uart_clk(int dev_index)
 	else
 		return 0;
 
+	/*
+	 * CLK_DIV_PERIL0
+	 * UART0_RATIO [3:0]
+	 * UART1_RATIO [7:4]
+	 * UART2_RATIO [8:11]
+	 * UART3_RATIO [12:15]
+	 * UART4_RATIO [16:19]
+	 * UART5_RATIO [23:20]
+	 */
 	ratio = readl(&clk->div_peril0);
 	ratio = (ratio >> (dev_index << 2)) & 0xf;
 
@@ -189,6 +215,10 @@ static unsigned long s5pc210_get_lcd_clk(void)
 	unsigned int sel;
 	unsigned int ratio;
 
+	/*
+	 * CLK_SRC_LCD0
+	 * FIMD0_SEL [3:0]
+	 */
 	sel = readl(&clk->src_lcd0);
 	sel = sel & 0xf;
 
@@ -201,6 +231,10 @@ static unsigned long s5pc210_get_lcd_clk(void)
 	else
 		return 0;
 
+	/*
+	 * CLK_DIV_LCD0
+	 * FIMC0_RATIO [3:0]
+	 */
 	ratio = readl(&clk->div_lcd0);
 	ratio = ratio & 0xf;
 
