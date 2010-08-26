@@ -411,7 +411,7 @@ static void init_pmic_max8952(void)
 	/* RAMP: As Fast As Possible: Default: Do Nothing */
 }
 
-void fimd_clk_set()
+void fimd_clk_set(void)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
