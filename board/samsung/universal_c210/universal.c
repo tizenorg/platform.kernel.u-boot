@@ -798,18 +798,6 @@ int usb_board_init(void)
 #endif
 
 #ifdef CONFIG_GENERIC_MMC
-static void mmc_clk_set(void)
-{
-	struct s5pc210_clock *clk =
-		(struct s5pc210_clock *)samsung_get_base_clock();
-	unsigned int cfg;
-
-	cfg = readl(&clk->div_fsys1);
-	cfg &= ~(0xff << 8);
-	cfg |= (0x1f << 8); /* MMC0_PRE_RATIO is 32 */
-	writel(cfg, &clk->div_fsys1);
-}
-
 int s5p_no_mmc_support(void)
 {
 	return 0;
@@ -827,7 +815,6 @@ int board_mmc_init(bd_t *bis)
 	/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
 	gpio_direction_output(&gpio1->e3, 6, 0);
 
-	mmc_clk_set();
 	/*
 	 * eMMC GPIO:
 	 * SDR 8-bit@48MHz at MMC0

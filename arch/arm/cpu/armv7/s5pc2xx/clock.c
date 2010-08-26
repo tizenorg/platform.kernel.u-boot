@@ -249,6 +249,7 @@ static void s5pc210_set_mmc_clk(int dev_index, unsigned int div)
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
 	unsigned int addr;
+	unsigned int val;
 
 	/*
 	 * CLK_DIV_FSYS1
@@ -263,7 +264,10 @@ static void s5pc210_set_mmc_clk(int dev_index, unsigned int div)
 		dev_index -= 2;
 	}
 
-	writel((div & 0xff) << ((dev_index << 4) + 8), addr);
+	val = readl(addr);
+	val &= ~(0xff << ((dev_index << 4) + 8));
+	val |= (div & 0xff) << ((dev_index << 4) + 8);
+	writel(val, addr);
 }
 
 void s5p_clock_init(void)
