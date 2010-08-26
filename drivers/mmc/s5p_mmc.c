@@ -293,7 +293,7 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	writew(clk, &host->reg->clkcon);
 
 	if (set_mmc_clk)
-		set_mmc_clk(0, div);
+		set_mmc_clk(host->dev_index, div);
 
 	/* Wait max 10 ms */
 	timeout = 10;
@@ -481,6 +481,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 	mmc->f_min = 400000;
 	mmc->f_max = 52000000;
 
+	mmc_host[dev_index].dev_index = dev_index;
 	mmc_host[dev_index].clock = 0;
 	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
 	mmc_register(mmc);
