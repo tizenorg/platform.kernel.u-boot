@@ -30,6 +30,7 @@
 #define CONFIG_SYS_CLK_FREQ_C210	24000000
 #endif
 
+void (*set_mmc_clk)(int dev_index, unsigned int div);
 unsigned long (*get_lcd_clk)(void);
 unsigned long (*get_uart_clk)(int dev_index);
 unsigned long (*get_pwm_clk)(void);
@@ -208,6 +209,29 @@ static unsigned long s5pc210_get_lcd_clk(void)
 	return pclk;
 }
 
+/* s5pc210: set the mmc clock */
+static void s5pc210_set_mmc_clk(int dev_index, unsigned int div)
+{
+	struct s5pc210_clock *clk =
+		(struct s5pc210_clock *)samsung_get_base_clock();
+	unsigned int addr;
+
+	/*
+	 * CLK_DIV_FSYS1
+	 * MMC0_PRE_RATIO [15:8], MMC1_PRE_RATIO [31:24]
+	 * CLK_DIV_FSYS2
+	 * MMC2_PRE_RATIO [15:8], MMC3_PRE_RATIO [31:24]
+	 */
+	if (dev_index < 2) {
+		addr = (unsigned int)&clk->div_fsys1;
+	} else {
+		addr = (unsigned int)&clk->div_fsys2;
+		dev_index -= 2;
+	}
+
+	writel((div & 0xff) << ((dev_index << 4) + 8), addr);
+}
+
 void s5p_clock_init(void)
 {
 	if (cpu_is_s5pc210()) {
@@ -216,5 +240,6 @@ void s5p_clock_init(void)
 		get_uart_clk = s5pc210_get_uart_clk;
 		get_pwm_clk = s5pc210_get_pwm_clk;
 		get_lcd_clk = s5pc210_get_lcd_clk;
+		set_mmc_clk = s5pc210_set_mmc_clk;
 	}
 }
