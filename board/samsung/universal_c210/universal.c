@@ -26,10 +26,11 @@
 #include <i2c.h>
 #include <lcd.h>
 #include <asm/io.h>
-#include <asm/arch/clock.h>
 #include <asm/arch/adc.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
+#include <asm/arch/power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -143,6 +144,7 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 };
 
 static void check_battery(int mode);
+static void check_micro_usb(int intr);
 
 void i2c_init_board(void)
 {
@@ -164,6 +166,8 @@ void i2c_init_board(void)
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
 
+	/* Reset on fsa9480 early */
+	check_micro_usb(1);
 	/* Reset on max17040 early */
 	if (battery_soc == 0)
 		check_battery(1);
@@ -269,6 +273,111 @@ static void check_battery(int mode)
 		printf("battery:\t%d%%\n", val[0]);
 		battery_soc = val[0];
 	}
+}
+
+static int fsa9480_probe(void)
+{
+	unsigned char addr = 0x25;
+
+	i2c_set_bus_num(I2C_10);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found fsa9480\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static void check_micro_usb(int intr)
+{
+	unsigned char addr;
+	unsigned char val[2];
+	static int started_charging_once = 0;
+	char *path;
+
+	if (fsa9480_probe())
+		return;
+
+	addr = 0x25;	/* fsa9480 */
+
+	/* Clear Interrupt */
+	if (intr) {
+		i2c_read(addr, 0x03, 1, val, 2);
+		return;
+	}
+
+	/* Read Device Type 1 */
+	i2c_read(addr, 0x0a, 1, val, 1);
+
+#define FSA_DEV1_CHARGER	(1 << 6)
+#define FSA_DEV1_UART		(1 << 3)
+#define FSA_DEV1_USB		(1 << 2)
+#define FSA_DEV2_JIG_USB_OFF	(1 << 1)
+#define FSA_DEV2_JIG_USB_ON	(1 << 0)
+
+#if 0
+	/* disable the charger related feature */
+	/*
+	 * If USB, use default 475mA
+	 * If Charger, use 600mA and go to charge mode
+	 */
+	if ((val[0] & FSA_DEV1_CHARGER) && !started_charging_once) {
+		started_charging_once = 1;
+
+		/* If it's full, do not charge. */
+		if (battery_soc < 100)
+			into_charge_mode();
+		else
+			charger_en(0);
+	} else if (val[0] & FSA_DEV1_USB) {
+		if (battery_soc < 100)
+			charger_en(475); /* enable charger and keep booting */
+		else
+			charger_en(0);
+	}
+#endif
+
+	/* If reset status is watchdog reset then skip it */
+	if (get_reset_status() != WDTRESET) {
+		/* If Factory Mode is Boot ON-USB, go to download mode */
+		i2c_read(addr, 0x07, 1, val, 1);
+
+#define FSA_ADC_FAC_USB_OFF	0x18
+#define FSA_ADC_FAC_USB_ON	0x19
+#define FSA_ADC_FAC_UART	0x1d
+
+		if (val[0] == FSA_ADC_FAC_USB_ON ||
+			val[0] == FSA_ADC_FAC_USB_OFF)
+			setenv("bootcmd", "usbdown");
+	}
+
+	path = getenv("usb");
+
+	if (!strncmp(path, "cp", 2))
+		run_command("microusb cp", 0);
+}
+
+static void micro_usb_switch(int path)
+{
+	unsigned char addr;
+	unsigned char val[2];
+
+	if (fsa9480_probe())
+		return;
+
+	addr = 0x25;		/* fsa9480 */
+
+	if (path)
+		val[0] = 0x90;	/* VAUDIO */
+	else
+		val[0] = (1 << 5) | (1 << 2);	/* DHOST */
+
+	i2c_write(addr, 0x13, 1, val, 1);	/* MANSW1 */
+
+	i2c_read(addr, 0x2, 1, val, 1);
+	val[0] &= ~(1 << 2);			/* Manual switching */
+	i2c_write(addr, 0x2, 1, val, 1);
 }
 
 #define LP3974_REG_ONOFF1	0x11
@@ -671,6 +780,9 @@ int misc_init_r(void)
 	/* check max17040 */
 	check_battery(0);
 
+	/* check fsa9480 */
+	check_micro_usb(0);
+
 	return 0;
 }
 #endif
@@ -898,3 +1010,37 @@ U_BOOT_CMD(
 );
 #endif
 
+#ifdef CONFIG_CMD_DEVICE_POWER
+static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	switch (argc) {
+	case 2:
+		if (strncmp(argv[1], "cp", 2) == 0) {
+			micro_usb_switch(1);
+			pmic_ldo_control(0, 0, 2, 1);
+			setenv("usb", "cp");
+		} else if (strncmp(argv[1], "ap", 2) == 0) {
+			micro_usb_switch(0);
+			pmic_ldo_control(0, 0, 2, 0);
+			setenv("usb", "ap");
+		}
+		break;
+	default:
+		cmd_usage(cmdtp);
+		return 1;
+	}
+
+	saveenv();
+
+	printf("USB Path is set to %s\n", getenv("usb"));
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	microusb,		CONFIG_SYS_MAXARGS,	1, do_microusb,
+	"Micro USB Switch",
+	"cp - switch to CP\n"
+	"microusb ap - switch to AP\n"
+);
+#endif
