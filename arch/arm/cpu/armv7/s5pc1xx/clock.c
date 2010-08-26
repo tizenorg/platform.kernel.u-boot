@@ -38,6 +38,7 @@
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 #endif
 
+void (*set_mmc_clk)(int dev_index, unsigned int div);
 unsigned long (*get_lcd_clk)(void);
 unsigned long (*get_uart_clk)(int dev_index);
 unsigned long (*get_pwm_clk)(void);
@@ -359,4 +360,5 @@ void s5p_clock_init(void)
 	}
 	get_uart_clk = s5pc1xx_get_uart_clk;
 	get_pwm_clk = s5pc1xx_get_pwm_clk;
+	set_mmc_clk = NULL;
 }
