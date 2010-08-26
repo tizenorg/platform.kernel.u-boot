@@ -207,6 +207,40 @@ static void check_auto_burn(void)
 	memset((void *)magic_base, 0, 2);
 }
 
+static int power_key_check(void)
+{
+	unsigned char addr, val[2];
+
+	addr = 0xCC >> 1;
+	i2c_set_bus_num(I2C_5);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found lp3974\n");
+		return 1;
+	}
+
+	/* power_key check */
+	i2c_read(addr, 0x00, 1, val, 1);
+	return (~val[0] & (1 << 6)) >> 6;
+}
+
+static void check_keypad(void)
+{
+	unsigned int val = 0;
+	unsigned int power_key, auto_download = 0;
+	unsigned int base = S5PC210_GPIO_PART2_BASE;
+
+	val = (~readl(&gpio2->x2.dat) & (1 << 1));
+
+	power_key = power_key_check();
+
+	if (power_key && (val && 0x2))
+		auto_download = 1;
+
+	if (auto_download)
+		setenv("bootcmd", "usbdown");
+}
+
 #define LP3974_REG_ONOFF1	0x11
 #define LP3974_REG_ONOFF2	0x12
 #define LP3974_REG_ONOFF3	0x13
@@ -602,6 +636,7 @@ int misc_init_r(void)
 	init_pmic_max8952();
 
 	check_hw_revision();
+	check_keypad();
 
 	return 0;
 }

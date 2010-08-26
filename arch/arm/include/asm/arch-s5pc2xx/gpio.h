@@ -68,7 +68,7 @@ struct s5pc210_gpio_part2 {
 	struct s5p_gpio_bank y4;
 	struct s5p_gpio_bank y5;
 	struct s5p_gpio_bank y6;
-	struct s5p_gpio_bank res1[50];
+	struct s5p_gpio_bank res1[80];
 	struct s5p_gpio_bank x0;
 	struct s5p_gpio_bank x1;
 	struct s5p_gpio_bank x2;
