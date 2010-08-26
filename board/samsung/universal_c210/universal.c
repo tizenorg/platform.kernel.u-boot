@@ -228,13 +228,12 @@ static void check_keypad(void)
 {
 	unsigned int val = 0;
 	unsigned int power_key, auto_download = 0;
-	unsigned int base = S5PC210_GPIO_PART2_BASE;
 
-	val = (~readl(&gpio2->x2.dat) & (1 << 1));
+	val = ~(gpio_get_value(&gpio2->x2, 1));
 
 	power_key = power_key_check();
 
-	if (power_key && (val && 0x2))
+	if (power_key && (val & 0x1))
 		auto_download = 1;
 
 	if (auto_download)
