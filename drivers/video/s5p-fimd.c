@@ -128,9 +128,9 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 
 static void s5pc_fimd_set_clock(void)
 {
-	unsigned int cfg = 0, div = 0, fimd_ratio = 0, temp = 0,
-		     remainder, remainder_div;
-	unsigned long pixel_clock, src_clock, max_clock, div64;
+	unsigned int cfg = 0, div = 0, remainder, remainder_div;
+	unsigned long pixel_clock, src_clock, max_clock;
+	u64 div64;
 
 	max_clock = 86 * 1000000;
 
@@ -159,7 +159,7 @@ static void s5pc_fimd_set_clock(void)
 	if (pixel_clock > max_clock)
 		pixel_clock = max_clock;
 
-	div64 = get_lcd_clk();
+	div64 = (u64)get_lcd_clk();
 
 	/* get quotient and remainder. */
 	remainder = do_div(div64, pixel_clock);
