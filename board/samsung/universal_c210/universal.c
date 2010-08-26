@@ -36,6 +36,7 @@ DECLARE_GLOBAL_DATA_PTR;
 static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
+static unsigned int battery_soc;
 static unsigned int board_rev;
 
 u32 get_board_rev(void)
@@ -141,6 +142,8 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 	{ .bus	= &i2c_13, },
 };
 
+static void check_battery(int mode);
+
 void i2c_init_board(void)
 {
 	int num_bus;
@@ -160,6 +163,10 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
+
+	/* Reset on max17040 early */
+	if (battery_soc == 0)
+		check_battery(1);
 }
 
 int board_init(void)
@@ -239,6 +246,30 @@ static void check_keypad(void)
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
+}
+
+static void check_battery(int mode)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+
+	i2c_set_bus_num(I2C_9);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max17040 fuel gauge\n");
+		return;
+	}
+
+	/* mode 0: check mode / 1: enable mode */
+	if (mode) {
+		val[0] = 0x54;
+		val[1] = 0x00;
+		i2c_write(addr, 0xfe, 1, val, 2);
+	} else {
+		i2c_read(addr, 0x04, 1, val, 1);
+		printf("battery:\t%d%%\n", val[0]);
+		battery_soc = val[0];
+	}
 }
 
 #define LP3974_REG_ONOFF1	0x11
@@ -637,6 +668,9 @@ int misc_init_r(void)
 
 	check_hw_revision();
 	check_keypad();
+
+	/* check max17040 */
+	check_battery(0);
 
 	return 0;
 }
