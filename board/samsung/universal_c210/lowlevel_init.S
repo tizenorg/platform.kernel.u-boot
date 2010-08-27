@@ -288,6 +288,11 @@ system_clock_init:
 	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3
 	str	r1, [r0, r2]
 
+	/* DSIM0[3]: 0, MDNIE0[2]: 0, MIE0[1]: 0 */
+	ldr	r1, =0xFFFFFFF1
+	ldr	r2, =0x0C934			@ CLK_GATE_IP_LCD0
+	str	r1, [r0, r2]
+
 	/* LCD1[5]: 0, G3D[3]: 0 */
 	ldr	r1, =0xFFFFFFD7
 	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
