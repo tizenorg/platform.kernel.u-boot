@@ -35,7 +35,7 @@ enum reset_status {
 #define RESET_WDT		(0x1 << 20)
 #define RESET_PIN		(0x1 << 16)
 
-static int get_reset_status(void)
+static unsigned int get_reset_status(void)
 {
 	unsigned int val;
 
@@ -50,7 +50,7 @@ static int get_reset_status(void)
 	else if (val & RESET_PIN)
 		return EXTRESET;
 
-	return -1;
+	return val;
 }
 #endif
 

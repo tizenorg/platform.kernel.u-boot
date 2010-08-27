@@ -783,8 +783,10 @@ static void check_reset_status(void)
 		puts("Watchdog Reset\n");
 		break;
 	case SWRESET:
-		puts("S/W Reset");
+		puts("S/W Reset\n");
 		break;
+	default:
+		printf("Unknown (0x%x)\n", status);
 	}
 }
 
