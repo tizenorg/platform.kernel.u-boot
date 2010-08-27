@@ -288,6 +288,11 @@ system_clock_init:
 	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3
 	str	r1, [r0, r2]
 
+	/* LCD1[5]: 0, G3D[3]: 0 */
+	ldr	r1, =0xFFFFFFD7
+	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
+	str	r1, [r0, r2]
+
 	/* PLL Setting */
 	ldr	r1, =0x1C20
 	ldr	r2, =0x14000			@ APLL_LOCK
