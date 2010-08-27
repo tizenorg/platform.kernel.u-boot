@@ -288,16 +288,6 @@ system_clock_init:
 	ldr	r2, =0x0C55C			@ CLK_DIV_PERIL3
 	str	r1, [r0, r2]
 
-	/* DSIM0[3]: 0, MDNIE0[2]: 0, MIE0[1]: 0 */
-	ldr	r1, =0xFFFFFFF1
-	ldr	r2, =0x0C934			@ CLK_GATE_IP_LCD0
-	str	r1, [r0, r2]
-
-	/* LCD1[5]: 0, G3D[3]: 0 */
-	ldr	r1, =0xFFFFFFD7
-	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
-	str	r1, [r0, r2]
-
 	/* PLL Setting */
 	ldr	r1, =0x1C20
 	ldr	r2, =0x14000			@ APLL_LOCK
@@ -338,6 +328,17 @@ system_clock_init:
 	ldr	r2, =0x0C120			@ VPLL_CON0
 	str	r1, [r0, r2]
 
+#ifndef CONFIG_PRELOADER
+	/* DSIM0[3]: 0, MDNIE0[2]: 0, MIE0[1]: 0 */
+	ldr	r1, =0xFFFFFFF1
+	ldr	r2, =0x0C934			@ CLK_GATE_IP_LCD0
+	str	r1, [r0, r2]
+
+	/* LCD1[5]: 0, G3D[3]: 0 */
+	ldr	r1, =0xFFFFFFD7
+	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
+	str	r1, [r0, r2]
+#endif
 	mov	pc, lr
 
 #ifndef CONFIG_PRELOADER
