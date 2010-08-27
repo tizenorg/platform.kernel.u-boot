@@ -766,9 +766,32 @@ static void check_hw_revision(void)
 	printf("HW Revision:\t0x%x\n", board_rev);
 }
 
+static void check_reset_status(void)
+{
+	int status = get_reset_status();
+
+	puts("Reset Status: ");
+
+	switch (status) {
+	case EXTRESET:
+		puts("Pin(Ext) Reset\n");
+		break;
+	case WARMRESET:
+		puts("Warm Reset\n");
+		break;
+	case WDTRESET:
+		puts("Watchdog Reset\n");
+		break;
+	case SWRESET:
+		puts("S/W Reset");
+		break;
+	}
+}
+
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
+	check_reset_status();
 	check_auto_burn();
 
 	init_pmic_lp3974();
