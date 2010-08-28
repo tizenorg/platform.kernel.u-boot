@@ -35,8 +35,10 @@ mem_ctrl_asm_init:
 	str	r1, [r0, r2]
 
 	ldr	r0, =S5PC210_MIU_BASE		@ 0x10600000
-	/* MIU_1BIT_INTERLEAVED */
+	/* MIU: 1BIT INTERLEAVED mode */
 	ldr	r1, =0x0000000C
+	/* MIU: 2BIT INTERLEAVED mode */
+	@ldr	r1, =0x2000150C
 	str	r1, [r0, #0x400]
 	ldr	r1, =0x40000000
 	str	r1, [r0, #0x808]
@@ -66,15 +68,15 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x0000008C
 	str	r1, [r0, #0x1C]			@ DMC_PHYCONTROL1
 	str	r1, [r6, #0x1C]			@ DMC_PHYCONTROL1
-	ldr	r1, =0x00000084
+	ldr	r2, =0x00000084
+	str	r2, [r0, #0x1C]			@ DMC_PHYCONTROL1
+	str	r2, [r6, #0x1C]			@ DMC_PHYCONTROL1
+	@ldr	r1, =0x0000008C
 	str	r1, [r0, #0x1C]			@ DMC_PHYCONTROL1
 	str	r1, [r6, #0x1C]			@ DMC_PHYCONTROL1
-	ldr	r1, =0x0000008C
-	str	r1, [r0, #0x1C]			@ DMC_PHYCONTROL1
-	str	r1, [r6, #0x1C]			@ DMC_PHYCONTROL1
-	ldr	r1, =0x00000084
-	str	r1, [r0, #0x1C]			@ DMC_PHYCONTROL1
-	str	r1, [r6, #0x1C]			@ DMC_PHYCONTROL1
+	@ldr	r2, =0x00000084
+	str	r2, [r0, #0x1C]			@ DMC_PHYCONTROL1
+	str	r2, [r6, #0x1C]			@ DMC_PHYCONTROL1
 
 	ldr	r1, =0x00000000
 	str	r1, [r0, #0x20]			@ DMC_PHYCONTROL2
@@ -84,13 +86,33 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x0FFF30DA
 	str	r1, [r0, #0x00]			@ DMC_CONCONTROL
 	str	r1, [r6, #0x00]			@ DMC_CONCONTROL
-	/* MemControl */
+	/*
+	 * MemControl
+	 * BL[22:20]		: 0x2 = 4 Memory Burst Length
+	 * NUM_CHIP[19:16]	: 0x0 = 1 chip
+	 * MEM_WIDTH[15:12]	: 0x2 = 32-bit
+	 * MEM_TYPE[11:8]	: 0x5 = LPDDR2-S4
+	 * DSREF_EN[5]		: 0x1 = Enable Dynamic Self Refresh
+	 * DPWRDN_TYPE[3:2]	: 0x0 = Active/precharge Power Down
+	 * DPWRDN_En[3:2]	: 0x1 = Enable Dynamic Power Down
+	 * CLK_STOP_EN[0]	: 0x1 = Stops during idle periods
+	 */
 	ldr	r1, =0x00202500
+	@ldr	r1, =0x00202523
 	str	r1, [r0, #0x04]			@ DMC_MEMCONTROL
 	str	r1, [r6, #0x04]			@ DMC_MEMCONTROL
+	/*
+	 * MemConfig0
+	 * CHIP_BASE[31:24]	: 0x20 for MIU
+	 * CHIP_MASK[23:16]	: 0xF0 = 256MiB
+	 * CHIP_MAP[15:12]	: 0x0 = Linear
+	 * CHIP_COL[11:8]	: 0x2 = 9 bits
+	 * CHIP_ROW[7:4]	: 0x2 = 14 bits
+	 * CHIP_ROW[3:0]	: 0x3 = 8 banks
+	 */
 	ldr	r1, =0x20f00223
 	str	r1, [r0, #0x08]			@ DMC_MEMCONFIG0
-	ldr	r1, =0x20f00223
+	@ldr	r1, =0x20f00223
 	str	r1, [r6, #0x08]			@ DMC_MEMCONFIG0
 	ldr	r1, =0xff000000
 	str	r1, [r0, #0x14]			@ DMC_PRECHCONFIG
