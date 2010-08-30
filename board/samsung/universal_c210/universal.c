@@ -705,7 +705,6 @@ void init_panel_info(vidinfo_t *vid)
 	vid->cfg_gpio = lcd_cfg_gpio;
 	vid->backlight_on = NULL;
 	vid->lcd_power_on = lcd_power_on;
-	vid->lcd_power_on = lcd_power_on;
 	vid->reset_lcd = reset_lcd;
 	vid->cfg_ldo = ld9040_cfg_ldo;
 	vid->enable_ldo = ld9040_enable_ldo;
