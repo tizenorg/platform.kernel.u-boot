@@ -560,7 +560,7 @@ extern void ld9040_set_platform_data(struct spi_platform_data *pd);
 
 struct spi_platform_data spi_pd;
 
-void lcd_cfg_gpio(void)
+static void lcd_cfg_gpio(void)
 {
 	unsigned int i, f3_end = 4;
 
@@ -619,7 +619,7 @@ void lcd_cfg_gpio(void)
 	return;
 }
 
-void reset_lcd(void)
+static void reset_lcd(void)
 {
 	gpio_set_value(&gpio2->y4, 5, 1);
 	udelay(10000);
@@ -629,7 +629,7 @@ void reset_lcd(void)
 	udelay(100);
 }
 
-void lcd_power_on(unsigned int onoff)
+static void lcd_power_on(unsigned int onoff)
 {
 	unsigned char addr;
 	unsigned char val[2];
@@ -658,6 +658,13 @@ void lcd_power_on(unsigned int onoff)
 		i2c_write(addr, LP3974_REG_LDO7, 1, val2, 1);
 		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	} else {
+		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+		val[0] &= ~(LP3974_LDO17);
+		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
+
+		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
+		val[0] &= ~(LP3974_LDO7);
+		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	}
 }
 
