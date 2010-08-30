@@ -446,10 +446,10 @@ static void init_pmic_lp3974(void)
 	 * default values and set as we want
 	 *
 	 * ONOFF1
-	 * Buck1 ON, Buck2 ON, Buck3 ON, Buck4 Off
+	 * Buck1 ON, Buck2 ON, Buck3 ON, Buck4 ON
 	 * LDO2 ON, LDO3 ON, LDO4 OFF, LDO5 ON
 	 */
-	val[0] = 0xED;
+	val[0] = 0xFD;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
 
 	/*
@@ -482,7 +482,6 @@ static void init_pmic_lp3974(void)
 	 */
 	val[0] = 0xFB;
 	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
-
 }
 
 static void init_pmic_max8952(void)
