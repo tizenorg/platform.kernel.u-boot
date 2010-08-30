@@ -493,11 +493,16 @@ static void init_pmic_max8952(void)
 	if (max8952_probe())
 		return;
 
-	/* VARM_OUTPUT_SEL_A / VID_0 / XEINT_3 (GPX0[3]) = default 0 */
-	gpio_direction_output(&gpio2->x0, 3, 0);
-	/* VARM_OUTPUT_SEL_B / VID_1 / XEINT_4 (GPX0[4]) = default 0 */
-	gpio_direction_output(&gpio2->x0, 4, 0);
+	/*
+	 * Note: use the default setting and configure pins high
+	 * to generate the 1.1V
+	 */
+	/* VARM_OUTPUT_SEL_A / VID_0 / XEINT_3 (GPX0[3]) = default 1 */
+	gpio_direction_output(&gpio2->x0, 3, 1);
+	/* VARM_OUTPUT_SEL_B / VID_1 / XEINT_4 (GPX0[4]) = default 1 */
+	gpio_direction_output(&gpio2->x0, 4, 1);
 
+#if 0
 	/* MODE0: 1.25V */
 	val[0] = 48;
 	i2c_write(addr, 0x00, 1, val, 1);
@@ -514,6 +519,7 @@ static void init_pmic_max8952(void)
 	/* CONTROL: Disable PULL_DOWN */
 	val[0] = 0;
 	i2c_write(addr, 0x04, 1, val, 1);
+#endif
 
 	/* SYNC: Do Nothing */
 	/* RAMP: As Fast As Possible: Default: Do Nothing */
