@@ -396,8 +396,8 @@ system_clock_init:
 	ldr	r2, =0x0C960			@ CLK_GATE_IP_PERIR
 	str	r1, [r0, r2]
 
-	/* LCD1[5]: 0, G3D[3]: 0 */
-	ldr	r1, =0xFFFFFFD7
+	/* LCD1[5], G3D[3], MFC[2], TV[1]		: 1101 0001 */
+	ldr	r1, =0xFFFFFFD1
 	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
 	str	r1, [r0, r2]
 #endif
