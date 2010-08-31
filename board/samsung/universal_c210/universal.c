@@ -773,12 +773,12 @@ static unsigned int get_hw_revision(void)
 {
 	int hwrev = 0, mode0, mode1;
 
-	run_command("pmic ldo 4 on", 0);
+	run_command("pmic ldo 8 on", 0);
 
 	mode0 = get_adc_value(1);		/* HWREV_MODE0 */
 	mode1 = get_adc_value(2);		/* HWREV_MODE1 */
 
-	run_command("pmic ldo 4 off", 0);
+	run_command("pmic ldo 8 off", 0);
 
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
 	if (IS_RANGE(mode0, 80, 100) && IS_RANGE(mode1, 80, 100))
