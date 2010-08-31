@@ -482,6 +482,25 @@ static void init_pmic_lp3974(void)
 	 */
 	val[0] = 0xFB;
 	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
+
+	val[0] = 0x0E; /* 1.1V @ DVSARM1(VINT) */
+	i2c_write(addr, 0x15, 1, val, 1);
+	val[0] = 0x0E; /* 1.1V @ DVSARM2(VINT) */
+	i2c_write(addr, 0x16, 1, val, 1);
+	val[0] = 0x0E; /* 1.1V @ DVSARM3(VINT) */
+	i2c_write(addr, 0x17, 1, val, 1);
+	val[0] = 0x0A; /* 1.0V @ DVSARM4(VINT) */
+	i2c_write(addr, 0x18, 1, val, 1);
+	val[0] = 0x12; /* 1.2V @ DVSINT1(VG3D) */
+	i2c_write(addr, 0x19, 1, val, 1);
+	val[0] = 0x0E; /* 1.1V @ DVSINT2(VG3D) */
+	i2c_write(addr, 0x1A, 1, val, 1);
+
+	/* Use DVSARM1 for VINT */
+	gpio_direction_output(&gpio2->x0, 5, 0);
+	gpio_direction_output(&gpio2->x0, 6, 0);
+	/* Use DVSINT2 for VG3D */
+	gpio_direction_output(&gpio1->e2, 0, 1);
 }
 
 static void init_pmic_max8952(void)
