@@ -444,21 +444,25 @@ static void init_pmic_lp3974(void)
 	 * Because the data sheet of LP3974 does NOT mention default
 	 * register values of ONOFF1~4 (ENABLE1~4), we ignore the given
 	 * default values and set as we want
-	 *
-	 * ONOFF1
-	 * Buck1 ON, Buck2 ON, Buck3 ON, Buck4 ON
-	 * LDO2 ON, LDO3 ON, LDO4 OFF, LDO5 ON
 	 */
-	val[0] = 0xFD;
-	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
+
+	/* Note: To remove USB detect warning, Turn off LDO 8 first */
 
 	/*
 	 * ONOFF2
-	 * LDO6 ON, LDO7 ON, LDO8 ON, LDO9 ON,
+	 * LDO6 ON, LDO7 ON, LDO8 OFF, LDO9 ON,
 	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
 	 */
-	val[0] = 0xF0;
+	val[0] = 0xD0;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
+
+	/*
+	 * ONOFF1
+	 * Buck1 ON, Buck2 ON, Buck3 ON, Buck4 ON
+	 * LDO2 ON, LDO3 OFF, LDO4 OFF, LDO5 ON
+	 */
+	val[0] = 0xF9;
+	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
 
 	/* LDO7: 1.8V */
 	val[0] = 0x02;
@@ -844,6 +848,7 @@ int misc_init_r(void)
 int usb_board_init(void)
 {
 #ifdef CONFIG_CMD_PMIC
+	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);
 #endif
 	return 0;
