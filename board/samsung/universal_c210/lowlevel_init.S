@@ -405,12 +405,23 @@ system_clock_init:
 
 #ifndef CONFIG_PRELOADER
 system_power_init:
-	ldr	r0, =S5PC210_POWER_BASE
+	ldr	r0, =S5PC210_POWER_BASE		@ 0x10020000
 
 	ldr	r2, =0x330C			@ PS_HOLD_CONTROL
 	ldr	r1, [r0, r2]
 	orr	r1, r1, #(0x3 << 8)		@ Data High, Output En
 	str	r1, [r0, r2]
+
+	/* Power Down */
+	add	r2, r0, #0x3000
+	@str	r5, [r2, #0xC00]		@ CAM_CONFIGURATION
+	str	r5, [r2, #0xC20]		@ TV_CONFIGURATION
+	str	r5, [r2, #0xC40]		@ MFC_CONFIGURATION
+	str	r5, [r2, #0xC60]		@ G3D_CONFIGURATION
+	str	r5, [r2, #0xCA0]		@ LCD1_CONFIGURATION
+	/* FIXME Don't turn off MAUDIO why??? */
+	@str	r5, [r2, #0xCC0]		@ MAUDIO_CONFIGURATION
+	str	r5, [r2, #0xCE0]		@ GPS_CONFIGURATION
 
 	mov	pc, lr
 #endif
