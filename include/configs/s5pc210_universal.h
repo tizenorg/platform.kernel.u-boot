@@ -75,7 +75,11 @@
  */
 #define CONFIG_SERIAL_MULTI	1
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC210 */
-#define CONFIG_SPI_GPIO          1	/* we use SERIAL 2 on S5PC210 */
+
+/* 
+ * spi gpio 
+ */
+#define CONFIG_SPI_GPIO		1
 
 /* MMC */
 #if 1

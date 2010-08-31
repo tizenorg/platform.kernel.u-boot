@@ -82,6 +82,11 @@
 #define CONFIG_SERIAL_MULTI	1
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC100 */
 
+/* 
+ * spi gpio 
+ */
+#define CONFIG_SPI_GPIO		1
+
 /* MMC */
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
