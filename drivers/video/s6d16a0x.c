@@ -25,8 +25,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
-#include "s5p-spi.h"
-
+#include <spi.h>
 /* these machine specific platform data would be setting at universal.c */
 struct spi_platform_data *s6d16a0x;
 
@@ -344,10 +343,10 @@ static const unsigned char SEQ_DISPOFF[] = {
 static void s6d16a0x_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
-		spi_write_byte(s6d16a0x, 0x0, address);
+		spi_gpio_write(s6d16a0x, 0x0, address);
 
 	if (command != COMMAND_ONLY)
-		spi_write_byte(s6d16a0x, 0x1, command);
+		spi_gpio_write(s6d16a0x, 0x1, command);
 }
 
 static void s6d16a0x_panel_send_sequence(const unsigned char *wbuf, unsigned int size_cmd)

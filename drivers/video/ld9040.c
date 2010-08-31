@@ -25,7 +25,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/gpio.h>
-#include "s5p-spi.h"
+#include <spi.h>
 
 /* these machine specific platform data would be setting at universal.c */
 struct spi_platform_data *ld9040;
@@ -287,10 +287,10 @@ static const unsigned char SEQ_EL_ON[] = {
 static void ld9040_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
-		spi_write_byte(ld9040, 0x0, address);
+		spi_gpio_write(ld9040, 0x0, address);
 
 	if (command != COMMAND_ONLY)
-		spi_write_byte(ld9040, 0x1, command);
+		spi_gpio_write(ld9040, 0x1, command);
 }
 
 static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int size_cmd)
@@ -316,7 +316,6 @@ void ld9040_cfg_ldo(void)
 	ld9040_panel_send_sequence(SEQ_GAMMA_SET1, ARRAY_SIZE(SEQ_GAMMA_SET1));
 	ld9040_panel_send_sequence(SEQ_GAMMA_CTRL, ARRAY_SIZE(SEQ_GAMMA_CTRL));
 	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
-	
 #endif
 
 #if 0

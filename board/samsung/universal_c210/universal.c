@@ -25,6 +25,7 @@
 #include <common.h>
 #include <i2c.h>
 #include <lcd.h>
+#include <spi.h>
 #include <asm/io.h>
 #include <asm/arch/adc.h>
 #include <asm/arch/clock.h>
@@ -581,8 +582,6 @@ void fimd_clk_set(void)
 	writel(cfg, &clk->div_lcd0);
 }
 
-#include "../../../drivers/video/s5p-spi.h"
-
 extern void ld9040_set_platform_data(struct spi_platform_data *pd);
 
 struct spi_platform_data spi_pd;
@@ -640,6 +639,10 @@ static void lcd_cfg_gpio(void)
 	spi_pd.clk_num = 1;
 	spi_pd.si_bank = &gpio2->y3;
 	spi_pd.si_num = 3;
+
+	spi_pd.mode = SPI_MODE_3;
+
+	spi_pd.cs_active = ACTIVE_LOW;
 
 	ld9040_set_platform_data(&spi_pd);
 

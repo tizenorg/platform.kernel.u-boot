@@ -40,6 +40,7 @@
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
+#include <spi.h>
 #include <bmp_layout.h>
 
 #include "animation_frames.h"
@@ -1877,8 +1878,6 @@ void fimd_clk_set()
 	cfg |= (0x2 << 20);
 	writel(cfg, &clk->div1);
 }
-
-#include "../../../drivers/video/s5p-spi.h"
 
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
 extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
