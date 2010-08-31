@@ -329,9 +329,71 @@ system_clock_init:
 	str	r1, [r0, r2]
 
 #ifndef CONFIG_PRELOADER
-	/* DSIM0[3]: 0, MDNIE0[2]: 0, MIE0[1]: 0 */
+	/*
+	 * SMMUJPEG[11], JPEG[6], CSIS1[5]		: 0111 1001
+	 * Turn off all
+	 */
+	ldr	r1, =0xFFF80000
+	ldr	r2, =0x0C920			@ CLK_GATE_IP_CAM
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFFC0
+	ldr	r2, =0x0C924			@ CLK_GATE_IP_VP
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFFE0
+	ldr	r2, =0x0C928			@ CLK_GATE_IP_MFC
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFFFC
+	ldr	r2, =0x0C92C			@ CLK_GATE_IP_G3D
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFC00
+	ldr	r2, =0x0C930			@ CLK_GATE_IP_IMAGE
+	str	r1, [r0, r2]
+
+	/* DSIM0[3], MDNIE0[2], MIE0[1]			: 0001 */
 	ldr	r1, =0xFFFFFFF1
 	ldr	r2, =0x0C934			@ CLK_GATE_IP_LCD0
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFFC0
+	ldr	r2, =0x0C938			@ CLK_GATE_IP_LCD1
+	str	r1, [r0, r2]
+
+	/*
+	 * SMMUPCIE[18], NFCON[16]			: 1111 1010
+	 * PCIE[14],  SATA[10]				: 1011 1011
+	 * SDMMC1[6], TSI[4],  SATAPHY[3], PCIEPHY[2]	: 1010 0011
+	 */
+	ldr	r1, =0xFFFABBA3
+	ldr	r2, =0x0C940			@ CLK_GATE_IP_FSYS
+	str	r1, [r0, r2]
+
+	/* Turn off all */
+	ldr	r1, =0xFFFFFFFC
+	ldr	r2, =0x0C94C			@ CLK_GATE_IP_GPS
+	str	r1, [r0, r2]
+
+	/*
+	 * MODEMIF[28], AC97[27], SPDIF[26], SLIMBUS[25]: 1110 0001
+	 * I2C2[8]					: 1111 1110
+	 */
+	ldr	r1, =0xE1FFFEFF
+	ldr	r2, =0x0C950			@ CLK_GATE_IP_PERIL
+	str	r1, [r0, r2]
+
+	/*
+	 * KEYIF[16]					: 1111 1110
+	 */
+	ldr	r1, =0xFFFEFFFF
+	ldr	r2, =0x0C960			@ CLK_GATE_IP_PERIR
 	str	r1, [r0, r2]
 
 	/* LCD1[5]: 0, G3D[3]: 0 */
