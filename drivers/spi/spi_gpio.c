@@ -42,9 +42,6 @@ static void spi_gpio_chipselect(struct spi_platform_data *spi,
 	/* set initial clock polarity */
 	if (cpol)
 		spi_gpio_set_sck(spi, spi->mode & SPI_CPOL);
-		//spi_gpio_set_sck(spi, cpol);
-//	else
-//		spi_gpio_set_sck(spi, !cpol);
 
 	/* SPI is normally active-low */
 	gpio_set_value(spi->cs_bank, spi->cs_num,
