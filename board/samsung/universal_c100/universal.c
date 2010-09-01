@@ -1960,6 +1960,7 @@ void lcd_cfg_gpio(void)
 		spi_pd.mode = SPI_MODE_3;
 
 		spi_pd.cs_active = ACTIVE_LOW;
+		spi_pd.word_len = 8;
 
 		if (board_is_sdk() && hwrevision(0))
 			s6d16a0x_set_platform_data(&spi_pd);
@@ -2003,6 +2004,7 @@ void lcd_cfg_gpio(void)
 		spi_pd.mode = SPI_MODE_3;
 
 		spi_pd.cs_active = ACTIVE_LOW;
+		spi_pd.word_len = 8;
 
 		/* these data would be sent to s6e63m0 lcd panel driver. */
 		s6e63m0_set_platform_data(&spi_pd);

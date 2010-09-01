@@ -51,17 +51,17 @@ static void spi_gpio_chipselect(struct spi_platform_data *spi,
 static void
 spi_gpio_tx_cpha0(struct spi_platform_data *spi,
 		unsigned int nsecs, unsigned int cpol,
-		char word, char bits)
+		unsigned int word, unsigned int bits)
 {
 	int i;
-	unsigned short data;
+	unsigned int data;
 
-	data = (word << 8) + bits;
+	data = (word << spi->word_len) + bits;
 
 	spi_gpio_chipselect(spi, cpol);
 
 	/* clock starts at inactive polarity */
-	for (i = PACKET_LEN; i >= 0; i--) {
+	for (i = spi->word_len; i >= 0; i--) {
 
 		/* data high or low */
 		if ((data >> i) & 0x1)
@@ -81,17 +81,17 @@ spi_gpio_tx_cpha0(struct spi_platform_data *spi,
 static void
 spi_gpio_tx_cpha1(struct spi_platform_data *spi,
 		unsigned int nsecs, unsigned int cpol,
-		char word, char bits)
+		unsigned int word, unsigned int bits)
 {
 	int i;
-	unsigned short data;
+	unsigned int data;
 
-	data = (word << 8) + bits;
+	data = (word << spi->word_len) + bits;
 
 	spi_gpio_chipselect(spi, cpol);
 
 	/* clock starts at inactive polarity */
-	for (i = PACKET_LEN; i >= 0; i--) {
+	for (i = spi->word_len; i >= 0; i--) {
 
 		/* setup MSB (to slave) on leading edge */
 		spi_gpio_set_sck(spi, !cpol);
@@ -110,31 +110,31 @@ spi_gpio_tx_cpha1(struct spi_platform_data *spi,
 }
 
 static void spi_gpio_tx_word_mode0(struct spi_platform_data *spi,
-		unsigned nsecs, char word, char bits)
+		unsigned int nsecs, unsigned int word, unsigned int bits)
 {
 	return spi_gpio_tx_cpha0(spi, nsecs, 0, word, bits);
 }
 
 static void spi_gpio_tx_word_mode1(struct spi_platform_data *spi,
-		unsigned nsecs, char word, char bits)
+		unsigned int nsecs, unsigned int word, unsigned int bits)
 {
 	return spi_gpio_tx_cpha1(spi, nsecs, 0, word, bits);
 }
 
 static void spi_gpio_tx_word_mode2(struct spi_platform_data *spi,
-		unsigned nsecs, char word, char bits)
+		unsigned int nsecs, unsigned int word, unsigned int bits)
 {
 	return spi_gpio_tx_cpha0(spi, nsecs, 1, word, bits);
 }
 
 static void spi_gpio_tx_word_mode3(struct spi_platform_data *spi,
-		unsigned nsecs, char word, char bits)
+		unsigned int nsecs, unsigned int word, unsigned int bits)
 {
 	return spi_gpio_tx_cpha1(spi, nsecs, 1, word, bits);
 }
 
 void spi_gpio_write(struct spi_platform_data *spi,
-	unsigned char address, unsigned char command)
+	unsigned int address, unsigned int command)
 {
 	switch (spi->mode) {
 	case SPI_MODE_0:

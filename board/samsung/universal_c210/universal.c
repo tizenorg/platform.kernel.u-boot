@@ -643,6 +643,7 @@ static void lcd_cfg_gpio(void)
 	spi_pd.mode = SPI_MODE_3;
 
 	spi_pd.cs_active = ACTIVE_LOW;
+	spi_pd.word_len = 8;
 
 	ld9040_set_platform_data(&spi_pd);
 

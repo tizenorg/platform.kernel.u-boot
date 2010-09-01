@@ -332,10 +332,10 @@ static const unsigned char SEQ_DISPLAY_ON[] = {
 static void s6e63m0_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
-		spi_gpio_write(s6e63m0, 0x0, address);
+		spi_gpio_write(s6e63m0, (unsigned int) 0x0, (unsigned int) address);
 
 	if (command != COMMAND_ONLY)
-		spi_gpio_write(s6e63m0, 0x1, command);
+		spi_gpio_write(s6e63m0, (unsigned int) 0x1, (unsigned int) command);
 }
 
 static void s6e63m0_panel_send_sequence(const unsigned char *wbuf, unsigned size_cmd)

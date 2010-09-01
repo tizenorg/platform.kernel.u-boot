@@ -287,10 +287,10 @@ static const unsigned char SEQ_EL_ON[] = {
 static void ld9040_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
-		spi_gpio_write(ld9040, 0x0, address);
+		spi_gpio_write(ld9040, (unsigned int) 0x0, (unsigned int) address);
 
 	if (command != COMMAND_ONLY)
-		spi_gpio_write(ld9040, 0x1, command);
+		spi_gpio_write(ld9040, (unsigned int) 0x1, (unsigned int) command);
 }
 
 static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int size_cmd)

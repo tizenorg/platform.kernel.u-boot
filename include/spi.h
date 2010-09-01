@@ -64,7 +64,6 @@ struct spi_slave {
 
 #define COMMAND_ONLY		0xFE
 #define DATA_ONLY		0xFF
-#define PACKET_LEN		8
 #define ACTIVE_LOW		0
 #define ACTIVE_HIGH		1
 
@@ -82,12 +81,13 @@ struct spi_platform_data {
 
 	unsigned int mode;
 	unsigned int cs_active;
+	unsigned int word_len;
 
 	unsigned int set_rev;
 };
 
 void spi_gpio_write(struct spi_platform_data *spi,
-				unsigned char address, unsigned char command);
+				unsigned int address, unsigned int command);
 
 /*-----------------------------------------------------------------------
  * Initialization, must be called once on start up.
