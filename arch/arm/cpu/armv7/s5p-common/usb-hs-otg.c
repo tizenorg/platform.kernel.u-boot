@@ -22,7 +22,6 @@
 
 #include <command.h>
 #include <asm/errno.h>
-#include <asm/arch/power.h>
 #include "usb-hs-otg.h"
 
 u32 remode_wakeup;
