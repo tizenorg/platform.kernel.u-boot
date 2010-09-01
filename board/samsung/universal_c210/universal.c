@@ -451,18 +451,18 @@ static void init_pmic_lp3974(void)
 
 	/*
 	 * ONOFF2
-	 * LDO6 ON, LDO7 ON, LDO8 OFF, LDO9 ON,
+	 * LDO6 OFF, LDO7 ON, LDO8 OFF, LDO9 ON,
 	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
 	 */
-	val[0] = 0xD0;
+	val[0] = 0x50;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
 	/*
 	 * ONOFF1
-	 * Buck1 ON, Buck2 ON, Buck3 ON, Buck4 ON
+	 * Buck1 ON, Buck2 OFF, Buck3 ON, Buck4 ON
 	 * LDO2 ON, LDO3 OFF, LDO4 OFF, LDO5 ON
 	 */
-	val[0] = 0xF9;
+	val[0] = 0xB9;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
 
 	/* LDO7: 1.8V */
