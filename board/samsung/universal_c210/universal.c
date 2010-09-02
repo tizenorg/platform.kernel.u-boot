@@ -442,15 +442,15 @@ static void init_pmic_lp3974(void)
 		return;
 
 	/* LDO2 1.2V LDO3 1.1V */
-	val[0] = (((1200 - 800) / 50) << 4) | (((1100 - 800) / 50));
+	val[0] = 0x86; /* (((1200 - 800) / 50) << 4) | (((1100 - 800) / 50)) */
 	i2c_write(addr, 0x1D, 1, val, 1);
 
 	/* LDO4 3.3V */
-	val[0] = (3300 - 1600) / 100;
+	val[0] = 0x11; /* (3300 - 1600) / 100; */
 	i2c_write(addr, 0x1E, 1, val, 1);
 
 	/* LDO5 2.8V */
-	val[0] = (2800 - 1600) / 100;
+	val[0] = 0x0c; /* (2800 - 1600) / 100; */
 	i2c_write(addr, 0x1F, 1, val, 1);
 
 	/* LDO6 not used: minimum */
@@ -458,39 +458,39 @@ static void init_pmic_lp3974(void)
 	i2c_write(addr, 0x20, 1, val, 1);
 
 	/* LDO7 1.8V */
-	val[0] = (1800 - 1600) / 100;
+	val[0] = 0x02; /* (1800 - 1600) / 100; */
 	i2c_write(addr, 0x21, 1, val, 1);
 
 	/* LDO8 3.3V LDO9 2.8V*/
-	val[0] = (((3300 - 3000) / 100) << 4) | (((2800 - 2800) / 100) << 0);
+	val[0] = 0x30; /* (((3300 - 3000) / 100) << 4) | (((2800 - 2800) / 100) << 0); */
 	i2c_write(addr, 0x22, 1, val, 1);
 
 	/* LDO10 1.1V LDO11 3.3V */
-	val[0] = (((1100 - 950) / 50) << 5) | (((3300 - 1600) / 100) << 0);
+	val[0] = 0x71; /* (((1100 - 950) / 50) << 5) | (((3300 - 1600) / 100) << 0); */
 	i2c_write(addr, 0x23, 1, val, 1);
 
 	/* LDO12 2.8V */
-	val[0] = (2800 - 1200) / 100 + 4;
+	val[0] = 0x14; /* (2800 - 1200) / 100 + 4; */
 	i2c_write(addr, 0x24, 1, val, 1);
 
 	/* LDO13 1.2V */
-	val[0] = (1200 - 1200) / 100 + 4;
+	val[0] = 0x4; /* (1200 - 1200) / 100 + 4; */
 	i2c_write(addr, 0x25, 1, val, 1);
 
 	/* LDO14 1.8V */
-	val[0] = (1800 - 1200) / 100;
+	val[0] = 0x6; /* (1800 - 1200) / 100; */
 	i2c_write(addr, 0x26, 1, val, 1);
 
 	/* LDO15 1.2V */
-	val[0] = (1200 - 1200) / 100;
+	val[0] = 0; /* (1200 - 1200) / 100; */
 	i2c_write(addr, 0x27, 1, val, 1);
 
 	/* LDO16 2.8V */
-	val[0] = (2800 - 1600) / 100;
+	val[0] = 0xc; /* (2800 - 1600) / 100; */
 	i2c_write(addr, 0x28, 1, val, 1);
 
 	/* LDO17 3.0V */
-	val[0] = (3000 - 1600) / 100;
+	val[0] = 0xe; /* (3000 - 1600) / 100; */
 	i2c_write(addr, 0x29, 1, val, 1);
 
 	/*
@@ -516,10 +516,6 @@ static void init_pmic_lp3974(void)
 	 */
 	val[0] = 0xB9;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
-
-	/* LDO7: 1.8V */
-	val[0] = 0x02;
-	i2c_write(addr, LP3974_REG_LDO7, 1, val, 1);
 
 	/*
 	 * ONOFF3
@@ -549,6 +545,11 @@ static void init_pmic_lp3974(void)
 	i2c_write(addr, 0x19, 1, val, 1);
 	val[0] = 0x0E; /* 1.1V @ DVSINT2(VG3D) */
 	i2c_write(addr, 0x1A, 1, val, 1);
+
+	val[0] = 0x2; /* 1.8V for BUCK3 VCC 1.8V PDA */
+	i2c_write(addr, 0x1B, 1, val, 1);
+	val[0] = 0x4; /* 1.2V for BUCK4 VMEM 1.2V C210 */
+	i2c_write(addr, 0x1C, 1, val, 1);
 
 	/* Use DVSARM1 for VINT */
 	gpio_direction_output(&gpio2->x0, 5, 0);
