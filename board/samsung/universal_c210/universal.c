@@ -441,6 +441,58 @@ static void init_pmic_lp3974(void)
 	if (lp3974_probe())
 		return;
 
+	/* LDO2 1.2V LDO3 1.1V */
+	val[0] = (((1200 - 800) / 50) << 4) | (((1100 - 800) / 50));
+	i2c_write(addr, 0x1D, 1, val, 1);
+
+	/* LDO4 3.3V */
+	val[0] = (3300 - 1600) / 100;
+	i2c_write(addr, 0x1E, 1, val, 1);
+
+	/* LDO5 2.8V */
+	val[0] = (2800 - 1600) / 100;
+	i2c_write(addr, 0x1F, 1, val, 1);
+
+	/* LDO6 not used: minimum */
+	val[0] = 0;
+	i2c_write(addr, 0x20, 1, val, 1);
+
+	/* LDO7 1.8V */
+	val[0] = (1800 - 1600) / 100;
+	i2c_write(addr, 0x21, 1, val, 1);
+
+	/* LDO8 3.3V LDO9 2.8V*/
+	val[0] = (((3300 - 3000) / 100) << 4) | (((2800 - 2800) / 100) << 0);
+	i2c_write(addr, 0x22, 1, val, 1);
+
+	/* LDO10 1.1V LDO11 3.3V */
+	val[0] = (((1100 - 800) / 50) << 5) | (((3300 - 1600) / 100) << 0);
+	i2c_write(addr, 0x23, 1, val, 1);
+
+	/* LDO12 2.8V */
+	val[0] = (2800 - 1200) / 100;
+	i2c_write(addr, 0x24, 1, val, 1);
+
+	/* LDO13 1.2V */
+	val[0] = (1200 - 1200) / 100;
+	i2c_write(addr, 0x25, 1, val, 1);
+
+	/* LDO14 1.8V */
+	val[0] = (1800 - 1200) / 100;
+	i2c_write(addr, 0x26, 1, val, 1);
+
+	/* LDO15 1.2V */
+	val[0] = (1200 - 1200) / 100;
+	i2c_write(addr, 0x27, 1, val, 1);
+
+	/* LDO16 2.8V */
+	val[0] = (2800 - 1600) / 100;
+	i2c_write(addr, 0x28, 1, val, 1);
+
+	/* LDO17 3.0V */
+	val[0] = (3000 - 1600) / 100;
+	i2c_write(addr, 0x29, 1, val, 1);
+
 	/*
 	 * Because the data sheet of LP3974 does NOT mention default
 	 * register values of ONOFF1~4 (ENABLE1~4), we ignore the given
@@ -477,9 +529,6 @@ static void init_pmic_lp3974(void)
 	val[0] = 0x10;
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
 
-	/* LDO17: 3.0V */
-	val[0] = 0x0E;
-	i2c_write(addr, LP3974_REG_LDO17, 1, val, 1);
 	/*
 	 * ONOFF4
 	 * EN32kAP ON, EN32kCP ON, ENVICHG ON, ENRAMP ON,
