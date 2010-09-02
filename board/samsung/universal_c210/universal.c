@@ -146,6 +146,8 @@ static struct i2c_gpio_bus i2c_gpio[] = {
 
 static void check_battery(int mode);
 static void check_micro_usb(int intr);
+static void init_pmic_lp3974(void);
+static void init_pmic_max8952(void);
 
 void i2c_init_board(void)
 {
@@ -166,6 +168,10 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
+
+	/* pmic init early */
+	init_pmic_lp3974();
+	init_pmic_max8952();
 
 	/* Reset on fsa9480 early */
 	check_micro_usb(1);
@@ -503,10 +509,10 @@ static void init_pmic_lp3974(void)
 
 	/*
 	 * ONOFF2
-	 * LDO6 OFF, LDO7 ON, LDO8 OFF, LDO9 ON,
+	 * LDO6 OFF, LDO7 OFF, LDO8 OFF, LDO9 ON,
 	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
 	 */
-	val[0] = 0x50;
+	val[0] = 0x10;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
 	/*
@@ -519,10 +525,10 @@ static void init_pmic_lp3974(void)
 
 	/*
 	 * ONOFF3
-	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 ON
+	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 OFF
 	 * EPWRHOLD OFF, EBATTMON OFF, ELBCNFG2 OFF, ELBCNFG1 OFF
 	 */
-	val[0] = 0x10;
+	val[0] = 0x00;
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
 
 	/*
@@ -727,16 +733,14 @@ static void lcd_power_on(unsigned int onoff)
 
 		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
 		val[0] |= LP3974_LDO17;
-		val2[0] = 0xE;
-		i2c_write(addr, LP3974_REG_LDO17, 1, val2, 1);
 		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
 
-		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
+		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
+		val[0] &= ~(LP3974_LDO7);
+		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
 		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
 		val[0] |= LP3974_LDO7;
-		val2[0] = 0x2;
-		i2c_write(addr, LP3974_REG_LDO7, 1, val2, 1);
 		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	} else {
 		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
@@ -881,9 +885,6 @@ int misc_init_r(void)
 {
 	check_reset_status();
 	check_auto_burn();
-
-	init_pmic_lp3974();
-	init_pmic_max8952();
 
 	check_hw_revision();
 	check_keypad();
