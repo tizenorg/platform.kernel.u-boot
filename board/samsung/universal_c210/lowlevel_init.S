@@ -280,7 +280,7 @@ system_clock_init:
 	ldr	r2, =0x0C54C			@ CLK_DIV_FSYS3
 	str	r1, [r0, r2]
 	/* UART[0:5] */
-	ldr	r1, =0x777777
+	ldr	r1, =0x774777
 	ldr	r2, =0x0C550			@ CLK_DIV_PERIL0
 	str	r1, [r0, r2]
 	/* SLIMBUS: ???, PWM */
