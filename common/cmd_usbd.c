@@ -259,12 +259,21 @@ static int mmc_cmd(int ops, char *p1, char *p2, char *p3)
 	return ret;
 }
 
+#define NORMAL_PARTITION	0
+#define EXTEND_PARTITION	1
+
+#define EXTEND_PART_TYPE	5
+
+#define EXTEND_MAX_PART		32
+
 static unsigned int cur_blk_offset;
 static unsigned int cur_part_size;
-static unsigned int cur_partition;
+static unsigned int cur_part;
 
 static unsigned int mmc_parts;
 static unsigned int mmc_part_write;
+
+static u8 part_mode = 0;
 
 struct partition_info {
 	u32 size;
@@ -274,8 +283,8 @@ struct partition_info {
 
 struct partition_header {
 	u8			fat32head[16];	/* RFSHEAD identifier */
-	struct partition_info	partition[4];
-	u8			res[448];	/* reserved */
+	struct partition_info	partition[EXTEND_MAX_PART];
+	u8			res[112];	/* reserved */
 } __attribute__((packed));
 
 struct partition_table {
@@ -293,10 +302,16 @@ struct mbr_table {
 	u16			signature;
 } __attribute__((packed));
 
+struct mul_partition_info {
+	u32 lba_begin;
+	u32 num_sectors;
+} __attribute__((packed));
+
 #define MBR_OFFSET	0x10
 
 struct partition_header part_info;
 struct mbr_table mbr_info;
+struct mul_partition_info mul_info[EXTEND_MAX_PART];
 
 static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 {
@@ -350,6 +365,7 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 	u32 ram_addr;
 	int i;
 	int ret;
+	struct mbr_table *mbr;
 
 	if (!usbd->mmc_total) {
 		printf("MMC is not supported!\n");
@@ -360,7 +376,7 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 
 	if (cur_blk_offset == 0) {
 		boot_sector *bs;
-		struct mbr_table *mbr;
+		u32 mbr_blk_size;
 
 		memcpy(&part_info, (void *)ram_addr,
 				sizeof(struct partition_header));
@@ -368,73 +384,163 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		ram_addr += sizeof(struct partition_header);
 		len -= sizeof(struct partition_header);
 		mbr = (struct mbr_table*)ram_addr;
+		mbr_blk_size = mbr->partition[0].lba_begin;
 
-		/* modify sectors of p1 */
-		mbr->partition[0].num_sectors = usbd->mmc_total -
-				(MBR_OFFSET +
-				mbr->partition[1].num_sectors +
-				mbr->partition[2].num_sectors +
-				mbr->partition[3].num_sectors);
+		if (mbr->partition[0].type_code != EXTEND_PART_TYPE) {
+			part_mode = NORMAL_PARTITION;
 
-		mmc_parts++;
-
-		/* modify lba_begin of p2 and p3 and p4 */
-		for (i = 1; i < 4; i++) {
-			if (part_info.partition[i].size == 0)
-				break;
+			/* modify sectors of p1 */
+			mbr->partition[0].num_sectors = usbd->mmc_total -
+					(mbr_blk_size +
+					mbr->partition[1].num_sectors +
+					mbr->partition[2].num_sectors +
+					mbr->partition[3].num_sectors);
 
 			mmc_parts++;
-			mbr->partition[i].lba_begin =
-				mbr->partition[i - 1].lba_begin +
-				mbr->partition[i - 1].num_sectors;
+
+			/* modify lba_begin of p2 and p3 and p4 */
+			for (i = 1; i < 4; i++) {
+				if (part_info.partition[i].size == 0)
+					break;
+
+				mmc_parts++;
+				mbr->partition[i].lba_begin =
+					mbr->partition[i - 1].lba_begin +
+					mbr->partition[i - 1].num_sectors;
+			}
+
+			/* copy MBR */
+			memcpy(&mbr_info, mbr, sizeof(struct mbr_table));
+
+			printf("Total Size: 0x%08x #parts %d\n",
+					(unsigned int)usbd->mmc_total,
+					mmc_parts);
+			for (i = 0; i < mmc_parts; i++) {
+				printf("p%d\t0x%08x\t0x%08x\n", i + 1,
+					mbr_info.partition[i].lba_begin,
+					mbr_info.partition[i].num_sectors);
+			}
+
+			/* write MBR */
+			sprintf(length, "%x", mbr_blk_size);
+			sprintf(offset, "%x", 0);
+			sprintf(ramaddr, "0x%x", (u32)ram_addr);
+			ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+
+			ram_addr += mbr_blk_size * usbd->mmc_blk;
+			len -= mbr_blk_size * usbd->mmc_blk;
+
+			cur_blk_offset = mbr_blk_size;
+			cur_part = 0;
+			cur_part_size = part_info.partition[0].size;
+
+			/* modify p1's total sector */
+			bs = (boot_sector *)ram_addr;
+			bs->total_sect = mbr_info.partition[0].num_sectors;
+
+			printf("\nWrite Partition %d.. %d blocks\n",
+				cur_part + 1,
+				part_info.partition[cur_part].size /
+				(int)usbd->mmc_blk);
+		} else {
+			part_mode = EXTEND_PARTITION;
+
+			for (i = 0; i < EXTEND_MAX_PART; i++) {
+				if (part_info.partition[i].size == 0)
+					break;
+				mmc_parts++;
+			}
+
+			if (mmc_parts == 0)
+				return -1;
+			else
+				printf("found %d partitions\n", mmc_parts);
+
+			/* build partition table */
+
+			mul_info[0].num_sectors =
+				usbd->mmc_total - mbr_blk_size * 2;
+			for (i = 1; i < mmc_parts; i++) {
+				mul_info[i].num_sectors =
+					part_info.partition[i].res;
+			}
+
+			for (i = 1; i < mmc_parts; i++) {
+				mul_info[0].num_sectors -=
+					mul_info[i].num_sectors;
+			}
+
+			mul_info[0].lba_begin = mbr->partition[0].lba_begin;
+			for (i = 1; i < mmc_parts; i++) {
+				mul_info[i].lba_begin =
+					mul_info[i-1].lba_begin	+
+					mul_info[i-1].num_sectors;
+			}
+
+			/* modify main MBR */
+			mbr->partition[0].num_sectors =
+				usbd->mmc_total - mbr_blk_size;
+
+			/* modify MBR data of p1 */
+			mbr = (struct mbr_table *)
+				(ram_addr + mbr_blk_size * usbd->mmc_blk);
+
+			mbr->partition[0].num_sectors =
+				mul_info[0].num_sectors - mbr_blk_size;
+			mbr->partition[1].lba_begin =
+				mul_info[1].lba_begin - mbr_blk_size;
+
+			/* modify BPB data of p1 */
+			bs = (boot_sector *)
+				((u32)mbr + mbr_blk_size * usbd->mmc_blk);
+			memset(&bs->sectors, 0, 2);
+			bs->total_sect = mbr->partition[0].num_sectors;
+
+			printf("Total Size: 0x%08x #parts %d\n",
+					(unsigned int)usbd->mmc_total,
+					mmc_parts);
+			for (i = 0; i < mmc_parts; i++) {
+				printf("p%d\t0x%08x\t0x%08x\n", i + 1,
+					mul_info[i].lba_begin,
+					mul_info[i].num_sectors);
+			}
+
+			cur_blk_offset = 0;
+			cur_part = 0;
+			cur_part_size = part_info.partition[0].size;
+
+			printf("\nWrite Partition %d.. %d blocks\n",
+				cur_part + 1,
+				part_info.partition[cur_part].size /
+				(int)usbd->mmc_blk);
 		}
-
-		/* copy MBR */
-		memcpy(&mbr_info, mbr, sizeof(struct mbr_table));
-
-		printf("Total Size: 0x%08x #parts %d\n",
-				(unsigned int)usbd->mmc_total, mmc_parts);
-		for (i = 0; i < mmc_parts; i++) {
-			printf("p%d\t0x%08x\t0x%08x\n", i + 1,
-				mbr_info.partition[i].lba_begin,
-				mbr_info.partition[i].num_sectors);
-		}
-
-		/* write MBR */
-		sprintf(length, "%x", MBR_OFFSET);
-		sprintf(offset, "%x", 0);
-		sprintf(ramaddr, "0x%x", (u32)ram_addr);
-		ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
-
-		ram_addr += (MBR_OFFSET * usbd->mmc_blk);
-		len -= (MBR_OFFSET * usbd->mmc_blk);
-
-		cur_blk_offset = MBR_OFFSET;
-		cur_partition = 0;
-		cur_part_size = part_info.partition[0].size;
-
-		/* modify p1's total sector */
-		bs = (boot_sector *)ram_addr;
-		bs->total_sect = mbr_info.partition[0].num_sectors;
-
-		printf("\nWrite Partition %d.. %d blocks\n",
-			cur_partition + 1,
-			part_info.partition[cur_partition].size /
-			(int)usbd->mmc_blk);
 	}
 
-	for (i = cur_partition; i < mmc_parts; i++) {
+	for (i = cur_part; i < mmc_parts; i++) {
 		ret = write_mmc_partition(usbd, &ram_addr, len);
 
 		if (ret < 0) {
 			cur_part_size -= len;
 			break;
 		} else {
-			cur_partition++;
+			cur_part++;
 			cur_part_size =
-				part_info.partition[cur_partition].size;
-			cur_blk_offset =
-				mbr_info.partition[cur_partition].lba_begin;
+				part_info.partition[cur_part].size;
+
+			if (part_mode == NORMAL_PARTITION) {
+				cur_blk_offset =
+					mbr_info.partition[cur_part].lba_begin;
+			} else {
+				cur_blk_offset =
+					mul_info[cur_part].lba_begin;
+				/* modify MBR */
+				if (cur_part <= mmc_parts) {
+					mbr = (struct mbr_table *)ram_addr;
+					mbr->partition[1].lba_begin =
+						mul_info[cur_part+1].lba_begin -
+						mbr->partition[0].lba_begin;
+				}
+			}
 
 			if (ret == 0)
 				break;
@@ -442,8 +548,8 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				len = ret;
 
 			printf("\nWrite Partition %d.. %d blocks\n",
-				cur_partition + 1,
-				part_info.partition[cur_partition].size /
+				cur_part + 1,
+				part_info.partition[cur_part].size /
 				(int)usbd->mmc_blk);
 		}
 	}
@@ -455,38 +561,94 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		char *offset, char *length)
 {
 	u32 ram_addr;
-	int ret;
+	u32 ofs;
 	int i;
+	struct mbr_table *mbr;
+	u32 mbr_blk_size;
 
 	ram_addr = (u32)down_ram_addr;
+	mbr = &mbr_info;
 
 	if (cur_blk_offset == 0) {
 		/* read MBR */
-		sprintf(length, "%x", MBR_OFFSET);
+		sprintf(length, "%x", (unsigned int)
+			(sizeof(struct mbr_table)/usbd->mmc_blk));
 		sprintf(offset, "%x", 0);
-		sprintf(ramaddr, "0x%x", (u32)&mbr_info);
-		ret = mmc_cmd(OPS_READ, ramaddr, offset, length);
+		sprintf(ramaddr, "0x%x", (u32)mbr);
+		mmc_cmd(OPS_READ, ramaddr, offset, length);
 
-		for (i = 0; i < 4; i++) {
-			printf("p%d\t0x%08x\t0x%08x\n", i + 1,
-				mbr_info.partition[i].lba_begin,
-				mbr_info.partition[i].num_sectors);
-		}
+		mbr_blk_size = mbr->partition[0].lba_begin;
 
-		cur_blk_offset = (unsigned int)
-			mbr_info.partition[mmc_part_write - 1].lba_begin;
-		cur_partition = mmc_part_write - 1;
-		cur_part_size = (unsigned int)len;
+		if (mbr->partition[0].type_code != EXTEND_PART_TYPE) {
+			part_mode = NORMAL_PARTITION;
 
-		if (mmc_part_write == 1) {
-			ram_addr += sizeof(boot_sector);
-			cur_blk_offset += sizeof(boot_sector) / usbd->mmc_blk;
-			len -= sizeof(boot_sector);
+			for (i = 0; i < 4; i++) {
+				printf("p%d\t0x%08x\t0x%08x\n", i + 1,
+					mbr_info.partition[i].lba_begin,
+					mbr_info.partition[i].num_sectors);
+			}
+
+			cur_blk_offset =
+				mbr->partition[mmc_part_write - 1].lba_begin;
+			cur_part = mmc_part_write - 1;
+			cur_part_size = len;
+
+			if (mmc_part_write == 1) {
+				ram_addr += sizeof(struct mbr_table);
+				cur_blk_offset += sizeof(struct mbr_table) /
+					usbd->mmc_blk;
+				len -= sizeof(struct mbr_table);
+			}
+		} else {
+			part_mode = EXTEND_PARTITION;
+
+			mbr_blk_size = mbr->partition[0].lba_begin;
+
+			for (i = 1; i < mmc_part_write; i++) {
+				ofs = mbr->partition[0].lba_begin +
+					mbr->partition[1].lba_begin;
+				printf("P%d start blk: 0x%x, size: 0x%x\n", i,
+					ofs, mbr->partition[0].num_sectors);
+				sprintf(length, "%x", (unsigned int)
+					(sizeof(struct mbr_table) /
+					usbd->mmc_blk));
+				sprintf(offset, "%x", ofs);
+				sprintf(ramaddr, "0x%x", (u32)mbr);
+				mmc_cmd(OPS_READ, ramaddr, offset, length);
+			}
+
+			ofs = mbr->partition[0].lba_begin +
+				mbr->partition[1].lba_begin;
+
+			ofs += mbr_blk_size; /* skip MBR */
+			cur_blk_offset = ofs;
+			cur_part = mmc_part_write - 1;
+			cur_part_size = len;
+
+			if (mmc_part_write == 1) {
+				boot_sector *bs;
+				u32 total_sect;
+				u8 *tmp;
+				/* modify BPB data of p1 */
+				sprintf(length, "%x", (unsigned int)
+					(sizeof(struct mbr_table) /
+					usbd->mmc_blk));
+				sprintf(offset, "%x", cur_blk_offset);
+				sprintf(ramaddr, "0x%x", (u32)mbr);
+				mmc_cmd(OPS_READ, ramaddr, offset, length);
+
+				bs = (boot_sector *)mbr;
+				total_sect = bs->total_sect;
+
+				bs = (boot_sector *)ram_addr;
+				memset(&bs->sectors, 0, 2);
+				bs->total_sect = total_sect;
+			}
 		}
 	}
 
 	printf("\nWrite Partition %d.. %d blocks\n",
-		cur_partition + 1,
+		cur_part + 1,
 		len / (int)usbd->mmc_blk);
 
 	write_mmc_partition(usbd, &ram_addr, len);
