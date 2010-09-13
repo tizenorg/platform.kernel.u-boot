@@ -31,6 +31,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
+#include <asm/arch/mipi_ddi.h>
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
@@ -126,7 +127,7 @@ static void s5pc_fimd_set_buffer_address(unsigned int win_id)
 	return;
 }
 
-static void s5pc_fimd_set_clock(void)
+static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 {
 	unsigned int cfg = 0, div = 0, remainder, remainder_div;
 	unsigned long pixel_clock, src_clock, max_clock;
@@ -138,7 +139,11 @@ static void s5pc_fimd_set_clock(void)
 		pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
 			pvid->vl_hbpd + pvid->vl_col / 2) * (pvid->vl_vspw +
 			    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_row);
-	else
+	else if (pvid->interface_mode == FIMD_CPU_INTERFACE) {
+		pixel_clock = pvid->vl_freq * pvid->vl_width * pvid->vl_height *
+		    (pvid->cs_setup + pvid->wr_setup + pvid->wr_act +
+			pvid->wr_hold + 1);
+	} else
 		pixel_clock = pvid->vl_freq * (pvid->vl_hspw + pvid->vl_hfpd +
 			pvid->vl_hbpd + pvid->vl_col) * (pvid->vl_vspw +
 			    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_row);
@@ -152,6 +157,7 @@ static void s5pc_fimd_set_clock(void)
 
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
+		S5P_VIDCON0_CLKVAL_F(0xFF) |
 		S5P_VIDCON0_VCLKEN_MASK | S5P_VIDCON0_CLKDIR_MASK);
 	cfg |= (S5P_VIDCON0_CLKSEL_SCLK | S5P_VIDCON0_CLKVALUP_ALWAYS | \
 		S5P_VIDCON0_VCLKEN_NORMAL | S5P_VIDCON0_CLKDIR_DIVIDED);
@@ -183,6 +189,29 @@ static void s5pc_fimd_set_clock(void)
 		fimd_ratio, src_clock / (fimd_ratio + 1), pixel_clock, div);
 
 	return;
+}
+
+void s3cfb_set_trigger(void)
+{
+	u32 reg = 0;
+	reg = readl(ctrl_base + S5P_TRIGCON);
+
+	reg |= 1 << 0 | 1 << 1;
+
+	writel(reg, ctrl_base + S5P_TRIGCON);
+}
+
+int s3cfb_is_i80_frame_done(void)
+{
+	u32 reg = 0;
+	int status;
+
+	reg = readl(ctrl_base + S5P_TRIGCON);
+
+	/* frame done func is valid only when TRIMODE[0] is set to 1. */
+	status = (((reg & (0x1 << 2)) == (0x1 << 2)) ? 1 : 0);
+
+	return status;
 }
 
 static void s5pc_fimd_lcd_on(unsigned int win_id)
@@ -235,6 +264,51 @@ void s5pc_fimd_window_off(unsigned int win_id)
 	writel(cfg, ctrl_base + S5P_WINSHMAP);
 }
 
+int s5pc_cpu_interface_timing(vidinfo_t *vid)
+{
+	unsigned int cpu_if_time_val;
+
+	cpu_if_time_val = readl(ctrl_base + S5P_I80IFCONA0);
+	cpu_if_time_val = S5C_LCD_CS_SETUP(vid->cs_setup) |
+		S5C_LCD_WR_SETUP(vid->wr_setup) |
+		S5C_LCD_WR_ACT(vid->wr_act) |
+		S5C_LCD_WR_HOLD(vid->wr_hold) |
+		S5C_RSPOL_LOW | /* in case of LCD MIPI module */
+		/* S3C_RSPOL_HIGH | */
+		S5C_I80IFEN_ENABLE;
+	writel(cpu_if_time_val, ctrl_base + S5P_I80IFCONA0);
+
+	return 0;
+}
+
+int s5pc_set_auto_cmd_rate(unsigned char cmd_rate, unsigned char ldi)
+{
+	unsigned int cmd_rate_val;
+	unsigned int i80_if_con_reg_val;
+
+	cmd_rate_val = (cmd_rate == DISABLE_AUTO_FRM) ? (0x0 << 0) :
+		(cmd_rate == PER_TWO_FRM) ? (0x1 << 0) :
+		(cmd_rate == PER_FOUR_FRM) ? (0x2 << 0) :
+		(cmd_rate == PER_SIX_FRM) ? (0x3 << 0) :
+		(cmd_rate == PER_EIGHT_FRM) ? (0x4 << 0) :
+		(cmd_rate == PER_TEN_FRM) ? (0x5 << 0) :
+		(cmd_rate == PER_TWELVE_FRM) ? (0x6 << 0) :
+		(cmd_rate == PER_FOURTEEN_FRM) ? (0x7 << 0) :
+		(cmd_rate == PER_SIXTEEN_FRM) ? (0x8 << 0) :
+		(cmd_rate == PER_EIGHTEEN_FRM) ? (0x9 << 0) :
+		(cmd_rate == PER_TWENTY_FRM) ? (0xa << 0) :
+		(cmd_rate == PER_TWENTY_TWO_FRM) ? (0xb << 0) :
+		(cmd_rate == PER_TWENTY_FOUR_FRM) ? (0xc << 0) :
+		(cmd_rate == PER_TWENTY_SIX_FRM) ? (0xd << 0) :
+		(cmd_rate == PER_TWENTY_EIGHT_FRM) ? (0xe << 0) : (0xf << 0);
+
+	i80_if_con_reg_val = readl(ctrl_base + S5P_I80IFCONB0);
+	i80_if_con_reg_val &= ~(0xf << 0);
+	i80_if_con_reg_val |= cmd_rate_val;
+	writel(i80_if_con_reg_val, ctrl_base + S5P_I80IFCONB0);
+
+	return 0;
+}
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
 	unsigned int cfg = 0, rgb_mode, win_id = 3;
@@ -245,59 +319,77 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	/* select register base according to cpu type */
 	ctrl_base = samsung_get_base_fimd();
 
-	/* set output to RGB */
-	rgb_mode = MODE_RGB_P;
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~S5P_VIDCON0_VIDOUT_MASK;
 
 	/* clock source is HCLK */
 	cfg |= 0 << 2;
 
-	cfg |= S5P_VIDCON0_VIDOUT_RGB;
-	writel(cfg, ctrl_base + S5P_VIDCON0);
-
+	rgb_mode = MODE_RGB_P;
 	/* set display mode */
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~S5P_VIDCON0_PNRMODE_MASK;
 	cfg |= (rgb_mode << S5P_VIDCON0_PNRMODE_SHIFT);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
-	/* set polarity */
-	cfg = 0;
-	if (!pvid->vl_clkp)
-		cfg |= S5P_VIDCON1_IVCLK_RISING_EDGE;
-	if (!pvid->vl_hsp)
-		cfg |= S5P_VIDCON1_IHSYNC_INVERT;
-	if (!pvid->vl_vsp)
-		cfg |= S5P_VIDCON1_IVSYNC_INVERT;
-	if (!pvid->vl_dp)
-		cfg |= S5P_VIDCON1_IVDEN_INVERT;
+	if (vid->interface_mode == FIMD_RGB_INTERFACE) {
+		cfg |= S5P_VIDCON0_VIDOUT_RGB;
+		writel(cfg, ctrl_base + S5P_VIDCON0);
 
-	writel(cfg, ctrl_base + S5P_VIDCON1);
+		/* set polarity */
+		cfg = 0;
+		if (!pvid->vl_clkp)
+			cfg |= S5P_VIDCON1_IVCLK_RISING_EDGE;
+		if (!pvid->vl_hsp)
+			cfg |= S5P_VIDCON1_IHSYNC_INVERT;
+		if (!pvid->vl_vsp)
+			cfg |= S5P_VIDCON1_IVSYNC_INVERT;
+		if (!pvid->vl_dp)
+			cfg |= S5P_VIDCON1_IVDEN_INVERT;
 
-	/* set timing */
-	cfg = 0;
-	cfg |= S5P_VIDTCON0_VFPD(pvid->vl_vfpd - 1);
-	cfg |= S5P_VIDTCON0_VBPD(pvid->vl_vbpd - 1);
-	cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vspw - 1);
-	writel(cfg, ctrl_base + S5P_VIDTCON0);
-	udebug("vidtcon0 = %x\n", cfg);
+		writel(cfg, ctrl_base + S5P_VIDCON1);
 
-	cfg = 0;
-	cfg |= S5P_VIDTCON1_HFPD(pvid->vl_hfpd - 1);
-	cfg |= S5P_VIDTCON1_HBPD(pvid->vl_hbpd - 1);
-	cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hspw - 1);
+		/* set timing */
+		cfg = 0;
+		cfg |= S5P_VIDTCON0_VFPD(pvid->vl_vfpd - 1);
+		cfg |= S5P_VIDTCON0_VBPD(pvid->vl_vbpd - 1);
+		cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vspw - 1);
+		writel(cfg, ctrl_base + S5P_VIDTCON0);
+		udebug("vidtcon0 = %x\n", cfg);
 
-	writel(cfg, ctrl_base + S5P_VIDTCON1);
-	udebug("vidtcon1 = %x\n", cfg);
+		cfg = 0;
+		cfg |= S5P_VIDTCON1_HFPD(pvid->vl_hfpd - 1);
+		cfg |= S5P_VIDTCON1_HBPD(pvid->vl_hbpd - 1);
+		cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hspw - 1);
 
-	/* set lcd size */
-	cfg = 0;
-	cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
-	cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
+		writel(cfg, ctrl_base + S5P_VIDTCON1);
+		udebug("vidtcon1 = %x\n", cfg);
 
-	writel(cfg, ctrl_base + S5P_VIDTCON2);
-	udebug("vidtcon2 = %x\n", cfg);
+		/* set lcd size */
+		cfg = 0;
+		cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
+		cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
+
+		writel(cfg, ctrl_base + S5P_VIDTCON2);
+		udebug("vidtcon2 = %x\n", cfg);
+
+	} else {
+		cfg |= S5P_VIDCON0_DSI_ENABLE | S5P_VIDCON0_VIDOUT_I80LDI0;
+		writel(cfg, ctrl_base + S5P_VIDCON0);
+
+		/* set lcd size */
+		cfg = 0;
+		cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
+		cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
+		writel(cfg, ctrl_base + S5P_VIDTCON2);
+		udebug("vidtcon2 = %x\n", cfg);
+
+		s5pc_cpu_interface_timing(vid);
+		s5pc_set_auto_cmd_rate(DISABLE_AUTO_FRM, DDI_MAIN_LCD);
+
+		udebug("MIPI Command mode.\n");
+	}
+
 
 	/* set par */
 	s5pc_fimd_set_par(win_id);
@@ -311,7 +403,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	udebug("vidaddr_pagewidth = %d\n", cfg);
 
 	/* set clock */
-	s5pc_fimd_set_clock();
+	s5pc_fimd_set_clock(vid);
 
 	/* set rgb mode to dual lcd. */
 	if (pvid->dual_lcd_enabled)

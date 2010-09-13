@@ -27,6 +27,7 @@
 #include <asm/io.h>
 #include <asm/arch/cpu.h>
 #include <lcd.h>
+#include <dsim.h>
 #include <malloc.h>
 
 #include "s5p-fb.h"
@@ -203,6 +204,7 @@ static void draw_samsung_logo(void* lcdbase)
 	unsigned int in_len, width, height;
 	unsigned long out_len = ARRAY_SIZE(logo) * sizeof(*logo);
 	void *dst = NULL;
+
 	width = 298;
 	height = 78;
 	x = ((panel_width - width) >> 1);
@@ -227,6 +229,9 @@ static void draw_samsung_logo(void* lcdbase)
 
 static void lcd_panel_on(vidinfo_t *vid)
 {
+	if (vid->mipi_power)
+		vid->mipi_power();
+
 	udelay(vid->init_delay);
 
 	if (vid->cfg_gpio)
@@ -245,14 +250,14 @@ static void lcd_panel_on(vidinfo_t *vid)
 	if (vid->backlight_on)
 		vid->backlight_on(1);
 
+	if (vid->interface_mode == FIMD_CPU_INTERFACE)
+		s5p_dsim_start();
 
 	if (vid->cfg_ldo)
 		vid->cfg_ldo();
 
-
 	if (vid->enable_ldo)
 		vid->enable_ldo(1);
-
 }
 
 /* extern void init_onenand_ext2(void); */

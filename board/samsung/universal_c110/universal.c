@@ -2166,6 +2166,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->reset_lcd = NULL;
 	vid->backlight_on = NULL;
 	vid->lcd_power_on = NULL;
+	vid->mipi_power = NULL;
 
 	vid->cfg_ldo = NULL;
 	vid->enable_ldo = NULL;
@@ -2181,6 +2182,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_height	= 800;
 
 	vid->dual_lcd_enabled = 0;
+	vid->interface_mode = FIMD_RGB_INTERFACE;
 
 	if (board_is_media()) {
 		vid->vl_col	= 960;

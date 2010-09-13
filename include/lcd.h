@@ -221,6 +221,7 @@ typedef struct vidinfo {
 	void (*lcd_power_on)(unsigned int onoff);
 	void (*cfg_ldo)(void);
 	void (*enable_ldo)(unsigned int onoff);
+	void (*mipi_power)(void);
 
 	unsigned int init_delay;
 	unsigned int power_on_delay;
