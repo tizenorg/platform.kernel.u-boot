@@ -579,7 +579,7 @@ system_clock_init:
 	str	r1, [r0, #0x460]		@ S5PC110_CLK_IP0
 
 	/* CLK_IP1 */
-	ldr	r1, =0xe9fdf0f9			@ FIMD[0] USBOTG[16]
+	ldr	r1, =0xe9fdf0fd			@ FIMD[0] DSIM[2] USBOTG[16]
 						@ NANDXL[24]
 	str	r1, [r0, #0x464]		@ S5PC110_CLK_IP1
 
