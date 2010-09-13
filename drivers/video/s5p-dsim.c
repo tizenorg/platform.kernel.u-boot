@@ -1,4 +1,4 @@
-/* linux/drivers/video/samsung/s5p-dsim.c
+/* /drivers/video/s5p-dsim.c
  *
  * Samsung MIPI-DSIM driver.
  *
@@ -20,7 +20,6 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include "s5p_dsim_lowlevel.h"
-#include "s6e39a0x.h"
 
 
 struct mipi_lcd_info {
