@@ -31,7 +31,7 @@
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/regs-fb.h>
-#include <asm/arch/mipi_ddi.h>
+#include <mipi_ddi.h>
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
@@ -309,6 +309,7 @@ int s5pc_set_auto_cmd_rate(unsigned char cmd_rate, unsigned char ldi)
 
 	return 0;
 }
+
 void s5pc_fimd_lcd_init(vidinfo_t *vid)
 {
 	unsigned int cfg = 0, rgb_mode, win_id = 3;

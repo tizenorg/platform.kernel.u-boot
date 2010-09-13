@@ -13,8 +13,8 @@
 #include <common.h>
 #include <dsim.h>
 #include <lcd.h>
+#include <mipi_ddi.h>
 #include <asm/errno.h>
-#include <asm/arch/mipi_ddi.h>
 #include <asm/arch/regs-dsim.h>
 #include <asm/arch/power.h>
 #include <linux/types.h>
@@ -771,11 +771,11 @@ int s5p_dsim_enable_d_phy(struct dsim_global *dsim, unsigned int enable)
 		udebug("dsim is NULL.\n");
 		return -EFAULT;
 	}
-
+#ifdef CONFIG_S5PC110
 	reg = (readl(S5PC110_MIPI_DPHY_CONTROL)) & ~(1 << 0);
 	reg |= (enable << 0);
 	writel(reg, S5PC110_MIPI_DPHY_CONTROL);
-
+#endif
 
 	return 0;
 }
@@ -790,10 +790,11 @@ int s5p_dsim_enable_dsi_master(struct dsim_global *dsim,
 		return -EFAULT;
 	}
 
+#ifdef CONFIG_S5PC110
 	reg = (readl(S5PC110_MIPI_DPHY_CONTROL)) & ~(1 << 2);
 	reg |= (enable << 2);
 	writel(reg, S5PC110_MIPI_DPHY_CONTROL);
-
+#endif
 
 	return 0;
 }

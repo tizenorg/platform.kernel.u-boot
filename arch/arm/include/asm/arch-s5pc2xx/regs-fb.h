@@ -121,6 +121,12 @@
 #define S5P_WPALCON_H		S5P_LCDREG(0x019C)	/* Window Palette control */
 #define S5P_WPALCON_L		S5P_LCDREG(0x01A0)	/* Window Palette control */
 
+#define S5P_TRIGCON		S5P_LCDREG(0x01A4)	/* I80/RGB Trigger control */
+#define S5P_I80IFCONA0		S5P_LCDREG(0x01B0)	/* I80 interface control 0 for main LDI */
+#define S5P_I80IFCONA1		S5P_LCDREG(0x01B4)	/* I80 interface control 0 for main LDI */
+#define S5P_I80IFCONB0		S5P_LCDREG(0x01B8)	/* I80 interface control 0 for main LDI */
+#define S5P_I80IFCONB1		S5P_LCDREG(0x01B8)	/* I80 interface control 0 for main LDI */
+
 #define S5P_VIDW0ALPHA0		S5P_LCDREG(0x0200)	/* Window 0 alpha value 0 */
 #define S5P_VIDW0ALPHA1		S5P_LCDREG(0x0204)	/* Window 0 alpha value 1 */
 #define S5P_VIDW1ALPHA0		S5P_LCDREG(0x0208)	/* Window 1 alpha value 0 */
@@ -386,4 +392,13 @@
 #define S5P_DUALRGB_VDEN_EN_ENABLE		(0x1 << 16)
 #define S5P_DUALRGB_MAIN_CNT(x)			((x & 0xfff) << 18)
 
+/* I80IFCONA0 and I80IFCONA1 */
+#define S5C_LCD_CS_SETUP(x)			(((x) & 0xf) << 16)
+#define S5C_LCD_WR_SETUP(x)			(((x) & 0xf) << 12)
+#define S5C_LCD_WR_ACT(x)			(((x) & 0xf) << 8)
+#define S5C_LCD_WR_HOLD(x)			(((x) & 0xf) << 4)
+#define S5C_RSPOL_LOW				(0 << 2)
+#define S5C_RSPOL_HIGH				(1 << 2)
+#define S5C_I80IFEN_DISABLE			(0 << 0)
+#define S5C_I80IFEN_ENABLE			(1 << 0)
 #endif /* _REGS_FB_H */

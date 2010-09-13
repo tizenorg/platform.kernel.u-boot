@@ -797,6 +797,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->init_delay = 0;
 	vid->power_on_delay = 30000;
 	vid->reset_delay = 20000;
+	vid->interface_mode = FIMD_RGB_INTERFACE;
 }
 
 static unsigned short get_adc_value(int channel)

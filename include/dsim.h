@@ -10,7 +10,7 @@
  * published by the Free Software Foundation.
 */
 
-#include <asm/arch/mipi_ddi.h>
+#include <mipi_ddi.h>
 #include <lcd.h>
 
 #define DEBUG

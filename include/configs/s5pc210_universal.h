@@ -359,6 +359,7 @@
 #define CONFIG_S6E63M0		1
 #define CONFIG_S6D16A0X		1
 #define CONFIG_LD9040		1
+#define CONFIG_DSIM		1
 #define CONFIG_CMD_BMP
 #endif
 
