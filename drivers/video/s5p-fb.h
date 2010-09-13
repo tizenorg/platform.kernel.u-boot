@@ -246,6 +246,24 @@ enum s5pcfb_rgb_mode_t {
 	MODE_BGR_S = 3,
 };
 
+enum s3cfb_cpu_auto_cmd_rate {
+	DISABLE_AUTO_FRM,
+	PER_TWO_FRM,
+	PER_FOUR_FRM,
+	PER_SIX_FRM,
+	PER_EIGHT_FRM,
+	PER_TEN_FRM,
+	PER_TWELVE_FRM,
+	PER_FOURTEEN_FRM,
+	PER_SIXTEEN_FRM,
+	PER_EIGHTEEN_FRM,
+	PER_TWENTY_FRM,
+	PER_TWENTY_TWO_FRM,
+	PER_TWENTY_FOUR_FRM,
+	PER_TWENTY_SIX_FRM,
+	PER_TWENTY_EIGHT_FRM,
+	PER_THIRTY_FRM,
+};
 void s5pc_fimd_lcd_init_mem(unsigned long screen_base, unsigned long fb_size,
 	unsigned long palette_size);
 void s5pc_fimd_lcd_init(vidinfo_t *vid);
