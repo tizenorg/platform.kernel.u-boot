@@ -37,9 +37,11 @@
 #include <asm/arch/regs-otg.h>
 #include <asm/arch/rtc.h>
 #include <asm/arch/adc.h>
+#include <asm/arch/mipi_ddi.h>
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
+#include <dsim.h>
 #include <spi.h>
 #include <bmp_layout.h>
 
@@ -1879,6 +1881,13 @@ void fimd_clk_set()
 	writel(cfg, &clk->div1);
 }
 
+void mipi_power_on(void)
+{
+	run_command("pmic ldo 3 on", 0);
+	run_command("pmic ldo 7 on", 0);
+}
+
+
 extern void s6e63m0_set_platform_data(struct spi_platform_data *pd);
 extern void s6d16a0x_set_platform_data(struct spi_platform_data *pd);
 extern void ld9040_set_platform_data(struct spi_platform_data *pd);
@@ -2066,7 +2075,8 @@ void reset_lcd(void)
 {
 	if (mach_is_aquila() || mach_is_goni() || mach_is_geminus()) {
 		gpio_set_value(&gpio->mp0_5, 5, 1);
-		if (board_is_sdk() && (hwrevision(3) || hwrevision(6))) {
+		if (board_is_sdk() &&
+			(hwrevision(3) || hwrevision(4) || hwrevision(5) ||hwrevision(6))) {
 			udelay(10000);
 			gpio_set_value(&gpio->mp0_5, 5, 0);
 			udelay(10000);
@@ -2152,6 +2162,8 @@ extern void s6d16a0x_cfg_ldo(void);
 extern void s6d16a0x_enable_ldo(unsigned int onoff);
 extern void ld9040_cfg_ldo(void);
 extern void ld9040_enable_ldo(unsigned int onoff);
+extern void s3cfb_set_trigger(void);
+extern void s3cfb_is_i80_frame_done(void);
 
 int s5p_no_lcd_support(void)
 {
@@ -2159,6 +2171,70 @@ int s5p_no_lcd_support(void)
 		return 1;
 	return 0;
 }
+
+static struct dsim_config dsim_info = {
+	/* main frame fifo auto flush at VSYNC pulse */
+	.auto_flush = DSIM_FALSE,
+	.eot_disable = DSIM_FALSE,
+
+	.auto_vertical_cnt = DSIM_FALSE,
+	.hse = DSIM_FALSE,
+	.hfp = DSIM_FALSE,
+	.hbp = DSIM_FALSE,
+	.hsa = DSIM_FALSE,
+
+	.e_no_data_lane = DSIM_DATA_LANE_2,
+	.e_byte_clk = DSIM_PLL_OUT_DIV8,
+
+	/* 472MHz: LSI Recommended */
+	.p = 3,
+	.m = 118,
+	.s = 1,
+
+	/* D-PHY PLL stable time spec :min = 200usec ~ max 400usec */
+	.pll_stable_time = 500,
+
+	.esc_clk = 10 * 1000000,	/* escape clk : 10MHz */
+
+	/* stop state holding counter after bta change count 0 ~ 0xfff */
+	.stop_holding_cnt = 0x0f,
+	.bta_timeout = 0xff,		/* bta timeout 0 ~ 0xff */
+	.rx_timeout = 0xffff,		/* lp rx timeout 0 ~ 0xffff */
+
+	.e_lane_swap = DSIM_NO_CHANGE,
+};
+
+static struct dsim_lcd_config dsim_lcd_info = {
+	.e_interface		= DSIM_COMMAND,
+
+	.parameter[DSI_VIRTUAL_CH_ID]	= (unsigned int) DSIM_VIRTUAL_CH_0,
+	.parameter[DSI_FORMAT]		= (unsigned int) DSIM_24BPP_888,
+	.parameter[DSI_VIDEO_MODE_SEL]	= (unsigned int) DSIM_BURST,
+
+	.mipi_ddi_pd		= NULL,
+};
+
+struct s5p_platform_dsim s6e39a0x_platform_data = {
+	.pvid = NULL,
+	.clk_name = "dsim",
+	.dsim_info = &dsim_info,
+	.dsim_lcd_info = &dsim_lcd_info,
+	.part_reset = s5p_dsim_part_reset,
+	.init_d_phy = s5p_dsim_init_d_phy,
+	.get_fb_frame_done = s3cfb_is_i80_frame_done,
+	.trigger = s3cfb_set_trigger,
+	.lcd_panel_name = "s6e39a0x",
+	.platform_rev = 1,
+
+	/*
+	 * the stable time of needing to write data on SFR
+	 * when the mipi mode becomes LP mode.
+	 */
+	.delay_for_stabilization = 600000,
+};
+
+extern void s5p_set_dsim_platform_data(struct s5p_platform_dsim *pd);
+extern void s6e39a0x_init(void);
 
 void init_panel_info(vidinfo_t *vid)
 {
@@ -2293,7 +2369,37 @@ void init_panel_info(vidinfo_t *vid)
 		vid->init_delay = 0;
 		vid->power_on_delay = 30000;
 		vid->reset_delay = 20000;
+	} else if (board_is_sdk() && (hwrevision(4) || hwrevision(5))) {
+		vid->vl_freq	= 60;
+		vid->vl_col	= 600;
+		vid->vl_row	= 1024;
+		vid->vl_width	= 600;
+		vid->vl_height	= 1024;
+
+		vid->vl_bpix	= 32;
+		/* disable dual lcd mode. */
+		vid->dual_lcd_enabled = 0;
+
+		vid->cs_setup = 0;
+		vid->wr_setup = 0;
+		vid->wr_act = 1;
+		vid->wr_hold = 0;
+
+		vid->cfg_gpio = lcd_cfg_gpio;
+		vid->backlight_on = NULL;
+		vid->lcd_power_on = lcd_power_on;
+		vid->reset_lcd = reset_lcd;
+		vid->mipi_power = mipi_power_on;
+
+		vid->init_delay = 0;
+		vid->power_on_delay = 30000;
+		vid->reset_delay = 20000;
+		vid->interface_mode = FIMD_CPU_INTERFACE;
+		s6e39a0x_platform_data.pvid = vid;
+		s6e39a0x_init();
+		s5p_set_dsim_platform_data(&s6e39a0x_platform_data);
 	}
+
 	if (mach_is_geminus()) {
 		vid->vl_freq	= 60;
 		vid->vl_col	= 1024,
@@ -2398,6 +2504,8 @@ int misc_init_r(void)
 			setenv("lcdinfo", "lcd=s6d16a0x");
 		else if (board_is_sdk() && (hwrevision(3) || hwrevision(6)))
 			setenv("lcdinfo", "lcd=ld9040");
+		else if (board_is_sdk() && (hwrevision(4) || hwrevision(5)))
+			setenv("lcdinfo", "lcd=s6e39a0x");
 		else if (board_is_media())
 			setenv("lcdinfo", "lcd=s6e63m0");
 		else
