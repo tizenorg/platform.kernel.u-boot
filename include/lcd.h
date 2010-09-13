@@ -26,6 +26,8 @@
  * MA 02111-1307 USA
  */
 
+#include <linux/types.h>
+
 #ifndef _LCD_H_
 #define _LCD_H_
 
@@ -55,6 +57,11 @@ extern void lcd_initcolregs (void);
 
 /* gunzip_bmp used if CONFIG_VIDEO_BMP_GZIP */
 extern struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp);
+
+enum {
+	FIMD_RGB_INTERFACE = 1,
+	FIMD_CPU_INTERFACE = 2,
+};
 
 #if defined CONFIG_MPC823
 /*
@@ -218,8 +225,42 @@ typedef struct vidinfo {
 	unsigned int init_delay;
 	unsigned int power_on_delay;
 	unsigned int reset_delay;
+	unsigned int interface_mode;
+	unsigned int cs_setup;
+	unsigned int wr_setup;
+	unsigned int wr_act;
+	unsigned int wr_hold;
 
 	unsigned int dual_lcd_enabled;
+
+#ifdef CONFIG_S6E39A0X
+	void *dsim_data;
+
+	/* transfer command to lcd panel at LP mode. */
+	int (*cmd_write) (void *dsim_data, unsigned int data_id,
+		unsigned int data0, unsigned int data1);
+	int (*cmd_read) (void *dsim_data, unsigned int data_id,
+		unsigned int data0, unsigned int data1);
+	/*
+	 * get the status that all screen data have been transferred
+	 * to mipi-dsi.
+	 */
+	int (*get_dsim_frame_done) (void *dsim_data);
+	int (*clear_dsim_frame_done) (void *dsim_data);
+
+	/*
+	 * changes mipi transfer mode to LP or HS mode.
+	 *
+	 * LP mode needs when some commands like gamma values transfers
+	 * to lcd panel.
+	 */
+	int (*change_dsim_transfer_mode) (int mode);
+
+	/* get frame done status of display controller. */
+	int (*get_fb_frame_done) (void);
+	/* trigger display controller in case of cpu mode. */
+	void (*trigger) (void);
+#endif
 } vidinfo_t;
 
 #else
