@@ -70,8 +70,8 @@ static void read_image16(char* pImg, int x1pos, int y1pos, int x2pos,
 	unsigned int offset_s;
 	int i, j;
 
-	for (i = y1pos; i < y2pos; i++) {
-		for (j = x1pos; j < x2pos; j++) {
+	for(i = y1pos; i < y2pos; i++) {
+		for(j = x1pos; j < x2pos; j++) {
 			offset_s = i * panel_width + j;
 			*(pDst + offset_s) = pixel;
 		}
@@ -109,12 +109,10 @@ static void s5pc_lcd_init_mem(void *lcdbase, vidinfo_t *vid)
 	palette_size = NBITS(vid->vl_bpix) == 8 ? 256 : 16;
 	palette_mem_size = palette_size * sizeof(u32);
 
-	s5pc_fimd_lcd_init_mem((unsigned long)lcd_base,
-		(unsigned long)fb_size, palette_size);
+	s5pc_fimd_lcd_init_mem((unsigned long)lcd_base, (unsigned long)fb_size, palette_size);
 
-	udebug("fb_size=%d, screen_base=%x, palette_size=%d,i
-		palettle_mem_size=%d\n", fb_size, (unsigned int)lcd_base,
-		(int)palette_size, (int)palette_mem_size);
+	udebug("fb_size=%d, screen_base=%x, palette_size=%d, palettle_mem_size=%d\n",
+			fb_size, (unsigned int)lcd_base, (int)palette_size, (int)palette_mem_size);
 }
 
 static void s5pc_lcd_init(vidinfo_t *vid)
@@ -177,8 +175,7 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 	}
 }
 
-void _draw_samsung_logo(void *lcdbase,
-	int x, int y, int w, int h, unsigned short *bmp)
+void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned short *bmp)
 {
 	int i, j, error_range = 40;
 	short k = 0;
@@ -206,7 +203,6 @@ static void draw_samsung_logo(void* lcdbase)
 	unsigned int in_len, width, height;
 	unsigned long out_len = ARRAY_SIZE(logo) * sizeof(*logo);
 	void *dst = NULL;
-
 	width = 298;
 	height = 78;
 	x = ((panel_width - width) >> 1);
@@ -224,18 +220,13 @@ static void draw_samsung_logo(void* lcdbase)
 	}
 	if (out_len == CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
 		printf("Image could be truncated"
-			" (increase CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)!\n");
-	_draw_samsung_logo(lcdbase,
-		x, y, width, height, (unsigned short *) dst);
+				" (increase CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)!\n");
+	_draw_samsung_logo(lcdbase, x, y, width, height, (unsigned short *) dst);
 	free(dst);
 }
 
-extern mipi_power_on(void);
 static void lcd_panel_on(vidinfo_t *vid)
 {
-	if (vid->interface_mode == FIMD_CPU_INTERFACE)
-		mipi_power_on();
-
 	udelay(vid->init_delay);
 
 	if (vid->cfg_gpio)
@@ -254,14 +245,14 @@ static void lcd_panel_on(vidinfo_t *vid)
 	if (vid->backlight_on)
 		vid->backlight_on(1);
 
-	if (vid->interface_mode == FIMD_CPU_INTERFACE)
-		s5p_dsim_start();
 
 	if (vid->cfg_ldo)
 		vid->cfg_ldo();
 
+
 	if (vid->enable_ldo)
 		vid->enable_ldo(1);
+
 }
 
 /* extern void init_onenand_ext2(void); */
@@ -295,8 +286,7 @@ void lcd_ctrl_init(void *lcdbase)
 		lcd_test(panel_width, panel_height);
 #endif
 	} else if (strcmp(option, "image") == 0)
-		memcpy(lcdbase,
-		LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
+		memcpy(lcdbase, LOGO_RGB24, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 	else {
 		memset(lcdbase, 0, PANEL_WIDTH*PANEL_HEIGHT*S5P_LCD_BPP >> 3);
 		draw_samsung_logo(lcdbase);

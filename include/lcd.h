@@ -26,8 +26,6 @@
  * MA 02111-1307 USA
  */
 
-#include <linux/types.h>
-
 #ifndef _LCD_H_
 #define _LCD_H_
 
@@ -58,11 +56,6 @@ extern void lcd_initcolregs (void);
 /* gunzip_bmp used if CONFIG_VIDEO_BMP_GZIP */
 extern struct bmp_image *gunzip_bmp(unsigned long addr, unsigned long *lenp);
 
-enum {
-	FIMD_RGB_INTERFACE = 1,
-	FIMD_CPU_INTERFACE = 2,
-};
-
 #if defined CONFIG_MPC823
 /*
  * LCD controller stucture for MPC823 CPU
@@ -81,8 +74,7 @@ typedef struct vidinfo {
 	u_char	vl_dp;		/* Data polarity */
 	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8 */
 	u_char	vl_lbw;		/* LCD Bus width, 0 = 4, 1 = 8 */
-	u_char	vl_splt;	/* Split display,
-				 * 0 = single-scan, 1 = dual-scan */
+	u_char	vl_splt;	/* Split display, 0 = single-scan, 1 = dual-scan */
 	u_char	vl_clor;	/* Color, 0 = mono, 1 = color */
 	u_char	vl_tft;		/* 0 = passive, 1 = TFT */
 
@@ -144,11 +136,9 @@ typedef struct vidinfo {
 	u_char	vl_hsp;		/* Horizontal Sync polarity */
 	u_char	vl_vsp;		/* Vertical Sync polarity */
 	u_char	vl_dp;		/* Data polarity */
-	u_char	vl_bpix;	/* Bits per pixel,
-				 * 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
+	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
 	u_char	vl_lbw;		/* LCD Bus width, 0 = 4, 1 = 8 */
-	u_char	vl_splt;	/* Split display,
-				 * 0 = single-scan, 1 = dual-scan */
+	u_char	vl_splt;	/* Split display, 0 = single-scan, 1 = dual-scan */
 	u_char	vl_clor;	/* Color, 0 = mono, 1 = color */
 	u_char	vl_tft;		/* 0 = passive, 1 = TFT */
 
@@ -175,8 +165,7 @@ typedef struct vidinfo {
 
 	/* LCD configuration register */
 	u_long vl_sync;		/* Horizontal / vertical sync */
-	u_long vl_bpix;		/* Bits per pixel,
-				 * 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
+	u_long vl_bpix;		/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
 	u_long vl_tft;		/* 0 = passive, 1 = TFT */
 
 	/* Horizontal control register. */
@@ -207,8 +196,7 @@ typedef struct vidinfo {
 	u_char	vl_hsp;		/* Horizontal Sync polarity */
 	u_char	vl_vsp;		/* Vertical Sync polarity */
 	u_char	vl_dp;		/* Data polarity */
-	u_char	vl_bpix;	/* Bits per pixel,
-				 * 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
+	u_char	vl_bpix;	/* Bits per pixel, 0 = 1, 1 = 2, 2 = 4, 3 = 8, 4 = 16 */
 
 	/* Horizontal control register. Timing from data sheet */
 	u_char	vl_hspw;	/* Horz sync pulse width */
@@ -230,42 +218,8 @@ typedef struct vidinfo {
 	unsigned int init_delay;
 	unsigned int power_on_delay;
 	unsigned int reset_delay;
-	unsigned int interface_mode;
-	unsigned int cs_setup;
-	unsigned int wr_setup;
-	unsigned int wr_act;
-	unsigned int wr_hold;
 
 	unsigned int dual_lcd_enabled;
-
-#ifdef CONFIG_S6E39A0X
-	void *dsim_data;
-
-	/* transfer command to lcd panel at LP mode. */
-	int (*cmd_write) (void *dsim_data, unsigned int data_id,
-		unsigned int data0, unsigned int data1);
-	int (*cmd_read) (void *dsim_data, unsigned int data_id,
-		unsigned int data0, unsigned int data1);
-	/*
-	 * get the status that all screen data have been transferred
-	 * to mipi-dsi.
-	 */
-	int (*get_dsim_frame_done) (void *dsim_data);
-	int (*clear_dsim_frame_done) (void *dsim_data);
-
-	/*
-	 * changes mipi transfer mode to LP or HS mode.
-	 *
-	 * LP mode needs when some commands like gamma values transfers
-	 * to lcd panel.
-	 */
-	int (*change_dsim_transfer_mode) (int mode);
-
-	/* get frame done status of display controller. */
-	int (*get_fb_frame_done) (void);
-	/* trigger display controller in case of cpu mode. */
-	void (*trigger) (void);
-#endif
 } vidinfo_t;
 
 #else
@@ -313,8 +267,8 @@ void lcd_show_board_info(void);
  *  the LCD controller and memory allocation. Someone has to know what
  *  is connected, as we can't autodetect anything.
  */
-#define CONFIG_SYS_HIGH	0	/* Pins are active high	*/
-#define CONFIG_SYS_LOW		1	/* Pins are active low */
+#define CONFIG_SYS_HIGH	0	/* Pins are active high			*/
+#define CONFIG_SYS_LOW		1	/* Pins are active low			*/
 
 #define LCD_MONOCHROME	0
 #define LCD_COLOR2	1
