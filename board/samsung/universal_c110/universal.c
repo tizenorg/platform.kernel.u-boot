@@ -37,7 +37,7 @@
 #include <asm/arch/regs-otg.h>
 #include <asm/arch/rtc.h>
 #include <asm/arch/adc.h>
-#include <asm/arch/mipi_ddi.h>
+#include <mipi_ddi.h>
 #include <asm/errno.h>
 #include <fbutils.h>
 #include <lcd.h>
