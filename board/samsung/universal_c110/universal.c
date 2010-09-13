@@ -1727,10 +1727,10 @@ static void init_pmic(void)
 	/* ONOFF2 */
 	i2c_read(addr, MAX8998_REG_ONOFF2, 1, val, 1);
 	/*
-	 * Disable LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
+	 * Disable LDO8(USB_3.3V), LDO10(VPLL_1.1V), LDO11(CAM_IO_2.8V),
 	 * LDO12(CAM_ISP_1.2V), LDO13(CAM_A_2.8V)
 	 */
-	val[0] &= ~(MAX8998_LDO10 | MAX8998_LDO11 |
+	val[0] &= ~(MAX8998_LDO8 | MAX8998_LDO10 | MAX8998_LDO11 |
 			MAX8998_LDO12 | MAX8998_LDO13);
 
 	if (mach_is_goni())
@@ -2855,6 +2855,7 @@ int board_eth_init(bd_t *bis)
 int usb_board_init(void)
 {
 #ifdef CONFIG_CMD_PMIC
+	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);
 #endif
 
