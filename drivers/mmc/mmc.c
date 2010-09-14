@@ -474,6 +474,16 @@ int mmc_change_freq(struct mmc *mmc)
 	case EXT_CSD_REV_1_5:
 		/* MMC v4.41 */
 		mmc->version |= EXT_CSD_REV_1_5;
+
+		/*
+		 * iNAND Specific
+		 * if use other NAND flash, this should be changed.
+		 */
+		if (ext_csd[95])
+			mmc->check_rev = MMC_REV_4_4_1;
+		else
+			mmc->check_rev = MMC_REV_4_3_PLUS;
+
 		break;
 	case EXT_CSD_REV_1_4:
 		/* Obsolete */

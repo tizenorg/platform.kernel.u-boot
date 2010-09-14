@@ -100,10 +100,11 @@ static void print_mmcinfo(struct mmc *mmc)
 	printf("Tran Speed: %d\n", mmc->tran_speed);
 	printf("Rd Block Len: %d\n", mmc->read_bl_len);
 
-	printf("%s version %d.%d\n", IS_SD(mmc) ? "SD" : "MMC",
+	printf("%s version %d.%d%s\n", IS_SD(mmc) ? "SD" : "MMC",
 			(mmc->version >> 4) & 0xf,
 			(mmc->version & 0xf) == EXT_CSD_REV_1_5 ?
-			41 : (mmc->version & 0xf));
+			(mmc->check_rev? 3 : 41) : (mmc->version & 0xf),
+			mmc->check_rev? "+":"");
 
 	printf("High Capacity: %s\n", mmc->high_capacity ? "Yes" : "No");
 

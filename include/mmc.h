@@ -143,6 +143,8 @@
 #define EXT_CSD_REV_1_4		4
 #define EXT_CSD_REV_1_5		5
 
+#define MMC_REV_4_4_1		0
+#define MMC_REV_4_3_PLUS	1
 /*
  * EXT_CSD field definitions
  */
@@ -270,6 +272,7 @@ struct mmc {
 	u64 capacity;
 	block_dev_desc_t block_dev;
 	uint boot_config;
+	int check_rev;	/* check version 4.3+ or 4.41 (1: 4.3+, 0: 4.41) */
 	int (*send_cmd)(struct mmc *mmc,
 			struct mmc_cmd *cmd, struct mmc_data *data);
 	void (*set_ios)(struct mmc *mmc);
