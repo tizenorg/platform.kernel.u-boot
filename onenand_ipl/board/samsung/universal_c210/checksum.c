@@ -1,3 +1,10 @@
+/*
+ * Copryright (C) 2010 Samsung Electronics
+ *
+ * Generate the checksum at S5PC210 EVT0
+ *
+ * Kyungmin Park <kyungmin.park@samsung.com>
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,19 +20,13 @@
 #define SZ_14K		0x3800
 #endif
 
-#define PAGE_SIZE	0x800
+#define CHECKSUM_8K	(SZ_8K - 0x4)
+
 /*
  * For 2KiB page OneNAND
- * +------+------+------+------+
- * | 2KiB | 2KiB | 2KiB | 2KiB |
- * +------+------+------+------+
- */
-#define CHECKSUM_8K	(SZ_8K - 0x4)
-/*
- * For 4KiB page OneNAND
- * +----------------+----------------+----------------+----------------+
- * | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved | 2KiB, reserved |
- * +----------------+----------------+----------------+----------------+
+ * +------+------+------+------+------+------+------+------+
+ * | 2KiB | 2KiB | 2KiB | 2KiB | 2KiB | 2KiB | 2KiB | 2KiB |
+ * +------+------+------+------+------+------+-----C+------+
  */
 #define CHECKSUM_16K	(SZ_14K - 0x4)
 
@@ -66,33 +67,6 @@ int main(int argc, char *argv[])
 		size = CHECKSUM_8K;
 
 	for (i = 0; i < size; i++) {
-		/* evt1 doesn't have reserved area */
-		if (evt == 0) {
-			/* if reserved area, skip the checksum */
-			if (stat.st_size > SZ_8K) {
-				if (i % PAGE_SIZE == 0) {
-					int res;
-					char tbuf[PAGE_SIZE];
-
-					res = i / PAGE_SIZE;
-					if (res % 2) {
-							i += PAGE_SIZE;
-						/*
-						 * if 1st page's reverved area,
-						 * copy the data to 2nd page
-						 */
-						if (res == 1) {
-							ret = read(fd, &tbuf,
-								PAGE_SIZE);
-							ret = write(fd, tbuf,
-								PAGE_SIZE);
-						}
-						lseek(fd, i, SEEK_SET);
-					}
-				}
-			}
-		}
-
 		ret = read(fd, &buf, 1);
 
 		if (ret < 0) {
