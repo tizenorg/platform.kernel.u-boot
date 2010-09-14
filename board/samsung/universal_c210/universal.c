@@ -720,7 +720,6 @@ static void lcd_power_on(unsigned int onoff)
 {
 	unsigned char addr;
 	unsigned char val[2];
-	unsigned char val2[2];
 
 	addr = 0xCC >> 1;	/* lp3974 */
 	if (lp3974_probe())
