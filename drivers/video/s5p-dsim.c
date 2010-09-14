@@ -29,7 +29,7 @@ struct mipi_lcd_info {
 
 static LIST_HEAD(lcd_info_list);
 
-extern int s3cfb_set_trigger(void);
+extern void s3cfb_set_trigger(void);
 extern int s3cfb_is_i80_frame_done(void);
 
 struct dsim_global dsim;
@@ -76,6 +76,7 @@ static int s5p_dsim_wr_data(void *dsim_data, unsigned int data_id,
 {
 	struct dsim_global *dsim = NULL;
 	unsigned int timeout = 5000 * 2;
+	unsigned int size, data_cnt = 0, payload = 0;
 	unsigned long delay_val, delay;
 	unsigned char check_rx_ack = 0;
 
@@ -163,16 +164,13 @@ static int s5p_dsim_wr_data(void *dsim_data, unsigned int data_id,
 		return 0;
 	case GEN_LONG_WR:
 	case DCS_LONG_WR:
-	{
-		unsigned int size, data_cnt = 0, payload = 0;
-
 		size = data1 * 4;
 
 		/* if data count is less then 4, then send 3bytes data.  */
 		if (data1 < 4) {
-			payload = *(unsigned char *)(data0) |
-			    *(unsigned char *)(data0 + 1) << 8 |
-			    *(unsigned char *)(data0 + 2) << 16;
+			payload = *(unsigned char *)(data0 + data_cnt) |
+			    *(unsigned char *)(data0 + (data_cnt + 1)) << 8 |
+			    *(unsigned char *)(data0 + (data_cnt + 2)) << 16;
 
 			s5p_dsim_wr_tx_data(dsim->reg_base, payload);
 
@@ -191,12 +189,11 @@ static int s5p_dsim_wr_data(void *dsim_data, unsigned int data_id,
 			(unsigned char) ((((unsigned short) data1) & 0xff00) >>
 				8));
 
-	}
-	if (check_rx_ack)
-		/* process response func should be implemented. */
-		return 0;
-	else
-		return -EINVAL;
+		if (check_rx_ack)
+			/* process response func should be implemented. */
+			return 0;
+		else
+			return -EINVAL;
 
 	/* packet typo for video data */
 	case RGB565_PACKED:
@@ -861,7 +858,6 @@ static struct mipi_ddi_platform_data dsim_mipi_ddi_pd = {
 
 int s5p_dsim_start(void)
 {
-	struct mipi_ddi_platform_data *ddi_pd = NULL;
 	int ret = 0;
 
 	dsim.dsim_pd = dsim_pd;

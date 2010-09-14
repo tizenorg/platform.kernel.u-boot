@@ -446,7 +446,7 @@ struct dsim_global {
  * and calls these callback functions in appropriate time.
  */
 struct mipi_lcd_driver {
-	s8	name[64];
+	char	name[64];
 
 	s32	(*init)(void);
 	void	(*display_on)(void);
