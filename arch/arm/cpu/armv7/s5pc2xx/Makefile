@@ -22,7 +22,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(SOC).a
 
-SOBJS	= reset.o
+SOBJS	= cache.o
+SOBJS	+= reset.o
 
 COBJS	+= clock.o
 
