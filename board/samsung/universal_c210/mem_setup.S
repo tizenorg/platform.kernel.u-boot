@@ -28,6 +28,13 @@
 	.globl mem_ctrl_asm_init
 mem_ctrl_asm_init:
 
+	/* Async bridge configuration at CPU_core */
+	/* 1: half_sync */
+	/* 0: full_sync */
+	ldr r0, =0x10010350
+	mov r1, #1
+	str r1, [r0]
+
 	ldr	r0, =S5PC210_CLOCK_BASE		@ 0x10030000
 	/* CLK_DIV_DMC0 on iROM DMC=50MHz for init DMC */
 	ldr	r1, =0x13113113
@@ -36,9 +43,9 @@ mem_ctrl_asm_init:
 
 	ldr	r0, =S5PC210_MIU_BASE		@ 0x10600000
 	/* MIU: 1BIT INTERLEAVED mode */
-	ldr	r1, =0x0000000C
+	@ldr	r1, =0x0000000C
 	/* MIU: 2BIT INTERLEAVED mode */
-	@ldr	r1, =0x2000150C
+	ldr	r1, =0x2000150C
 	str	r1, [r0, #0x400]
 	ldr	r1, =0x40000000
 	str	r1, [r0, #0x808]
@@ -163,7 +170,7 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x00000810
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
-	ldr	r1, =0x00000C10
+	ldr	r1, =0x00000C10 /* 0xC08 at LSI bootloader */
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
 
