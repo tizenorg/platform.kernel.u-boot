@@ -106,14 +106,14 @@ finished_inval:
 	ldmfd	r13!, {r0 - r5, r7, r9 - r12, pc}
 
 l2_cache_enable:
-	push	{r0, r1, r2, lr}
+	push	{r1, r2, r3, lr}
 	mrc	15, 0, r3, cr1, cr0, 1
 	orr	r3, r3, #2
 	mcr	15, 0, r3, cr1, cr0, 1
 	pop	{r1, r2, r3, pc}
 
 l2_cache_disable:
-	push	{r0, r1, r2, lr}
+	push	{r1, r2, r3, lr}
 	mrc	15, 0, r3, cr1, cr0, 1
 	bic	r3, r3, #2
 	mcr	15, 0, r3, cr1, cr0, 1
