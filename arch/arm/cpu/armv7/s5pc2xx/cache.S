@@ -39,10 +39,6 @@
 invalidate_dcache:
 	stmfd	r13!, {r0 - r5, r7, r9 - r12, r14}
 
-	cmp	r0, #0xC100			@ check if the cpu is s5pc100
-
-	beq	finished_inval			@ s5pc100 doesn't need this
-						@ routine
 	mrc	p15, 1, r0, c0, c0, 1		@ read clidr
 	ands	r3, r0, #0x7000000		@ extract loc from clidr
 	mov	r3, r3, lsr #23			@ left align loc bit field
