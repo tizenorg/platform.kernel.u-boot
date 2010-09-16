@@ -65,15 +65,13 @@ lowlevel_init:
 	str	r1, [r0, #0x4]
 #endif
 
+#ifdef CONFIG_PRELOADER
 	/* INFORM7 is 0xBAD if slept. */
 	ldr	r0, =S5PC210_POWER_BASE
 	ldr	r1, [r0, #0x81C]
 	ldr	r0, =0xBAD
 	cmp	r0, r1
 	beq	wakeup
-
-#if 0
-	bl	io_retention_release
 #endif
 
 #ifdef CONFIG_PRELOADER
@@ -140,80 +138,19 @@ lowlevel_init:
 	mov	lr, r11
 	mov	pc, lr
 
-disable_l2cache:
-	mrc     p15, 0, r0, c1, c0, 1
-	bic     r0, r0, #(1<<1)
-	mcr     p15, 0, r0, c1, c0, 1
-	mov	pc, lr
-
-enable_l2cache:
-	mrc     p15, 0, r0, c1, c0, 1
-	orr     r0, r0, #(1<<1)
-	mcr     p15, 0, r0, c1, c0, 1
-	mov     pc, lr
-
-.macro  cache_invalidate_dcache_v7
-	MRC     p15, 1, r0, c0, c0, 1      @ read Cache Level ID register (clidr)
-	ANDS    r3, r0, #0x7000000         @ extract level of coherency from clidr
-	MOV     r3, r3, lsr #23            @ left align level of coherency bit field
-	BEQ     finished_inval             @ if loc is 0, then no need to clean
-
-	MOV     r10, #0                    @ start clean at cache level 0 (in r10)
-loop_1:
-	ADD     r2, r10, r10, lsr #1       @ work out 3x current cache level
-	MOV     r1, r0, lsr r2             @ extract cache type bits from clidr
-	AND     r1, r1, #7                 @ mask of the bits for current cache only
-	CMP     r1, #2                     @ see what cache we have at this level
-	BLT     skip_inval                 @ skip if no cache, or just i-cache
-	MCR     p15, 2, r10, c0, c0, 0     @ select current cache level in cssr
-	MOV     r1, #0
-	MCR     p15, 0, r1, c7, c5, 4      @ prefetchflush to synch the new cssr&csidr
-	MRC     p15, 1, r1, c0, c0, 0      @ read the new csidr
-	AND     r2, r1, #7                 @ extract the length of the cache lines
-	ADD     r2, r2, #4                 @ add 4 (line length offset)
-	LDR     r6, =0x3ff
-	ANDS    r6, r6, r1, lsr #3         @ find maximum number on the way size
-	CLZ     r5,r6                       @ DCI 0xE16F5F16 , find bit position of way size increment
-	LDR     r7, =0x7fff
-	ANDS    r7, r7, r1, lsr #13        @ extract max number of the index size
-loop_2:
-	MOV     r8, r6                     @ create working copy of max way size
-loop_3:
-	ORR     r11, r10, r8, lsl r5       @ factor way and cache number into r11
-	ORR     r11, r11, r7, lsl r2       @ factor index number into r11
-	MCR     p15, 0, r11, c7, c6, 2     @ invalidate by set/way
-	SUBS    r8, r8, #1                 @ decrement the way
-	BGE     loop_3
-
-	SUBS    r7, r7, #1                 @ decrement the index
-	BGE     loop_2
-skip_inval:
-	ADD     r10, r10, #2               @ increment cache number
-	CMP     r3, r10
-	BGT     loop_1
-finished_inval:
-.endm
-
+#ifdef CONFIG_PRELOADER
 wakeup:
 
 	bl	io_retention_release
-
-#ifdef CONFIG_PRELOADER
 	bl	mem_ctrl_asm_init
-#endif
-
-	/* init system clock */
 	bl	system_clock_init
-
-#ifdef CONFIG_PRELOADER
 	bl	mem_ctrl_asm_init2
-#endif
-	bl uart_asm_init
+	bl	uart_asm_init
 
 	/* Invalidate L2 Cache */
-	bl	disable_l2cache
-	cache_invalidate_dcache_v7
-	bl	enable_l2cache
+	bl	l2_cache_disable
+	bl	invalidate_dcache
+	bl	l2_cache_enable
 
 	/* INFORM0 is the continue address */
 	ldr	r0, =S5PC210_POWER_BASE
@@ -223,6 +160,7 @@ wakeup:
 	nop
 	nop
 	nop
+#endif
 
 /*
  * uart_asm_init: Initialize UART's pins
@@ -492,7 +430,7 @@ system_power_init:
 	mov	pc, lr
 #endif
 
-
+#ifdef CONFIG_PRELOADER
 io_retention_release:
 	ldr	r0, =0x10020000
 	ldr	r2, =(1 << 28)
@@ -519,3 +457,4 @@ io_retention_release:
 	str	r2, [r1]
 
 	mov	pc, lr
+#endif
