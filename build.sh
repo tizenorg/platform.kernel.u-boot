@@ -40,6 +40,10 @@ check_users()
 		CROSS_COMPILER=/opt/arm-2009q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
+	if [ "$USER" = "cwchoi00" ]; then
+		CROSS_COMPILER=/opt/arm-2009q3/bin/arm-none-linux-gnueabi-
+		JOBS="-j 5"
+	fi
 }
 
 check_ipl()
@@ -135,4 +139,11 @@ elif [ "$USER" = "leedonghwa" ]; then
 	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
 	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
 	mv -f system_uboot* /home/leedonghwa/Build-Binaries/
+elif [ "$USER" = "cwchoi00" ]; then
+	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
+	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot_recovery_evt0.tar u-boot-recovery-evt0.bin
+	tar cvf system_uboot_recovery_evt1.tar u-boot-recovery-evt1.bin
+	tar cvf system_uboot_recovery_evt1-fused.tar u-boot-recovery-evt1-fused.bin
 fi
