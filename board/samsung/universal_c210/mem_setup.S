@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Samsung Electrnoics
+ * Copyright (C) 2010 Samsung Electrnoics
  * Minkyu Kang <mk7.kang@samsung.com>
  * Kyungmin Park <kyungmin.park@samsung.com>
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2009 Samsung Electronics
+ * Copyright (C) 2010 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -24,8 +24,6 @@
 #include <common.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
-#include <linux/mtd/samsung_onenand.h>
-#include <onenand_uboot.h>
 
 static int s5pc210_chip_probe(struct mtd_info *mtd)
 {
