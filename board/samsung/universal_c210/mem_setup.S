@@ -139,28 +139,28 @@ mem_ctrl_asm_init:
 	str	r1, [r0, #0x3C]
 	str	r1, [r6, #0x3C]
 
-	mov	r2, #0x10000
+	mov	r2, #0x100000
 2:	subs	r2, r2, #1
 	bne	2b
 
 	ldr	r1, =0x07000000
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
-	mov	r2, #0x10000
+	mov	r2, #0x100000
 3:	subs	r2, r2, #1
 	bne	3b
 
 	ldr	r1, =0x00071C00
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
-	mov	r2, #0x10000
+	mov	r2, #0x100000
 4:	subs	r2, r2, #1
 	bne	4b
 
 	ldr	r1, =0x00010BFC
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
-	mov	r2, #0x10000
+	mov	r2, #0x100000
 5:	subs	r2, r2, #1
 	bne	5b
 
@@ -170,7 +170,7 @@ mem_ctrl_asm_init:
 	ldr	r1, =0x00000810
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
-	ldr	r1, =0x00000C10 /* 0xC08 at LSI bootloader */
+	ldr	r1, =0x00000C08
 	str	r1, [r0, #0x10]
 	str	r1, [r6, #0x10]
 
@@ -192,7 +192,7 @@ mem_ctrl_asm_init2:
 	str	r1, [r0, #0x18]
 	str	r1, [r6, #0x18]
 
-	mov	r1, #0x10000
+	mov	r1, #0x20000
 1:	subs	r1, r1, #1
 	bne	1b
 
@@ -203,7 +203,7 @@ mem_ctrl_asm_init2:
 	str	r1, [r0, #0x1C]
 	str	r1, [r6, #0x1C]
 
-	mov	r1, #0x10000
+	mov	r1, #0x20000
 1:	subs	r1, r1, #1
 	bne	1b
 

@@ -147,11 +147,6 @@ wakeup:
 	bl	mem_ctrl_asm_init2
 	bl	uart_asm_init
 
-	/* Invalidate L2 Cache */
-	bl	l2_cache_disable
-	bl	invalidate_dcache
-	bl	l2_cache_enable
-
 	/* INFORM0 is the continue address */
 	ldr	r0, =S5PC210_POWER_BASE
 	ldr	r1, [r0, #0x800]
