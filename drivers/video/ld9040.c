@@ -53,7 +53,6 @@ static const unsigned char SEQ_TEMP_SWIRE[] = {
 	DATA_ONLY, 0x06,
 	DATA_ONLY, 0x06,
 	DATA_ONLY, 0x06,
-	DATA_ONLY, 0x06,
 };
 
 static const unsigned char SEQ_GTCON[] = {
@@ -366,7 +365,6 @@ void ld9040_cfg_ldo(void)
 	ld9040_panel_send_sequence(SEQ_MANPWR, ARRAY_SIZE(SEQ_MANPWR));
 	ld9040_panel_send_sequence(SEQ_PWR_CTRL, ARRAY_SIZE(SEQ_PWR_CTRL));
 	ld9040_panel_send_sequence(SEQ_ELVSS_ON, ARRAY_SIZE(SEQ_ELVSS_ON));
-	ld9040_panel_send_sequence(SEQ_TEMP_SWIRE, ARRAY_SIZE(SEQ_TEMP_SWIRE));
 	ld9040_panel_send_sequence(SEQ_GTCON, ARRAY_SIZE(SEQ_GTCON));
 	ld9040_panel_send_sequence(SEQ_GAMMA_SET1, ARRAY_SIZE(SEQ_GAMMA_SET1));
 	ld9040_panel_send_sequence(SEQ_GAMMA_CTRL, ARRAY_SIZE(SEQ_GAMMA_CTRL));
