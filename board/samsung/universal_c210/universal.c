@@ -46,6 +46,11 @@ u32 get_board_rev(void)
 	return board_rev;
 }
 
+static int get_hwrev(void)
+{
+	return board_rev & 0xFF;
+}
+
 enum {
 	I2C_0, I2C_1, I2C_2, I2C_3,
 	I2C_4, I2C_5, I2C_6, I2C_7,
@@ -838,6 +843,8 @@ static unsigned int get_hw_revision(void)
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
 	if (IS_RANGE(mode0, 80, 100) && IS_RANGE(mode1, 80, 100))
 		hwrev = 0x0;
+	if (IS_RANGE(mode0, 750, 870) && IS_RANGE(mode1, 80, 100))
+		hwrev = 0x1;
 #undef IS_RANGE
 
 	printf("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
@@ -920,13 +927,27 @@ int board_mmc_init(bd_t *bis)
 {
 	int i;
 
-	/*
-	 * Set the low to enable LDO_EN
-	 * But when you use the test board for eMMC booting
-	 * you should set it HIGH since it removes the inverter
-	 */
-	/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
-	gpio_direction_output(&gpio1->e3, 6, 0);
+	switch (get_hwrev()) {
+	case 0:
+		/*
+		 * Set the low to enable LDO_EN
+		 * But when you use the test board for eMMC booting
+		 * you should set it HIGH since it removes the inverter
+		 */
+		/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
+		gpio_direction_output(&gpio1->e3, 6, 0);
+		break;
+	case 1:
+		/*
+		 * Default reset state is High and there's no inverter
+		 * But set it as HIGH to ensure
+		 */
+		/* MASSMEMORY_EN: XMDMADDR_3: GPE1[3] */
+		gpio_direction_output(&gpio1->e1, 3, 1);
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * eMMC GPIO:
