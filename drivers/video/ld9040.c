@@ -47,7 +47,7 @@ static const unsigned char SEQ_ELVSS_ON[] = {
 	DATA_ONLY, 0x16,
 };
 
-static const unsigned short SEQ_TEMP_SWIRE[] = {
+static const unsigned char SEQ_TEMP_SWIRE[] = {
 	0xB2, 0x06,
 
 	DATA_ONLY, 0x06,
@@ -63,7 +63,7 @@ static const unsigned char SEQ_GTCON[] = {
 	DATA_ONLY, 0x00,
 };
 
-static const unsigned short SEQ_PANEL_CONDITION[] = {
+static const unsigned char SEQ_PANEL_CONDITION[] = {
 	0xF8, 0x05,
 
 	DATA_ONLY, 0x65,
@@ -90,33 +90,33 @@ static const unsigned short SEQ_PANEL_CONDITION[] = {
 	DATA_ONLY, 0x02,
 };
 
-static const unsigned short SEQ_GAMMA_SET1[] = {
+static const unsigned char SEQ_GAMMA_SET1[] = {
 	0xF9, 0x00,
 
-	DATA_ONLY, 0x9E,
+	DATA_ONLY, 0x13,
+	DATA_ONLY, 0xB2,
 	DATA_ONLY, 0xBA,
-	DATA_ONLY, 0xB0,
-	DATA_ONLY, 0xC2,
+	DATA_ONLY, 0xD2,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0x75,
+	DATA_ONLY, 0x30,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xB9,
+	DATA_ONLY, 0xAF,
+	DATA_ONLY, 0xC0,
 	DATA_ONLY, 0xB8,
-	DATA_ONLY, 0xAB,
-	DATA_ONLY, 0xBE,
+	DATA_ONLY, 0xCD,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0x8E,
+	DATA_ONLY, 0x3D,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xB0,
-	DATA_ONLY, 0xB6,
-	DATA_ONLY, 0xAC,
-	DATA_ONLY, 0xBF,
+	DATA_ONLY, 0xA8,
+	DATA_ONLY, 0xB8,
+	DATA_ONLY, 0xB7,
+	DATA_ONLY, 0xCD,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0x94,
+	DATA_ONLY, 0x44,
 };
 
 static const unsigned char SEQ_GAMMA_CTRL[] = {
-	0xFB, 0x00,
+	0xFB, 0x02,
 
 	DATA_ONLY, 0x5A,
 };
@@ -348,9 +348,6 @@ static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int s
 {
 	int i = 0;
 
-	/* workaround */
-	udelay(10);
-
 	while (i < size_cmd) {
 		ld9040_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
@@ -359,7 +356,8 @@ static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int s
 
 void ld9040_cfg_ldo(void)
 {
-	/* SMD power on sequence */
+	udelay(10);
+
 	ld9040_panel_send_sequence(SEQ_USER_SETTING,
 					ARRAY_SIZE(SEQ_USER_SETTING));
 	ld9040_panel_send_sequence(SEQ_PANEL_CONDITION,
@@ -374,7 +372,7 @@ void ld9040_cfg_ldo(void)
 	ld9040_panel_send_sequence(SEQ_GAMMA_CTRL, ARRAY_SIZE(SEQ_GAMMA_CTRL));
 	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
 
-	udelay(10);
+	udelay(120);
 }
 
 void ld9040_enable_ldo(unsigned int onoff)
