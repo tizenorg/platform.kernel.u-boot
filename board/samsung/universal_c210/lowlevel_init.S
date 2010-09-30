@@ -133,19 +133,26 @@ lowlevel_init:
 #ifndef CONFIG_PRELOADER
 	/* PMU init */
 	bl	system_power_init
+
 #endif
 
 	mov	lr, r11
 	mov	pc, lr
+	nop
+	nop
+	nop
 
 #ifdef CONFIG_PRELOADER
 wakeup:
+	bl	l2_cache_disable
+	bl	invalidate_dcache
+	bl	l2_cache_enable
 
-	bl	io_retention_release
 	bl	mem_ctrl_asm_init
 	bl	system_clock_init
 	bl	mem_ctrl_asm_init2
-	bl	uart_asm_init
+
+	bl	io_retention_release
 
 	/* INFORM0 is the continue address */
 	ldr	r0, =S5PC210_POWER_BASE
@@ -154,9 +161,9 @@ wakeup:
 	nop
 	nop
 	nop
-	nop
 #endif
 
+#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */
@@ -209,6 +216,7 @@ uart_asm_init:
 #endif
 
 	mov	pc, lr
+#endif
 
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE

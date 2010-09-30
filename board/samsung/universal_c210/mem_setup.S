@@ -78,10 +78,10 @@ mem_ctrl_asm_init:
 	ldr	r2, =0x00000084
 	str	r2, [r0, #0x1C]			@ DMC_PHYCONTROL1
 	str	r2, [r6, #0x1C]			@ DMC_PHYCONTROL1
-	@ldr	r1, =0x0000008C
+	ldr	r1, =0x0000008C
 	str	r1, [r0, #0x1C]			@ DMC_PHYCONTROL1
 	str	r1, [r6, #0x1C]			@ DMC_PHYCONTROL1
-	@ldr	r2, =0x00000084
+	ldr	r2, =0x00000084
 	str	r2, [r0, #0x1C]			@ DMC_PHYCONTROL1
 	str	r2, [r6, #0x1C]			@ DMC_PHYCONTROL1
 
@@ -117,7 +117,7 @@ mem_ctrl_asm_init:
 	 * CHIP_ROW[7:4]	: 0x2 = 14 bits
 	 * CHIP_ROW[3:0]	: 0x3 = 8 banks
 	 */
-	ldr	r1, =0x20f00223
+	ldr	r1, =0x20f01223
 	str	r1, [r0, #0x08]			@ DMC_MEMCONFIG0
 	@ldr	r1, =0x20f00223
 	str	r1, [r6, #0x08]			@ DMC_MEMCONFIG0
