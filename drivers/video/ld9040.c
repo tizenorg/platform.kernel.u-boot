@@ -40,11 +40,20 @@ static const unsigned char SEQ_USER_SETTING[] = {
 	DATA_ONLY, 0x5A,
 };
 
-static const unsigned char SEQ_ELVSS[] = {
-	0xB1, 0x0B,
+static const unsigned char SEQ_ELVSS_ON[] = {
+	0xB1, 0x0D,
 
 	DATA_ONLY, 0x00,
 	DATA_ONLY, 0x16,
+};
+
+static const unsigned short SEQ_TEMP_SWIRE[] = {
+	0xB2, 0x06,
+
+	DATA_ONLY, 0x06,
+	DATA_ONLY, 0x06,
+	DATA_ONLY, 0x06,
+	DATA_ONLY, 0x06,
 };
 
 static const unsigned char SEQ_GTCON[] = {
@@ -54,29 +63,56 @@ static const unsigned char SEQ_GTCON[] = {
 	DATA_ONLY, 0x00,
 };
 
-static const unsigned char SEQ_GAMMA_SET1[] = {
-	0xF9, 0x18,
+static const unsigned short SEQ_PANEL_CONDITION[] = {
+	0xF8, 0x05,
 
-	DATA_ONLY, 0x9A,
+	DATA_ONLY, 0x65,
+	DATA_ONLY, 0x96,
+	DATA_ONLY, 0x71,
+	DATA_ONLY, 0x7D,
+	DATA_ONLY, 0x19,
+	DATA_ONLY, 0x3B,
+	DATA_ONLY, 0x0D,
+	DATA_ONLY, 0x19,
+	DATA_ONLY, 0x7E,
+	DATA_ONLY, 0x0D,
+	DATA_ONLY, 0xE2,
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0x7E,
+	DATA_ONLY, 0x7D,
+	DATA_ONLY, 0x07,
+	DATA_ONLY, 0x07,
+	DATA_ONLY, 0x20,
+	DATA_ONLY, 0x20,
+	DATA_ONLY, 0x20,
+	DATA_ONLY, 0x02,
+	DATA_ONLY, 0x02,
+};
+
+static const unsigned short SEQ_GAMMA_SET1[] = {
+	0xF9, 0x00,
+
+	DATA_ONLY, 0x9E,
+	DATA_ONLY, 0xBA,
 	DATA_ONLY, 0xB0,
+	DATA_ONLY, 0xC2,
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0x75,
+	DATA_ONLY, 0x00,
+	DATA_ONLY, 0xB9,
+	DATA_ONLY, 0xB8,
 	DATA_ONLY, 0xAB,
-	DATA_ONLY, 0xC4,
+	DATA_ONLY, 0xBE,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xAA,
+	DATA_ONLY, 0x8E,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xA1,
-	DATA_ONLY, 0xB5,
 	DATA_ONLY, 0xB0,
-	DATA_ONLY, 0xC7,
-	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xC5,
-	DATA_ONLY, 0x24,
-	DATA_ONLY, 0xA7,
-	DATA_ONLY, 0xAC,
-	DATA_ONLY, 0x9A,
 	DATA_ONLY, 0xB6,
+	DATA_ONLY, 0xAC,
+	DATA_ONLY, 0xBF,
 	DATA_ONLY, 0x00,
-	DATA_ONLY, 0xE5,
+	DATA_ONLY, 0x94,
 };
 
 static const unsigned char SEQ_GAMMA_CTRL[] = {
@@ -97,10 +133,25 @@ static const unsigned char SEQ_APON[] = {
 static const unsigned char SEQ_DISPCTL[] = {
 	0xF2, 0x02,
 
-	DATA_ONLY, 0x03,
-	DATA_ONLY, 0x1C,
+	DATA_ONLY, 0x08,
+	DATA_ONLY, 0x08,
 	DATA_ONLY, 0x10,
 	DATA_ONLY, 0x10,
+};
+
+static const unsigned char SEQ_MANPWR[] = {
+	0xB0, 0x04,
+};
+
+static const unsigned char SEQ_PWR_CTRL[] = {
+	0xF4, 0x0A,
+
+	DATA_ONLY, 0x87,
+	DATA_ONLY, 0x25,
+	DATA_ONLY, 0x6A,
+	DATA_ONLY, 0x44,
+	DATA_ONLY, 0x02,
+	DATA_ONLY, 0x88,
 };
 
 static const unsigned char SEQ_SLPOUT[] = {
@@ -308,64 +359,20 @@ static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int s
 
 void ld9040_cfg_ldo(void)
 {
-#if 1
 	/* SMD power on sequence */
-	ld9040_panel_send_sequence(SEQ_USER_SETTING, ARRAY_SIZE(SEQ_USER_SETTING));
-	ld9040_panel_send_sequence(SEQ_ELVSS, ARRAY_SIZE(SEQ_ELVSS));
+	ld9040_panel_send_sequence(SEQ_USER_SETTING,
+					ARRAY_SIZE(SEQ_USER_SETTING));
+	ld9040_panel_send_sequence(SEQ_PANEL_CONDITION,
+					ARRAY_SIZE(SEQ_PANEL_CONDITION));
+	ld9040_panel_send_sequence(SEQ_DISPCTL, ARRAY_SIZE(SEQ_DISPCTL));
+	ld9040_panel_send_sequence(SEQ_MANPWR, ARRAY_SIZE(SEQ_MANPWR));
+	ld9040_panel_send_sequence(SEQ_PWR_CTRL, ARRAY_SIZE(SEQ_PWR_CTRL));
+	ld9040_panel_send_sequence(SEQ_ELVSS_ON, ARRAY_SIZE(SEQ_ELVSS_ON));
+	ld9040_panel_send_sequence(SEQ_TEMP_SWIRE, ARRAY_SIZE(SEQ_TEMP_SWIRE));
 	ld9040_panel_send_sequence(SEQ_GTCON, ARRAY_SIZE(SEQ_GTCON));
 	ld9040_panel_send_sequence(SEQ_GAMMA_SET1, ARRAY_SIZE(SEQ_GAMMA_SET1));
 	ld9040_panel_send_sequence(SEQ_GAMMA_CTRL, ARRAY_SIZE(SEQ_GAMMA_CTRL));
 	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
-#endif
-
-#if 0
-	/* Auto power on sequence */
-	ld9040_panel_send_sequence(SEQ_USER_SETTING, ARRAY_SIZE(SEQ_USER_SETTING));
-	ld9040_panel_send_sequence(SEQ_ELVSS, ARRAY_SIZE(SEQ_ELVSS));
-	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
-#endif
-
-#if 0
-	/* Manual power on sequence */
-	ld9040_panel_send_sequence(SEQ_SWRESET, ARRAY_SIZE(SEQ_SWRESET));
-	ld9040_panel_send_sequence(SEQ_USER_SETTING, ARRAY_SIZE(SEQ_USER_SETTING));
-	ld9040_panel_send_sequence(SEQ_ELVSS, ARRAY_SIZE(SEQ_ELVSS));
-	ld9040_panel_send_sequence(SEQ_SLPOUT, ARRAY_SIZE(SEQ_SLPOUT));
-	ld9040_panel_send_sequence(SEQ_VCI1_1ST_EN, ARRAY_SIZE(SEQ_VCI1_1ST_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VL1_EN, ARRAY_SIZE(SEQ_VL1_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VL2_EN, ARRAY_SIZE(SEQ_VL2_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VCI1_2ND_EN, ARRAY_SIZE(SEQ_VCI1_2ND_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VL3_EN, ARRAY_SIZE(SEQ_VL3_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VREG1_AMP_EN, ARRAY_SIZE(SEQ_VREG1_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VGH_AMP_EN, ARRAY_SIZE(SEQ_VGH_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VGL_AMP_EN, ARRAY_SIZE(SEQ_VGL_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VMOS_AMP_EN, ARRAY_SIZE(SEQ_VMOS_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VINT_AMP_EN, ARRAY_SIZE(SEQ_VINT_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VBH_AMP_EN, ARRAY_SIZE(SEQ_VBH_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_VBL_AMP_EN, ARRAY_SIZE(SEQ_VBL_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_GAM_AMP_EN, ARRAY_SIZE(SEQ_GAM_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_SD_AMP_EN, ARRAY_SIZE(SEQ_SD_AMP_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_GLS_EN, ARRAY_SIZE(SEQ_GLS_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_ELS_EN, ARRAY_SIZE(SEQ_ELS_EN));
-	udelay(6000);
-	ld9040_panel_send_sequence(SEQ_EL_ON, ARRAY_SIZE(SEQ_EL_ON));
-	udelay(6000);
-#endif
 
 	udelay(10);
 }
