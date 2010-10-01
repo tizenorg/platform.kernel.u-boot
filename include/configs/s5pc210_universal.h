@@ -305,8 +305,8 @@
 
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 2 sectors */
 
-/* OneNAND IPL uses 8KiB */
-#define CONFIG_ONENAND_START_PAGE	4
+/* OneNAND IPL uses 32KiB = 2KiB * 16 */
+#define CONFIG_ONENAND_START_PAGE	16
 
 /* IPL + RECOVERY + U-BOOT */
 #define CONFIG_RECOVERY_UBOOT_BLOCK	1

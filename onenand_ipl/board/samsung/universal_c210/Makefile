@@ -2,7 +2,6 @@
 #  Samsung Universal(S5PC210) board OneNAND IPL
 #
 #  Copyright (C) 2010 Samsung Electronics
-#  Minkyu Kang <mk7.kang@samsung.com>
 #  Kyungmin Park <kyungmin.park@samsung.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -13,10 +12,9 @@
 
 include $(TOPDIR)/config.mk
 # S5PC210 loads at 0x02020000 (EVT0)
-# S5PC210 loads at 0xxxxxxxxx (EVT1)
-# Header (16 bytes) are added after more
-TEXT_BASE		= 0x02022000
-TEXT_BASE16K_EVT0	= 0x02026000
+TEXT_BASE		= 0x02020000
+TEXT_BASE14K_EVT0	= 0x02023800
+TEXT_BASE16K_EVT0	= 0x02024000
 
 LDSCRIPT= $(TOPDIR)/onenand_ipl/board/$(BOARDDIR)/u-boot-onenand.lds
 LDFLAGS	= -Bstatic -T $(LDSCRIPT) -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
@@ -37,15 +35,21 @@ LNDIR	:= $(OBJTREE)/onenand_ipl/board/$(BOARDDIR)
 
 onenandobj	:= $(OBJTREE)/onenand_ipl/
 
-ALL	= $(onenandobj)onenand-ipl $(onenandobj)onenand-ipl.bin $(onenandobj)onenand-ipl-16k.bin $(onenandobj)onenand-ipl-16k-evt0.bin
+ALL	= zerofile-16k $(onenandobj)onenand-ipl-32k.bin $(onenandobj)onenand-ipl-16k-evt0.bin
 
 all:	$(obj).depend $(ALL)
 
-$(onenandobj)onenand-ipl-16k.bin:	$(onenandobj)onenand-ipl-16k-evt0.bin
+$(onenandobj)onenand-ipl-32k.bin:	$(onenandobj)onenand-ipl-32k-evt0-fused.bin
 	cp $< $@
+	cat $(onenandobj)onenand-ipl-16k-evt0.bin zerofile-16k > $(onenandobj)onenand-ipl-32k-evt0.bin
+
+$(onenandobj)onenand-ipl-32k-evt0-fused.bin:
+	cat c210.bl1-16k.bin.signed onenand-ipl-16k-evt0.bin.signed > $@
 
 $(onenandobj)onenand-ipl-16k-evt0.bin:	$(onenandobj)onenand-ipl checksum
+	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE14K_EVT0) -O binary $< $(onenandobj)onenand-ipl-14k-evt0.bin
 	$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(TEXT_BASE16K_EVT0) -O binary $< $@
+	$(onenandobj)/board/$(BOARDDIR)/checksum $(onenandobj)onenand-ipl-14k-evt0.bin 0
 	$(onenandobj)/board/$(BOARDDIR)/checksum $@ 0
 
 $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
@@ -54,6 +58,9 @@ $(onenandobj)onenand-ipl.bin:	$(onenandobj)onenand-ipl
 $(onenandobj)onenand-ipl:	$(OBJS)
 	cd $(LNDIR) && $(LD) $(LDFLAGS) $$UNDEF_SYM $(__OBJS) \
 		-Map $@.map -o $@
+
+zerofile-16k:
+	dd if=/dev/zero of=zerofile-16k bs=1024 count=16
 
 checksum: checksum.c
 	$(HOSTCC) -o $@ $<
@@ -107,6 +114,6 @@ include $(SRCTREE)/rules.mk
 sinclude $(obj).depend
 
 clean:
-	rm onenand_boot.c onenand_read.c
+	rm onenand_boot.c onenand_read.c checksum
 
 #########################################################################
