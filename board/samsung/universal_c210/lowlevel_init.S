@@ -216,15 +216,24 @@ uart_asm_init:
 #endif
 
 	mov	pc, lr
+	nop
+	nop
+	nop
 #endif
 
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
 
-	/* APLL(1), MPLL(0), CORE(1), HPM(0) */
+	/* APLL(1), MPLL(1), CORE(0), HPM(0) */
 	ldr	r1, =0x0101
 	ldr	r2, =0x14200			@ CLK_SRC_CPU
 	str	r1, [r0, r2]
+
+	/* wait ?us */
+	mov	r1, #0x10000
+1:	subs	r1, r1, #1
+	bne	1b
+
 	/*
 	 * CLK_SRC_TOP0
 	 * MUX_ONENAND_SEL[28]	0: DOUT133, 1: DOUT166
@@ -314,10 +323,10 @@ system_clock_init:
 	ldr	r2, =0x14100			@ APLL_CON0
 	str	r1, [r0, r2]
 	/* MPLL */
-	ldr	r1, =0x8000000d
+	ldr	r1, =0x8000001C
 	ldr	r2, =0x1410C			@ MPLL_CON1
 	str	r1, [r0, r2]
-	ldr	r1, =0x806e0401			@ 660MHz
+	ldr	r1, =0x80c80601			@ 800MHz
 	ldr	r2, =0x14108			@ MPLL_CON0
 	str	r1, [r0, r2]
 	/* EPLL */
@@ -409,6 +418,9 @@ system_clock_init:
 	str	r1, [r0, r2]
 #endif
 	mov	pc, lr
+	nop
+	nop
+	nop
 
 #ifndef CONFIG_PRELOADER
 system_power_init:
@@ -431,6 +443,9 @@ system_power_init:
 	str	r5, [r2, #0xCE0]		@ GPS_CONFIGURATION
 
 	mov	pc, lr
+	nop
+	nop
+	nop
 #endif
 
 #ifdef CONFIG_PRELOADER
@@ -460,4 +475,8 @@ io_retention_release:
 	str	r2, [r1]
 
 	mov	pc, lr
+	nop
+	nop
+	nop
 #endif
+

@@ -128,15 +128,15 @@ mem_ctrl_asm_init:
 	str	r1, [r0, #0x30]			@ DMC_TIMINGAREF
 	str	r1, [r6, #0x30]			@ DMC_TIMINGAREF
 
-	/* CLK 330 */
-	ldr	r1, =0x2B47654E
-	str	r1, [r0, #0x34]
+	/* CLK 400 */
+	ldr	r1, =0x34498691
+	str	r1, [r0, #0x34]			@TimingRow
 	str	r1, [r6, #0x34]
-	ldr	r1, =0x35330306
-	str	r1, [r0, #0x38]
+	ldr	r1, =0x36330306
+	str	r1, [r0, #0x38]			@TimingData
 	str	r1, [r6, #0x38]
-	ldr	r1, =0x442f0365
-	str	r1, [r0, #0x3C]
+	ldr	r1, =0x50380365
+	str	r1, [r0, #0x3C]			@TimingPower
 	str	r1, [r6, #0x3C]
 
 	mov	r2, #0x100000
