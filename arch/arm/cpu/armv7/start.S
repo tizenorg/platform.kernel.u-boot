@@ -167,7 +167,8 @@ copy_loop:				@ copy 32 bytes at a time
 stack_setup:
 	ldr	r0, _TEXT_BASE		@ upper 128 KiB: relocated uboot
 #if defined(CONFIG_PRELOADER)
-	sub	sp, r0, #128		@ leave 32 words for abort-stack
+	/* As _TEXT_BASE is internal RAM start address don't sub it */
+	add	sp, r0, #128		@ leave 32 words for abort-stack
 #else
 	sub	r0, r0, #CONFIG_SYS_MALLOC_LEN @ malloc area
 	sub	r0, r0, #CONFIG_SYS_GBL_DATA_SIZE @ bdinfo
