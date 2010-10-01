@@ -39,7 +39,7 @@ ALL	= zerofile-16k $(onenandobj)onenand-ipl-32k.bin $(onenandobj)onenand-ipl-16k
 
 all:	$(obj).depend $(ALL)
 
-$(onenandobj)onenand-ipl-32k.bin:	$(onenandobj)onenand-ipl-32k-evt0-fused.bin
+$(onenandobj)onenand-ipl-32k.bin:	$(onenandobj)onenand-ipl-32k-evt0-fused.bin $(onenandobj)onenand-ipl-16k-evt0.bin
 	cp $< $@
 	cat $(onenandobj)onenand-ipl-16k-evt0.bin zerofile-16k > $(onenandobj)onenand-ipl-32k-evt0.bin
 
