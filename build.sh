@@ -18,6 +18,7 @@ check_users()
 	if [ "$USER" = "kmpark" ]; then
 		#CROSS_COMPILER=/pub/toolchains/gcc-4.4.1/bin/arm-none-linux-gnueabi-
 		CROSS_COMPILER=/scratchbox/compilers/arm-linux-gnueabi-gcc4.4.1-glibc2.10.1-2009q3-93/bin/arm-none-linux-gnueabi-
+		touch onenand_ipl/board/samsung/universal_c210/start.S
 		JOBS="-j 4"
 	fi
 	if [ "$USER" = "dofmind" ]; then
@@ -65,13 +66,25 @@ build_uboot()
 
 make_evt_image()
 {
-	cat "$IPL"_ipl/"$IPL"-ipl-16k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin
-	cat "$IPL"_ipl/"$IPL"-ipl-16k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
-	if [ "$IPL" = "mmc" ]; then
-		cat "$IPL"_ipl/"$IPL"-ipl-8k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
+	set -x
+	SOC=`grep BOARD include/config.mk | awk -F'_' '{print $2}'`
+	IPL_PREFIX=${IPL}_ipl/${IPL}-ipl
+
+	if [ "$SOC" = "c210" ]; then
+		# Universal Rev0.0
+		cat ${IPL_PREFIX}-32k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin	
+		# Universal Rev0.1 (Secure boot)
+		cat ${IPL_PREFIX}-32k-evt0-fused.bin u-boot.bin > u-boot-"$IPL"-evt0-fused.bin
+	elif [ "$SOC" = "c110" ]; then
+		# C110
+		cat ${IPL_PREFIX}-16k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin
+		cat ${IPL_PREFIX}-16k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
+		if [ "$IPL" = "mmc" ]; then
+			cat ${IPL_PREFIX}-8k-fused.bin u-boot.bin > u-boot-"$IPL"-evt1-fused.bin
+		fi
+		# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
+		cp u-boot-"$IPL".bin u-boot-"$IPL"-evt1.bin
 	fi
-	# To distinguish previous u-boot-onenand.bin, it uses the evt1 suffix
-	cp u-boot-"$IPL".bin u-boot-"$IPL"-evt1.bin
 }
 
 make_recovery_image()
@@ -90,7 +103,7 @@ check_ipl $1
 build_uboot $*
 
 make_evt_image
-make_recovery_image
+#make_recovery_image
 
 if [ "$IPL" != "mmc" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
@@ -101,10 +114,8 @@ if [ "$IPL" != "mmc" ]; then
 fi
 
 if [ "$USER" = "kmpark" ]; then
-	ls -al u-boot.bin u-boot-onenand.bin u-boot-onenand-evt0.bin
-	# To prevent wrong program
-	cp -f u-boot-onenand-evt0.bin u-boot-onenand.bin
-	cp -f u-boot.bin u-boot-onenand.bin u-boot-onenand-evt0.bin /tftpboot
+	ls -al u-boot*.bin
+	cp -f u-boot.bin u-boot-onenand.bin /tftpboot
 	ls -al onenand_ipl
 	pushd ../images
 	./system.sh
