@@ -31,6 +31,8 @@
 #endif
 
 void (*set_mmc_clk)(int dev_index, unsigned int div);
+int (*set_lcd_parent_clk)(const unsigned int lcd_numm,
+			const unsigned int pclk_name, const unsigned int div);
 unsigned long (*get_lcd_clk)(void);
 unsigned long (*get_uart_clk)(int dev_index);
 unsigned long (*get_pwm_clk)(void);
@@ -206,6 +208,61 @@ static unsigned long s5pc210_get_uart_clk(int dev_index)
 	return uclk;
 }
 
+/* s5pc210: set parent clock and ratio for fimdx. */
+static int s5pc210_set_lcd_pclk(const unsigned int lcd_num,
+		const unsigned int pclk_name, const unsigned int div)
+{
+	struct s5pc210_clock *clk =
+		(struct s5pc210_clock *)samsung_get_base_clock();
+	unsigned int sel, ratio;
+	unsigned int parent_sel;
+	unsigned int src_addr, div_addr;
+
+	if (lcd_num == 0) {
+		src_addr = (unsigned int)&clk->src_lcd0;
+		div_addr = (unsigned int)&clk->div_lcd0;
+	} else if (lcd_num == 1) {
+		src_addr = (unsigned int)&clk->src_lcd1;
+		div_addr = (unsigned int)&clk->div_lcd1;
+	} else
+		return -1;
+	/*
+	 * CLK_SRC_LCDx
+	 * FIMDx_SEL [3:0]
+	 */
+	sel = readl(src_addr);
+	sel &= ~0xf;
+
+	switch (pclk_name) {
+	case MPLL:
+		parent_sel = 0x6;
+		break;
+	case EPLL:
+		parent_sel = 0x7;
+		break;
+	case VPLL:
+		parent_sel = 0x8;
+		break;
+	default:
+		parent_sel = 0x6;
+		break;
+	};
+
+	sel |= (parent_sel & 0xf);
+	writel(sel, src_addr);
+
+	/*
+	 * CLK_DIV_LCDx
+	 * FIMDx_RATIO [3:0]
+	 */
+	ratio = readl(div_addr);
+	ratio &= ~0xf;
+	ratio |= div;
+	writel(ratio, div_addr);
+
+	return 0;
+}
+
 /* s5pc210: return lcd clock frequency */
 static unsigned long s5pc210_get_lcd_clk(void)
 {
@@ -233,7 +290,7 @@ static unsigned long s5pc210_get_lcd_clk(void)
 
 	/*
 	 * CLK_DIV_LCD0
-	 * FIMC0_RATIO [3:0]
+	 * FIMD0_RATIO [3:0]
 	 */
 	ratio = readl(&clk->div_lcd0);
 	ratio = ratio & 0xf;
@@ -279,5 +336,7 @@ void s5p_clock_init(void)
 		get_pwm_clk = s5pc210_get_pwm_clk;
 		get_lcd_clk = s5pc210_get_lcd_clk;
 		set_mmc_clk = s5pc210_set_mmc_clk;
+
+		set_lcd_parent_clk = s5pc210_set_lcd_pclk;
 	}
 }

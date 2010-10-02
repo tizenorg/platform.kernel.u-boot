@@ -232,6 +232,11 @@ typedef struct vidinfo {
 	unsigned int wr_act;
 	unsigned int wr_hold;
 
+	/* parent clock name(MPLL, EPLL or VPLL) */
+	unsigned int pclk_name;
+	/* ratio value for source clock from parent clock.*/
+	unsigned int sclk_div;
+
 	unsigned int dual_lcd_enabled;
 
 #ifdef CONFIG_S6E39A0X

@@ -148,7 +148,6 @@ static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 			pvid->vl_hbpd + pvid->vl_col) * (pvid->vl_vspw +
 			    pvid->vl_vfpd + pvid->vl_vbpd + pvid->vl_row);
 
-
 	if (get_pll_clk == NULL) {
 		printf("get_pll_clk is null.\n");
 		return;
@@ -164,6 +163,12 @@ static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 
 	if (pixel_clock > max_clock)
 		pixel_clock = max_clock;
+
+	/**
+	 * after it adds pclk_name and sclk_div for c110 to board file.
+	 * cancel comment out below.
+	 */
+	/* set_lcd_parent_clk(0, pvid->pclk_name, pvid->sclk_div); */
 
 	div64 = (u64)get_lcd_clk();
 

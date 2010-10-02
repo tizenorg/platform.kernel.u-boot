@@ -36,5 +36,7 @@ extern unsigned long (*get_pwm_clk)(void);
 extern unsigned long (*get_uart_clk)(int dev_index);
 extern unsigned long (*get_lcd_clk)(void);
 extern void (*set_mmc_clk)(int dev_index, unsigned int div);
+extern int (*set_lcd_parent_clk)(const unsigned int lcd_num,
+			const unsigned int pclk_name, const unsigned int div);
 
 #endif

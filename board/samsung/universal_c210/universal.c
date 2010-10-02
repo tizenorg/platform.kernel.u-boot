@@ -32,6 +32,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/power.h>
+#include <asm/arch/clk.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -820,6 +821,12 @@ void init_panel_info(vidinfo_t *vid)
 	vid->power_on_delay = 30000;
 	vid->reset_delay = 20000;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
+
+	/* board should be detected at here. */
+
+	/* for LD8040. */
+	vid->pclk_name = MPLL;
+	vid->sclk_div = 1;
 }
 
 static unsigned short get_adc_value(int channel)
