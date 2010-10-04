@@ -1784,6 +1784,7 @@ struct ubifs_info {
 
 	int ltab_lnum;
 	int ltab_offs;
+	struct ubifs_lprops *lpt;
 	struct ubifs_lpt_lprops *ltab;
 	struct ubifs_lpt_lprops *ltab_cmt;
 	int lsave_cnt;
