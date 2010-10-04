@@ -31,7 +31,7 @@
 #endif
 
 void (*set_mmc_clk)(int dev_index, unsigned int div);
-int (*set_lcd_parent_clk)(const unsigned int lcd_numm,
+int (*set_lcd_clk)(const unsigned int dev_index,
 			const unsigned int pclk_name, const unsigned int div);
 unsigned long (*get_lcd_clk)(void);
 unsigned long (*get_uart_clk)(int dev_index);
@@ -208,8 +208,12 @@ static unsigned long s5pc210_get_uart_clk(int dev_index)
 	return uclk;
 }
 
-/* s5pc210: set parent clock and ratio for fimdx. */
-static int s5pc210_set_lcd_pclk(const unsigned int lcd_num,
+/**
+ * s5pc210: set parent clock and ratio for fimdx.
+ * @dev_index: index of fimd using bus0 or bus1.
+ * @div: ratio value for sclk_fimd.
+ */
+static int s5pc210_set_lcd_clk(const unsigned int dev_index,
 		const unsigned int pclk_name, const unsigned int div)
 {
 	struct s5pc210_clock *clk =
@@ -218,10 +222,10 @@ static int s5pc210_set_lcd_pclk(const unsigned int lcd_num,
 	unsigned int parent_sel;
 	unsigned int src_addr, div_addr;
 
-	if (lcd_num == 0) {
+	if (dev_index == 0) {
 		src_addr = (unsigned int)&clk->src_lcd0;
 		div_addr = (unsigned int)&clk->div_lcd0;
-	} else if (lcd_num == 1) {
+	} else if (dev_index == 1) {
 		src_addr = (unsigned int)&clk->src_lcd1;
 		div_addr = (unsigned int)&clk->div_lcd1;
 	} else
@@ -336,7 +340,6 @@ void s5p_clock_init(void)
 		get_pwm_clk = s5pc210_get_pwm_clk;
 		get_lcd_clk = s5pc210_get_lcd_clk;
 		set_mmc_clk = s5pc210_set_mmc_clk;
-
-		set_lcd_parent_clk = s5pc210_set_lcd_pclk;
+		set_lcd_clk = s5pc210_set_lcd_clk;
 	}
 }

@@ -168,7 +168,7 @@ static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 	 * after it adds pclk_name and sclk_div for c110 to board file.
 	 * cancel comment out below.
 	 */
-	/* set_lcd_parent_clk(0, pvid->pclk_name, pvid->sclk_div); */
+	/* set_lcd_clk(0, pvid->pclk_name, pvid->sclk_div); */
 
 	div64 = (u64)get_lcd_clk();
 
