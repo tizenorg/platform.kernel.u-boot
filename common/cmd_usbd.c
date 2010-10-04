@@ -22,6 +22,14 @@
 static struct part_info *parts[16];
 #endif
 
+#ifdef CONFIG_UBIFS_MK
+#include <mkfs.ubifs.h>
+#endif
+
+#ifdef CONFIG_UBINIZE
+#include <ubinize.h>
+#endif
+
 static const char pszMe[] = "usbd: ";
 
 static struct usbd_ops usbd_ops;
@@ -1150,10 +1158,10 @@ static int process_data(struct usbd_ops *usbd)
 			printf("CSA Clear will be skipped temporary\n");
 
 #ifdef CONFIG_UBIFS_MK
-#include <mkfs.ubifs.h>
 		void *dest_addr;
 		void *src_addr = (void *) down_ram_addr;
 		int leb_size, max_leb_cnt, mkfs_min_io_size;
+		unsigned long ubifs_dest_size, ubi_dest_size;
 #ifdef CONFIG_S5PC110
 		mkfs_min_io_size = 4096;
 		leb_size = 248 * 1024;
@@ -1163,7 +1171,6 @@ static int process_data(struct usbd_ops *usbd)
 		leb_size = 126 * 1024;
 		max_leb_cnt = 4096;
 #endif
-		unsigned long ubifs_dest_size, ubi_dest_size;
 		printf("Start making ubifs\n");
 		ret = mkfs(src_addr, len, &dest_addr, &ubifs_dest_size,
 			   mkfs_min_io_size, leb_size, max_leb_cnt);
@@ -1175,7 +1182,6 @@ static int process_data(struct usbd_ops *usbd)
 #endif
 
 #ifdef CONFIG_UBINIZE
-#include <ubinize.h>
 		int peb_size, ubi_min_io_size, subpage_size, vid_hdr_offs;
 #ifdef CONFIG_S5PC110
 		ubi_min_io_size = 4096;
