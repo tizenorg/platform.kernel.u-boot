@@ -32,6 +32,10 @@ COBJS-y += misc.o
 COBJS-y += debug.o
 endif
 
+ifdef CONFIG_UBINIZE
+COBJS-y += crc32.o ubinize.o
+endif
+
 COBJS	:= $(COBJS-y)
 SRCS 	:= $(COBJS:.o=.c)
 OBJS 	:= $(addprefix $(obj),$(COBJS))

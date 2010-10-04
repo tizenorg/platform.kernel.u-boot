@@ -31,6 +31,7 @@
 #define __UBI_MEDIA_H__
 
 #include <asm/byteorder.h>
+#include <linux/types.h>
 
 /* The version of UBI images supported by this implementation */
 #define UBI_VERSION 1
@@ -151,7 +152,8 @@ struct ubi_ec_hdr {
 	__be64  ec; /* Warning: the current limit is 31-bit anyway! */
 	__be32  vid_hdr_offset;
 	__be32  data_offset;
-	__u8    padding2[36];
+	__be32  image_seq;
+	__u8	padding2[32];
 	__be32  hdr_crc;
 } __attribute__ ((packed));
 
