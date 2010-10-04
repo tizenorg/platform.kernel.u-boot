@@ -237,8 +237,10 @@ system_clock_init:
 	/*
 	 * CLK_SRC_TOP0
 	 * MUX_ONENAND_SEL[28]	0: DOUT133, 1: DOUT166
+	 * MUX_VPLL_SEL[8]	0: FINPLL,  1: FOUTVPLL
+	 * MUX_EPLL_SEL[4]	0: FINPLL,  1: FOUTEPLL
 	 */
-	ldr	r1, =0x10000000
+	ldr	r1, =0x10000110
 	ldr	r2, =0x0C210			@ CLK_SRC_TOP
 	str	r1, [r0, r2]
 

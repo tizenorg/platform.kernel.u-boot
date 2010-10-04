@@ -186,21 +186,6 @@ void i2c_init_board(void)
 		check_battery(1);
 }
 
-/**
- * setup machine specific clocks.
- */
-static void setup_clock(void)
-{
-	struct s5pc210_clock *clk =
-		(struct s5pc210_clock *)samsung_get_base_clock();
-	unsigned int sel;
-
-	sel = readl(&clk->src_top0);
-	/* set source clock for VPLL to FOUTVPLL. */
-	sel |= (1 << 8);
-	writel(sel, &clk->src_top0);
-}
-
 int board_init(void)
 {
 	gpio1 = (struct s5pc210_gpio_part1 *) S5PC210_GPIO_PART1_BASE;
@@ -208,9 +193,6 @@ int board_init(void)
 
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
-
-	/* setup machine specific clocks. */
-	setup_clock();
 
 	return 0;
 }
