@@ -801,8 +801,12 @@ int mmc_startup(struct mmc *mmc)
 	if (err)
 		return err;
 
+	/*
+	 * Workaround
+	 * removed sd_change_freq(mmc)
+	 */
 	if (IS_SD(mmc))
-		err = sd_change_freq(mmc);
+		mmc->card_caps |= MMC_MODE_4BIT;
 	else
 		err = mmc_change_freq(mmc);
 

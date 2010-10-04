@@ -388,9 +388,9 @@ system_clock_init:
 	/*
 	 * SMMUPCIE[18], NFCON[16]			: 1111 1010
 	 * PCIE[14],  SATA[10], SDMMC43[9:8]		: 1011 1000
-	 * SDMMC21[7:6], TSI[4], SATAPHY[3], PCIEPHY[2]	: 0010 0011
+	 * SDMMC1[6], TSI[4], SATAPHY[3], PCIEPHY[2]	: 1010 0011
 	 */
-	ldr	r1, =0xFFFAB823
+	ldr	r1, =0xFFFAB8A3
 	ldr	r2, =0x0C940			@ CLK_GATE_IP_FSYS
 	str	r1, [r0, r2]
 
