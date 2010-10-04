@@ -117,6 +117,9 @@ int saveenv(void)
 	env_new.crc = crc32(0, env_new.data, ENV_SIZE);
 
 	instr.len = CONFIG_ENV_SIZE;
+	if (instr.len < mtd->erasesize)
+		instr.len = ALIGN(instr.len, mtd->erasesize);
+
 #ifdef CONFIG_ENV_ADDR_FLEX
 	if (FLEXONENAND(this)) {
 		env_addr = CONFIG_ENV_ADDR_FLEX;
