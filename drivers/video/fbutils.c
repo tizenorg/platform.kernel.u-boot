@@ -52,7 +52,6 @@ static unsigned int color_index;
 
 static unsigned colormap [256];
 extern vidinfo_t panel_info;
-static gd_t *g_gd;
 
 static char red_length = 8, red_offset = 16;
 static char green_length = 8, green_offset = 8;
@@ -288,6 +287,8 @@ void draw_progress(int y, int per, unsigned char color)
 	fb_printf(buf);
 }
 
+DECLARE_GLOBAL_DATA_PTR;
+
 void init_font(void)
 {
 	int addr = 0, y;
@@ -296,12 +297,10 @@ void init_font(void)
 	line_length = panel_info.vl_width * 4;
 	bytes_per_pixel = panel_info.vl_bpix / 8;
 
-	g_gd = (gd_t *)(_armboot_start - CONFIG_SYS_MALLOC_LEN - sizeof(gd_t));
-
 	line_addr = (unsigned char **)malloc(sizeof(__u32) * panel_info.vl_height);
 
 	for (y = 0; y < panel_info.vl_height; y++, addr += line_length) {
-		line_addr[y] = (unsigned char *)(g_gd->fb_base + addr);
+		line_addr[y] = (unsigned char *)(gd->fb_base + addr);
 	}
 
 	make_color_table();
