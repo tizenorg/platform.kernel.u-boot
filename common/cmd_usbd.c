@@ -22,6 +22,14 @@
 static struct part_info *parts[16];
 #endif
 
+#ifdef CONFIG_UBIFS_MK
+#include <mkfs.ubifs.h>
+#endif
+
+#ifdef CONFIG_UBINIZE
+#include <ubinize.h>
+#endif
+
 static const char pszMe[] = "usbd: ";
 
 static struct usbd_ops usbd_ops;
@@ -1149,11 +1157,64 @@ static int process_data(struct usbd_ops *usbd)
 		else
 			printf("CSA Clear will be skipped temporary\n");
 
+#ifdef CONFIG_UBIFS_MK
+		void *dest_addr;
+		void *src_addr = (void *) down_ram_addr;
+		int leb_size, max_leb_cnt, mkfs_min_io_size;
+		unsigned long ubifs_dest_size, ubi_dest_size;
+#ifdef CONFIG_S5PC110
+		mkfs_min_io_size = 4096;
+		leb_size = 248 * 1024;
+		max_leb_cnt = 4096;
+#elif CONFIG_S5PC210
+		mkfs_min_io_size = 2048;
+		leb_size = 126 * 1024;
+		max_leb_cnt = 4096;
+#endif
+		printf("Start making ubifs\n");
+		ret = mkfs(src_addr, len, &dest_addr, &ubifs_dest_size,
+			   mkfs_min_io_size, leb_size, max_leb_cnt);
+		if (ret) {
+			printf("Error : making ubifs failed\n");
+			goto out;
+		}
+		printf("Complete making ubifs\n");
+#endif
+
+#ifdef CONFIG_UBINIZE
+		int peb_size, ubi_min_io_size, subpage_size, vid_hdr_offs;
+#ifdef CONFIG_S5PC110
+		ubi_min_io_size = 4096;
+		peb_size = 256 * 1024;
+		subpage_size = 4096;
+		vid_hdr_offs = 0;
+#elif CONFIG_S5PC210
+		ubi_min_io_size = 2048;
+		peb_size = 128 * 1024;
+		subpage_size = 512;
+		vid_hdr_offs = 512;
+#endif
+		printf("Start ubinizing\n");
+		ret = ubinize(dest_addr, ubifs_dest_size,
+			      src_addr, &ubi_dest_size,
+			      peb_size, ubi_min_io_size,
+			      subpage_size, vid_hdr_offs);
+		if (ret) {
+			printf("Error : ubinizing failed\n");
+			goto out;
+		}
+		printf("Complete ubinizing\n");
+
+		len = (unsigned int) ubi_dest_size;
+
+		free(dest_addr);
+#endif
 		/* Write : arg (0 Modem) / (1 CSA) */
 		if (!arg) {
 			sprintf(length, "%x", (unsigned int) len);
 			ret = nand_cmd(1, ramaddr, offset, length);
 		}
+out:
 		break;
 
 #ifdef CONFIG_CMD_MMC

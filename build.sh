@@ -45,6 +45,10 @@ check_users()
 		CROSS_COMPILER=/opt/arm-2009q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
+	if [ "$USER" = "donggeun" ]; then
+		CROSS_COMPILER=/scratchbox/compilers/arm-linux-gnueabi-gcc4.4.1-glibc2.10.1-2009q3-93/bin/arm-none-linux-gnueabi-
+		JOBS="-j 5"
+	fi
 }
 
 check_ipl()
@@ -145,4 +149,9 @@ elif [ "$USER" = "cwchoi00" ]; then
 	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
 	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+elif [ "$USER" = "donggeun" ]; then
+	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
+	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	mv -f system_uboot*.tar /home/donggeun/workspace/images
 fi

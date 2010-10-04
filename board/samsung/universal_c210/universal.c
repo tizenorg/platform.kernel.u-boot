@@ -932,7 +932,7 @@ int s5p_no_mmc_support(void)
 
 int board_mmc_init(bd_t *bis)
 {
-	int i;
+	int i, err;
 
 	switch (get_hwrev()) {
 	case 0:
@@ -992,7 +992,35 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_drv(&gpio2->k1, i, GPIO_DRV_4X);
 	}
 
-	return s5p_mmc_init(0, 8);
+	/*
+	 * SD card GPIO:
+	 * GPK2[0]	SD_2_CLK(2)
+	 * GPK2[1]	SD_2_CMD(2)
+	 * GPK2[2]	SD_2_CDn	-> Not used
+	 * GPK2[3:6]	SD_2_DATA[0:3](2)
+	 */
+	for (i = 0; i < 7; i++) {
+		if (i == 2)
+			continue;
+		/* GPK2[0:6] special function 2 */
+		gpio_cfg_pin(&gpio2->k2, i, 0x2);
+		/* GPK2[0:6] pull disable */
+		gpio_set_pull(&gpio2->k2, i, GPIO_PULL_NONE);
+		/* GPK2[0:6] drv 4x */
+		gpio_set_drv(&gpio2->k2, i, GPIO_DRV_4X);
+	}
+
+	/*
+	 * MMC device init
+	 * mmc0	 : eMMC (8-bit buswidth)
+	 * mmc2	 : SD card (4-bit buswidth)
+	 */
+	err  = s5p_mmc_init(0, 8);
+	if (err)
+		return err;
+
+	return s5p_mmc_init(2, 4);
+
 }
 #endif
 

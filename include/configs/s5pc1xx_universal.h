@@ -72,7 +72,7 @@
 /*
  * Size of malloc() pool
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 15 * 1024 * 1024)
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* size in bytes for initial data */
 
 /*
@@ -151,6 +151,11 @@
 #define CONFIG_CMD_UBIFS
 #define CONFIG_LZO
 #endif
+
+/* To enable make ubifs and ubinized image*/
+#define CONFIG_LZO_COMPRESSION
+#define CONFIG_UBIFS_MK
+#define CONFIG_UBINIZE
 
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
 #undef CONFIG_CMD_NET

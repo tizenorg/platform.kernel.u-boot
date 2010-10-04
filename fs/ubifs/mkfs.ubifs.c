@@ -36,6 +36,16 @@
 
 #define MODEM_IMAGE_SIZE	0xc00000
 
+#define DEFAULT_ROOTDIR_SQNUM	1
+#define DEFAULT_ROOTDIR_NLINK	2
+#define DEFAULT_FILE_SQNUM	2
+#define DEFAULT_FILE_NLINK	1
+#define DEFAULT_TIME_SEC	0x4ca2dfd9
+#define DEFAULT_ROOTDIR_MODE	0x41ed
+#define DEFAULT_FILE_MODE	0x81c0
+#define DEFAULT_UID		1000
+#define DEFAULT_GID		513
+
 /**
  * struct idx_entry - index entry.
  * @next: next index entry (NULL at end of list)
@@ -441,21 +451,21 @@ static int add_inode_with_data(unsigned long file_size, ino_t inum, void *data,
 	ino->size       = cpu_to_le64(file_size);
 
 	if (inum == UBIFS_ROOT_INO) {
-		ino->creat_sqnum	= cpu_to_le64(1);
-		ino->nlink		= cpu_to_le32(2);
-		ino->atime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->ctime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->mtime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->mode		= cpu_to_le32(0x41ed);
+		ino->creat_sqnum	= cpu_to_le64(DEFAULT_ROOTDIR_SQNUM);
+		ino->nlink		= cpu_to_le32(DEFAULT_ROOTDIR_NLINK);
+		ino->atime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->ctime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->mtime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->mode		= cpu_to_le32(DEFAULT_ROOTDIR_MODE);
 	} else {
-		ino->creat_sqnum	= cpu_to_le64(2);
-		ino->nlink		= cpu_to_le32(1);
-		ino->atime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->ctime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->mtime_sec		= cpu_to_le64(0x4ca2dfd9);
-		ino->uid		= cpu_to_le32(1000);
-		ino->gid		= cpu_to_le32(513);
-		ino->mode		= cpu_to_le32(0x81c0);
+		ino->creat_sqnum	= cpu_to_le64(DEFAULT_FILE_SQNUM);
+		ino->nlink		= cpu_to_le32(DEFAULT_FILE_NLINK);
+		ino->atime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->ctime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->mtime_sec		= cpu_to_le64(DEFAULT_TIME_SEC);
+		ino->uid		= cpu_to_le32(DEFAULT_UID);
+		ino->gid		= cpu_to_le32(DEFAULT_GID);
+		ino->mode		= cpu_to_le32(DEFAULT_FILE_MODE);
 	}
 
 	ino->flags      = cpu_to_le32(use_flags);
