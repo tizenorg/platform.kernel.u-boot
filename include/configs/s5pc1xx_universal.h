@@ -38,7 +38,6 @@
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
 #define CONFIG_MACH_AQUILA	1	/* working with Aquila */
 #define CONFIG_MACH_GONI	1	/* working with Goni */
-#define CONFIG_RECOVERY		1	/* working with recovery block */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -288,8 +287,7 @@
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE	/* memtest works on	      */
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_SDRAM_BASE + 0x5000000)
 
-#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x4000000)
-#define CONFIG_SYS_BOOT_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x4800000)
+#define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 0x4800000)
 
 #define CONFIG_SYS_HZ			1000
 
@@ -349,7 +347,7 @@
 #define CONFIG_RECOVERY_BOOT_BLOCKS	4
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
-#define CONFIG_ENV_SIZE			(256 << 10)	/* 256 KiB, 0x40000 */
+#define CONFIG_ENV_SIZE			4096
 #define CONFIG_ENV_ADDR			(1 << 20)	/* 1 MB, 0x100000 */
 
 #define CONFIG_RECOVERY_SIZE		(768 << 10)	/* 768 KiB, 0xC0000 */
@@ -410,5 +408,8 @@
 #ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)
 #endif
+
+#define CONFIG_SYS_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - 0x1000000)
+#define CONFIG_SYS_INIT_SP_ADDR	(CONFIG_SYS_SP_ADDR - CONFIG_SYS_GBL_DATA_SIZE)
 
 #endif	/* __CONFIG_H */

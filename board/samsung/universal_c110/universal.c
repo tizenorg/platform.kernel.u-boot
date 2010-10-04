@@ -306,6 +306,8 @@ void i2c_init_board(void)
 	if (cpu_is_s5pc100())
 		return;
 
+	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
+
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
 	if (mach_is_aquila()) {
@@ -354,8 +356,7 @@ void i2c_init_board(void)
 	/* Reset on fsa9480 early */
 	check_micro_usb(1);
 	/* Reset on max17040 early */
-	if (battery_soc == 0)
-		check_battery(1);
+	check_battery(1);
 }
 
 #ifdef CONFIG_MISC_INIT_R
@@ -711,16 +712,6 @@ static void check_hw_revision(void)
 			gd->bd->bi_arch_number = C100_MACH_START + board;
 	} else {
 		gd->bd->bi_arch_number = board;
-	}
-
-	/* Architecture Common settings */
-	if (cpu_is_s5pc110()) {
-		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
-	} else {
-		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; "
-				"bootm 0x30007FC0");
-		setenv("updatek", "onenand erase 0x60000 0x300000; "
-				  "onenand write 0x31008000 0x60000 0x300000");
 	}
 }
 
@@ -2495,6 +2486,16 @@ static void setup_meminfo(void)
 
 int misc_init_r(void)
 {
+	/* Architecture Common settings */
+	if (cpu_is_s5pc110()) {
+		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
+	} else {
+		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; "
+				"bootm 0x30007FC0");
+		setenv("updatek", "onenand erase 0x60000 0x300000; "
+				"onenand write 0x31008000 0x60000 0x300000");
+	}
+
 #ifdef CONFIG_LCD
 	/* It should be located at first */
 	lcd_is_enabled = 0;
@@ -2587,6 +2588,12 @@ int board_init(void)
 
 int dram_init(void)
 {
+	gd->ram_size = PHYS_SDRAM_1_SIZE;
+	return 0;
+}
+
+void dram_init_banksize(void)
+{
 	unsigned int base, memconfig0, size;
 	unsigned int memconfig1, sz = 0;
 	int mem_3g = 0;
@@ -2598,6 +2605,9 @@ int dram_init(void)
 		gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
 		size = 128;
 	} else {
+		gd->bd->bi_arch_number = MACH_TYPE_AQUILA;
+		check_hw_revision();
+
 		/* In S5PC110, we can't swap the DMC0/1 */
 		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
@@ -2651,7 +2661,8 @@ int dram_init(void)
 	 */
 	gd->bd->bi_dram[1].size = (size + sz) << 20;
 
-	return 0;
+	/* Set the memory size correctly */
+	gd->ram_size = gd->bd->bi_dram[0].size + gd->bd->bi_dram[1].size;
 }
 
 /* Used for sleep test */
