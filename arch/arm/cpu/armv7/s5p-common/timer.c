@@ -71,15 +71,12 @@ int timer_init(void)
 	val |= (MUX_DIV_2 & 0xF) << MUX4_DIV_SHIFT;
 	writel(val, &timer->tcfg1);
 
-	if (count_value == 0) {
-		/* reset initial value */
-		/* count_value = 2085937.5(HZ) (per 1 sec)*/
-		count_value = get_pwm_clk() / ((PRESCALER_1 + 1) *
-				(MUX_DIV_2 + 1));
+	/* count_value = 2085937.5(HZ) (per 1 sec)*/
+	count_value = get_pwm_clk() / ((PRESCALER_1 + 1) *
+			(MUX_DIV_2 + 1));
 
-		/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
-		count_value = count_value / 100;
-	}
+	/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
+	count_value = count_value / 100;
 
 	/* set count value */
 	writel(count_value, &timer->tcntb4);
@@ -120,7 +117,10 @@ void set_timer(unsigned long t)
 /* delay x useconds */
 void __udelay(unsigned long usec)
 {
+	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long tmo, tmp, now, until;
+
+	count_value = readl(&timer->tcntb4);
 
 	if (usec >= 1000) {
 		/*
