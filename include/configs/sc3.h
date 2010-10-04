@@ -76,15 +76,12 @@
 /*-----------------------------------------------------------------------
  * Serial Port
  *----------------------------------------------------------------------*/
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
 #define CONFIG_SERIAL_MULTI
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
-/*
- * define CONFIG_POWER_DOWN if your cpu should power down while waiting for your input
- * Works only, if you have enabled the CONFIG_SERIAL_SOFTWARE_FIFO feature
- */
-#if CONFIG_SERIAL_SOFTWARE_FIFO
- #define CONFIG_POWER_DOWN
-#endif
 
 /*
  * define CONFIG_SYS_CLK_FREQ to your base crystal clock in Hz
@@ -379,8 +376,9 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		0xFFE00000
-#define CONFIG_SYS_MONITOR_BASE	0xFFFC0000     /* placed last 256k */
-#define CONFIG_SYS_MONITOR_LEN		(224 * 1024)	/* Reserve 224 KiB for Monitor	*/
+
+#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* Start of U-Boot	*/
+#define CONFIG_SYS_MONITOR_LEN		(0xFFFFFFFF - CONFIG_SYS_MONITOR_BASE + 1)
 #define CONFIG_SYS_MALLOC_LEN		(128 * 1024)	/* Reserve 128 KiB for malloc()	*/
 
 /*

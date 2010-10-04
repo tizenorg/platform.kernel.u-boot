@@ -57,7 +57,7 @@ int timer_init(void)
 	/*
 	 * @ PWM Timer 4
 	 * Timer Freq(HZ) =
-	 *	PCLK / { (prescaler_value + 1) * (divider_value) }
+	 *	PWM_CLK / { (prescaler_value + 1) * (divider_value) }
 	 */
 
 	/* set prescaler : 16 */

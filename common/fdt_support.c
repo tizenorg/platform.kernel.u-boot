@@ -498,11 +498,12 @@ int fdt_resize(void *blob)
 
 	/*
 	 * Calculate the actual size of the fdt
-	 * plus the size needed for two fdt_add_mem_rsv, one
-	 * for the fdt itself and one for a possible initrd
+	 * plus the size needed for 5 fdt_add_mem_rsv, one
+	 * for the fdt itself and 4 for a possible initrd
+	 * ((initrd-start + initrd-end) * 2 (name & value))
 	 */
 	actualsize = fdt_off_dt_strings(blob) +
-		fdt_size_dt_strings(blob) + 2*sizeof(struct fdt_reserve_entry);
+		fdt_size_dt_strings(blob) + 5 * sizeof(struct fdt_reserve_entry);
 
 	/* Make it so the fdt ends on a page boundary */
 	actualsize = ALIGN(actualsize + ((uint)blob & 0xfff), 0x1000);
@@ -590,11 +591,30 @@ int fdt_pci_dma_ranges(void *blob, int phb_off, struct pci_controller *hose) {
 
 #ifdef CONFIG_FDT_FIXUP_NOR_FLASH_SIZE
 /*
+ * Provide a weak default function to return the flash bank size.
+ * There might be multiple non-identical flash chips connected to one
+ * chip-select, so we need to pass an index as well.
+ */
+u32 __flash_get_bank_size(int cs, int idx)
+{
+	extern flash_info_t flash_info[];
+
+	/*
+	 * As default, a simple 1:1 mapping is provided. Boards with
+	 * a different mapping need to supply a board specific mapping
+	 * routine.
+	 */
+	return flash_info[cs].size;
+}
+u32 flash_get_bank_size(int cs, int idx)
+	__attribute__((weak, alias("__flash_get_bank_size")));
+
+/*
  * This function can be used to update the size in the "reg" property
- * of the NOR FLASH device nodes. This is necessary for boards with
+ * of all NOR FLASH device nodes. This is necessary for boards with
  * non-fixed NOR FLASH sizes.
  */
-int fdt_fixup_nor_flash_size(void *blob, int cs, u32 size)
+int fdt_fixup_nor_flash_size(void *blob)
 {
 	char compat[][16] = { "cfi-flash", "jedec-flash" };
 	int off;
@@ -606,19 +626,31 @@ int fdt_fixup_nor_flash_size(void *blob, int cs, u32 size)
 	for (i = 0; i < 2; i++) {
 		off = fdt_node_offset_by_compatible(blob, -1, compat[i]);
 		while (off != -FDT_ERR_NOTFOUND) {
+			int idx;
+
 			/*
-			 * Found one compatible node, now check if this one
-			 * has the correct CS
+			 * Found one compatible node, so fixup the size
+			 * int its reg properties
 			 */
 			prop = fdt_get_property_w(blob, off, "reg", &len);
 			if (prop) {
-				reg = (u32 *)&prop->data[0];
-				if (reg[0] == cs) {
-					reg[2] = size;
-					fdt_setprop(blob, off, "reg", reg,
-						    3 * sizeof(u32));
+				int tuple_size = 3 * sizeof(reg);
 
-					return 0;
+				/*
+				 * There might be multiple reg-tuples,
+				 * so loop through them all
+				 */
+				len /= tuple_size;
+				reg = (u32 *)&prop->data[0];
+				for (idx = 0; idx < len; idx++) {
+					/*
+					 * Update size in reg property
+					 */
+					reg[2] = flash_get_bank_size(reg[0],
+								     idx);
+					fdt_setprop(blob, off, "reg", reg,
+						    tuple_size);
+					reg += tuple_size;
 				}
 			}
 
@@ -628,7 +660,7 @@ int fdt_fixup_nor_flash_size(void *blob, int cs, u32 size)
 		}
 	}
 
-	return -1;
+	return 0;
 }
 #endif
 
@@ -873,35 +905,6 @@ static inline u64 of_read_number(const __be32 *cell, int size)
 	return r;
 }
 
-static int of_n_cells(const void *blob, int nodeoffset, const char *name)
-{
-	int np;
-	const int *ip;
-
-	do {
-		np = fdt_parent_offset(blob, nodeoffset);
-
-		if (np >= 0)
-			nodeoffset = np;
-		ip = (int *)fdt_getprop(blob, nodeoffset, name, NULL);
-		if (ip)
-			return be32_to_cpup(ip);
-	} while (np >= 0);
-
-	/* No #<NAME>-cells property for the root node */
-	return 1;
-}
-
-int of_n_addr_cells(const void *blob, int nodeoffset)
-{
-	return of_n_cells(blob, nodeoffset, "#address-cells");
-}
-
-int of_n_size_cells(const void *blob, int nodeoffset)
-{
-	return of_n_cells(blob, nodeoffset, "#size-cells");
-}
-
 #define PRu64	"%llx"
 
 /* Max address size we deal with */
@@ -927,7 +930,7 @@ static void of_dump_addr(const char *s, const u32 *addr, int na) { }
 struct of_bus {
 	const char	*name;
 	const char	*addresses;
-	void		(*count_cells)(void *blob, int offset,
+	void		(*count_cells)(void *blob, int parentoffset,
 				int *addrc, int *sizec);
 	u64		(*map)(u32 *addr, const u32 *range,
 				int na, int ns, int pna);
@@ -935,13 +938,26 @@ struct of_bus {
 };
 
 /* Default translator (generic bus) */
-static void of_bus_default_count_cells(void *blob, int offset,
+static void of_bus_default_count_cells(void *blob, int parentoffset,
 					int *addrc, int *sizec)
 {
-	if (addrc)
-		*addrc = of_n_addr_cells(blob, offset);
-	if (sizec)
-		*sizec = of_n_size_cells(blob, offset);
+	const u32 *prop;
+
+	if (addrc) {
+		prop = fdt_getprop(blob, parentoffset, "#address-cells", NULL);
+		if (prop)
+			*addrc = be32_to_cpup(prop);
+		else
+			*addrc = 2;
+	}
+
+	if (sizec) {
+		prop = fdt_getprop(blob, parentoffset, "#size-cells", NULL);
+		if (prop)
+			*sizec = be32_to_cpup(prop);
+		else
+			*sizec = 1;
+	}
 }
 
 static u64 of_bus_default_map(u32 *addr, const u32 *range,
@@ -1067,7 +1083,7 @@ u64 __of_translate_address(void *blob, int node_offset, const u32 *in_addr,
 	bus = &of_busses[0];
 
 	/* Cound address cells & copy address locally */
-	bus->count_cells(blob, node_offset, &na, &ns);
+	bus->count_cells(blob, parent, &na, &ns);
 	if (!OF_CHECK_COUNTS(na, ns)) {
 		printf("%s: Bad cell count for %s\n", __FUNCTION__,
 		       fdt_get_name(blob, node_offset, NULL));
@@ -1094,7 +1110,7 @@ u64 __of_translate_address(void *blob, int node_offset, const u32 *in_addr,
 
 		/* Get new parent bus and counts */
 		pbus = &of_busses[0];
-		pbus->count_cells(blob, node_offset, &pna, &pns);
+		pbus->count_cells(blob, parent, &pna, &pns);
 		if (!OF_CHECK_COUNTS(pna, pns)) {
 			printf("%s: Bad cell count for %s\n", __FUNCTION__,
 				fdt_get_name(blob, node_offset, NULL));
@@ -1151,4 +1167,22 @@ int fdt_node_offset_by_compat_reg(void *blob, const char *compat,
 	return -FDT_ERR_NOTFOUND;
 }
 
+/**
+ * fdt_alloc_phandle: Return next free phandle value
+ *
+ * @blob: ptr to device tree
+ */
+int fdt_alloc_phandle(void *blob)
+{
+	int offset, len, phandle = 0;
+	const u32 *val;
 
+	for (offset = fdt_next_node(blob, -1, NULL); offset >= 0;
+	     offset = fdt_next_node(blob, offset, NULL)) {
+		val = fdt_getprop(blob, offset, "linux,phandle", &len);
+		if (val)
+			phandle = max(*val, phandle);
+	}
+
+	return phandle + 1;
+}

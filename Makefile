@@ -22,7 +22,7 @@
 #
 
 VERSION = 2010
-PATCHLEVEL = 06
+PATCHLEVEL = 09
 SUBLEVEL =
 EXTRAVERSION =
 ifneq "$(SUBLEVEL)" ""
@@ -304,13 +304,6 @@ U_BOOT_MMC = $(obj)u-boot-mmc.bin
 MMC_BIN ?= $(obj)mmc_ipl/mmc-ipl-16k.bin
 endif
 
-ifeq ($(CONFIG_RECOVERY_U_BOOT),y)
-RECOVERY_BLOCK = recovery
-U_BOOT_RECOVERY = $(obj)u-boot-recovery.bin
-RECOVERY_BIN ?= $(obj)recovery/recovery.bin
-export RECOVERY_BLOCK
-endif
-
 __OBJS := $(subst $(obj),,$(OBJS))
 __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 
@@ -318,7 +311,7 @@ __LIBS := $(subst $(obj),,$(LIBS)) $(subst $(obj),,$(LIBBOARD))
 #########################################################################
 
 # Always append ALL so that arch config.mk's can add custom ones
-ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND) $(U_BOOT_MMC) $(U_BOOT_RECOVERY)
+ALL += $(obj)u-boot.srec $(obj)u-boot.bin $(obj)System.map $(U_BOOT_NAND) $(U_BOOT_ONENAND) $(U_BOOT_MMC)
 
 all:		$(ALL)
 
@@ -414,12 +407,6 @@ $(MMC_IPL):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
 $(U_BOOT_MMC):	$(MMC_IPL) $(obj)u-boot.bin
 		cat $(MMC_BIN) $(obj)u-boot.bin > $(obj)u-boot-mmc.bin
 
-$(RECOVERY_BLOCK):	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk $(ONENAND_IPL)
-		$(MAKE) -C recovery all
-
-$(U_BOOT_RECOVERY):	$(RECOVERY_BLOCK) $(obj)u-boot.bin
-		cat $(RECOVERY_BIN) $(obj)u-boot.bin > $(obj)u-boot-recovery.bin
-
 $(VERSION_FILE):
 		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
 		 '$(shell $(TOPDIR)/tools/setlocalversion $(TOPDIR))' ) > $@.tmp
@@ -429,14 +416,8 @@ $(TIMESTAMP_FILE):
 		@LC_ALL=C date +'#define U_BOOT_DATE "%b %d %C%y"' > $@
 		@LC_ALL=C date +'#define U_BOOT_TIME "%T"' >> $@
 
-gdbtools:
-		$(MAKE) -C tools/gdb all || exit 1
-
 updater:
-		$(MAKE) -C tools/updater all || exit 1
-
-env:
-		$(MAKE) -C tools/env all MTD_VERSION=${MTD_VERSION} || exit 1
+		$(MAKE) -C tools/updater all
 
 # Explicitly make _depend in subdirs containing multiple targets to prevent
 # parallel sub-makes creating .depend files simultaneously.
@@ -491,16 +472,21 @@ $(obj)include/autoconf.mk: $(obj)include/config.h
 else	# !config.mk
 all $(obj)u-boot.hex $(obj)u-boot.srec $(obj)u-boot.bin \
 $(obj)u-boot.img $(obj)u-boot.dis $(obj)u-boot \
-$(filter-out tools,$(SUBDIRS)) $(TIMESTAMP_FILE) $(VERSION_FILE) gdbtools \
-updater env depend dep tags ctags etags cscope $(obj)System.map:
+$(filter-out tools,$(SUBDIRS)) $(TIMESTAMP_FILE) $(VERSION_FILE) \
+updater depend dep tags ctags etags cscope $(obj)System.map:
 	@echo "System not configured - see README" >&2
 	@ exit 1
 
 tools:
-	$(MAKE) -C tools
-tools-all:
-	$(MAKE) -C tools HOST_TOOLS_ALL=y
+	$(MAKE) -C $@ all
 endif	# config.mk
+
+easylogo env gdb:
+	$(MAKE) -C tools/$@ all MTD_VERSION=${MTD_VERSION}
+gdbtools: gdb
+
+tools-all: easylogo env gdb
+	$(MAKE) -C tools HOST_TOOLS_ALL=y
 
 .PHONY : CHANGELOG
 CHANGELOG:
@@ -519,8 +505,9 @@ unconfig:
 %_config::	unconfig
 	@$(MKCONFIG) -A $(@:_config=)
 
-##%: %_config
-##	$(MAKE)
+sinclude .boards.depend
+.boards.depend:	boards.cfg
+	awk '(NF && $$1 !~ /^#/) { print $$1 ": " $$1 "_config; $$(MAKE)" }' $< > $@
 
 #
 # Functions to generate common board directory names
@@ -1820,6 +1807,7 @@ P2010RDB_config \
 P2010RDB_NAND_config \
 P2010RDB_SDCARD_config \
 P2010RDB_SPIFLASH_config \
+P2020DS_DDR2_config \
 P2020RDB_config \
 P2020RDB_NAND_config \
 P2020RDB_SDCARD_config \
@@ -1914,7 +1902,7 @@ CPUAT91_RAM_config \
 CPUAT91_config	:	unconfig
 	@mkdir -p $(obj)include
 	@echo "#define CONFIG_$(@:_config=) 1"	>$(obj)include/config.h
-	@$(MKCONFIG) -n $@ -a cpuat91 arm arm920t cpuat91 eukrea at91rm9200
+	@$(MKCONFIG) -n $@ -a cpuat91 arm arm920t cpuat91 eukrea at91
 
 #########################################################################
 ## ARM926EJ-S Systems
@@ -2212,7 +2200,6 @@ s5pc100_universal_config:	unconfig
 	@$(MKCONFIG) -a s5pc1xx_universal arm armv7 universal_c100 samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
-	@echo "CONFIG_RECOVERY_U_BOOT = y" >> $(obj)include/config.mk
 
 s5pc110_universal_mmc_config \
 s5pc110_universal_config:	unconfig
@@ -2228,7 +2215,6 @@ s5pc110_universal_config:	unconfig
 	else \
 		echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk ; \
 		echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk ; \
-		echo "CONFIG_RECOVERY_U_BOOT = y" >> $(obj)include/config.mk ; \
 	fi;
 
 s5pc1xx_p1p2_config:	unconfig
@@ -2241,7 +2227,7 @@ s5pc210_universal_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm armv7 universal_c210 samsung s5pc2xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
-	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-32k.bin" >> $(obj)include/config.mk
+	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
 
 #########################################################################
 ## XScale Systems
@@ -2553,7 +2539,6 @@ clean:
 	@rm -f $(obj)mmc_ipl/mmc-{ipl,ipl.bin,ipl.map}
 	@rm -f $(MMC_BIN)
 	@rm -f $(obj)mmc_ipl/u-boot.lds
-	@rm -f $(obj)recovery/{recovery,recovery.map}
 	@rm -f $(TIMESTAMP_FILE) $(VERSION_FILE)
 	@find $(OBJTREE) -type f \
 		\( -name 'core' -o -name '*.bak' -o -name '*~' \
@@ -2561,7 +2546,7 @@ clean:
 		| xargs rm -f
 
 clobber:	clean
-	@find $(OBJTREE) -type f \( -name .depend \
+	@find $(OBJTREE) -type f \( -name '*.depend' \
 		-o -name '*.srec' -o -name '*.bin' -o -name u-boot.img \) \
 		-print0 \
 		| xargs -0 rm -f
@@ -2576,7 +2561,6 @@ clobber:	clean
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)onenand_ipl ] || find $(obj)onenand_ipl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)mmc_ipl ] || find $(obj)mmc_ipl -name "*" -type l -print | xargs rm -f
-	@[ ! -d $(obj)recovery ] || find $(obj)recovery -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)api_examples ] || find $(obj)api_examples -name "*" -type l -print | xargs rm -f
 
 ifeq ($(OBJTREE),$(SRCTREE))

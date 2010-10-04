@@ -25,6 +25,7 @@
 /*
  * IDE support
  */
+
 #include <common.h>
 #include <config.h>
 #include <watchdog.h>
@@ -43,6 +44,12 @@
 
 #ifdef CONFIG_MPC5xxx
 #include <mpc5xxx.h>
+#endif
+
+#ifdef CONFIG_ORION5X
+#include <asm/arch/orion5x.h>
+#elif defined CONFIG_KIRKWOOD
+#include <asm/arch/kirkwood.h>
 #endif
 
 #include <ide.h>
@@ -811,7 +818,7 @@ set_pcmcia_timing (int pmode)
 static void
 input_swap_data(int dev, ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar i;
 	volatile uchar *pbuf_even = (uchar *)(ATA_CURR_BASE(dev)+ATA_DATA_EVEN);
 	volatile uchar *pbuf_odd  = (uchar *)(ATA_CURR_BASE(dev)+ATA_DATA_ODD);
@@ -847,11 +854,11 @@ input_swap_data(int dev, ulong *sect_buf, int words)
 #endif	/* __LITTLE_ENDIAN || CONFIG_AU1X00 */
 
 
-#if defined(__PPC__) || defined(CONFIG_PXA_PCMCIA) || defined(CONFIG_SH)
+#if defined(CONFIG_IDE_SWAP_IO)
 static void
 output_data(int dev, ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -891,19 +898,19 @@ output_data(int dev, ulong *sect_buf, int words)
 	}
 #endif
 }
-#else	/* ! __PPC__ */
+#else	/* ! CONFIG_IDE_SWAP_IO */
 static void
 output_data(int dev, ulong *sect_buf, int words)
 {
 	outsw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, words<<1);
 }
-#endif	/* __PPC__ */
+#endif	/* CONFIG_IDE_SWAP_IO */
 
-#if defined(__PPC__) || defined(CONFIG_PXA_PCMCIA) || defined(CONFIG_SH)
+#if defined(CONFIG_IDE_SWAP_IO)
 static void
 input_data(int dev, ulong *sect_buf, int words)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -949,14 +956,14 @@ input_data(int dev, ulong *sect_buf, int words)
 	}
 #endif
 }
-#else	/* ! __PPC__ */
+#else	/* ! CONFIG_IDE_SWAP_IO */
 static void
 input_data(int dev, ulong *sect_buf, int words)
 {
 	insw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, words << 1);
 }
 
-#endif	/* __PPC__ */
+#endif	/* CONFIG_IDE_SWAP_IO */
 
 /* -------------------------------------------------------------------------
  */
@@ -1537,7 +1544,6 @@ static void ide_reset (void)
 
 #if defined(CONFIG_IDE_LED)	&& \
    !defined(CONFIG_CPC45)	&& \
-   !defined(CONFIG_HMI10)	&& \
    !defined(CONFIG_KUP4K)	&& \
    !defined(CONFIG_KUP4X)
 
@@ -1573,13 +1579,13 @@ int ide_device_present(int dev)
  * ATAPI Support
  */
 
-#if defined(__PPC__) || defined(CONFIG_PXA_PCMCIA)
+#if defined(CONFIG_IDE_SWAP_IO)
 /* since ATAPI may use commands with not 4 bytes alligned length
  * we have our own transfer functions, 2 bytes alligned */
 static void
 output_data_shorts(int dev, ushort *sect_buf, int shorts)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -1611,7 +1617,7 @@ output_data_shorts(int dev, ushort *sect_buf, int shorts)
 static void
 input_data_shorts(int dev, ushort *sect_buf, int shorts)
 {
-#if defined(CONFIG_HMI10) || defined(CONFIG_CPC45)
+#if defined(CONFIG_CPC45)
 	uchar	*dbuf;
 	volatile uchar	*pbuf_even;
 	volatile uchar	*pbuf_odd;
@@ -1640,7 +1646,7 @@ input_data_shorts(int dev, ushort *sect_buf, int shorts)
 #endif
 }
 
-#else	/* ! __PPC__ */
+#else	/* ! CONFIG_IDE_SWAP_IO */
 static void
 output_data_shorts(int dev, ushort *sect_buf, int shorts)
 {
@@ -1653,7 +1659,7 @@ input_data_shorts(int dev, ushort *sect_buf, int shorts)
 	insw(ATA_CURR_BASE(dev)+ATA_DATA_REG, sect_buf, shorts);
 }
 
-#endif	/* __PPC__ */
+#endif	/* CONFIG_IDE_SWAP_IO */
 
 /*
  * Wait until (Status & mask) == res, or timeout (in ms)

@@ -118,16 +118,6 @@ extern int board_start_ide(void);
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_ENV_IS_EMBEDDED)
-#define TOTAL_MALLOC_LEN	CONFIG_SYS_MALLOC_LEN
-#elif ( ((CONFIG_ENV_ADDR+CONFIG_ENV_SIZE) < CONFIG_SYS_MONITOR_BASE) || \
-	(CONFIG_ENV_ADDR >= (CONFIG_SYS_MONITOR_BASE + CONFIG_SYS_MONITOR_LEN)) ) || \
-      defined(CONFIG_ENV_IS_IN_NVRAM)
-#define	TOTAL_MALLOC_LEN	(CONFIG_SYS_MALLOC_LEN + CONFIG_ENV_SIZE)
-#else
-#define	TOTAL_MALLOC_LEN	CONFIG_SYS_MALLOC_LEN
-#endif
-
 #if !defined(CONFIG_SYS_MEM_TOP_HIDE)
 #define CONFIG_SYS_MEM_TOP_HIDE	0
 #endif
@@ -169,7 +159,7 @@ typedef int (init_fnc_t) (void);
 static int init_baudrate (void)
 {
 	char tmp[64];	/* long enough for environment variables */
-	int i = getenv_r ("baudrate", tmp, sizeof (tmp));
+	int i = getenv_f("baudrate", tmp, sizeof (tmp));
 
 	gd->baudrate = (i > 0)
 			? (int) simple_strtoul (tmp, NULL, 10)
@@ -442,7 +432,7 @@ void board_init_f (ulong bootflag)
 	/*
 	 * reserve protected RAM
 	 */
-	i = getenv_r ("pram", (char *)tmp, sizeof (tmp));
+	i = getenv_f("pram", (char *)tmp, sizeof (tmp));
 	reg = (i > 0) ? simple_strtoul ((const char *)tmp, NULL, 10) : CONFIG_PRAM;
 	addr -= (reg << 10);		/* size is in kB */
 	debug ("Reserving %ldk for protected RAM at %08lx\n", reg, addr);
@@ -519,15 +509,12 @@ void board_init_f (ulong bootflag)
 	bd->bi_memstart  = CONFIG_SYS_SDRAM_BASE;	/* start of  DRAM memory	*/
 	bd->bi_memsize   = gd->ram_size;	/* size  of  DRAM memory in bytes */
 
-#ifdef CONFIG_IP860
-	bd->bi_sramstart = SRAM_BASE;	/* start of  SRAM memory	*/
-	bd->bi_sramsize  = SRAM_SIZE;	/* size  of  SRAM memory	*/
-#elif defined CONFIG_MPC8220
+#ifdef CONFIG_SYS_SRAM_BASE
 	bd->bi_sramstart = CONFIG_SYS_SRAM_BASE;	/* start of  SRAM memory	*/
 	bd->bi_sramsize  = CONFIG_SYS_SRAM_SIZE;	/* size  of  SRAM memory	*/
 #else
-	bd->bi_sramstart = 0;		/* FIXME */ /* start of  SRAM memory	*/
-	bd->bi_sramsize  = 0;		/* FIXME */ /* size  of  SRAM memory	*/
+	bd->bi_sramstart = 0;
+	bd->bi_sramsize  = 0;
 #endif
 
 #if defined(CONFIG_8xx) || defined(CONFIG_8260) || defined(CONFIG_5xx) || \
@@ -783,6 +770,17 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	nand_init();		/* go init the NAND */
 #endif
 
+#ifdef CONFIG_GENERIC_MMC
+/*
+ * MMC initialization is called before relocating env.
+ * Thus It is required that operations like pin multiplexer
+ * be put in board_init.
+ */
+	WATCHDOG_RESET ();
+	puts ("MMC:  ");
+	mmc_initialize (bd);
+#endif
+
 	/* relocate environment function pointers etc. */
 	env_relocate ();
 
@@ -790,7 +788,7 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	 * Fill in missing fields of bd_info.
 	 * We do this here, where we have "normal" access to the
 	 * environment; we used to do this still running from ROM,
-	 * where had to use getenv_r(), which can be pretty slow when
+	 * where had to use getenv_f(), which can be pretty slow when
 	 * the environment is in EEPROM.
 	 */
 
@@ -903,13 +901,6 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	 */
 	interrupt_init ();
 
-	/* Must happen after interrupts are initialized since
-	 * an irq handler gets installed
-	 */
-#ifdef CONFIG_SERIAL_SOFTWARE_FIFO
-	serial_buffered_init();
-#endif
-
 #if defined(CONFIG_STATUS_LED) && defined(STATUS_LED_BOOT)
 	status_led_set (STATUS_LED_BOOT, STATUS_LED_BLINKING);
 #endif
@@ -937,12 +928,6 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	WATCHDOG_RESET ();
 	puts ("SCSI:  ");
 	scsi_init ();
-#endif
-
-#ifdef CONFIG_GENERIC_MMC
-	WATCHDOG_RESET ();
-	puts ("MMC:  ");
-	mmc_initialize (bd);
 #endif
 
 #if defined(CONFIG_CMD_DOC)

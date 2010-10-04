@@ -272,12 +272,6 @@ int smc911x_initialize(u8 dev_num, int base_addr)
 	dev->recv = smc911x_rx;
 	sprintf(dev->name, "%s-%hu", DRIVERNAME, dev_num);
 
-	/* Try to detect chip. Will fail if not present. */
-	if (smc911x_detect_chip(dev)) {
-		free(dev);
-		return 0;
-	}
-
 	eth_register(dev);
 	return 1;
 }

@@ -38,7 +38,7 @@
 #undef DEBUG
 
 #include <common.h>
-#include <ppc4xx.h>
+#include <asm/ppc4xx.h>
 #include <asm/io.h>
 #include <asm/processor.h>
 
@@ -985,7 +985,7 @@ u32 DQS_autocalibration(void)
 	puts(str);
 
 #if defined(DEBUG_PPC4xx_DDR_AUTOCALIBRATION)
-	i = getenv_r("autocalib", tmp, sizeof(tmp));
+	i = getenv_f("autocalib", tmp, sizeof(tmp));
 	if (i < 0)
 		strcpy(tmp, CONFIG_AUTOCALIB);
 

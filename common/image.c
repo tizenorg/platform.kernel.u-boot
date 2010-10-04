@@ -103,6 +103,7 @@ static table_entry_t uimage_os[] = {
 	{	IH_OS_LYNXOS,	"lynxos",	"LynxOS",		},
 #endif
 	{	IH_OS_NETBSD,	"netbsd",	"NetBSD",		},
+	{	IH_OS_OSE,	"ose",		"Enea OSE",		},
 	{	IH_OS_RTEMS,	"rtems",	"RTEMS",		},
 	{	IH_OS_U_BOOT,	"u-boot",	"U-Boot",		},
 #if defined(CONFIG_CMD_ELF) || defined(USE_HOSTCC)
@@ -433,17 +434,23 @@ ulong getenv_bootm_low(void)
 
 phys_size_t getenv_bootm_size(void)
 {
+	phys_size_t tmp;
 	char *s = getenv ("bootm_size");
 	if (s) {
-		phys_size_t tmp;
 		tmp = (phys_size_t)simple_strtoull (s, NULL, 16);
 		return tmp;
 	}
+	s = getenv("bootm_low");
+	if (s)
+		tmp = (phys_size_t)simple_strtoull (s, NULL, 16);
+	else
+		tmp = 0;
+
 
 #if defined(CONFIG_ARM)
-	return gd->bd->bi_dram[0].size;
+	return gd->bd->bi_dram[0].size - tmp;
 #else
-	return gd->bd->bi_memsize;
+	return gd->bd->bi_memsize - tmp;
 #endif
 }
 
@@ -1178,6 +1185,7 @@ static int fit_check_fdt (const void *fit, int fdt_noffset, int verify)
  *      0 - success
  *      1 - failure
  */
+#if defined(CONFIG_SYS_BOOTMAPSZ)
 int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 		char **of_flat_tree, ulong *of_size)
 {
@@ -1257,6 +1265,7 @@ int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 error:
 	return 1;
 }
+#endif /* CONFIG_SYS_BOOTMAPSZ */
 
 /**
  * boot_get_fdt - main fdt handling routine

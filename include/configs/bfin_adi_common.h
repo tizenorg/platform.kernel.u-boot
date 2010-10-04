@@ -50,6 +50,7 @@
 # endif
 # ifdef CONFIG_POST
 #  define CONFIG_CMD_DIAG
+#  define CONFIG_POST_ALT_LIST
 # endif
 # ifdef CONFIG_RTC_BFIN
 #  define CONFIG_CMD_DATE
@@ -68,6 +69,7 @@
 # endif
 # if defined(CONFIG_HARD_I2C) || defined(CONFIG_SOFT_I2C)
 #  define CONFIG_CMD_I2C
+#  define CONFIG_SOFT_I2C_READ_REPEATED_START
 # endif
 # ifdef CONFIG_SYS_NO_FLASH
 #  undef CONFIG_CMD_FLASH

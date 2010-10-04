@@ -64,8 +64,6 @@
 #define S5PC110_VIC3_BASE	0xF2300000
 #define S5PC110_FIMD_BASE	0xF8000000
 
-/* Chip ID */
-
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
 /* CPU detection macros */
