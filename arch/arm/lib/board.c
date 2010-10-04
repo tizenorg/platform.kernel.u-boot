@@ -695,6 +695,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #if defined(CONFIG_CMD_I2C)
 	extern void i2c_reloc(void);
 #endif
+#if defined(CONFIG_CMD_ONENAND)
+	extern void onenand_reloc(void);
+#endif
 #endif
 
 	gd = id;
@@ -704,6 +707,10 @@ void board_init_r (gd_t *id, ulong dest_addr)
 
 	monitor_flash_len = _bss_start - _TEXT_BASE;
 	debug ("monitor flash len: %08lX\n", monitor_flash_len);
+
+	/* Workaround */
+	arch_cpu_init();
+
 	board_init();	/* Setup chipselects */
 
 #ifdef CONFIG_SERIAL_MULTI
@@ -723,6 +730,9 @@ void board_init_r (gd_t *id, ulong dest_addr)
 #endif
 #if defined(CONFIG_CMD_I2C)
 	i2c_reloc();
+#endif
+#if defined(CONFIG_CMD_ONENAND)
+	onenand_reloc();
 #endif
 #endif /* !defined(CONFIG_RELOC_FIXUP_WORKS) */
 
