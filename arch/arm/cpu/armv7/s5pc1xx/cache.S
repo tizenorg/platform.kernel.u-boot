@@ -104,18 +104,17 @@ finished_inval:
 						@ but we compile with armv5
 
 	ldmfd	r13!, {r0 - r5, r7, r9 - r12, pc}
-	.align	5
 
 l2_cache_enable:
-	mrc	p15, 0, r0, c1, c0, 1
-	orr	r0, r0, #2
-	mcr	p15, 0, r0, c1, c0, 1
-	mov	pc, lr
-	.align	5
+	push	{r1, r2, r3, lr}
+	mrc	15, 0, r3, cr1, cr0, 1
+	orr	r3, r3, #2
+	mcr	15, 0, r3, cr1, cr0, 1
+	pop	{r1, r2, r3, pc}
 
 l2_cache_disable:
-	mrc	p15, 0, r0, c1, c0, 1
-	bic	r0, r0, #2
-	mcr	p15, 0, r0, c1, c0, 1
-	mov	pc, lr
-	.align 5
+	push	{r1, r2, r3, lr}
+	mrc	15, 0, r3, cr1, cr0, 1
+	bic	r3, r3, #2
+	mcr	15, 0, r3, cr1, cr0, 1
+	pop	{r1, r2, r3, pc}
