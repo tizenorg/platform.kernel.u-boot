@@ -304,9 +304,6 @@ void i2c_init_board(void)
 {
 	int num_bus;
 
-	if (cpu_is_s5pc100())
-		return;
-
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
 	if (mach_is_aquila()) {
@@ -540,170 +537,158 @@ static unsigned int get_hw_revision(struct s5p_gpio_bank *bank, int hwrev3)
 static void check_hw_revision(void)
 {
 	unsigned int board = MACH_UNIVERSAL;	/* Default is Universal */
+	int hwrev3 = 1;
 
-	if (cpu_is_s5pc100()) {
-		struct s5pc100_gpio *gpio =
-			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
+	board_rev = 0;
 
-		board_rev = get_hw_revision(&gpio->j0, 0);
+	/*
+	 * Note Check 'Aquila' board first
+	 *
+	 * TT: TickerTape
+	 * SS: SplitScreen
+	 * LRA: Limo Real Aquila
+	 * LUA: Limo Universal Aquila
+	 * OA: Old Aquila
+	 * CYP: Cypress
+	 * BB: Bamboo
+	 *
+	 * ADDR = 0xE0200000 + OFF
+	 *
+	 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	     CYP
+	 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00
+	 *   J2: 0x0284	          0x01 0x10 0x00
+	 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		     0x0F
+	 *   H3: 0x0C64	               0x03 0x07 0x0F
+	 *   D1: 0x00C4	0x0F	       0x3F 0x3F 0x0F 0xXC 0x3F
+	 *    I: 0x0224	                         0x02 0x00 0x08
+	 * MP03: 0x0324	                         0x9x      0xbx 0x9x
+	 * MP05: 0x0364	                         0x80      0x88
+	 */
 
-		/* C100 TickerTape */
-		if (board_rev == 3)
-			board = MACH_TICKERTAPE;
-	} else {
-		int hwrev3 = 1;
+	/* C110 Aquila */
+	if (gpio_get_value(&gpio->j1, 4) == 0) {
+		board = MACH_TYPE_AQUILA;
+		board_rev |= J1_B2_BOARD;
 
-		board_rev = 0;
+		gpio_set_pull(&gpio->j2, 6, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->j2, 6);
 
-		/*
-		 * Note Check 'Aquila' board first
-		 *
-		 * TT: TickerTape
-		 * SS: SplitScreen
-		 * LRA: Limo Real Aquila
-		 * LUA: Limo Universal Aquila
-		 * OA: Old Aquila
-		 * CYP: Cypress
-		 * BB: Bamboo
-		 *
-		 * ADDR = 0xE0200000 + OFF
-		 *
-		 * 	 OFF	Universal BB   LRA  LUA  OA   TT   SS	     CYP
-		 *   J1: 0x0264	0x10      0x10 0x00 0x00 0x00 0x00 0x00
-		 *   J2: 0x0284	          0x01 0x10 0x00
-		 *   H1: 0x0C24	   W           0x28 0xA8 0x1C		     0x0F
-		 *   H3: 0x0C64	               0x03 0x07 0x0F
-		 *   D1: 0x00C4	0x0F	       0x3F 0x3F 0x0F 0xXC 0x3F
-		 *    I: 0x0224	                         0x02 0x00 0x08
-		 * MP03: 0x0324	                         0x9x      0xbx 0x9x
-		 * MP05: 0x0364	                         0x80      0x88
-		 */
+		/* Check board */
+		if (gpio_get_value(&gpio->h1, 2) == 0)
+			board_rev |= LIMO_UNIVERSAL_BOARD;
 
-		/* C110 Aquila */
-		if (gpio_get_value(&gpio->j1, 4) == 0) {
-			board = MACH_TYPE_AQUILA;
-			board_rev |= J1_B2_BOARD;
-
-			gpio_set_pull(&gpio->j2, 6, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->j2, 6);
-
-			/* Check board */
-			if (gpio_get_value(&gpio->h1, 2) == 0)
-				board_rev |= LIMO_UNIVERSAL_BOARD;
-
-			if (gpio_get_value(&gpio->h3, 2) == 0)
-				board_rev |= LIMO_REAL_BOARD;
-
-			if (gpio_get_value(&gpio->j2, 6) == 1)
-				board_rev |= MEDIA_BOARD;
-
-			/* set gpio to default value. */
-			gpio_set_pull(&gpio->j2, 6, GPIO_PULL_DOWN);
-			gpio_direction_output(&gpio->j2, 6, 0);
-		}
-
-		/* Workaround: C110 Aquila Rev0.6 */
-		if (board_rev == 6) {
-			board = MACH_TYPE_AQUILA;
+		if (gpio_get_value(&gpio->h3, 2) == 0)
 			board_rev |= LIMO_REAL_BOARD;
-		}
 
-		/* C110 Aquila Bamboo */
-		if (gpio_get_value(&gpio->j2, 0) == 1) {
-			board = MACH_TYPE_AQUILA;
-			board_rev |= BAMBOO_BOARD;
-		}
+		if (gpio_get_value(&gpio->j2, 6) == 1)
+			board_rev |= MEDIA_BOARD;
 
-		/* C110 TickerTape */
-		if (gpio_get_value(&gpio->d1, 0) == 0 &&
-				gpio_get_value(&gpio->d1, 1) == 0)
-			board = MACH_TICKERTAPE;
-
-		/* WMG160 - GPH3[0:4] = 0x00 */
-		if (board == MACH_TICKERTAPE) {
-			int i, wmg160 = 1;
-
-			for (i = 0; i < 4; i++) {
-				if (gpio_get_value(&gpio->h3, i) != 0) {
-					wmg160 = 0;
-					break;
-				}
-			}
-			if (wmg160) {
-				board = MACH_WMG160;
-				hwrev3 = 7;
-			}
-		}
-
-		/* C110 Geminus for rev0.0 */
-		gpio_set_pull(&gpio->j1, 2, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->j1, 2);
-		if (gpio_get_value(&gpio->j1, 2) == 1) {
-			board = MACH_GEMINUS;
-			if ((board_rev & ~BOARD_MASK) == 3)
-				board_rev &= ~0xff;
-		}
-		gpio_set_pull(&gpio->j1, 2, GPIO_PULL_DOWN);
-		gpio_direction_output(&gpio->j1, 2, 0);
-
-		/* C110 Geminus for rev0.1 ~ */
-		gpio_set_pull(&gpio->j0, 6, GPIO_PULL_NONE);
-		gpio_direction_input(&gpio->j0, 6);
-		if (gpio_get_value(&gpio->j0, 6) == 1) {
-			board = MACH_GEMINUS;
-			hwrev3 = 7;
-		}
-		gpio_set_pull(&gpio->j0, 6, GPIO_PULL_DOWN);
-
-		/* Kessler MP0_5[6] == 1 */
-		gpio_direction_input(&gpio->mp0_5, 6);
-		if (gpio_get_value(&gpio->mp0_5, 6) == 1) {
-			/* Cypress: Do this for cypress */
-			gpio_set_pull(&gpio->j2, 2, GPIO_PULL_NONE);
-			gpio_direction_input(&gpio->j2, 2);
-			if (gpio_get_value(&gpio->j2, 2) == 1) {
-				board = MACH_CYPRESS;
-				gpio_direction_output(&gpio->mp0_5, 6, 0);
-			} else {
-				board = MACH_TYPE_GONI;
-				board_rev |= KESSLER_BOARD;
-#if 0
-				/* workaround: temporarily use sdk rev0.5 */
-				board_rev |= SDK_BOARD;
-
-#endif
-				/* Limo SDK MP0_5[4] == 1 */
-				gpio_direction_input(&gpio->mp0_5, 4);
-				if (gpio_get_value(&gpio->mp0_5, 4) == 1) {
-					board_rev &= ~KESSLER_BOARD;
-
-#if 0
-					/* Haydn MP0_4[0] == 1 */
-					gpio_direction_input(
-						&gpio->mp0_4, 0);
-					if (gpio_get_value(
-						&gpio->mp0_4, 0) == 1)
-						board_rev |= HAYDN_BOARD;
-					else
-#endif
-						board_rev |= SDK_BOARD;
-				}
-
-			}
-			gpio_set_pull(&gpio->j2, 2, GPIO_PULL_DOWN);
-			hwrev3 = 7;
-		} else {
-			gpio_direction_output(&gpio->mp0_5, 6, 0);
-			/* Goni S1 board detection */
-			if (board == MACH_TICKERTAPE) {
-				board = MACH_TYPE_GONI;
-				board_rev |= S1_BOARD;
-				hwrev3 = 7;
-			}
-		}
-
-		board_rev |= get_hw_revision(&gpio->j0, hwrev3);
+		/* set gpio to default value. */
+		gpio_set_pull(&gpio->j2, 6, GPIO_PULL_DOWN);
+		gpio_direction_output(&gpio->j2, 6, 0);
 	}
+
+	/* Workaround: C110 Aquila Rev0.6 */
+	if (board_rev == 6) {
+		board = MACH_TYPE_AQUILA;
+		board_rev |= LIMO_REAL_BOARD;
+	}
+
+	/* C110 Aquila Bamboo */
+	if (gpio_get_value(&gpio->j2, 0) == 1) {
+		board = MACH_TYPE_AQUILA;
+		board_rev |= BAMBOO_BOARD;
+	}
+
+	/* C110 TickerTape */
+	if (gpio_get_value(&gpio->d1, 0) == 0 &&
+			gpio_get_value(&gpio->d1, 1) == 0)
+		board = MACH_TICKERTAPE;
+
+	/* WMG160 - GPH3[0:4] = 0x00 */
+	if (board == MACH_TICKERTAPE) {
+		int i, wmg160 = 1;
+
+		for (i = 0; i < 4; i++) {
+			if (gpio_get_value(&gpio->h3, i) != 0) {
+				wmg160 = 0;
+				break;
+			}
+		}
+		if (wmg160) {
+			board = MACH_WMG160;
+			hwrev3 = 7;
+		}
+	}
+
+	/* C110 Geminus for rev0.0 */
+	gpio_set_pull(&gpio->j1, 2, GPIO_PULL_NONE);
+	gpio_direction_input(&gpio->j1, 2);
+	if (gpio_get_value(&gpio->j1, 2) == 1) {
+		board = MACH_GEMINUS;
+		if ((board_rev & ~BOARD_MASK) == 3)
+			board_rev &= ~0xff;
+	}
+	gpio_set_pull(&gpio->j1, 2, GPIO_PULL_DOWN);
+	gpio_direction_output(&gpio->j1, 2, 0);
+
+	/* C110 Geminus for rev0.1 ~ */
+	gpio_set_pull(&gpio->j0, 6, GPIO_PULL_NONE);
+	gpio_direction_input(&gpio->j0, 6);
+	if (gpio_get_value(&gpio->j0, 6) == 1) {
+		board = MACH_GEMINUS;
+		hwrev3 = 7;
+	}
+	gpio_set_pull(&gpio->j0, 6, GPIO_PULL_DOWN);
+
+	/* Kessler MP0_5[6] == 1 */
+	gpio_direction_input(&gpio->mp0_5, 6);
+	if (gpio_get_value(&gpio->mp0_5, 6) == 1) {
+		/* Cypress: Do this for cypress */
+		gpio_set_pull(&gpio->j2, 2, GPIO_PULL_NONE);
+		gpio_direction_input(&gpio->j2, 2);
+		if (gpio_get_value(&gpio->j2, 2) == 1) {
+			board = MACH_CYPRESS;
+			gpio_direction_output(&gpio->mp0_5, 6, 0);
+		} else {
+			board = MACH_TYPE_GONI;
+			board_rev |= KESSLER_BOARD;
+#if 0
+			/* workaround: temporarily use sdk rev0.5 */
+			board_rev |= SDK_BOARD;
+
+#endif
+			/* Limo SDK MP0_5[4] == 1 */
+			gpio_direction_input(&gpio->mp0_5, 4);
+			if (gpio_get_value(&gpio->mp0_5, 4) == 1) {
+				board_rev &= ~KESSLER_BOARD;
+
+#if 0
+				/* Haydn MP0_4[0] == 1 */
+				gpio_direction_input(
+						&gpio->mp0_4, 0);
+				if (gpio_get_value(
+							&gpio->mp0_4, 0) == 1)
+					board_rev |= HAYDN_BOARD;
+				else
+#endif
+					board_rev |= SDK_BOARD;
+			}
+
+		}
+		gpio_set_pull(&gpio->j2, 2, GPIO_PULL_DOWN);
+		hwrev3 = 7;
+	} else {
+		gpio_direction_output(&gpio->mp0_5, 6, 0);
+		/* Goni S1 board detection */
+		if (board == MACH_TICKERTAPE) {
+			board = MACH_TYPE_GONI;
+			board_rev |= S1_BOARD;
+			hwrev3 = 7;
+		}
+	}
+
+	board_rev |= get_hw_revision(&gpio->j0, hwrev3);
 
 	/* Set machine id */
 	if (board < MACH_PSEUDO_END) {
@@ -808,9 +793,6 @@ static void pmic_pin_init(void)
 {
 	unsigned int reg, value;
 
-	if (cpu_is_s5pc100())
-		return;
-
 	/* AP_PS_HOLD: XEINT_0: GPH0[0]
 	 * Note: Don't use GPIO PS_HOLD it doesn't work
 	 */
@@ -828,9 +810,6 @@ static void pmic_pin_init(void)
 
 static void enable_ldos(void)
 {
-	if (cpu_is_s5pc100())
-		return;
-
 	/* TOUCH_EN: XMMC3DATA_3: GPG3[6] output high */
 	gpio_direction_output(&gpio->g3, 6, 1);
 }
@@ -915,53 +894,31 @@ static void check_keypad(void)
 	if (mach_is_wmg160())
 		return;
 
-	if (cpu_is_s5pc100()) {
-		struct s5pc100_gpio *gpio =
-			(struct s5pc100_gpio *)S5PC100_GPIO_BASE;
-
-		row_num = 3;
+	if (board_is_limo_real() || board_is_limo_universal()) {
+		row_num = 2;
 		col_num = 3;
-
-		/* Set GPH2[2:0] to KP_COL[2:0] */
-		gpio_cfg_pin(&gpio->h2, 0, 0x3);
-		gpio_cfg_pin(&gpio->h2, 1, 0x3);
-		gpio_cfg_pin(&gpio->h2, 2, 0x3);
-
-		/* Set GPH3[2:0] to KP_ROW[2:0] */
-		gpio_cfg_pin(&gpio->h3, 0, 0x3);
-		gpio_cfg_pin(&gpio->h3, 1, 0x3);
-		gpio_cfg_pin(&gpio->h3, 2, 0x3);
-
-		reg = S5PC100_KEYPAD_BASE;
-		col_mask = S5PC1XX_KEYIFCOL_MASK;
-		col_mask_shift = 0;
 	} else {
-		if (board_is_limo_real() || board_is_limo_universal()) {
-			row_num = 2;
-			col_num = 3;
-		} else {
-			row_num = 4;
-			col_num = 4;
-		}
-
-		for (i = 0; i < row_num; i++) {
-			if (board_is_sdk() &&
-				(hwrevision(3) || hwrevision(4)) && i == 0)
-				continue;
-
-			/* Set GPH3[3:0] to KP_ROW[3:0] */
-			gpio_cfg_pin(&gpio->h3, i, 0x3);
-			gpio_set_pull(&gpio->h3, i, GPIO_PULL_UP);
-		}
-
-		for (i = 0; i < col_num; i++)
-			/* Set GPH2[3:0] to KP_COL[3:0] */
-			gpio_cfg_pin(&gpio->h2, i, 0x3);
-
-		reg = S5PC110_KEYPAD_BASE;
-		col_mask = S5PC110_KEYIFCOLEN_MASK;
-		col_mask_shift = 8;
+		row_num = 4;
+		col_num = 4;
 	}
+
+	for (i = 0; i < row_num; i++) {
+		if (board_is_sdk() &&
+				(hwrevision(3) || hwrevision(4)) && i == 0)
+			continue;
+
+		/* Set GPH3[3:0] to KP_ROW[3:0] */
+		gpio_cfg_pin(&gpio->h3, i, 0x3);
+		gpio_set_pull(&gpio->h3, i, GPIO_PULL_UP);
+	}
+
+	for (i = 0; i < col_num; i++)
+		/* Set GPH2[3:0] to KP_COL[3:0] */
+		gpio_cfg_pin(&gpio->h2, i, 0x3);
+
+	reg = S5PC110_KEYPAD_BASE;
+	col_mask = S5PC110_KEYIFCOLEN_MASK;
+	col_mask_shift = 8;
 
 	/* KEYIFCOL reg clear */
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
@@ -1558,9 +1515,6 @@ static int fsa9480_probe(void)
 {
 	unsigned char addr = 0x25;
 
-	if (cpu_is_s5pc100())
-		return 1;
-
 	if (board_is_limo_real()) {
 		if (hwrevision(0) || hwrevision(1))
 			return 1;
@@ -1704,9 +1658,6 @@ static void init_pmic(void)
 	unsigned char addr;
 	unsigned char val[2];
 
-	if (cpu_is_s5pc100())
-		return;
-
 	addr = 0xCC >> 1;	/* max8998 */
 	if (max8998_probe())
 		return;
@@ -1756,9 +1707,6 @@ static void setup_power_down_mode_registers(void)
 	struct s5pc1xx_gpio_item *mr;
 	int n_mr;
 	int i;
-
-	if (cpu_is_s5pc100())
-		return;
 
 	/* Only Limo real and kessler supports worked for sleep currnet */
 	if (mach_is_aquila()) {
@@ -2614,60 +2562,52 @@ void dram_init_banksize(void)
 	unsigned int memconfig1, sz = 0;
 	int mem_3g = 0;
 
-	if (cpu_is_s5pc100()) {
-		/* In mem setup, we swap the bank. So below size is correct */
-		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-		gd->bd->bi_dram[0].size = PHYS_SDRAM_2_SIZE;
-		gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
-		size = 128;
-	} else {
-		/* In S5PC110, we can't swap the DMC0/1 */
-		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
+	/* In S5PC110, we can't swap the DMC0/1 */
+	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
+	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 
-		base = S5PC110_DMC1_BASE;
-		/* DMC configuration */
-		memconfig0 = readl(base + MEMCONFIG0_OFFSET);
-		gd->bd->bi_dram[1].start = memconfig0 & 0xFF000000;
+	base = S5PC110_DMC1_BASE;
+	/* DMC configuration */
+	memconfig0 = readl(base + MEMCONFIG0_OFFSET);
+	gd->bd->bi_dram[1].start = memconfig0 & 0xFF000000;
 
-		size = (memconfig0 >> 16) & 0xFF;
-		size = ((unsigned char) ~size) + 1;
+	size = (memconfig0 >> 16) & 0xFF;
+	size = ((unsigned char) ~size) + 1;
 
-		/*
-		 * (0x07 + 1) * 16 = 128 MiB
-		 * (0x0f + 1) * 16 = 256 MiB
-		 */
-		size = size << 4;
+	/*
+	 * (0x07 + 1) * 16 = 128 MiB
+	 * (0x0f + 1) * 16 = 256 MiB
+	 */
+	size = size << 4;
 
-		/*
-		 * Aquila Rev0.5 4G3G1G
-		 * Aquila Rev0.8 4G3G1G
-		 * Aquila Rev0.9 4G3G1G
-		 * Limo SDK Rev 0.2 4G3G1G
-		 * Limo SDK Rev 0.3 4G3G1G
-		 * Limo SDK Rev 0.4 4G3G1G
-		 * WMG160 Rev 0.7 4G3G1G
-		 */
-		if (mach_is_aquila() || mach_is_goni()) {
-			if ((!board_is_sdk() && (hwrevision(5) ||
-				hwrevision(8) || hwrevision(9))) ||
+	/*
+	 * Aquila Rev0.5 4G3G1G
+	 * Aquila Rev0.8 4G3G1G
+	 * Aquila Rev0.9 4G3G1G
+	 * Limo SDK Rev 0.2 4G3G1G
+	 * Limo SDK Rev 0.3 4G3G1G
+	 * Limo SDK Rev 0.4 4G3G1G
+	 * WMG160 Rev 0.7 4G3G1G
+	 */
+	if (mach_is_aquila() || mach_is_goni()) {
+		if ((!board_is_sdk() && (hwrevision(5) ||
+						hwrevision(8) || hwrevision(9))) ||
 				(board_is_sdk() && !hwrevision(1)))
-				mem_3g = 1;
-			if (mach_is_goni() && board_is_s1()) {
-				mem_3g = 0;
-				sz = 0;
-			}
-		} else if (mach_is_wmg160() && !hwrevision(5)) {
-				mem_3g = 1;
+			mem_3g = 1;
+		if (mach_is_goni() && board_is_s1()) {
+			mem_3g = 0;
+			sz = 0;
 		}
+	} else if (mach_is_wmg160() && !hwrevision(5)) {
+		mem_3g = 1;
+	}
 
-		if (mem_3g) {
-			memconfig1 = readl(base + MEMCONFIG1_OFFSET);
+	if (mem_3g) {
+		memconfig1 = readl(base + MEMCONFIG1_OFFSET);
 
-			sz = (memconfig1 >> 16) & 0xFF;
-			sz = ((unsigned char) ~sz) + 1;
-			sz = sz << 4;
-		}
+		sz = (memconfig1 >> 16) & 0xFF;
+		sz = ((unsigned char) ~sz) + 1;
+		sz = sz << 4;
 	}
 	/*
 	 * bi_dram[1].size contains all DMC1 memory size
@@ -2865,9 +2805,6 @@ int board_eth_init(bd_t *bis)
 {
 	int res = -1;
 
-	if (cpu_is_s5pc100())
-		return -1;
-
 	s3c_udc_probe(&s5pc110_otg_data);
 	if (usb_eth_initialize(bis) >= 0)
 		res = 0;
@@ -2882,28 +2819,6 @@ int usb_board_init(void)
 	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);
 #endif
-
-	if (cpu_is_s5pc100()) {
-#ifdef CONFIG_HARD_I2C
-		uchar val[2] = {0,};
-
-		/* PMIC */
-		if (i2c_read(0x66, 0, 1, val, 2)) {
-			puts("i2c_read error\n");
-			return 1;
-		}
-
-		val[0] |= (1 << 3);
-		val[1] |= (1 << 5);
-
-		if (i2c_write(0x66, 0, 1, val, 2)) {
-			puts("i2c_write error\n");
-			return 1;
-		}
-		i2c_read(0x66, 0, 1, val, 2);
-#endif
-		return 0;
-	}
 
 	/* S5PC110 */
 	if (board_is_limo_universal() ||
