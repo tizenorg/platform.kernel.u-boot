@@ -2211,10 +2211,6 @@ struct s5p_platform_dsim s6e39a0x_platform_data = {
 	.clk_name = "dsim",
 	.dsim_info = &dsim_info,
 	.dsim_lcd_info = &dsim_lcd_info,
-	.part_reset = s5p_dsim_part_reset,
-	.init_d_phy = s5p_dsim_init_d_phy,
-	.get_fb_frame_done = s3cfb_is_i80_frame_done,
-	.trigger = s3cfb_set_trigger,
 	.lcd_panel_name = "s6e39a0x",
 	.platform_rev = 1,
 
@@ -2387,6 +2383,11 @@ void init_panel_info(vidinfo_t *vid)
 		vid->power_on_delay = 30000;
 		vid->reset_delay = 20000;
 		vid->interface_mode = FIMD_CPU_INTERFACE;
+
+		s6e39a0x_platform_data.part_reset = s5p_dsim_part_reset;
+		s6e39a0x_platform_data.init_d_phy = s5p_dsim_init_d_phy;
+		s6e39a0x_platform_data.get_fb_frame_done = s3cfb_is_i80_frame_done;
+		s6e39a0x_platform_data.trigger = s3cfb_set_trigger;
 		s6e39a0x_platform_data.pvid = vid;
 		s6e39a0x_init();
 		s5p_set_dsim_platform_data(&s6e39a0x_platform_data);
