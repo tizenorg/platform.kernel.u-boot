@@ -159,6 +159,9 @@ void i2c_init_board(void)
 {
 	int num_bus;
 
+	gpio1 = (struct s5pc210_gpio_part1 *) S5PC210_GPIO_PART1_BASE;
+	gpio2 = (struct s5pc210_gpio_part2 *) S5PC210_GPIO_PART2_BASE;
+
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
@@ -182,8 +185,7 @@ void i2c_init_board(void)
 	/* Reset on fsa9480 early */
 	check_micro_usb(1);
 	/* Reset on max17040 early */
-	if (battery_soc == 0)
-		check_battery(1);
+	check_battery(1);
 }
 
 int board_init(void)
@@ -194,17 +196,34 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
+#ifdef CONFIG_LCD
+	/*
+	 * set reserved memory region for framebuffer.
+	 *
+	 * this region wouldn't be rewrited by kernel so
+	 * could avoid nosie screen filled by garbages
+	 * after hibernation resume has been completed.
+	 */
+	gd->fb_base = CONFIG_FB_RESERVED_MEM;
+#endif
+
 	return 0;
 }
 
 int dram_init(void)
+{
+	gd->ram_size = (512 << 20);
+	return 0;
+}
+
+void dram_init_banksize(void)
 {
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
 
-	return 0;
+	gd->ram_size = gd->bd->bi_dram[0].size + gd->bd->bi_dram[1].size;
 }
 
 static void check_auto_burn(void)
@@ -609,6 +628,8 @@ static void init_pmic_max8952(void)
 	/* RAMP: As Fast As Possible: Default: Do Nothing */
 }
 
+#ifdef CONFIG_LCD
+
 void fimd_clk_set(void)
 {
 	struct s5pc210_clock *clk =
@@ -810,6 +831,7 @@ void init_panel_info(vidinfo_t *vid)
 	vid->pclk_name = MPLL;
 	vid->sclk_div = 1;
 }
+#endif
 
 static unsigned short get_adc_value(int channel)
 {
