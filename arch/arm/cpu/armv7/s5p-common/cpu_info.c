@@ -33,9 +33,9 @@ unsigned int s5p_cpu_rev = 1;
 int arch_cpu_init(void)
 {
 	s5p_set_cpu_id();
-#ifndef CONFIG_RECOVERY_BLOCK
+
 	s5p_clock_init();
-#endif
+
 	return 0;
 }
 #endif
@@ -48,12 +48,11 @@ u32 get_device_type(void)
 #ifdef CONFIG_DISPLAY_CPUINFO
 int print_cpuinfo(void)
 {
-#ifndef CONFIG_RECOVERY_BLOCK
 	char buf[32];
 
 	printf("CPU:\tS5P%X@%sMHz\n",
 			s5p_cpu_id, strmhz(buf, get_arm_clk()));
-#endif
+
 	return 0;
 }
 #endif

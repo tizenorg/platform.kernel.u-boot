@@ -34,7 +34,7 @@
 
 .globl _start
 _start: b	reset
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 	ldr	pc, _undefined_instruction
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
@@ -69,13 +69,13 @@ _end_vect:
  *
  *************************************************************************/
 
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 .globl _TEXT_BASE
 #endif
 _TEXT_BASE:
 	.word	TEXT_BASE
 
-#if defined(CONFIG_PRELOADER) || defined(CONFIG_RECOVERY_BLOCK)
+#if defined(CONFIG_PRELOADER)
 .globl _armboot_start
 _armboot_start:
 	.word _start
@@ -105,7 +105,7 @@ FIQ_STACK_START:
 #endif
 
 #if !defined(CONFIG_SYS_ARM_WITHOUT_RELOC)
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 /* IRQ stack memory (calculated at run-time) + 8 bytes */
 .globl IRQ_STACK_START_IN
 IRQ_STACK_START_IN:
@@ -149,7 +149,7 @@ reset:
 	orr	r0, r0, #0xd3
 	msr	cpsr,r0
 
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 #if (CONFIG_OMAP34XX)
 	/* Copy vectors to mask ROM indirect addr */
 	adr	r0, _start		@ r0 <- current position of code
@@ -173,15 +173,13 @@ next:
 	bl	cpy_clk_code		@ put dpll adjust code behind vectors
 #endif /* NAND Boot */
 #endif
-#endif	/* CONFIG_PRELOADER || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_PRELOADER */
 	/* the mask ROM code should have PLL and others stable */
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
-#if !defined(CONFIG_RECOVERY_BLOCK)
 	bl	cpu_init_crit
 #endif
-#endif
 
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 /* Set stackpointer in internal RAM to call board_init_f */
 call_board_init_f:
 	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
@@ -198,7 +196,7 @@ call_board_init_f:
  * after relocating the monitor code.
  *
  */
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 	.globl	relocate_code
 relocate_code:
 	mov	r4, r0	/* save addr_sp */
@@ -242,13 +240,11 @@ stack_setup:
 _start_armboot: .word start_oneboot
 #elif defined(CONFIG_MMC_IPL)
 _start_armboot: .word start_mmcboot
-#elif defined(CONFIG_RECOVERY_BLOCK)
-_start_armboot: .word start_recovery_boot
 #endif
 #endif
 
 #if !defined(CONFIG_SKIP_RELOCATE_UBOOT)
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 	adr	r0, _start
 	ldr	r2, _TEXT_BASE
 	ldr	r3, _bss_start
@@ -308,7 +304,7 @@ clbss_l:str	r2, [r0]		/* clear loop...		    */
  * We are done. Do not return, instead branch to second part of board
  * initialization, now running from RAM.
  */
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 jump_2_ram:
 	ldr	r0, _TEXT_BASE
 	ldr	r2, _board_init_r
@@ -420,7 +416,6 @@ _start_armboot: .word start_armboot
  *
  *************************************************************************/
 cpu_init_crit:
-#if !defined(CONFIG_RECOVERY_BLOCK)
 	/*
 	 * Invalidate L1 I/D
 	 */
@@ -448,9 +443,8 @@ cpu_init_crit:
 	bl	lowlevel_init		@ go setup pll,mux,memory
 	mov	lr, ip			@ restore link
 	mov	pc, lr			@ back to my caller
-#endif
 
-#if !defined(CONFIG_PRELOADER) && !defined(CONFIG_RECOVERY_BLOCK)
+#if !defined(CONFIG_PRELOADER)
 /*
  *************************************************************************
  *
@@ -657,4 +651,4 @@ fiq:
 	bl	do_fiq
 
 #endif
-#endif	/* CONFIG_PRELOADER || CONFIG_RECOVERY_BLOCK */
+#endif	/* CONFIG_PRELOADER */

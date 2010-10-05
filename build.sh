@@ -91,15 +91,6 @@ make_evt_image()
 	fi
 }
 
-make_recovery_image()
-{
-	if [ "$IPL" != "mmc" ]; then
-		cat recovery/recovery-evt0.bin u-boot.bin > u-boot-recovery-evt0.bin
-		cat recovery/recovery-fused.bin u-boot.bin > u-boot-recovery-evt1-fused.bin
-		cp u-boot-recovery.bin u-boot-recovery-evt1.bin
-	fi
-}
-
 check_ccache
 check_users
 check_ipl $1
@@ -107,7 +98,6 @@ check_ipl $1
 build_uboot $*
 
 make_evt_image
-#make_recovery_image
 
 if [ "$IPL" != "mmc" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
