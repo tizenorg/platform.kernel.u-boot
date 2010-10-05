@@ -232,7 +232,8 @@ copy_loop:				@ copy 32 bytes at a time
 
 stack_setup:
 	ldr	r0, _TEXT_BASE
-	sub	sp, r0, #128
+	/* As _TEXT_BASE is internal RAM start address don't sub it */
+	add	sp, r0, #128
 	bic	sp, sp, #7
 
 	ldr	pc, _start_armboot	@ jump to C code
