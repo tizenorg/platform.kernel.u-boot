@@ -35,11 +35,11 @@ void start_mmcboot(void)
 	if (mmc_init())
 		hang();
 
-	buf = (uchar *)CONFIG_SYS_BOOT_ADDR;
+	buf = (uchar *)CONFIG_SYS_LOAD_ADDR;
 
 	mmc_read_block(buf);
 
-	((init_fnc_t *)CONFIG_SYS_BOOT_ADDR)();
+	((init_fnc_t *)CONFIG_SYS_LOAD_ADDR)();
 
 	/* should never come here */
 }
