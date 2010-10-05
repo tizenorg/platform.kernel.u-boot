@@ -454,6 +454,10 @@ ulong lcd_setmem (ulong addr)
 	debug ("LCD panel info: %d x %d, %d bit/pix\n",
 		panel_info.vl_col, panel_info.vl_row, (panel_info.vl_bpix) );
 
+	/* Workaround: Panel information is NOT initialized */
+	if (panel_info.vl_col == 0xffff || panel_info.vl_row == 0xffff)
+		return addr;
+
 	size = line_length * panel_info.vl_row;
 
 	/* Round up to nearest full page */
