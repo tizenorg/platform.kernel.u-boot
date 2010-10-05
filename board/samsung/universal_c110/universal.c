@@ -53,6 +53,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define C100_MACH_START			3000
 #define C110_MACH_START			3100
 
+static unsigned int arch_number;
 static unsigned int board_rev;
 static unsigned int battery_soc;
 static struct s5pc110_gpio *gpio;
@@ -208,12 +209,12 @@ enum {
 
 static int c110_machine_id(void)
 {
-	return gd->bd->bi_arch_number - C110_MACH_START;
+	return arch_number - C110_MACH_START;
 }
 
 static int mach_is_aquila(void)
 {
-	return gd->bd->bi_arch_number == MACH_TYPE_AQUILA;
+	return arch_number == MACH_TYPE_AQUILA;
 }
 
 static int mach_is_tickertape(void)
@@ -259,7 +260,7 @@ static int board_is_j1b2(void)
 /* Kessler */
 static int mach_is_goni(void)
 {
-	return gd->bd->bi_arch_number == MACH_TYPE_GONI;
+	return arch_number == MACH_TYPE_GONI;
 }
 
 static int board_is_sdk(void)
@@ -305,8 +306,6 @@ void i2c_init_board(void)
 
 	if (cpu_is_s5pc100())
 		return;
-
-	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
 	num_bus = ARRAY_SIZE(i2c_gpio);
 
@@ -678,6 +677,7 @@ static void check_hw_revision(void)
 				if (gpio_get_value(&gpio->mp0_5, 4) == 1) {
 					board_rev &= ~KESSLER_BOARD;
 
+#if 0
 					/* Haydn MP0_4[0] == 1 */
 					gpio_direction_input(
 						&gpio->mp0_4, 0);
@@ -685,6 +685,7 @@ static void check_hw_revision(void)
 						&gpio->mp0_4, 0) == 1)
 						board_rev |= HAYDN_BOARD;
 					else
+#endif
 						board_rev |= SDK_BOARD;
 				}
 
@@ -707,11 +708,11 @@ static void check_hw_revision(void)
 	/* Set machine id */
 	if (board < MACH_PSEUDO_END) {
 		if (cpu_is_s5pc110())
-			gd->bd->bi_arch_number = C110_MACH_START + board;
+			arch_number = C110_MACH_START + board;
 		else
-			gd->bd->bi_arch_number = C100_MACH_START + board;
+			arch_number = C100_MACH_START + board;
 	} else {
-		gd->bd->bi_arch_number = board;
+		arch_number = board;
 	}
 }
 
@@ -732,11 +733,11 @@ static void show_hw_revision(void)
 	}
 
 	if (mach_is_goni() || mach_is_aquila())
-		board = gd->bd->bi_arch_number;
+		board = arch_number;
 	else if (cpu_is_s5pc110())
-		board = gd->bd->bi_arch_number - C110_MACH_START;
+		board = arch_number - C110_MACH_START;
 	else
-		board = gd->bd->bi_arch_number - C100_MACH_START;
+		board = arch_number - C100_MACH_START;
 
 	check_board_revision(board, board_rev);
 
@@ -2561,13 +2562,24 @@ int misc_init_r(void)
 }
 #endif
 
+#ifdef CONFIG_BOARD_EARLY_INIT_F
+int board_early_init_f(void)
+{
+	/* Set Initial global variables */
+	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
+
+	/* Check H/W Revision */
+	check_hw_revision();
+
+	return 0;
+}
+#endif
+
 int board_init(void)
 {
 	/* Set Initial global variables */
 	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
-	gd->bd->bi_arch_number = MACH_TYPE_AQUILA;
-	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 #ifdef CONFIG_LCD
 	/*
@@ -2582,6 +2594,9 @@ int board_init(void)
 
 	/* Check H/W Revision */
 	check_hw_revision();
+
+	gd->bd->bi_arch_number = arch_number;
+	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
 	return 0;
 }
@@ -2605,9 +2620,6 @@ void dram_init_banksize(void)
 		gd->bd->bi_dram[1].start = S5PC100_PHYS_SDRAM_2;
 		size = 128;
 	} else {
-		gd->bd->bi_arch_number = MACH_TYPE_AQUILA;
-		check_hw_revision();
-
 		/* In S5PC110, we can't swap the DMC0/1 */
 		gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 		gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;

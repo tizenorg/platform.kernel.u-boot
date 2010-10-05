@@ -358,6 +358,7 @@
 #define CONFIG_DOS_PARTITION	1
 
 #define CONFIG_MISC_INIT_R
+#define CONFIG_BOARD_EARLY_INIT_F
 
 /* I2C */
 #if 0
