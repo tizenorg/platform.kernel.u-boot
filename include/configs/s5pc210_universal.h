@@ -195,7 +195,9 @@
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 
-#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:1m(bootloader)"\
+#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:"\
+				"128k(s-boot)"\
+				",896k(bootloader)"\
 				",256k(params)"\
 				",2816k(config)"\
 				",8m(csa)"\
@@ -222,13 +224,13 @@
 
 #define CONFIG_COMMON_BOOT	"${console} ${meminfo} ${mtdparts}"
 
-#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=3 ubi.mtd=6" \
+#define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=9 ubi.mtd=4 ubi.mtd=7" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x100000;" \
 			" onenand write 0x42008000 0x0 0x100000\0"
 
-#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=3 ubi.mtd=6"
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=4 ubi.mtd=7"
 
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
 
@@ -271,8 +273,8 @@
 	"meminfo=mem=512M\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=9\0" \
-	"ubiblock=8\0" \
+	"bootblock=10\0" \
+	"ubiblock=9\0" \
 	"ubi=enabled\0" \
 	"loaduimage=fatload mmc 1 0x40007FC0 uImage\0" \
 	"opts=always_resume=1"
