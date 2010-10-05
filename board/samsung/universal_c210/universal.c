@@ -860,7 +860,7 @@ static unsigned short get_adc_value(int channel)
 
 static unsigned int get_hw_revision(void)
 {
-	int hwrev = 0, mode0, mode1;
+	int hwrev, mode0, mode1;
 
 	run_command("pmic ldo 4 on", 0);
 
@@ -869,10 +869,15 @@ static unsigned int get_hw_revision(void)
 
 	run_command("pmic ldo 4 off", 0);
 
+	/*
+	 * XXX Always set the default hwrev as the latest board
+	 */
+	hwrev = 1;
+
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
-	if (IS_RANGE(mode0, 80, 100) && IS_RANGE(mode1, 80, 100))
+	if (IS_RANGE(mode0, 80, 110) && IS_RANGE(mode1, 80, 110))
 		hwrev = 0x0;
-	if (IS_RANGE(mode0, 750, 870) && IS_RANGE(mode1, 80, 100))
+	if (IS_RANGE(mode0, 750, 940) && IS_RANGE(mode1, 80, 110))
 		hwrev = 0x1;
 #undef IS_RANGE
 
