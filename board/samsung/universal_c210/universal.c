@@ -212,7 +212,7 @@ int board_init(void)
 
 int dram_init(void)
 {
-	gd->ram_size = (512 << 20);
+	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
 	return 0;
 }
 
