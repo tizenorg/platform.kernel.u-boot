@@ -1602,10 +1602,6 @@ static int init(void)
 	if (err)
 		return err;
 
-	modem_buf = malloc(MODEM_IMAGE_SIZE);
-	if (!modem_buf)
-		return err_msg("out of memory");
-
 	return 0;
 }
 
@@ -1632,7 +1628,7 @@ static void deinit(void)
  * incremental updates to the output file.
  */
 int mkfs(void *src_addr, unsigned long src_size,
-	 void **dest_addr, unsigned long *dest_size,
+	 void *dest_addr, unsigned long *dest_size,
 	 int min_io_size, int leb_size, int max_leb_cnt)
 {
 	int err = 0;
@@ -1641,6 +1637,9 @@ int mkfs(void *src_addr, unsigned long src_size,
 	unsigned char type = UBIFS_ITYPE_REG;
 	char *name = "modem.bin";
 	unsigned long root_dir_size = UBIFS_INO_NODE_SZ;
+
+	modem_buf = dest_addr;
+	memset(modem_buf, 0, MODEM_IMAGE_SIZE);
 
 	err = set_options(min_io_size, leb_size, max_leb_cnt);
 	if (err)
@@ -1706,7 +1705,6 @@ int mkfs(void *src_addr, unsigned long src_size,
 
 	err = write_orphan_area();
 
-	*dest_addr = modem_buf;
 	*dest_size = (unsigned long) c->leb_cnt * c->leb_size;
 
 	printf("ubifs image offset : 0x%x\n", (unsigned int) dest_addr);

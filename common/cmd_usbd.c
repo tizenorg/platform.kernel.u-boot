@@ -1098,7 +1098,7 @@ static int process_data(struct usbd_ops *usbd)
 			printf("CSA Clear will be skipped temporary\n");
 
 #ifdef CONFIG_UBIFS_MK
-		void *dest_addr;
+		void *dest_addr = (void *) down_ram_addr + 0xc00000;
 		void *src_addr = (void *) down_ram_addr;
 		int leb_size, max_leb_cnt, mkfs_min_io_size;
 		unsigned long ubifs_dest_size, ubi_dest_size;
@@ -1112,7 +1112,7 @@ static int process_data(struct usbd_ops *usbd)
 		max_leb_cnt = 4096;
 #endif
 		printf("Start making ubifs\n");
-		ret = mkfs(src_addr, len, &dest_addr, &ubifs_dest_size,
+		ret = mkfs(src_addr, len, dest_addr, &ubifs_dest_size,
 			   mkfs_min_io_size, leb_size, max_leb_cnt);
 		if (ret) {
 			printf("Error : making ubifs failed\n");
@@ -1146,8 +1146,6 @@ static int process_data(struct usbd_ops *usbd)
 		printf("Complete ubinizing\n");
 
 		len = (unsigned int) ubi_dest_size;
-
-		free(dest_addr);
 #endif
 		/* Write : arg (0 Modem) / (1 CSA) */
 		if (!arg) {
