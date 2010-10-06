@@ -35,8 +35,6 @@
 #include <asm/arch/gpio.h>
 #include "s5p-fb.h"
 
-#define MPLL 1
-
 static unsigned int ctrl_base;
 static unsigned long *lcd_base_addr;
 static vidinfo_t *pvid = NULL;
@@ -325,12 +323,6 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 	/* select register base according to cpu type */
 	ctrl_base = samsung_get_base_fimd();
 
-	cfg = readl(ctrl_base + S5P_VIDCON0);
-	cfg &= ~S5P_VIDCON0_VIDOUT_MASK;
-
-	/* clock source is HCLK */
-	cfg |= 0 << 2;
-
 	rgb_mode = MODE_RGB_P;
 	/* set display mode */
 	cfg = readl(ctrl_base + S5P_VIDCON0);
@@ -356,15 +348,13 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 		writel(cfg, ctrl_base + S5P_VIDCON1);
 
 		/* set timing */
-		cfg = 0;
-		cfg |= S5P_VIDTCON0_VFPD(pvid->vl_vfpd - 1);
+		cfg = S5P_VIDTCON0_VFPD(pvid->vl_vfpd - 1);
 		cfg |= S5P_VIDTCON0_VBPD(pvid->vl_vbpd - 1);
 		cfg |= S5P_VIDTCON0_VSPW(pvid->vl_vspw - 1);
 		writel(cfg, ctrl_base + S5P_VIDTCON0);
 		udebug("vidtcon0 = %x\n", cfg);
 
-		cfg = 0;
-		cfg |= S5P_VIDTCON1_HFPD(pvid->vl_hfpd - 1);
+		cfg = S5P_VIDTCON1_HFPD(pvid->vl_hfpd - 1);
 		cfg |= S5P_VIDTCON1_HBPD(pvid->vl_hbpd - 1);
 		cfg |= S5P_VIDTCON1_HSPW(pvid->vl_hspw - 1);
 
@@ -372,8 +362,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 		udebug("vidtcon1 = %x\n", cfg);
 
 		/* set lcd size */
-		cfg = 0;
-		cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
+		cfg = S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
 		cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
 
 		writel(cfg, ctrl_base + S5P_VIDTCON2);
@@ -384,8 +373,7 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 		writel(cfg, ctrl_base + S5P_VIDCON0);
 
 		/* set lcd size */
-		cfg = 0;
-		cfg |= S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
+		cfg = S5P_VIDTCON2_HOZVAL(pvid->vl_col - 1);
 		cfg |= S5P_VIDTCON2_LINEVAL(pvid->vl_row - 1);
 		writel(cfg, ctrl_base + S5P_VIDTCON2);
 		udebug("vidtcon2 = %x\n", cfg);
@@ -395,7 +383,6 @@ void s5pc_fimd_lcd_init(vidinfo_t *vid)
 
 		udebug("MIPI Command mode.\n");
 	}
-
 
 	/* set par */
 	s5pc_fimd_set_par(win_id);

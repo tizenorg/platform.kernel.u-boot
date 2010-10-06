@@ -1802,7 +1802,7 @@ static void setup_power_down_mode_registers(void)
 
 #ifdef CONFIG_LCD
 
-void fimd_clk_set()
+void fimd_clk_set(void)
 {
 	struct s5pc110_clock *clk =
 		(struct s5pc110_clock *)samsung_get_base_clock();
@@ -2103,7 +2103,7 @@ extern void s6d16a0x_enable_ldo(unsigned int onoff);
 extern void ld9040_cfg_ldo(void);
 extern void ld9040_enable_ldo(unsigned int onoff);
 extern void s3cfb_set_trigger(void);
-extern void s3cfb_is_i80_frame_done(void);
+extern int s3cfb_is_i80_frame_done(void);
 
 int s5p_no_lcd_support(void)
 {

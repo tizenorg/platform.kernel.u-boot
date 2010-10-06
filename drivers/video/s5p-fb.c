@@ -164,6 +164,7 @@ int conv_rgb565_to_rgb888(unsigned short rgb565, unsigned int sw)
 	return (red << 16 | green << 8 | blue);
 }
 
+#if 0
 void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 {
 	int i, j;
@@ -175,6 +176,7 @@ void draw_bitmap(void *lcdbase, int x, int y, int w, int h, unsigned long *bmp)
 			*(fb + (j * panel_width) + i) = *(bmp + k++);
 	}
 }
+#endif
 
 void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned short *bmp)
 {
@@ -328,10 +330,4 @@ void lcd_enable(void)
 ulong calc_fbsize(void)
 {
 	return s5pc_fimd_calc_fbsize();
-}
-
-void s5pc1xxfb_test(void *lcdbase)
-{
-	lcd_ctrl_init(lcdbase);
-	lcd_enable();
 }
