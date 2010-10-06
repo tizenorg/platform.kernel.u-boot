@@ -117,6 +117,7 @@ void bad_mode (void)
 
 void show_regs (struct pt_regs *regs)
 {
+#ifndef CONFIG_SHOW_REGS_SILENT
 	unsigned long flags;
 	const char *processor_modes[] = {
 	"USER_26",	"FIQ_26",	"IRQ_26",	"SVC_26",
@@ -150,6 +151,7 @@ void show_regs (struct pt_regs *regs)
 		fast_interrupts_enabled (regs) ? "on" : "off",
 		processor_modes[processor_mode (regs)],
 		thumb_mode (regs) ? " (T)" : "");
+#endif
 }
 
 void do_undefined_instruction (struct pt_regs *pt_regs)
