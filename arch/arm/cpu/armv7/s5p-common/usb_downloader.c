@@ -205,7 +205,6 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 #ifdef CONFIG_GENERIC_MMC
 	usbd_set_mmc_dev(usbd);
 #endif
-	usbd->cpu_reset = s5pc1xx_wdt_reset;
 
 	return usbd;
 }

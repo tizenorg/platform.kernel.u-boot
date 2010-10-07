@@ -371,7 +371,7 @@ static void check_micro_usb(int intr)
 #endif
 
 	/* If reset status is watchdog reset then skip it */
-	if (get_reset_status() != WDTRESET) {
+	if (get_reset_status() != SWRESET) {
 		/* If Factory Mode is Boot ON-USB, go to download mode */
 		i2c_read(addr, 0x07, 1, val, 1);
 
