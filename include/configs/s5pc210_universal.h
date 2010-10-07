@@ -35,6 +35,7 @@
 #define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC210		1	/* which is in a S5PC210 */
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
+#define CONFIG_SBOOT		1	/* use the s-boot */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -195,6 +196,7 @@
 /* Actual modem binary size is 16MiB. Add 2MiB for bad block handling */
 #define MTDIDS_DEFAULT		"onenand0=samsung-onenand"
 
+#ifdef CONFIG_SBOOT
 #define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:"\
 				"128k(s-boot)"\
 				",896k(bootloader)"\
@@ -206,6 +208,18 @@
 				",12m(modem)"\
 				",60m(qboot)"\
 				",-(UBI)\0"
+#else
+#define MTDPARTS_DEFAULT	"mtdparts=samsung-onenand:"\
+				"1m(bootloader)"\
+				",256k(params)"\
+				",2816k(config)"\
+				",8m(csa)"\
+				",7m(kernel)"\
+				",1m(log)"\
+				",12m(modem)"\
+				",60m(qboot)"\
+				",-(UBI)\0"
+#endif
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
@@ -233,6 +247,14 @@
 #define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=4 ubi.mtd=7"
 
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
+
+#ifdef CONFIG_SBOOT
+#define CONFIG_BOOTBLOCK	"10"
+#define CONFIG_UBIBLOCK		"9"
+#else
+#define CONFIG_BOOTBLOCK	"9"
+#define CONFIG_UBIBLOCK		"8"
+#endif
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
@@ -273,8 +295,8 @@
 	"meminfo=mem=512M\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=10\0" \
-	"ubiblock=9\0" \
+	"bootblock=" CONFIG_BOOTBLOCK "\0" \
+	"ubiblock=" CONFIG_UBIBLOCK" \0" \
 	"ubi=enabled\0" \
 	"loaduimage=fatload mmc 1 0x40007FC0 uImage\0" \
 	"opts=always_resume=1"
