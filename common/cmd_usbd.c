@@ -1039,6 +1039,21 @@ static int process_data(struct usbd_ops *usbd)
 			}
 		}
 #endif
+#ifdef CONFIG_SBOOT
+		/* Only u-boot.bin is allowed */
+		{
+			long *img_header = (long *)down_ram_addr;
+
+			if (*img_header != 0xea000018) {
+				printf("\n!!! ERROR !!!\n"
+					"Please download the u-boot.bin.\n"
+					"Other images are not allowed.\n\n");
+				*((ulong *) usbd->tx_data) = STATUS_ERROR;
+				usbd->send_data(usbd->tx_data, usbd->tx_len);
+				return 0;
+			}
+		}
+#endif
 #if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
 		/* Erase the environment also when write bootloader */
 		{
