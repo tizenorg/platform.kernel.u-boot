@@ -832,6 +832,8 @@ static int process_data(struct usbd_ops *usbd)
 			part_id = get_part_id("modem");
 		else if (part_id == KERNEL_PART_ID)
 			part_id = get_part_id("kernel");
+		else if (part_id == BOOT_PART_ID)
+			part_id = get_part_id("bootloader");
 #ifdef CONFIG_MIRAGE
 		if (part_id)
 			part_id--;
