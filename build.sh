@@ -75,10 +75,7 @@ make_evt_image()
 	IPL_PREFIX=${IPL}_ipl/${IPL}-ipl
 
 	if [ "$SOC" = "c210" ]; then
-		# Universal Rev0.0
-		cat ${IPL_PREFIX}-32k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin	
-		# Universal Rev0.1 (Secure boot)
-		cat ${IPL_PREFIX}-32k-evt0-fused.bin u-boot.bin > u-boot-"$IPL"-evt0-fused.bin
+		echo "Use the s-boot instead"
 	elif [ "$SOC" = "c110" ]; then
 		# C110
 		cat ${IPL_PREFIX}-16k-evt0.bin u-boot.bin > u-boot-"$IPL"-evt0.bin
@@ -99,7 +96,7 @@ build_uboot $*
 
 make_evt_image
 
-if [ "$IPL" != "mmc" ]; then
+if [ "$IPL" != "mmc" -a -e "$PWD/u-boot-onenand.bin" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
 	if [ "$size" -ge "262144" ]; then
 		echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
