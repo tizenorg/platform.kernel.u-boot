@@ -49,6 +49,17 @@ check_users()
 		CROSS_COMPILER=/scratchbox/compilers/arm-linux-gnueabi-gcc4.4.1-glibc2.10.1-2009q3-93/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
+	if [ "$USER" = "marek" ]; then
+		CROSS_COMPILER=/home/marek/dev//arm-2008q3/bin/arm-none-linux-gnueabi-
+		TARGET=${TARGET:-s5pc110}
+		make clean clobber unconfig mrproper
+		make ${TARGET}_universal_config
+		JOBS="-j 2"
+	fi
+	if [ "$USER" = "lukma" ]; then
+	    CROSS_COMPILER=/home/lukma/work/arm-2009q3/bin/arm-none-eabi-
+	    JOBS="-j 5"
+	fi
 }
 
 check_ipl()
@@ -142,4 +153,31 @@ elif [ "$USER" = "donggeun" ]; then
 	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
 	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
 	mv -f system_uboot*.tar /home/donggeun/workspace/images
+elif [ "$USER" = "marek" ]; then
+	BOARD=`grep BOARD include/config.mk | awk -F'= ' '{printf $2}'`
+	DATE=`date +%Y%m%d`
+	echo $BOARD
+	if [ "$BOARD" = "universal_c110" ] ; then
+		tar cfv universal-uboot-system-${DATE}.tar u-boot-onenand-evt0.bin
+		tar cfv universal-uboot-system-${DATE}-evt1-fused.tar u-boot-onenand-evt1-fused.bin
+		tar cfv universal-uboot-system-${DATE}-evt1.tar u-boot-onenand-evt1.bin
+		cp universal-uboot-system-${DATE}.tar ../image/w1
+		cp universal-uboot-system-${DATE}-evt1-fused.tar ../image/w1
+		cp universal-uboot-system-${DATE}-evt1.tar ../image/w1
+	fi
+	if [ "$BOARD" = "universal_c210" ] ; then
+		pushd ../s-boot
+		./build.sh
+		popd
+		mv s-boot-onenand.bin u-boot-onenand.bin
+		tar cfv universal-uboot-system-${DATE}-c210-sboot.tar u-boot-onenand.bin
+		cp universal-uboot-system-${DATE}-c210-sboot.tar ../image/w1
+		tar cfv universal-uboot-system-${DATE}-c210-raw.tar u-boot.bin
+		cp universal-uboot-system-${DATE}-c210-raw.tar ../image/w1
+	fi
+elif [ "$USER" = "lukma" ]; then
+	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
+	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
+	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	cp system_uboot_evt1-fused.tar ../image/w1/system_uboot_evt1-fused-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar	
 fi
