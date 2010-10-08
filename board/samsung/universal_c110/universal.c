@@ -1511,6 +1511,30 @@ static int get_reset_status(void)
 	return readl(S5PC110_RST_STAT) & 0xf;
 }
 
+static void check_reset_status(void)
+{
+	int status = get_reset_status();
+
+	puts("Reset Status: ");
+
+	switch (status) {
+	case EXTRESET:
+		puts("Pin(Ext) Reset\n");
+		break;
+	case WARMRESET:
+		puts("Warm Reset\n");
+		break;
+	case WDTRESET:
+		puts("Watchdog Reset\n");
+		break;
+	case SWRESET:
+		puts("S/W Reset\n");
+		break;
+	default:
+		printf("Unknown (0x%x)\n", status);
+	}
+}
+
 static int fsa9480_probe(void)
 {
 	unsigned char addr = 0x25;
@@ -2436,6 +2460,8 @@ static void setup_meminfo(void)
 
 int misc_init_r(void)
 {
+	check_reset_status();
+
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
 		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
