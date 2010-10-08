@@ -2458,9 +2458,39 @@ static void setup_meminfo(void)
 	setenv("meminfo", meminfo);
 }
 
+#define KMSG_SIZE	0x1000
+#define KMSG_ADDRESS	0xED000000
+
+static void show_dump_msg(void)
+{
+	int status = get_reset_status();
+	long *msg_header = (long *)KMSG_ADDRESS;
+	char msg[KMSG_SIZE];
+	int i;
+
+	if (status != SWRESET)
+		return;
+
+	if (*msg_header != 0x3d3d3d3d)
+		return;
+
+	memcpy(msg, KMSG_ADDRESS, KMSG_SIZE);
+
+	printf("\n\n", msg);
+	for (i = 0; i < KMSG_SIZE; i++) {
+		printf("%c", msg[i]);
+	}
+	printf("\n\n");
+
+	memset(KMSG_ADDRESS, 0x0, KMSG_SIZE);
+
+	setenv("bootdelay", "-1");
+}
+
 int misc_init_r(void)
 {
 	check_reset_status();
+	show_dump_msg();
 
 	/* Architecture Common settings */
 	if (cpu_is_s5pc110()) {
