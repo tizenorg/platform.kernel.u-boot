@@ -101,11 +101,11 @@ make_evt_image()
 
 check_ccache
 check_users
-check_ipl $1
+#check_ipl $1
 
 build_uboot $*
 
-make_evt_image
+#make_evt_image
 
 if [ "$IPL" != "mmc" -a -e "$PWD/u-boot-onenand.bin" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
@@ -123,35 +123,21 @@ if [ "$USER" = "kmpark" ]; then
 	./system.sh
 	popd
 elif [ "$USER" = "dofmind" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
-	tar cvf system_uboot.tar u-boot-onenand.bin
+	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot*.tar /home/release
 elif [ "$USER" = "prom" ]; then
 	tar cvf system_uboot.tar u-boot.bin
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
 	mv -f system_uboot* /home/share/Work/bin
 elif [ "$USER" = "jaehoon" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot* /home/jaehoon/shared/new/
 elif [ "$USER" = "leedonghwa" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot* /home/leedonghwa/Build-Binaries/
 elif [ "$USER" = "cwchoi00" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot.tar u-boot.bin
 elif [ "$USER" = "donggeun" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
+	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot*.tar /home/donggeun/workspace/images
 elif [ "$USER" = "marek" ]; then
 	BOARD=`grep BOARD include/config.mk | awk -F'= ' '{printf $2}'`
