@@ -38,6 +38,7 @@
 #define CONFIG_UNIVERSAL	1	/* working with Universal */
 #define CONFIG_MACH_AQUILA	1	/* working with Aquila */
 #define CONFIG_MACH_GONI	1	/* working with Goni */
+#define CONFIG_SBOOT		1	/* use the s-boot */
 
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -208,7 +209,10 @@
 				",60m(qboot)"\
 				",-(UBI)\0"
 
-#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:1m(bootloader)"\
+#ifdef CONFIG_SBOOT
+#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:"\
+				"256k(s-boot)"\
+				",512k(bootloader)"\
 				",256k(params)"\
 				",2816k(config)"\
 				",8m(csa)"\
@@ -217,6 +221,18 @@
 				",12m(modem)"\
 				",60m(qboot)"\
 				",-(UBI)\0"
+#else
+#define MTDPARTS_DEFAULT_4KB	"mtdparts=samsung-onenand:"\
+				"768k(bootloader)"\
+				",256k(params)"\
+				",2816k(config)"\
+				",8m(csa)"\
+				",7m(kernel)"\
+				",1m(log)"\
+				",12m(modem)"\
+				",60m(qboot)"\
+				",-(UBI)\0"
+#endif
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
@@ -239,6 +255,14 @@
 
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
 
+#ifdef CONFIG_SBOOT
+#define CONFIG_BOOTBLOCK	"10"
+#define CONFIG_UBIBLOCK		"9"
+#else
+#define CONFIG_BOOTBLOCK	"9"
+#define CONFIG_UBIBLOCK		"8"
+#endif
+
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
@@ -247,7 +271,7 @@
 	" onenand write 0x31008000 0xc00000 0x600000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x32000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x30007FC0 0xc00000 0x600000;" \
+	"bootk=onenand read 0x30007FC0 0xbc0000 0x600000;" \
 	" bootm 0x30007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
@@ -276,8 +300,8 @@
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
-	"bootblock=9\0" \
-	"ubiblock=8\0" \
+	"bootblock=" CONFIG_BOOTBLOCK "\0" \
+	"ubiblock=" CONFIG_UBIBLOCK" \0" \
 	"ubi=enabled\0" \
 	"opts=always_resume=1"
 
@@ -351,7 +375,7 @@
 
 #define CONFIG_ENV_IS_IN_ONENAND	1
 #define CONFIG_ENV_SIZE			4096
-#define CONFIG_ENV_ADDR			(1 << 20)	/* 1 MB, 0x100000 */
+#define CONFIG_ENV_ADDR			(768 << 10)	/* 768KB, 0xc00000 */
 
 #define CONFIG_USE_ONENAND_BOARD_INIT
 #define CONFIG_SAMSUNG_ONENAND		1
