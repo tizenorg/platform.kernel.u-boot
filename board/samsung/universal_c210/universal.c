@@ -875,9 +875,9 @@ static unsigned int get_hw_revision(void)
 	hwrev = 1;
 
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
-	if (IS_RANGE(mode0, 80, 110) && IS_RANGE(mode1, 80, 110))
+	if (IS_RANGE(mode0, 80, 200) && IS_RANGE(mode1, 80, 200))
 		hwrev = 0x0;
-	if (IS_RANGE(mode0, 750, 940) && IS_RANGE(mode1, 80, 110))
+	if (IS_RANGE(mode0, 750, 1000) && IS_RANGE(mode1, 80, 200))
 		hwrev = 0x1;
 #undef IS_RANGE
 
