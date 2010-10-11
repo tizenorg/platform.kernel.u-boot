@@ -2197,21 +2197,15 @@ smdkc100_config:	unconfig
 
 s5pc100_universal_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h 
-	@$(MKCONFIG) -a s5pc1xx_universal arm armv7 universal_c100 samsung s5pc1xx
+	@$(MKCONFIG) $(@:_config=) arm armv7 universal_c100 samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
-
-s5pc110_universal_config:	unconfig
-	@$(MKCONFIG) -a s5pc1xx_universal arm armv7 universal_c110 samsung s5pc1xx
 
 s5pc1xx_p1p2_config:	unconfig
 	@echo "#define CONFIG_ONENAND_U_BOOT" > $(obj)include/config.h
 	@$(MKCONFIG) $(@:_config=) arm armv7 p1p2 samsung s5pc1xx
 	@echo "CONFIG_ONENAND_U_BOOT = y" >> $(obj)include/config.mk
 	@echo "ONENAND_BIN = $(obj)onenand_ipl/onenand-ipl-16k.bin" >> $(obj)include/config.mk
-
-s5pc210_universal_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) arm armv7 universal_c210 samsung s5pc2xx
 
 #########################################################################
 ## XScale Systems
