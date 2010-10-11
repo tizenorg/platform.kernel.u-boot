@@ -2474,15 +2474,15 @@ static void show_dump_msg(void)
 	if (*msg_header != 0x3d3d3d3d)
 		return;
 
-	memcpy(msg, KMSG_ADDRESS, KMSG_SIZE);
+	memcpy(msg, (void *)KMSG_ADDRESS, KMSG_SIZE);
 
-	printf("\n\n", msg);
+	printf("\n\n");
 	for (i = 0; i < KMSG_SIZE; i++) {
 		printf("%c", msg[i]);
 	}
 	printf("\n\n");
 
-	memset(KMSG_ADDRESS, 0x0, KMSG_SIZE);
+	memset((void *)KMSG_ADDRESS, 0x0, KMSG_SIZE);
 
 	setenv("bootdelay", "-1");
 }
