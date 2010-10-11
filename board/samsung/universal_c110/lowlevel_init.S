@@ -36,8 +36,7 @@
  * Register usages:
  *
  * r5 has zero always
- * r7 has S5PC100 GPIO base, 0xE0300000
- * r8 has real GPIO base, 0xE0300000, 0xE0200000 at S5PC100, S5PC110 repectively
+ * r8 has GPIO base
  * r9 has Mobile DDR size, 1 means 1GiB, 2 means 2GiB and so on
  */
 
@@ -50,6 +49,8 @@ lowlevel_init:
 
 	/* r5 has always zero */
 	mov	r5, #0
+
+	ldr     r8, =S5PC110_GPIO_BASE
 
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
 	ldr	r0, =S5PC110_RST_STAT
