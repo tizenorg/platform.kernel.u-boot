@@ -251,14 +251,14 @@
 #define CONFIG_UPDATEB	"updateb=onenand erase 0x0 0x100000;" \
 			" onenand write 0x32008000 0x0 0x100000\0"
 
-#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=3 ubi.mtd=6"
-
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
 
 #ifdef CONFIG_SBOOT
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=4 ubi.mtd=7"
 #define CONFIG_BOOTBLOCK	"10"
 #define CONFIG_UBIBLOCK		"9"
 #else
+#define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=3 ubi.mtd=6"
 #define CONFIG_BOOTBLOCK	"9"
 #define CONFIG_UBIBLOCK		"8"
 #endif
