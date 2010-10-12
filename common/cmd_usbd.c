@@ -1108,6 +1108,14 @@ static int process_data(struct usbd_ops *usbd)
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
 
+		/* Check ubi image, 0x23494255 is UBI# */
+		{
+			long *img_header = (long *)down_ram_addr;
+
+			if (*img_header == 0x23494255)
+				goto ubi_img;
+		}
+
 		/* Erase */
 		if (!arg)
 			nand_cmd(0, offset, length, NULL);
@@ -1164,6 +1172,8 @@ static int process_data(struct usbd_ops *usbd)
 
 		len = (unsigned int) ubi_dest_size;
 #endif
+
+ubi_img:
 		/* Write : arg (0 Modem) / (1 CSA) */
 		if (!arg) {
 			sprintf(length, "%x", (unsigned int) len);
