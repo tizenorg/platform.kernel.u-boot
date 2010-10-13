@@ -133,6 +133,7 @@
 #define CONFIG_CMD_SLEEP
 #define CONFIG_CMD_PMIC
 #define CONFIG_CMD_DEVICE_POWER
+#define CONFIG_CMD_FAT
 
 /* disabled commands */
 //#define CONFIG_CMD_GPIO
@@ -236,7 +237,13 @@
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#define CONFIG_BOOTCOMMAND	"run ubifsboot"
+#define CONFIG_BOOTCOMMAND \
+	"if mmc rescan 1; then " \
+		"if run loaduimage; then " \
+			"run sdboot; " \
+		"else run ubifsboot; " \
+		"fi; " \
+	"else run ubifsboot; fi"
 
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
 
@@ -293,6 +300,8 @@
 	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
+	"sdboot=set bootargs root=/dev/mmcblk0p2 " CONFIG_COMMON_BOOT \
+	CONFIG_UBI_MTD "; bootm 0x30007FC0\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
@@ -303,6 +312,7 @@
 	"bootblock=" CONFIG_BOOTBLOCK "\0" \
 	"ubiblock=" CONFIG_UBIBLOCK" \0" \
 	"ubi=enabled\0" \
+	"loaduimage=fatload mmc 1 0x30007FC0 uImage\0" \
 	"opts=always_resume=1"
 
 /*
