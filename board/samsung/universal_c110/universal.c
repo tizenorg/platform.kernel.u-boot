@@ -2563,6 +2563,9 @@ int misc_init_r(void)
 	/* check fsa9480 */
 	check_micro_usb(0);
 
+	run_command("dcache on", 0);
+	run_command("icache on", 0);
+
 	return 0;
 }
 #endif
