@@ -2966,11 +2966,11 @@ int board_mmc_init(bd_t *bis)
 		for (i = 0; i < 7; i++) {
 			if (i == 2)
 				continue;
-			/* GPG0[0:6] special function 2 */
+			/* GPG2[0:6] special function 2 */
 			gpio_cfg_pin(&gpio->g2, i, 0x2);
-			/* GPG0[0:6] pull disable */
+			/* GPG2[0:6] pull disable */
 			gpio_set_pull(&gpio->g2, i, GPIO_PULL_NONE);
-			/* GPG0[0:6] drv 4x */
+			/* GPG2[0:6] drv 4x */
 			gpio_set_drv(&gpio->g2, i, GPIO_DRV_4X);
 		}
 		err =s5p_mmc_init(2, 4);
