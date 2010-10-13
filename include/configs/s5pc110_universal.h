@@ -300,7 +300,7 @@
 	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
-	"sdboot=set bootargs root=/dev/mmcblk0p2 " CONFIG_COMMON_BOOT \
+	"sdboot=set bootargs root=/dev/mmcblk1p2 " CONFIG_COMMON_BOOT \
 	CONFIG_UBI_MTD "; bootm 0x30007FC0\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
