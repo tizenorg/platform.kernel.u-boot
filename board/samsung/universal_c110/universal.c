@@ -691,14 +691,10 @@ static void check_hw_revision(void)
 	board_rev |= get_hw_revision(&gpio->j0, hwrev3);
 
 	/* Set machine id */
-	if (board < MACH_PSEUDO_END) {
-		if (cpu_is_s5pc110())
-			arch_number = C110_MACH_START + board;
-		else
-			arch_number = C100_MACH_START + board;
-	} else {
+	if (board < MACH_PSEUDO_END)
+		arch_number = C110_MACH_START + board;
+	else
 		arch_number = board;
-	}
 }
 
 static void show_hw_revision(void)
@@ -719,10 +715,8 @@ static void show_hw_revision(void)
 
 	if (mach_is_goni() || mach_is_aquila())
 		board = arch_number;
-	else if (cpu_is_s5pc110())
-		board = arch_number - C110_MACH_START;
 	else
-		board = arch_number - C100_MACH_START;
+		board = arch_number - C110_MACH_START;
 
 	check_board_revision(board, board_rev);
 
@@ -753,8 +747,7 @@ static void show_hw_revision(void)
 		s5p_set_cpu_rev(0);
 	}
 
-	if (cpu_is_s5pc110())
-		writel(0xc1100000 | (0xffff & (s5p_get_cpu_rev() ? 1 : 0)),
+	writel(0xc1100000 | (0xffff & (s5p_get_cpu_rev() ? 1 : 0)),
 				S5PC110_INFORM3);
 
 	empty_device_info_buffer();
@@ -1449,9 +1442,6 @@ static void into_charge_mode(void)
 				char *argv[] = {"0", "0"};
 				wakeup_stat = do_sleep(&ctt, 0, 1, argv);
 			}
-		} else {
-			puts("\n\n\nERROR: this is not S5PC110.\n\n\n");
-			return;
 		}
 
 		/* Check TEMP HIGH/LOW */
@@ -2491,16 +2481,6 @@ int misc_init_r(void)
 {
 	check_reset_status();
 	show_dump_msg();
-
-	/* Architecture Common settings */
-	if (cpu_is_s5pc110()) {
-		setenv("mtdparts", MTDPARTS_DEFAULT_4KB);
-	} else {
-		setenv("bootk", "onenand read 0x30007FC0 0x60000 0x300000; "
-				"bootm 0x30007FC0");
-		setenv("updatek", "onenand erase 0x60000 0x300000; "
-				"onenand write 0x31008000 0x60000 0x300000");
-	}
 
 #ifdef CONFIG_LCD
 	/* It should be located at first */
