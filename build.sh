@@ -18,7 +18,6 @@ check_users()
 	if [ "$USER" = "kmpark" ]; then
 		#CROSS_COMPILER=/pub/toolchains/gcc-4.4.1/bin/arm-none-linux-gnueabi-
 		CROSS_COMPILER=/scratchbox/compilers/arm-linux-gnueabi-gcc4.4.1-glibc2.10.1-2009q3-93/bin/arm-none-linux-gnueabi-
-		touch onenand_ipl/board/samsung/universal_c210/start.S
 		JOBS="-j 4"
 	fi
 	if [ "$USER" = "dofmind" ]; then
