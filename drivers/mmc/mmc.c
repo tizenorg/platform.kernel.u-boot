@@ -134,10 +134,6 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 		cmd.resp_type = MMC_RSP_R1b;
 		cmd.flags = 0;
 		stoperr = mmc_send_cmd(mmc, &cmd, NULL);
-		if (stoperr) {
-			printf("stop transmission failed\n");
-			return stoperr;
-		}
 	}
 
 	return blkcnt;
@@ -423,10 +419,6 @@ int mmc_change_freq(struct mmc *mmc)
 	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215])
 		mmc->high_capacity = 1;
 
-	if (mmc->high_capacity)
-		mmc->capacity = ((ext_csd[215] << 24) | (ext_csd[214] << 16) |
-			(ext_csd[213] << 8) | (ext_csd[212]));
-
 	cardtype = ext_csd[196] & 0xf;
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING, 1);
@@ -696,6 +688,7 @@ int mmc_startup(struct mmc *mmc)
 	uint mult, freq;
 	u64 cmult, csize;
 	struct mmc_cmd cmd;
+	char ext_csd[512];
 
 	/* Put the Card in Identify Mode */
 	cmd.cmdidx = MMC_CMD_ALL_SEND_CID;
@@ -745,7 +738,7 @@ int mmc_startup(struct mmc *mmc)
 	mmc->csd[3] = cmd.response[3];
 
 	if (mmc->version == MMC_VERSION_UNKNOWN) {
-		int version = (mmc->csd[0] >> 26) & 0xf;
+		int version = (cmd.response[0] >> 26) & 0xf;
 
 		switch (version) {
 			case 0:
@@ -770,17 +763,17 @@ int mmc_startup(struct mmc *mmc)
 	}
 
 	/* divide frequency by 10, since the mults are 10x bigger */
-	freq = fbase[(mmc->csd[0] & 0x7)];
-	mult = multipliers[((mmc->csd[0] >> 3) & 0xf)];
+	freq = fbase[(cmd.response[0] & 0x7)];
+	mult = multipliers[((cmd.response[0] >> 3) & 0xf)];
 
 	mmc->tran_speed = freq * mult;
 
-	mmc->read_bl_len = 1 << ((mmc->csd[1] >> 16) & 0xf);
+	mmc->read_bl_len = 1 << ((cmd.response[1] >> 16) & 0xf);
 
 	if (IS_SD(mmc))
 		mmc->write_bl_len = mmc->read_bl_len;
 	else
-		mmc->write_bl_len = 1 << ((mmc->csd[3] >> 22) & 0xf);
+		mmc->write_bl_len = 1 << ((cmd.response[3] >> 22) & 0xf);
 
 	if (mmc->high_capacity) {
 		csize = (mmc->csd[1] & 0x3f) << 16
@@ -811,12 +804,18 @@ int mmc_startup(struct mmc *mmc)
 	if (err)
 		return err;
 
-	/*
-	 * Workaround
-	 * removed sd_change_freq(mmc)
-	 */
+	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
+		/* check  ext_csd version and capacity */
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (!err & (ext_csd[192] >= 2)) {
+			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
+					ext_csd[214] << 16 | ext_csd[215] << 24;
+			mmc->capacity *= 512;
+		}
+	}
+
 	if (IS_SD(mmc))
-		mmc->card_caps |= MMC_MODE_4BIT;
+		err = sd_change_freq(mmc);
 	else
 		err = mmc_change_freq(mmc);
 
@@ -877,22 +876,18 @@ int mmc_startup(struct mmc *mmc)
 
 		if (mmc->card_caps & MMC_MODE_HS) {
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
-				mmc->tran_speed = 52000000;
-			 else
-				mmc->tran_speed = 26000000;
-		}
-
-		mmc_set_clock(mmc, mmc->tran_speed);
+				mmc_set_clock(mmc, 52000000);
+			else
+				mmc_set_clock(mmc, 26000000);
+		} else
+			mmc_set_clock(mmc, 20000000);
 	}
 
 	/* fill in device description */
 	mmc->block_dev.lun = 0;
 	mmc->block_dev.type = 0;
 	mmc->block_dev.blksz = mmc->read_bl_len;
-	if (mmc->high_capacity)
-		mmc->block_dev.lba = mmc->capacity;
-	else
-		mmc->block_dev.lba = lldiv(mmc->capacity, mmc->read_bl_len);
+	mmc->block_dev.lba = lldiv(mmc->capacity, mmc->read_bl_len);
 	sprintf(mmc->block_dev.vendor, "Man %06x Snr %08x", mmc->cid[0] >> 8,
 			(mmc->cid[2] << 8) | (mmc->cid[3] >> 24));
 	sprintf(mmc->block_dev.product, "%c%c%c%c%c", mmc->cid[0] & 0xff,
