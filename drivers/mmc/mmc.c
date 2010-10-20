@@ -814,8 +814,12 @@ int mmc_startup(struct mmc *mmc)
 		}
 	}
 
+	/*
+	 * Workaorund
+	 * removed sd_change_freq(mmc)
+	 */
 	if (IS_SD(mmc))
-		err = sd_change_freq(mmc);
+		mmc->card_caps |= MMC_MODE_4BIT;
 	else
 		err = mmc_change_freq(mmc);
 
@@ -876,11 +880,12 @@ int mmc_startup(struct mmc *mmc)
 
 		if (mmc->card_caps & MMC_MODE_HS) {
 			if (mmc->card_caps & MMC_MODE_HS_52MHz)
-				mmc_set_clock(mmc, 52000000);
+				mmc->tran_speed = 52000000;
 			else
-				mmc_set_clock(mmc, 26000000);
-		} else
-			mmc_set_clock(mmc, 20000000);
+				mmc->tran_speed = 26000000;
+		}
+
+		mmc_set_clock(mmc, mmc->tran_speed);
 	}
 
 	/* fill in device description */
