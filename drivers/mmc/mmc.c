@@ -889,7 +889,10 @@ int mmc_startup(struct mmc *mmc)
 	mmc->block_dev.lun = 0;
 	mmc->block_dev.type = 0;
 	mmc->block_dev.blksz = mmc->read_bl_len;
-	mmc->block_dev.lba = lldiv(mmc->capacity, mmc->read_bl_len);
+	if (mmc->high_capacity)
+		mmc->block_dev.lba = mmc->capacity;
+	else
+		mmc->block_dev.lba = lldiv(mmc->capacity, mmc->read_bl_len);
 	sprintf(mmc->block_dev.vendor, "Man %06x Snr %08x", mmc->cid[0] >> 8,
 			(mmc->cid[2] << 8) | (mmc->cid[3] >> 24));
 	sprintf(mmc->block_dev.product, "%c%c%c%c%c", mmc->cid[0] & 0xff,
