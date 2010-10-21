@@ -168,11 +168,7 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	mmc_init(mmc);
 
 	usbd->mmc_blk = mmc->read_bl_len;
-
-	if (mmc->high_capacity)
-		usbd->mmc_total = mmc->capacity;
-	else
-		usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
+	usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
 }
 #endif
 
