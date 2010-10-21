@@ -161,8 +161,6 @@ elif [ "$USER" = "marek" ]; then
 		cp universal-uboot-system-${DATE}-c210-raw.tar ../image/w1
 	fi
 elif [ "$USER" = "lukma" ]; then
-	tar cvf system_uboot_evt0.tar u-boot-onenand-evt0.bin
-	tar cvf system_uboot_evt1.tar u-boot-onenand-evt1.bin
-	tar cvf system_uboot_evt1-fused.tar u-boot-onenand-evt1-fused.bin
-	cp system_uboot_evt1-fused.tar ../image/w1/system_uboot_evt1-fused-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar	
+	tar cvf system_uboot.tar u-boot.bin
+	cp system_uboot.tar ../image/w1/uboot-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar	
 fi
