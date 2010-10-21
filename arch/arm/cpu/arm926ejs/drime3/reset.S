@@ -23,8 +23,10 @@
 
 #include <asm/arch/cpu.h>
 
+#defnie DRIME3_PCU_LATCH	0x4
+
 .globl reset_cpu
 reset_cpu:
-	ldr	r1, =DRIME3_RESET_BASE
-	ldr	r2, =0x0
-	str	r2, [r1]
+	ldr	r1, =DRIME3_PCU_BASE
+	ldr	r2, =0x10
+	str	r2, [r1, #0x04]		@ write LATCH
