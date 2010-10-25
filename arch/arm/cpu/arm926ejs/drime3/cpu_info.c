@@ -29,5 +29,7 @@
 int print_cpuinfo(void)
 {
 	printf("CPU:\tDRIMeIII@%sMHz\n", "400");
+
+	return 0;
 }
 #endif
