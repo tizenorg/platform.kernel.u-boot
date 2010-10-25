@@ -126,6 +126,10 @@ lowlevel_init:
 #endif
 
 #ifndef CONFIG_PRELOADER
+	/* Disable Watchdog */
+	ldr	r0, =S5PC210_WATCHDOG_BASE		@0x10060000
+	str	r5, [r0]
+
 	/* UART */
 	bl	uart_asm_init
 #endif
