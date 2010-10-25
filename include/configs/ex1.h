@@ -207,4 +207,6 @@
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 #define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
+#define CONFIG_SYS_ARM_WITHOUT_RELOC /* This board is tested with relocation support */
+
 #endif	/* __CONFIG_H */
