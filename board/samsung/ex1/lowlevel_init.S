@@ -3,6 +3,11 @@
 #include <version.h>
 #include <asm/arch/cpu.h>
 
+#define PD_YEAR		0x5555
+#define PD_MON		0xa
+#define PD_DATE		0x35
+#define PD_WEEK		0x7
+
 _TEXT_BASE:
 	.word	TEXT_BASE
 
@@ -11,6 +16,62 @@ lowlevel_init:
 	mov	r11, lr
 
 #ifndef CONFIG_ONENAND_IPL
+rtc_set_prevent_powerup:
+	ldr	r1, =DRIME3_RTC_BASE
+
+	ldr	r0, =0x03
+	str	r0, [r1]
+
+	ldr	r0, =PD_YEAR
+	ldr	r2, [r1, #0x20]		@ load RTC_AYEAR
+	cmp	r0, r2
+	bne	wakeup_off
+
+	ldr	r0, =PD_MON
+	ldr	r2, [r1, #0x1c]		@ load RTC_AMON
+	cmp	r0, r2
+	bne	wakeup_off
+
+	ldr	r0, =PD_WEEK
+	ldr	r2, [r1, #0x18]		@ load RTC_AWEEK
+	cmp	r0, r2
+	bne	wakeup_off
+
+	ldr	r0, =PD_DATE
+	ldr	r2, [r1, #0x14]		@ load RTC_ADATE
+	cmp	r0, r2
+	bne	wakeup_off
+	b	set_drvier_current
+
+wakeup_off:
+	ldr	r0, =0x0
+	str	r0, [r1, #0x4c]		@ store RTC_INTCLR
+
+	ldr	r0, =PD_YEAR
+	str	r0, [r1, #0x20]		@ store RTC_AYEAR
+
+	ldr	r0, =PD_MON
+	str	r0, [r1, #0x1c]		@ store RTC_AMON
+
+	ldr	r0, =PD_WEEK
+	str	r0, [r1, #0x18]		@ store RTC_AWEEK
+
+	ldr	r0, =PD_DATE
+	str	r0, [r1, #0x14]		@ store RTC_ADATE
+
+	ldr	r0, =0x0
+	str	r0, [r1]		@ store RTC_CTRL
+
+	ldr	r1, =DRIME3_PCU_BASE
+	ldr	r0, [r1]
+	ldr	r2, =0xffffffdf
+	and	r0, r0, r2
+	str	r0, [r1]
+	ldr	r2, =0xffffffbf
+	ldr	r0, [r1]
+	and	r0, r0, r2
+	str	r0, [r1]
+
 set_drvier_current:
 	ldr	r1, =0x900D0078
 	ldr	r0, =0x43434343
