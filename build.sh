@@ -56,8 +56,12 @@ check_users()
 		JOBS="-j 2"
 	fi
 	if [ "$USER" = "lukma" ]; then
-	    CROSS_COMPILER=/home/lukma/work/arm-2009q3/bin/arm-none-eabi-
-	    JOBS="-j 5"
+		CROSS_COMPILER=/home/lukma/work/arm-2009q3/bin/arm-none-eabi-
+		JOBS="-j 5"
+	fi
+	if [ "$USER" = "mzx" ]; then
+		CROSS_COMPILER=/opt/toolchains/arm-2009q3/bin/arm-none-linux-gnueabi-
+		JOBS="-j 4"
 	fi
 }
 
@@ -110,7 +114,6 @@ if [ "$IPL" != "mmc" -a -e "$PWD/u-boot-onenand.bin" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
 	if [ "$size" -ge "262144" ]; then
 		echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
-		exit
 	fi
 fi
 
@@ -162,5 +165,8 @@ elif [ "$USER" = "marek" ]; then
 	fi
 elif [ "$USER" = "lukma" ]; then
 	tar cvf system_uboot.tar u-boot.bin
-	cp system_uboot.tar ../image/w1/uboot-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar	
+	cp system_uboot.tar ../image/w1/uboot-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar
+elif [ "$USER" = "mzx" ]; then
+	tar cvf u-boot-system.tar u-boot.bin
+	cp u-boot-system.tar /home/smb/
 fi
