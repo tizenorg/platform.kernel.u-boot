@@ -872,7 +872,7 @@ static unsigned int get_hw_revision(void)
 		hwrev = 0x0;		/* 0.01V	0.01V */
 	if (IS_RANGE(mode0, 750, 1000) && IS_RANGE(mode1, 80, 200))
 		hwrev = 0x1;		/* 610mV	0.01V */
-	if (IS_RANGE(mode0, 1300, 1600) && IS_RANGE(mode1, 80, 200))
+	if (IS_RANGE(mode0, 1300, 1700) && IS_RANGE(mode1, 80, 200))
 		hwrev = 0x2;		/* 1.16V	0.01V */
 #undef IS_RANGE
 
