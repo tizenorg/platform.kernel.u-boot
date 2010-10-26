@@ -71,14 +71,6 @@ static struct i2c_gpio_bus_data i2c_1 = {
 	.scl_pin	= 3,
 };
 
-#if 0
-/* i2c2		SDA: GPA0[6] SCL: GPA0[7] */
-static struct i2c_gpio_bus_data i2c_2 = {
-	.sda_pin	= 6,
-	.scl_pin	= 7,
-};
-#endif
-
 /* i2c3 (TSP)	SDA: GPA1[2] SCL: GPA1[3] */
 static struct i2c_gpio_bus_data i2c_3 = {
 	.sda_pin	= 2,
@@ -871,14 +863,17 @@ static unsigned int get_hw_revision(void)
 
 	/*
 	 * XXX Always set the default hwrev as the latest board
+	 * ADC = (voltage) / 3.3 * 4096
 	 */
-	hwrev = 1;
+	hwrev = 2;
 
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
 	if (IS_RANGE(mode0, 80, 200) && IS_RANGE(mode1, 80, 200))
-		hwrev = 0x0;
+		hwrev = 0x0;		/* 0.01V	0.01V */
 	if (IS_RANGE(mode0, 750, 1000) && IS_RANGE(mode1, 80, 200))
-		hwrev = 0x1;
+		hwrev = 0x1;		/* 610mV	0.01V */
+	if (IS_RANGE(mode0, 1300, 1600) && IS_RANGE(mode1, 80, 200))
+		hwrev = 0x2;		/* 1.16V	0.01V */
 #undef IS_RANGE
 
 	printf("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
