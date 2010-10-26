@@ -886,6 +886,12 @@ static unsigned int get_hw_revision(void)
 	return hwrev;
 }
 
+static const char *pcb_rev[] = {
+	"UNIV_0.0",
+	"UNIV_0.1",
+	"AQUILA_1.7",
+};
+
 static void check_hw_revision(void)
 {
 	int hwrev;
@@ -895,6 +901,7 @@ static void check_hw_revision(void)
 	board_rev |= hwrev;
 
 	printf("HW Revision:\t0x%x\n", board_rev);
+	printf("PCB Revision:\t%s\n", pcb_rev[board_rev & 0xf]);
 }
 
 static void check_reset_status(void)
