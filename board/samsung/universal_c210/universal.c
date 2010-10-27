@@ -973,15 +973,14 @@ int board_mmc_init(bd_t *bis)
 		/* MASSMEMORY_EN: XMDMDATA_6: GPE3[6] */
 		gpio_direction_output(&gpio1->e3, 6, 0);
 		break;
-	case 1:
+	default:
+		break;
 		/*
 		 * Default reset state is High and there's no inverter
 		 * But set it as HIGH to ensure
 		 */
 		/* MASSMEMORY_EN: XMDMADDR_3: GPE1[3] */
 		gpio_direction_output(&gpio1->e1, 3, 1);
-		break;
-	default:
 		break;
 	}
 
