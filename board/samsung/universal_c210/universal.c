@@ -813,8 +813,8 @@ void init_panel_info(vidinfo_t *vid)
 	vid->enable_ldo = ld9040_enable_ldo;
 
 	vid->init_delay = 0;
-	vid->power_on_delay = 30000;
-	vid->reset_delay = 20000;
+	vid->power_on_delay = 10000;
+	vid->reset_delay = 10000;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
 
 	/* board should be detected at here. */
