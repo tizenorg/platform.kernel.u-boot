@@ -199,14 +199,16 @@ int dram_init(void)
 	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
 
 	/* Early init for i2c devices - Where these funcions should go?? */
+
+	/* Reset on max17040 */
+	check_battery(1);
+
 	/* pmic init */
 	init_pmic_lp3974();
 	init_pmic_max8952();
 
 	/* Reset on fsa9480 */
 	check_micro_usb(1);
-	/* Reset on max17040 */
-	check_battery(1);
 
 	return 0;
 }
