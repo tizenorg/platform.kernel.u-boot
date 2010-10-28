@@ -146,6 +146,7 @@ static void check_battery(int mode);
 static void check_micro_usb(int intr);
 static void init_pmic_lp3974(void);
 static void init_pmic_max8952(void);
+static int pmic_ldo_control(int buck, int ldo, int safeout, int on);
 
 void i2c_init_board(void)
 {
@@ -169,15 +170,6 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
-
-	/* pmic init early */
-	init_pmic_lp3974();
-	init_pmic_max8952();
-
-	/* Reset on fsa9480 early */
-	check_micro_usb(1);
-	/* Reset on max17040 early */
-	check_battery(1);
 }
 
 int board_init(void)
@@ -205,6 +197,17 @@ int board_init(void)
 int dram_init(void)
 {
 	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
+
+	/* Early init for i2c devices - Where these funcions should go?? */
+	/* pmic init */
+	init_pmic_lp3974();
+	init_pmic_max8952();
+
+	/* Reset on fsa9480 */
+	check_micro_usb(1);
+	/* Reset on max17040 */
+	check_battery(1);
+
 	return 0;
 }
 
@@ -535,9 +538,9 @@ static void init_pmic_lp3974(void)
 	/*
 	 * ONOFF1
 	 * Buck1 ON, Buck2 OFF, Buck3 ON, Buck4 ON
-	 * LDO2 ON, LDO3 OFF, LDO4 OFF, LDO5 ON
+	 * LDO2 ON, LDO3 OFF, LDO4 ON, LDO5 ON
 	 */
-	val[0] = 0xB9;
+	val[0] = 0xBB;
 	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
 
 	/*
@@ -854,12 +857,10 @@ static unsigned int get_hw_revision(void)
 {
 	int hwrev, mode0, mode1;
 
-	run_command("pmic ldo 4 on", 0);
-
 	mode0 = get_adc_value(1);		/* HWREV_MODE0 */
 	mode1 = get_adc_value(2);		/* HWREV_MODE1 */
 
-	run_command("pmic ldo 4 off", 0);
+	pmic_ldo_control(0, 4, 0, 0);
 
 	/*
 	 * XXX Always set the default hwrev as the latest board
@@ -876,7 +877,7 @@ static unsigned int get_hw_revision(void)
 		hwrev = 0x2;		/* 1.16V	0.01V */
 #undef IS_RANGE
 
-	printf("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
+	debug("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
 
 	return hwrev;
 }
@@ -1140,22 +1141,13 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	i2c_write(addr, reg, 1, val, 1);
 	i2c_read_r(addr, reg, 1, val, 1);
 
-	if (ldo)
-		printf("ldo %d value 0x%x, %s\n", ldo, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-	else if (buck)
-		printf("buck %d value 0x%x, %s\n", buck, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-	else if (safeout)
-		printf("safeout %d value 0x%x, %s\n", safeout, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-
 	return 0;
 }
 
 static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int buck = 0, ldo = 0, safeout = 0, on = -1;
+	int ret;
 
 	switch (argc) {
 	case 2:
@@ -1179,7 +1171,11 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		else
 			break;
 
-		return pmic_ldo_control(buck, ldo, safeout, on);
+		ret = pmic_ldo_control(buck, ldo, safeout, on);
+
+		if (!ret)
+			printf("%s %s %s\n", argv[1], argv[2], argv[3]);
+		return ret;
 
 	default:
 		break;
@@ -1206,11 +1202,11 @@ static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	case 2:
 		if (strncmp(argv[1], "cp", 2) == 0) {
 			micro_usb_switch(1);
-			pmic_ldo_control(0, 0, 2, 1);
+			run_command("pmic safeout 2 on", 0);
 			setenv("usb", "cp");
 		} else if (strncmp(argv[1], "ap", 2) == 0) {
 			micro_usb_switch(0);
-			pmic_ldo_control(0, 0, 2, 0);
+			run_command("pmic safeout 2 off", 0);
 			setenv("usb", "ap");
 		}
 		break;
