@@ -51,6 +51,15 @@ lowlevel_init:
 	ldr	r7, =S5PC210_GPIO_PART1_BASE
 	ldr	r8, =S5PC210_GPIO_PART2_BASE
 
+	/* System Timer */
+	ldr	r0, =S5PC210_SYSTIMER_BASE
+	ldr	r1, =0x5000
+	str	r1, [r0, #0x0]
+	ldr	r1, =0xffffffff
+	str	r1, [r0, #0x8]
+	ldr	r1, =0x49
+	str	r1, [r0, #0x4]
+
 #ifndef CONFIG_PRELOADER
 	/* Workaround: PMIC manual reset */
 	/* nPOWER: XEINT_23: GPX2[7] */
