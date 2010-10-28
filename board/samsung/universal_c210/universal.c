@@ -529,10 +529,10 @@ static void init_pmic_lp3974(void)
 
 	/*
 	 * ONOFF2
-	 * LDO6 OFF, LDO7 OFF, LDO8 OFF, LDO9 ON,
+	 * LDO6 OFF, LDO7 ON, LDO8 OFF, LDO9 ON,
 	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
 	 */
-	val[0] = 0x10;
+	val[0] = 0x50;
 	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 
 	/*
@@ -545,10 +545,10 @@ static void init_pmic_lp3974(void)
 
 	/*
 	 * ONOFF3
-	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 OFF
+	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 ON,
 	 * EPWRHOLD OFF, EBATTMON OFF, ELBCNFG2 OFF, ELBCNFG1 OFF
 	 */
-	val[0] = 0x00;
+	val[0] = 0x10;
 	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
 
 	/*
@@ -700,7 +700,7 @@ static void lcd_cfg_gpio(void)
 	//writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
-	gpio_cfg_pin(&gpio2->y4, 5, GPIO_OUTPUT);
+	gpio_direction_output(&gpio2->y4, 5, 1);
 
 	/*
  	 * gpio pad configuration for
@@ -728,6 +728,7 @@ static void lcd_cfg_gpio(void)
 	return;
 }
 
+#if 0
 static void reset_lcd(void)
 {
 	gpio_set_value(&gpio2->y4, 5, 1);
@@ -773,6 +774,7 @@ static void lcd_power_on(unsigned int onoff)
 		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
 	}
 }
+#endif
 
 extern void ld9040_cfg_ldo(void);
 extern void ld9040_enable_ldo(unsigned int onoff);
@@ -810,14 +812,15 @@ void init_panel_info(vidinfo_t *vid)
 
 	vid->cfg_gpio = lcd_cfg_gpio;
 	vid->backlight_on = NULL;
-	vid->lcd_power_on = lcd_power_on;
-	vid->reset_lcd = reset_lcd;
+	vid->lcd_power_on = NULL;	/* Don't need the poweron squence */
+	vid->reset_lcd = NULL;		/* Don't need the reset squence */
+
 	vid->cfg_ldo = ld9040_cfg_ldo;
 	vid->enable_ldo = ld9040_enable_ldo;
 
 	vid->init_delay = 0;
-	vid->power_on_delay = 10000;
-	vid->reset_delay = 10000;
+	vid->power_on_delay = 0;
+	vid->reset_delay = 0;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
 
 	/* board should be detected at here. */
