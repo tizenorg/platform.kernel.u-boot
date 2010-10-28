@@ -619,6 +619,10 @@ void board_init_f (ulong bootflag)
 	addr_sp -= sizeof (bd_t);
 	bd = (bd_t *) addr_sp;
 	gd->bd = bd;
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("ramsize: 0x%08lX\n", gd->ram_size);
+	printf("bd addr: 0x%08lX\n", gd->bd);
+#endif
 	debug ("Reserving %zu Bytes for Board Info at: %08lx\n",
 			sizeof (bd_t), addr_sp);
 	addr_sp -= sizeof (gd_t);
