@@ -114,6 +114,11 @@ int do_bootm_linux(int flag, int argc, char * const argv[], bootm_headers_t *ima
 
 	cleanup_before_linux ();
 
+#ifdef CONFIG_TEST_BOOTTIME
+	/* Checking for boot time: It will be deleted */
+	printf("boot time: %d ms\n\n", (0xffffffff - readl(0x1005000c)) / 20 / 1000);
+#endif
+
 	theKernel (0, machid, bd->bi_boot_params);
 	/* does not return */
 
