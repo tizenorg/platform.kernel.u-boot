@@ -1000,7 +1000,7 @@ static void check_battery(int mode)
 
 	/* mode 0: check mode / 1: enable mode */
 	if (mode) {
-		val[0] = 0x54;
+		val[0] = 0x40;
 		val[1] = 0x00;
 		i2c_write(addr, 0xfe, 1, val, 2);
 	} else {
