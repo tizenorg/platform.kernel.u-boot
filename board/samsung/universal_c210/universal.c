@@ -41,6 +41,7 @@ static struct s5pc210_gpio_part2 *gpio2;
 
 static unsigned int battery_soc;
 static unsigned int board_rev;
+extern vidinfo_t panel_info;
 
 u32 get_board_rev(void)
 {
@@ -209,6 +210,9 @@ int dram_init(void)
 
 	/* Reset on fsa9480 */
 	check_micro_usb(1);
+
+	/* Initialize the panel info */
+	memset(&panel_info, 0x0, sizeof(panel_info));
 
 	return 0;
 }
