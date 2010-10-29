@@ -44,6 +44,7 @@
 #include <dsim.h>
 #include <spi.h>
 #include <bmp_layout.h>
+#include <ramoops.h>
 
 #include "animation_frames.h"
 #include "gpio_setting.h"
@@ -2448,39 +2449,28 @@ static void setup_meminfo(void)
 	setenv("meminfo", meminfo);
 }
 
-#define KMSG_SIZE	0x1000
-#define KMSG_ADDRESS	0xED000000
-
+#ifdef CONFIG_RAMOOPS
 static void show_dump_msg(void)
 {
 	int status = get_reset_status();
-	long *msg_header = (long *)KMSG_ADDRESS;
-	char msg[KMSG_SIZE];
-	int i;
+	int ret;
 
 	if (status != SWRESET)
 		return;
 
-	if (*msg_header != 0x3d3d3d3d)
-		return;
+	ret = ramoops_show_msg(samsung_get_base_modem());
 
-	memcpy(msg, (void *)KMSG_ADDRESS, KMSG_SIZE);
-
-	printf("\n\n");
-	for (i = 0; i < KMSG_SIZE; i++) {
-		printf("%c", msg[i]);
-	}
-	printf("\n\n");
-
-	memset((void *)KMSG_ADDRESS, 0x0, KMSG_SIZE);
-
-	setenv("bootdelay", "-1");
+	if (!ret)
+		setenv("bootdelay", "-1");
 }
+#endif
 
 int misc_init_r(void)
 {
 	check_reset_status();
+#ifdef CONFIG_RAMOOPS
 	show_dump_msg();
+#endif
 
 #ifdef CONFIG_LCD
 	/* It should be located at first */
