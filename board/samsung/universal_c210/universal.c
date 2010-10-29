@@ -937,11 +937,7 @@ static void check_reset_status(void)
 #ifdef CONFIG_RAMOOPS
 static void show_dump_msg(void)
 {
-	int status = get_reset_status();
 	int ret;
-
-	if (status != SWRESET)
-		return;
 
 	ret = ramoops_show_msg(samsung_get_base_modem());
 
