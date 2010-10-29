@@ -6,4 +6,4 @@
 #define RAMOOPS_SIZE	0x1000
 #define RAMOOPS_HEADER	0x3d3d3d3d
 
-int ramoops_show_msg(unsigned int base);
+int ramoops_init(unsigned int base);

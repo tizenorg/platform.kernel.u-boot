@@ -2449,12 +2449,12 @@ static void setup_meminfo(void)
 	setenv("meminfo", meminfo);
 }
 
-#ifdef CONFIG_RAMOOPS
+#ifdef CONFIG_CMD_RAMOOPS
 static void show_dump_msg(void)
 {
 	int ret;
 
-	ret = ramoops_show_msg(samsung_get_base_modem());
+	ret = ramoops_init(samsung_get_base_modem());
 
 	if (!ret)
 		setenv("bootdelay", "-1");
@@ -2464,7 +2464,7 @@ static void show_dump_msg(void)
 int misc_init_r(void)
 {
 	check_reset_status();
-#ifdef CONFIG_RAMOOPS
+#ifdef CONFIG_CMD_RAMOOPS
 	show_dump_msg();
 #endif
 
