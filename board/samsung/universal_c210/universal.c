@@ -937,22 +937,12 @@ static void check_reset_status(void)
 #ifdef CONFIG_CMD_RAMOOPS
 static void show_dump_msg(void)
 {
-	struct s5pc210_clock *clk =
-		(struct s5pc210_clock *)samsung_get_base_clock();
 	int ret;
-	unsigned int reg;
 
 	ret = ramoops_init(samsung_get_base_modem());
 
 	if (!ret)
 		setenv("bootdelay", "-1");
-
-#if 0
-	/* disable the clock for Modem I/F */
-	reg = readl(&clk->gate_ip_peril);
-	reg &= ~(1 << 28);
-	writel(reg, &clk->gate_ip_peril);
-#endif
 }
 #endif
 
