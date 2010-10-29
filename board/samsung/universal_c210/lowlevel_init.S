@@ -413,10 +413,10 @@ system_clock_init:
 	str	r1, [r0, r2]
 
 	/*
-	 * MODEMIF[28], AC97[27], SPDIF[26], SLIMBUS[25]: 1110 0001
+	 * AC97[27], SPDIF[26], SLIMBUS[25]		: 1111 0001
 	 * I2C2[8]					: 1111 1110
 	 */
-	ldr	r1, =0xE1FFFEFF
+	ldr	r1, =0xF1FFFEFF
 	ldr	r2, =0x0C950			@ CLK_GATE_IP_PERIL
 	str	r1, [r0, r2]
 
