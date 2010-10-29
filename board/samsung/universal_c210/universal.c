@@ -947,10 +947,12 @@ static void show_dump_msg(void)
 	if (!ret)
 		setenv("bootdelay", "-1");
 
+#if 0
 	/* disable the clock for Modem I/F */
 	reg = readl(&clk->gate_ip_peril);
 	reg &= ~(1 << 28);
 	writel(reg, &clk->gate_ip_peril);
+#endif
 }
 #endif
 
