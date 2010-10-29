@@ -545,6 +545,9 @@ void board_init_f (ulong bootflag)
 #endif
 
 	addr = CONFIG_SYS_SDRAM_BASE + gd->ram_size;
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
+#endif
 
 #ifdef CONFIG_LOGBUFFER
 #ifndef CONFIG_ALT_LB_ADDR
@@ -574,10 +577,16 @@ void board_init_f (ulong bootflag)
 	gd->tlb_addr = addr;
 	debug ("TLB table at: %08lx\n", addr);
 #endif
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
+#endif
 
 	/* round down to next 4 kB limit */
 	addr &= ~(4096 - 1);
 	debug ("Top of RAM usable for U-Boot at: %08lx\n", addr);
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
+#endif
 
 #ifdef CONFIG_VFD
 #	ifndef PAGE_SIZE
@@ -595,6 +604,9 @@ void board_init_f (ulong bootflag)
 	addr = lcd_setmem (addr);
 	gd->fb_base = addr;
 #endif /* CONFIG_LCD */
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
+#endif
 
 	/*
 	 * reserve memory for U-Boot code, data & bss
@@ -604,6 +616,9 @@ void board_init_f (ulong bootflag)
 	addr &= ~(4096 - 1);
 
 	debug ("Reserving %ldk for U-Boot at: %08lx\n", gd->mon_len >> 10, addr);
+#ifdef CONFIG_TEST_BOOTFAIL
+	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
+#endif
 
 #ifndef CONFIG_PRELOADER
 	/*
@@ -622,6 +637,7 @@ void board_init_f (ulong bootflag)
 #ifdef CONFIG_TEST_BOOTFAIL
 	printf("ramsize: 0x%08lX\n", gd->ram_size);
 	printf("bd addr: 0x%08lX\n", gd->bd);
+	printf("addr_sp: 0x%08lX\n", addr_sp);
 #endif
 	debug ("Reserving %zu Bytes for Board Info at: %08lx\n",
 			sizeof (bd_t), addr_sp);
