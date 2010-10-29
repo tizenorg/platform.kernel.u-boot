@@ -4,6 +4,9 @@
  */
 #include <common.h>
 #include <ramoops.h>
+#ifdef CONFIG_S5PC1XXFB
+#include <fbutils.h>
+#endif
 
 static char msg[RAMOOPS_SIZE];
 static int dumped;
@@ -11,16 +14,38 @@ static int dumped;
 static void ramoops_show(void)
 {
 	int i;
+#ifdef CONFIG_S5PC1XXFB
+	unsigned int chars;
+#endif
 
 	if (!dumped) {
 		puts("No Messages\n");
 		return;
 	}
 
+#ifdef CONFIG_S5PC1XXFB
+	init_font();
+	fb_clear();
+	set_font_color(FONT_WHITE);
+	chars = get_chars();
+	printf("chars %d\n", chars);
+#endif
+
 	printf("\n\n");
-	for (i = 0; i < RAMOOPS_SIZE; i++)
-		printf("%c", msg[i]);
+	for (i = 0; i < RAMOOPS_SIZE; i++) {
+		char s[1];
+		sprintf(s, "%c", msg[i]);
+		puts(s);
+#ifdef CONFIG_S5PC1XXFB
+		if (!s5p_no_lcd_support() && i > (RAMOOPS_SIZE - chars))
+			fb_printf(s);
+#endif
+	}
 	printf("\n\n");
+
+#ifdef CONFIG_S5PC1XXFB
+	exit_font();
+#endif
 }
 
 int ramoops_init(unsigned int base)

@@ -66,4 +66,9 @@ void draw_wheel(int x, int y, unsigned char color);
 /* draw progress */
 void draw_progress(int y, int per, unsigned char color);
 
+/* clear the framebuffer */
+void fb_clear(void);
+
+unsigned int get_chars(void);
+
 #endif /* _FONT_H */

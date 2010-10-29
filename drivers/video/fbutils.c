@@ -314,3 +314,23 @@ void exit_font(void)
 	g_default_x = g_default_y = 0;
 	g_x = g_y = 0;
 }
+
+void fb_clear(void)
+{
+	int y;
+	int line_length = panel_info.vl_width * 4;
+
+	for (y = 0; y < panel_info.vl_height; y++)
+		memset(line_addr[y], 0x0, line_length);
+}
+
+unsigned int get_chars(void)
+{
+	int chars;
+	int lines;
+
+	chars = panel_info.vl_width / font_vga_8x16.width - 10;
+	lines = panel_info.vl_height  / (font_vga_8x16.height + 2);
+
+	return chars * lines;
+}
