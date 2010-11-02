@@ -953,6 +953,10 @@ int misc_init_r(void)
 #ifdef CONFIG_CMD_RAMOOPS
 	show_dump_msg();
 #endif
+
+#ifdef CONFIG_LCD
+	setenv("lcdinfo", "lcd=ld9040");
+#endif
 	check_auto_burn();
 
 	check_hw_revision();
