@@ -1340,6 +1340,7 @@ extern int drv_lcd_init_resume(void);
 static void into_charge_mode(void)
 {
 	struct s5pc110_rtc *rtc = (struct s5pc110_rtc *)S5PC110_RTC_BASE;
+	enum temperature_level previous_state = _TEMP_OK;
 	unsigned int level;
 	int i, j;
 	bmp_image_t *bmp;
@@ -1396,7 +1397,6 @@ static void into_charge_mode(void)
 
 	do {
 		unsigned int org, org_ip3;
-		enum temperature_level  previous_state = _TEMP_OK;
 
 		empty_device_info_buffer();
 		if (max8998_power_key())
