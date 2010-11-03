@@ -649,7 +649,7 @@ static void charger_en(int enable)
 		 * setting...
 		 */
 		val[0] = 0x8B;
-		i2c_write(addr, 0xC, 1, val, 1);
+		i2c_write(addr, 0x0C, 1, val, 1);
 		i2c_read(addr, 0x0D, 1, val, 1);
 		val[0] &= ~(0x1);
 		i2c_write(addr, 0x0D, 1, val, 1);
@@ -657,7 +657,7 @@ static void charger_en(int enable)
 	case 600:
 		puts("Enable the charger @ 600mA\n");
 		val[0] = 0x6D;
-		i2c_write(addr, 0xC, 1, val, 1);
+		i2c_write(addr, 0x0C, 1, val, 1);
 		i2c_read(addr, 0x0D, 1, val, 1);
 		val[0] &= ~(0x1);
 		i2c_write(addr, 0x0D, 1, val, 1);
@@ -1241,6 +1241,7 @@ int usb_board_init(void)
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);
+	run_command("pmic safeout 1 on", 0);
 #endif
 	return 0;
 }
