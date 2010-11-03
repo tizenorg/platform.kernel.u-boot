@@ -323,6 +323,8 @@ static int fsa9480_probe(void)
 	return 0;
 }
 
+static void charger_en(int enable);
+static void into_charge_mode(int charger_speed);
 static void check_micro_usb(int intr)
 {
 	unsigned char addr;
@@ -350,7 +352,6 @@ static void check_micro_usb(int intr)
 #define FSA_DEV2_JIG_USB_OFF	(1 << 1)
 #define FSA_DEV2_JIG_USB_ON	(1 << 0)
 
-#if 0
 	/* disable the charger related feature */
 	/*
 	 * If USB, use default 475mA
@@ -360,17 +361,18 @@ static void check_micro_usb(int intr)
 		started_charging_once = 1;
 
 		/* If it's full, do not charge. */
-		if (battery_soc < 100)
-			into_charge_mode();
+		if (battery_soc < 100) {
+			charger_en(600);
+			into_charge_mode(600);
+		}
 		else
 			charger_en(0);
 	} else if (val[0] & FSA_DEV1_USB) {
 		if (battery_soc < 100)
-			charger_en(475); /* enable charger and keep booting */
+			charger_en(500); /* enable charger and keep booting */
 		else
 			charger_en(0);
 	}
-#endif
 
 	/* If reset status is watchdog reset then skip it */
 	if (get_reset_status() != SWRESET) {
@@ -566,6 +568,30 @@ static void init_pmic_lp3974(void)
 	val[0] = 0xFB;
 	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
 
+	/*
+	 * CHGCNTL1
+	 * ICHG: 500mA (0x3) / 600mA (0x5)
+	 * RESTART LEVEL: 100mA (0x1)
+	 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
+	 * Let's start with slower charging mode and let micro usb driver
+	 * determine whether we can do it fast or not. Thus, using the slower
+	 * setting...
+	 */
+	val[0] = 0x8B;
+	i2c_write(addr, 0xC, 1, val, 1);
+
+	/*
+	 * CHGCNTL2
+	 * CHARGER DISABLE: Enable (0x0)
+	 * TEMP CONTROL: 105C (0x0)
+	 * BATT SEL: 4.2V (0x0)
+	 * FULL TIMEOUT: 5hr (0x0)
+	 * ESAFEOUT2: ON (0x1)
+	 * ESAFEOUT1: OFF (0x0)
+	 */
+	val[0] = 0x40;
+	i2c_write(addr, 0xD, 1, val, 1);
+
 	val[0] = 0x0E; /* 1.1V @ DVSARM1(VINT) */
 	i2c_write(addr, 0x15, 1, val, 1);
 	val[0] = 0x0E; /* 1.1V @ DVSARM2(VINT) */
@@ -589,6 +615,243 @@ static void init_pmic_lp3974(void)
 	gpio_direction_output(&gpio2->x0, 6, 0);
 	/* Use DVSINT2 for VG3D */
 	gpio_direction_output(&gpio1->e2, 0, 1);
+}
+
+/* charger_en(): set lp3974 pmic's charger mode
+ * enable 0: disable charger
+ * 	600: 600mA
+ * 	500: 500mA
+ */
+static void charger_en(int enable)
+{
+	unsigned char addr = 0xCC >> 1; /* LP3974 */
+	unsigned char val[2];
+
+	if (lp3974_probe())
+		return;
+
+	switch (enable) {
+	case 0:
+		puts("Disable the charger.\n");
+		i2c_read(addr, 0x0D, 1, val, 1);
+		val[0] |= 0x1;
+		i2c_write(addr, 0xD, 1, val, 1);
+		break;
+	case 500:
+		puts("Enable the charger @ 500mA\n");
+		/*
+		 * CHGCNTL1
+		 * ICHG: 500mA (0x3) / 600mA (0x5)
+		 * RESTART LEVEL: 100mA (0x1)
+		 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
+		 * Let's start with slower charging mode and let micro usb driver
+		 * determine whether we can do it fast or not. Thus, using the slower
+		 * setting...
+		 */
+		val[0] = 0x8B;
+		i2c_write(addr, 0xC, 1, val, 1);
+		i2c_read(addr, 0x0D, 1, val, 1);
+		val[0] &= ~(0x1);
+		i2c_write(addr, 0x0D, 1, val, 1);
+		break;
+	case 600:
+		puts("Enable the charger @ 600mA\n");
+		val[0] = 0x6D;
+		i2c_write(addr, 0xC, 1, val, 1);
+		i2c_read(addr, 0x0D, 1, val, 1);
+		val[0] &= ~(0x1);
+		i2c_write(addr, 0x0D, 1, val, 1);
+		break;
+	default:
+		puts("Incorrect charger setting.\n");
+	}
+}
+
+struct thermister_stat {
+	short centigrade;
+	unsigned short adc;
+};
+
+static struct thermister_stat adc_to_temperature_data[] = {
+	{ .centigrade = -20,    .adc = 1856, },
+	{ .centigrade = -15,    .adc = 1799, },
+	{ .centigrade = -10,    .adc = 1730, },
+	{ .centigrade = -5,     .adc = 1649, },
+	{ .centigrade = 0,      .adc = 1556, },
+	{ .centigrade = 5,      .adc = 1454, },
+	{ .centigrade = 10,     .adc = 1343, },
+	{ .centigrade = 15,     .adc = 1227, },
+	{ .centigrade = 20,     .adc = 1109, },
+	{ .centigrade = 25,     .adc = 992, },
+	{ .centigrade = 30,     .adc = 880, },
+	{ .centigrade = 35,     .adc = 773, },
+	{ .centigrade = 40,     .adc = 675, },
+	{ .centigrade = 45,     .adc = 586, },
+	{ .centigrade = 50,     .adc = 507, },
+	{ .centigrade = 55,     .adc = 436, },
+	{ .centigrade = 58,     .adc = 399, },
+	{ .centigrade = 63,     .adc = 343, },
+	{ .centigrade = 65,     .adc = 322, },
+};
+
+#ifndef USHRT_MAX
+#define USHRT_MAX	0xFFFFU
+#endif
+
+static int adc_to_temperature_centigrade(unsigned short adc)
+{
+	int i;
+	int approximation;
+	/* low_*: Greatest Lower Bound,
+	 *          *          *          * high_*: Smallest Upper Bound */
+	int low_temp = 0, high_temp = 0;
+	unsigned short low_adc = 0, high_adc = USHRT_MAX;
+	for (i = 0; i < ARRAY_SIZE(adc_to_temperature_data); i++) {
+		if (adc_to_temperature_data[i].adc <= adc &&
+				adc_to_temperature_data[i].adc >= low_adc) {
+			low_temp = adc_to_temperature_data[i].centigrade;
+			low_adc = adc_to_temperature_data[i].adc;
+		}
+		if (adc_to_temperature_data[i].adc >= adc &&
+				adc_to_temperature_data[i].adc <= high_adc) {
+			high_temp = adc_to_temperature_data[i].centigrade;
+			high_adc = adc_to_temperature_data[i].adc;
+		}
+	}
+
+	/* Linear approximation between cloest low and high,
+	 * which is the weighted average of the two. */
+
+	/* The following equation is correct only when the two are different */
+	if (low_adc == high_adc)
+		return low_temp;
+	if (ARRAY_SIZE(adc_to_temperature_data) < 2)
+		return 20; /* The room temperature */
+	if (low_adc == 0)
+		return high_temp;
+	if (high_adc == USHRT_MAX)
+		return low_temp;
+
+	approximation = low_temp * (adc - low_adc) +
+		high_temp * (high_adc - adc);
+	approximation /= high_adc - low_adc;
+
+	return approximation;
+}
+
+static unsigned short get_adc_value(int channel);
+static int adc_get_average_ambient_temperature(void)
+{
+	unsigned short min = USHRT_MAX;
+	unsigned short max = 0;
+	unsigned int sum = 0;
+	unsigned int measured = 0;
+	int i;
+
+	for (i = 0; i < 7; i++) {
+		/* XADCAIN6 */
+		unsigned short measurement = get_adc_value(6);
+		sum += measurement;
+		measured++;
+		if (min > measurement)
+			min = measurement;
+		if (max < measurement)
+			max = measurement;
+	}
+	if (measured >= 3) {
+		measured -= 2;
+		sum -= min;
+		sum -= max;
+	}
+	sum /= measured;
+	printf("Average Ambient Temperature = %d(ADC=%d)\n",
+			adc_to_temperature_centigrade(sum), sum);
+	return adc_to_temperature_centigrade(sum);
+}
+
+enum temperature_level {
+	_TEMP_OK,
+	_TEMP_OK_HIGH,
+	_TEMP_OK_LOW,
+	_TEMP_TOO_HIGH,
+	_TEMP_TOO_LOW,
+};
+
+static enum temperature_level temperature_check(void)
+{
+	int temp = adc_get_average_ambient_temperature();
+	if (temp < -5)
+		return _TEMP_TOO_LOW;
+	if (temp < 0)
+		return _TEMP_OK_LOW;
+	if (temp > 63)
+		return _TEMP_TOO_HIGH;
+	if (temp > 58)
+		return _TEMP_OK_HIGH;
+	return _TEMP_OK;
+}
+
+/*
+ * into_charge_mode()
+ * Run a charge loop with animation and temperature check with sleep
+**/
+static void into_charge_mode(int charger_speed)
+{
+	int i, j, delay;
+	int battery_soc = 0;
+	enum temperature_level previous_state = _TEMP_OK;
+	unsigned int wakeup_stat;
+
+	/* 1. Show Animation */
+	for (i = 0; i < 5; i++) {
+		for (j = 0; j < 5; j++) {
+			printf(".");
+			for (delay = 0; delay < 1000; delay++)
+				udelay(1000);
+		}
+		printf("\n");
+	}
+
+	/* 2. Loop with temperature check and sleep */
+	do {
+		/* TODO: 2.A. Setup wakeup source and rtc tick */
+
+		/* TODO: 2.B. Go to sleep */
+		for (delay = 0; delay < 4000; delay++)
+			udelay(1000);
+
+		/* 2.C. Check the temperature */
+		switch (temperature_check()) {
+		case _TEMP_OK:
+			charger_en(charger_speed);
+			previous_state = _TEMP_OK;
+			break;
+		case _TEMP_TOO_LOW:
+			charger_en(0);
+			previous_state = _TEMP_TOO_LOW;
+			break;
+		case _TEMP_TOO_HIGH:
+			charger_en(0);
+			previous_state = _TEMP_TOO_HIGH;
+			break;
+		case _TEMP_OK_LOW:
+			if (previous_state == _TEMP_TOO_LOW) {
+				charger_en(0);
+			} else {
+				charger_en(charger_speed);
+				previous_state = _TEMP_OK;
+			}
+			break;
+		case _TEMP_OK_HIGH:
+			if (previous_state == _TEMP_TOO_HIGH) {
+				charger_en(0);
+			} else {
+				charger_en(charger_speed);
+				previous_state = _TEMP_OK;
+			}
+			break;
+		}
+	} while (wakeup_stat == 0x04);
 }
 
 static void init_pmic_max8952(void)
