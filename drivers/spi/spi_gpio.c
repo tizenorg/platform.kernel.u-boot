@@ -33,6 +33,11 @@ static void spi_gpio_set_mosi(struct spi_platform_data *spi, int is_on)
 	gpio_set_value(spi->si_bank, spi->si_num, is_on);
 }
 
+static int spi_gpio_get_mosi(struct spi_platform_data *spi)
+{
+	return gpio_get_value(spi->si_bank, spi->si_num);
+}
+
 static void spi_gpio_chipselect(struct spi_platform_data *spi,
 	int cpol)
 {
@@ -150,4 +155,42 @@ void spi_gpio_write(struct spi_platform_data *spi,
 		spi_gpio_tx_word_mode3(spi,
 			1, address, command);
 	}
+}
+
+static int
+spi_read(struct spi_platform_data *spi,
+		unsigned int nsecs, unsigned int cpol)
+{
+	int i;
+	unsigned int data = 0, tmp = 0;
+
+	gpio_cfg_pin(spi->si_bank, spi->si_num, GPIO_INPUT);
+
+	/* clock starts at inactive polarity */
+	for (i = 15; i >= 0; i--) {
+
+		spi_gpio_set_sck(spi, !cpol);
+
+		udelay(nsecs);
+
+		tmp = spi_gpio_get_mosi(spi);
+		if (tmp) {
+			data |= (1 << i);
+		} else {
+			data |= (0 << i);
+		}
+
+		udelay(nsecs);
+		spi_gpio_set_sck(spi, cpol);
+
+		udelay(nsecs);
+	}
+
+	gpio_cfg_pin(spi->si_bank, spi->si_num, GPIO_OUTPUT);
+	return data;
+}
+
+int spi_gpio_read(struct spi_platform_data *spi)
+{
+	return spi_read(spi, 1, 1);
 }

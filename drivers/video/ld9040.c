@@ -334,6 +334,17 @@ static const unsigned char SEQ_EL_ON[] = {
 	/* DATA_ONLY, 0x02,	VMOS/VBL/VBH not used */
 };
 
+static const unsigned char SEQ_ID1[] = {
+	0xDA, COMMAND_ONLY,
+};
+
+static const unsigned char SEQ_ID2[] = {
+	0xDB, COMMAND_ONLY,
+};
+static const unsigned char SEQ_ID3[] = {
+	0xDC, COMMAND_ONLY,
+};
+
 static void ld9040_spi_write(unsigned char address, unsigned char command)
 {
 	if (address != DATA_ONLY)
@@ -351,6 +362,12 @@ static void ld9040_panel_send_sequence(const unsigned char *wbuf, unsigned int s
 		ld9040_spi_write(wbuf[i], wbuf[i+1]);
 		i += 2;
 	}
+}
+
+static int ld9040_spi_read(const unsigned char *wbuf, unsigned int size_cmd)
+{
+	ld9040_panel_send_sequence(wbuf, size_cmd);
+	return spi_gpio_read(ld9040);
 }
 
 void ld9040_cfg_ldo(void)
@@ -375,9 +392,17 @@ void ld9040_cfg_ldo(void)
 
 void ld9040_enable_ldo(unsigned int onoff)
 {
+	char ret = 0;
 	if (onoff) {
 		ld9040_panel_send_sequence(SEQ_DISPON, ARRAY_SIZE(SEQ_DISPON));
 	}
+
+	ret = ld9040_spi_read(SEQ_ID1, ARRAY_SIZE(SEQ_ID1));
+	printf("OLED Module manufacturer : \t%x\n", ret);
+	ret = ld9040_spi_read(SEQ_ID2, ARRAY_SIZE(SEQ_ID2));
+	printf("OLED Module/driver version : \t%x\n", ret);
+	ret = ld9040_spi_read(SEQ_ID3, ARRAY_SIZE(SEQ_ID3));
+	printf("OLED module/driver : \t\t%x\n", ret);
 }
 
 /* this function would be called at universal.c */

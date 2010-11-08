@@ -89,6 +89,8 @@ struct spi_platform_data {
 void spi_gpio_write(struct spi_platform_data *spi,
 				unsigned int address, unsigned int command);
 
+int spi_gpio_read(struct spi_platform_data *spi);
+
 /*-----------------------------------------------------------------------
  * Initialization, must be called once on start up.
  *
