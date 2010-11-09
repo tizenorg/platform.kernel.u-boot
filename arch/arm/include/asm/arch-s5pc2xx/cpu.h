@@ -74,6 +74,7 @@ static inline unsigned int samsung_get_base_##device(void)	\
 		return 0;					\
 }
 
+SAMSUNG_BASE(adc, ADC_BASE)
 SAMSUNG_BASE(clock, CLOCK_BASE)
 SAMSUNG_BASE(fimd, FIMD_BASE)
 SAMSUNG_BASE(gpio_part1, GPIO_PART1_BASE)
