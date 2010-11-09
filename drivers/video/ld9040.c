@@ -398,11 +398,15 @@ void ld9040_enable_ldo(unsigned int onoff)
 	}
 
 	ret = ld9040_spi_read(SEQ_ID1, ARRAY_SIZE(SEQ_ID1));
-	printf("OLED Module manufacturer : \t%x\n", ret);
-	ret = ld9040_spi_read(SEQ_ID2, ARRAY_SIZE(SEQ_ID2));
-	printf("OLED Module/driver version : \t%x\n", ret);
-	ret = ld9040_spi_read(SEQ_ID3, ARRAY_SIZE(SEQ_ID3));
-	printf("OLED module/driver : \t\t%x\n", ret);
+	if (ret == 0)
+		printf("LD9040 Module manufacturer ID: unknown\n");
+	else {
+		printf("OLED Module manufacturer : \t%x\n", ret);
+		ret = ld9040_spi_read(SEQ_ID2, ARRAY_SIZE(SEQ_ID2));
+		printf("OLED Module/driver version : \t%x\n", ret);
+		ret = ld9040_spi_read(SEQ_ID3, ARRAY_SIZE(SEQ_ID3));
+		printf("OLED module/driver : \t\t%x\n", ret);
+	}
 }
 
 /* this function would be called at universal.c */
