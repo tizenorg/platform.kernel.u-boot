@@ -1148,6 +1148,8 @@ static unsigned int get_hw_revision(void)
 		hwrev = 0x1;		/* 610mV	0.01V */
 	if (IS_RANGE(mode0, 1300, 1700) && IS_RANGE(mode1, 80, 200))
 		hwrev = 0x2;		/* 1.16V	0.01V */
+	if (IS_RANGE(mode0, 2000, 2400) && IS_RANGE(mode1, 80, 200))
+		hwrev = 0x3;		/* 1.79V	0.01V */
 #undef IS_RANGE
 
 	debug("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
@@ -1159,6 +1161,7 @@ static const char *pcb_rev[] = {
 	"UNIV_0.0",
 	"UNIV_0.1",
 	"AQUILA_1.7",
+	"AQUILA_1.9",
 };
 
 static void check_hw_revision(void)
