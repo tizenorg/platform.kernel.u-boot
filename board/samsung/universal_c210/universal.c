@@ -1327,6 +1327,10 @@ int board_mmc_init(bd_t *bis)
 	 */
 	err = s5p_mmc_init(0, 8);
 
+	/*
+	 * Check the T-flash  detect pin
+	 * GPX3[4] T-flash detect pin
+	 */
 	if (!gpio_get_value(&gpio2->x3, 4)) {
 		/*
 		 * SD card GPIO:
