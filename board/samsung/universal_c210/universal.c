@@ -1103,7 +1103,7 @@ void init_panel_info(vidinfo_t *vid)
 
 static unsigned short get_adc_value(int channel)
 {
-	struct s5p_adc *adc = (struct s5p_adc *)samsung_get_adc_base();
+	struct s5p_adc *adc = (struct s5p_adc *)samsung_get_base_adc();
 	unsigned short ret = 0;
 	unsigned int reg;
 	unsigned int loop = 0;
