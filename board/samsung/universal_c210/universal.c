@@ -1271,7 +1271,6 @@ int board_mmc_init(bd_t *bis)
 		gpio_direction_output(&gpio1->e3, 6, 0);
 		break;
 	default:
-		break;
 		/*
 		 * Default reset state is High and there's no inverter
 		 * But set it as HIGH to ensure
