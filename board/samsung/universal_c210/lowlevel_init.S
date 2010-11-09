@@ -299,15 +299,15 @@ system_clock_init:
 	ldr	r2, =0x0C510			@ CLK_DIV_TOP
 	str	r1, [r0, r2]
 	/* MMC[0:1] */
-	ldr	r1, =0x000d000d			/* FIXME check the value */
+	ldr	r1, =0x000f000f			/* FIXME check the value */
 	ldr	r2, =0x0C544			@ CLK_DIV_FSYS1
 	str	r1, [r0, r2]
 	/* MMC[2:3] */
-	ldr	r1, =0x000d000d			/* FIXME check the value */
+	ldr	r1, =0x000f000f			/* FIXME check the value */
 	ldr	r2, =0x0C548			@ CLK_DIV_FSYS2
 	str	r1, [r0, r2]
 	/* MMC4 */
-	ldr	r1, =0x000d			/* FIXME check the value */
+	ldr	r1, =0x000f			/* FIXME check the value */
 	ldr	r2, =0x0C54C			@ CLK_DIV_FSYS3
 	str	r1, [r0, r2]
 	/* UART[0:5] */
