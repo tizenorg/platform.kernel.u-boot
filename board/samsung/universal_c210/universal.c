@@ -1139,7 +1139,7 @@ static unsigned int get_hw_revision(void)
 	 * XXX Always set the default hwrev as the latest board
 	 * ADC = (voltage) / 3.3 * 4096
 	 */
-	hwrev = 2;
+	hwrev = 3;
 
 #define IS_RANGE(x, min, max)	((x) > (min) && (x) < (max))
 	if (IS_RANGE(mode0, 80, 200) && IS_RANGE(mode1, 80, 200))
