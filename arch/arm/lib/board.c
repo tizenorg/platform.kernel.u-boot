@@ -578,9 +578,6 @@ void board_init_f (ulong bootflag)
 	/* round down to next 4 kB limit */
 	addr &= ~(4096 - 1);
 	debug ("Top of RAM usable for U-Boot at: %08lx\n", addr);
-#ifdef CONFIG_TEST_BOOTFAIL
-	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
-#endif
 
 #ifdef CONFIG_VFD
 #	ifndef PAGE_SIZE
@@ -598,9 +595,6 @@ void board_init_f (ulong bootflag)
 	addr = lcd_setmem (addr);
 	gd->fb_base = addr;
 #endif /* CONFIG_LCD */
-#ifdef CONFIG_TEST_BOOTFAIL
-	printf("[%d] addr : 0x%08lX\n", __LINE__, addr);
-#endif
 
 	/*
 	 * reserve memory for U-Boot code, data & bss
