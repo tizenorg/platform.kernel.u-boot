@@ -364,8 +364,7 @@ static void check_micro_usb(int intr)
 		if (battery_soc < 100) {
 			charger_en(600);
 			into_charge_mode(600);
-		}
-		else
+		} else
 			charger_en(0);
 	} else if (val[0] & FSA_DEV1_USB) {
 		if (battery_soc < 100)
@@ -617,10 +616,11 @@ static void init_pmic_lp3974(void)
 	gpio_direction_output(&gpio1->e2, 0, 1);
 }
 
-/* charger_en(): set lp3974 pmic's charger mode
+/*
+ * charger_en(): set lp3974 pmic's charger mode
  * enable 0: disable charger
- * 	600: 600mA
- * 	500: 500mA
+ * 600: 600mA
+ * 500: 500mA
  */
 static void charger_en(int enable)
 {
@@ -644,9 +644,9 @@ static void charger_en(int enable)
 		 * ICHG: 500mA (0x3) / 600mA (0x5)
 		 * RESTART LEVEL: 100mA (0x1)
 		 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
-		 * Let's start with slower charging mode and let micro usb driver
-		 * determine whether we can do it fast or not. Thus, using the slower
-		 * setting...
+		 * Let's start with slower charging mode and
+		 * let micro usb driver determine whether we can do it
+		 * fast or not. Thus, using the slower setting...
 		 */
 		val[0] = 0x8B;
 		i2c_write(addr, 0x0C, 1, val, 1);
@@ -798,9 +798,8 @@ static enum temperature_level temperature_check(void)
 static void into_charge_mode(int charger_speed)
 {
 	int i, j, delay;
-	int battery_soc = 0;
 	enum temperature_level previous_state = _TEMP_OK;
-	unsigned int wakeup_stat;
+	unsigned int wakeup_stat = 0;
 
 	/* 1. Show Animation */
 	for (i = 0; i < 5; i++) {
@@ -973,9 +972,9 @@ static void lcd_cfg_gpio(void)
 	gpio_direction_output(&gpio2->y4, 5, 1);
 
 	/*
- 	 * gpio pad configuration for
- 	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
- 	 */
+	 * gpio pad configuration for
+	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
+	 */
 
 	gpio_cfg_pin(&gpio2->y4, 3, GPIO_OUTPUT);
 	gpio_cfg_pin(&gpio2->y3, 1, GPIO_OUTPUT);
@@ -1157,7 +1156,7 @@ static unsigned int get_hw_revision(void)
 	return hwrev;
 }
 
-static const char *pcb_rev[] = {
+static const char * const pcb_rev[] = {
 	"UNIV_0.0",
 	"UNIV_0.1",
 	"AQUILA_1.7",
