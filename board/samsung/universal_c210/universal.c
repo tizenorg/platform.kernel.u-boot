@@ -421,6 +421,8 @@ static void micro_usb_switch(int path)
 #define LP3974_REG_ONOFF4	0x14
 #define LP3974_REG_LDO7	0x21
 #define LP3974_REG_LDO17	0x29
+#define LP3974_REG_UVLO		0xB9
+#define LP3974_REG_MODCHG	0xEF
 /* ONOFF1 */
 #define LP3974_LDO3		(1 << 2)
 /* ONOFF2 */
@@ -614,6 +616,25 @@ static void init_pmic_lp3974(void)
 	gpio_direction_output(&gpio2->x0, 6, 0);
 	/* Use DVSINT2 for VG3D */
 	gpio_direction_output(&gpio1->e2, 0, 1);
+
+	/*
+	 * Default level of UVLO.
+	 * UVLOf = 2.7V (0x3 << 4), UVLOr = 3.1V (0xB)
+	 * set UVLOf to 2.55V (0 << 4).
+	 */
+	val[0] = 0x2C;
+	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+	val[0] = 0x58;
+	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+	val[0] = 0xB1;
+	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+
+	i2c_read_r(addr, LP3974_REG_UVLO, 1, val, 1);
+	val[0] = (val[0] & 0xf) | (0 << 4);
+	i2c_write(addr, LP3974_REG_UVLO, 1, val, 1);
+
+	val[0] = 0x00;
+	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
 }
 
 /*
