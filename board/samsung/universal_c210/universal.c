@@ -1076,8 +1076,8 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_hfpd	= 16;
 
 	vid->vl_vspw	= 2;
-	vid->vl_vbpd	= 8;
-	vid->vl_vfpd	= 8;
+	vid->vl_vbpd	= 6;
+	vid->vl_vfpd	= 4;
 
 	vid->cfg_gpio = lcd_cfg_gpio;
 	vid->backlight_on = NULL;
