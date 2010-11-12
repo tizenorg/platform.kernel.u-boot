@@ -147,6 +147,14 @@ lowlevel_init:
 	/* PMU init */
 	bl	system_power_init
 
+#if 0
+	/* Enable NEON. Don't change the register r0 */
+	ldr	r0, =0x00F00000
+	mcr	p15, 0, r0, c1, c0, 2
+	ldr	r0, =0x40000000
+	.word	0xeee80a10	/* VMSR_FPSCR_r0 */
+	.word	0xeef80a10	/* VMRS_r0_FPSCR */
+#endif
 #endif
 
 	mov	lr, r11
