@@ -358,6 +358,15 @@
 
 #define CONFIG_MISC_INIT_R
 
+/* eMMC boot */
+#if 0
+#undef CONFIG_CMD_ONENAND
+#undef CONFIG_ENV_IS_IN_ONENAND
+#undef CONFIG_ENV_AUTOSAVE
+#undef CONFIG_CMD_DEVICE_POWER
+#define CONFIG_ENV_IS_NOWHERE
+#endif
+
 /* I2C */
 #if 0
 #define CONFIG_DRIVER_S5PC1XX_I2C
