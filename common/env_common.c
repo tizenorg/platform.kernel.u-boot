@@ -38,6 +38,9 @@ extern env_t *env_ptr;
 
 extern void env_relocate_spec (void);
 extern uchar env_get_char_spec(int);
+#ifdef CONFIG_ENV_AUTOSAVE
+extern int saveenv(void);
+#endif
 
 static uchar env_get_char_init (int index);
 
@@ -192,6 +195,10 @@ void set_default_env(const char *s)
 		error("Environment import failed: errno = %d\n", errno);
 	}
 	gd->flags |= GD_FLG_ENV_READY;
+
+#ifdef CONFIG_ENV_AUTOSAVE
+	saveenv();
+#endif
 }
 
 /*
