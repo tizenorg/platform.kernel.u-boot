@@ -46,6 +46,38 @@ int usb_board_init(void) __attribute__((weak, alias("__usb_board_init")));
 extern int s5p_no_lcd_support(void);
 extern void s5pc_fimd_lcd_off(unsigned int win_id);
 extern void s5pc_fimd_window_off(unsigned int win_id);
+extern void get_rev_info(char *rev_info);
+
+#ifdef CONFIG_GENERIC_MMC
+#include <mmc.h>
+static int mmc_type;
+extern int s5p_no_mmc_support(void);
+
+static void usbd_set_mmc_dev(struct usbd_ops *usbd)
+{
+	struct mmc *mmc;
+	char mmc_name[4];
+
+	if (s5p_no_mmc_support())
+		return;
+
+	usbd->mmc_dev = 0;
+	/* FIXME */
+	usbd->mmc_max = 0x8000;
+
+	mmc = find_mmc_device(usbd->mmc_dev);
+	mmc_init(mmc);
+
+	usbd->mmc_blk = mmc->read_bl_len;
+	usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
+
+	sprintf(mmc_name, "%c%c%c", mmc->cid[0] & 0xff,
+			(mmc->cid[1] >> 24), (mmc->cid[1] >> 16) & 0xff);
+
+	if (!strncmp(mmc_name, "SEM", 3))
+		mmc_type = 1;
+}
+#endif
 
 void s5pc1xx_wdt_reset(void)
 {
@@ -77,8 +109,22 @@ static void usb_init(void)
 
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
+		char rev_info[64];
+
 		init_font();
 		set_font_color(FONT_WHITE);
+
+		get_rev_info(rev_info);
+		fb_printf(rev_info);
+
+#ifdef CONFIG_GENERIC_MMC
+		if (mmc_type)
+			fb_printf("MMC: iNAND\n");
+		else
+			fb_printf("MMC: MoviNAND\n");
+
+		fb_printf("\n");
+#endif
 		fb_printf("Ready to USB Connection\n");
 	}
 #endif
@@ -102,7 +148,7 @@ static void usb_init(void)
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
 		fb_printf("Download Start\n");
-		draw_progress(40, 0, FONT_WHITE);
+		draw_progress(80, 0, FONT_WHITE);
 	}
 #endif
 }
@@ -148,29 +194,6 @@ static void recv_setup(char *addr, int len)
 	otg.dn_ptr = (u8 *) addr;
 	otg.dn_filesize = len;
 }
-
-#ifdef CONFIG_GENERIC_MMC
-#include <mmc.h>
-extern int s5p_no_mmc_support(void);
-
-static void usbd_set_mmc_dev(struct usbd_ops *usbd)
-{
-	struct mmc *mmc;
-
-	if (s5p_no_mmc_support())
-		return;
-
-	usbd->mmc_dev = 0;
-	/* FIXME */
-	usbd->mmc_max = 0x8000;
-
-	mmc = find_mmc_device(usbd->mmc_dev);
-	mmc_init(mmc);
-
-	usbd->mmc_blk = mmc->read_bl_len;
-	usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
-}
-#endif
 
 #ifdef CONFIG_S5PC1XXFB
 static void set_progress(int progress)

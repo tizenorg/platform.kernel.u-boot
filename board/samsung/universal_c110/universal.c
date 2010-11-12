@@ -758,6 +758,23 @@ static void show_hw_revision(void)
 		s5p_get_cpu_rev() ? "" : "EVT0");
 }
 
+void get_rev_info(char *rev_info)
+{
+	int board;
+
+	if (mach_is_goni() || mach_is_aquila())
+		board = arch_number;
+	else
+		board = arch_number - C110_MACH_START;
+
+	check_board_revision(board, board_rev);
+
+	sprintf(rev_info, "HW Revision: %x (%s%s) %s\n",
+		board_rev, get_board_name(board),
+		display_features(board, board_rev),
+		s5p_get_cpu_rev() ? "" : "EVT0");
+}
+
 static void check_auto_burn(void)
 {
 	unsigned long magic_base = CONFIG_SYS_SDRAM_BASE + 0x02000000;

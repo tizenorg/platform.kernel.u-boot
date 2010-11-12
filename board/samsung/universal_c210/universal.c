@@ -1196,6 +1196,12 @@ static void check_hw_revision(void)
 	printf("PCB Revision:\t%s\n", pcb_rev[board_rev & 0xf]);
 }
 
+void get_rev_info(char *rev_info)
+{
+	sprintf(rev_info, "HW Revision: 0x%x (%s)\n",
+			board_rev, pcb_rev[board_rev & 0xf]);
+}
+
 static void check_reset_status(void)
 {
 	int status = get_reset_status();
