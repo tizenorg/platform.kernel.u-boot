@@ -198,7 +198,7 @@ static void recv_setup(char *addr, int len)
 #ifdef CONFIG_S5PC1XXFB
 static void set_progress(int progress)
 {
-	draw_progress(40, progress, FONT_WHITE);
+	draw_progress(80, progress, FONT_WHITE);
 }
 #endif
 /*
