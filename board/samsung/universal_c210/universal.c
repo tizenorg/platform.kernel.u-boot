@@ -1118,6 +1118,8 @@ void init_panel_info(vidinfo_t *vid)
 	/* for LD8040. */
 	vid->pclk_name = MPLL;
 	vid->sclk_div = 1;
+
+	setenv("lcdinfo", "lcd=ld9040");
 }
 #endif
 
@@ -1246,9 +1248,6 @@ int misc_init_r(void)
 	show_dump_msg();
 #endif
 
-#ifdef CONFIG_LCD
-	setenv("lcdinfo", "lcd=ld9040");
-#endif
 	check_auto_burn();
 
 	check_hw_revision();
