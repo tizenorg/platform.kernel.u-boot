@@ -1108,6 +1108,12 @@ static int process_data(struct usbd_ops *usbd)
 		sprintf(offset, "%x", parts[part_id]->offset);
 		sprintf(length, "%x", parts[part_id]->size);
 
+		/* Erase */
+		if (!arg)
+			nand_cmd(0, offset, length, NULL);
+		else
+			printf("CSA Clear will be skipped temporary\n");
+
 		/* Check ubi image, 0x23494255 is UBI# */
 		{
 			long *img_header = (long *)down_ram_addr;
@@ -1115,12 +1121,6 @@ static int process_data(struct usbd_ops *usbd)
 			if (*img_header == 0x23494255)
 				goto ubi_img;
 		}
-
-		/* Erase */
-		if (!arg)
-			nand_cmd(0, offset, length, NULL);
-		else
-			printf("CSA Clear will be skipped temporary\n");
 
 #ifdef CONFIG_UBIFS_MK
 		void *dest_addr = (void *) down_ram_addr + 0xc00000;
