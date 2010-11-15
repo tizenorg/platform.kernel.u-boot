@@ -564,22 +564,33 @@ static int add_data_node(unsigned long file_size, void *src_addr, ino_t inum)
 		dn->ch.node_type = UBIFS_DATA_NODE;
 		key_write(c, &key, &dn->key);
 		dn->size = cpu_to_le32(bytes_read);
-		memcpy(&dn->data, buf, bytes_read);
 		out_len = bytes_read;
 
-		err = lzo1x_1_compress(buf, bytes_read, &dn->data,
+		err = lzo1x_1_compress(buf, bytes_read, dn->data,
 				       &out_len, lzo_mem);
 		if (err != LZO_E_OK)
 			return err;
 		dn->compr_type = cpu_to_le16(MKFS_UBIFS_COMPR_LZO);
-		dn_len = UBIFS_DATA_NODE_SZ + out_len;
-		/* Add data node to file system */
 
+		if (out_len > UBIFS_BLOCK_SIZE) {
+			bytes_read = UBIFS_BLOCK_SIZE - UBIFS_DATA_NODE_SZ;
+			dn->size = cpu_to_le32(bytes_read);
+			memset(buf, 0, UBIFS_BLOCK_SIZE);
+			memcpy(buf, src_addr + offset, bytes_read);
+
+			err = lzo1x_1_compress(buf, bytes_read, dn->data, &out_len, lzo_mem);
+			if (err != LZO_E_OK)
+				return err;
+		}
+
+		dn_len = UBIFS_DATA_NODE_SZ + out_len;
+
+		/* Add data node to file system */
 		err = add_node(&key, NULL, dn, dn_len);
 		if (err)
 			return err;
 
-		offset += UBIFS_BLOCK_SIZE;
+		offset += bytes_read;
 	} while (offset < file_size);
 
 	return err;
