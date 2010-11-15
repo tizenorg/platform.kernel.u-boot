@@ -363,6 +363,7 @@ static void s5p_usb_core_soft_reset(void)
 	} while (!(tmp & AHB_MASTER_IDLE));
 }
 
+#if 0
 static void s5p_usb_wait_cable_insert(void)
 {
 	u32 tmp;
@@ -381,6 +382,7 @@ static void s5p_usb_wait_cable_insert(void)
 		}
 	} while (1);
 }
+#endif
 
 static void s5p_usb_init_core(void)
 {
@@ -453,7 +455,6 @@ int s5p_usbctl_init(void)
 
 	s5p_usb_init_phy();
 	s5p_usb_core_soft_reset();
-	s5p_usb_wait_cable_insert();
 	s5p_usb_init_core();
 	s5p_usb_check_current_mode(&ucMode);
 
