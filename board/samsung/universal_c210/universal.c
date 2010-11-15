@@ -252,39 +252,6 @@ static void check_auto_burn(void)
 	memset((void *)magic_base, 0, 2);
 }
 
-static int power_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-	i2c_set_bus_num(I2C_5);
-
-	if (i2c_probe(addr)) {
-		puts("Can't found lp3974\n");
-		return 1;
-	}
-
-	/* power_key check */
-	i2c_read(addr, 0x00, 1, val, 1);
-	return (~val[0] & (1 << 6)) >> 6;
-}
-
-static void check_keypad(void)
-{
-	unsigned int val = 0;
-	unsigned int power_key, auto_download = 0;
-
-	val = ~(gpio_get_value(&gpio2->x2, 1));
-
-	power_key = power_key_check();
-
-	if (power_key && (val & 0x1))
-		auto_download = 1;
-
-	if (auto_download)
-		setenv("bootcmd", "usbdown");
-}
-
 static void check_battery(int mode)
 {
 	unsigned char val[2];
@@ -415,11 +382,14 @@ static void micro_usb_switch(int path)
 	i2c_write(addr, 0x2, 1, val, 1);
 }
 
+#define LP3974_REG_IRQ1		0x00
+#define LP3974_REG_IRQ2		0x01
+#define LP3974_REG_IRQ3		0x02
 #define LP3974_REG_ONOFF1	0x11
 #define LP3974_REG_ONOFF2	0x12
 #define LP3974_REG_ONOFF3	0x13
 #define LP3974_REG_ONOFF4	0x14
-#define LP3974_REG_LDO7	0x21
+#define LP3974_REG_LDO7		0x21
 #define LP3974_REG_LDO17	0x29
 #define LP3974_REG_UVLO		0xB9
 #define LP3974_REG_MODCHG	0xEF
@@ -635,6 +605,52 @@ static void init_pmic_lp3974(void)
 
 	val[0] = 0x00;
 	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+}
+
+static int poweron_key_check(void)
+{
+	unsigned char addr, val[2];
+
+	addr = 0xCC >> 1;
+	if (lp3974_probe())
+		return 0;
+
+	i2c_read_r(addr, LP3974_REG_IRQ3, 1, val, 1);
+	return val[0] & 0x1;
+}
+
+int check_exit_key(void)
+{
+	return poweron_key_check();
+}
+
+static int power_key_check(void)
+{
+	unsigned char addr, val[2];
+
+	addr = 0xCC >> 1;
+	if (lp3974_probe())
+		return -1;
+
+	/* power_key check */
+	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 1);
+	return (~val[0] & (1 << 6)) >> 6;
+}
+
+static void check_keypad(void)
+{
+	unsigned int val = 0;
+	unsigned int power_key, auto_download = 0;
+
+	val = ~(gpio_get_value(&gpio2->x2, 1));
+
+	power_key = power_key_check();
+
+	if (power_key && (val & 0x1))
+		auto_download = 1;
+
+	if (auto_download)
+		setenv("bootcmd", "usbdown");
 }
 
 /*
@@ -1266,6 +1282,9 @@ int misc_init_r(void)
 #ifdef CONFIG_CMD_USBDOWN
 int usb_board_init(void)
 {
+	/* interrupt clear */
+	poweron_key_check();
+
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);

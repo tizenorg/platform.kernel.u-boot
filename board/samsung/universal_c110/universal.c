@@ -870,127 +870,6 @@ static void setup_media_gpios(void)
 	gpio_set_pull(&gpio->h3, 4, GPIO_PULL_UP);
 }
 
-static int power_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-	i2c_set_bus_num(I2C_PMIC);
-
-	if (i2c_probe(addr)) {
-		puts("Can't found max8998\n");
-		return 1;
-	}
-
-	/* power_key check */
-	i2c_read(addr, 0x00, 1, val, 1);
-	return val[0] & (1 << 7);
-}
-
-#define KBR3		(1 << 3)
-#define KBR2		(1 << 2)
-#define KBR1		(1 << 1)
-#define KBR0		(1 << 0)
-
-static void check_keypad(void)
-{
-	unsigned int reg, value;
-	unsigned int col_num, row_num;
-	unsigned int col_mask;
-	unsigned int col_mask_shift;
-	unsigned int row_state[4];
-	unsigned int i, power_key;
-	unsigned int auto_download = 0;
-
-	if (mach_is_wmg160())
-		return;
-
-	if (board_is_limo_real() || board_is_limo_universal()) {
-		row_num = 2;
-		col_num = 3;
-	} else {
-		row_num = 4;
-		col_num = 4;
-	}
-
-	for (i = 0; i < row_num; i++) {
-		if (board_is_sdk() &&
-				(hwrevision(3) || hwrevision(4)) && i == 0)
-			continue;
-
-		/* Set GPH3[3:0] to KP_ROW[3:0] */
-		gpio_cfg_pin(&gpio->h3, i, 0x3);
-		gpio_set_pull(&gpio->h3, i, GPIO_PULL_UP);
-	}
-
-	for (i = 0; i < col_num; i++)
-		/* Set GPH2[3:0] to KP_COL[3:0] */
-		gpio_cfg_pin(&gpio->h2, i, 0x3);
-
-	reg = S5PC110_KEYPAD_BASE;
-	col_mask = S5PC110_KEYIFCOLEN_MASK;
-	col_mask_shift = 8;
-
-	/* KEYIFCOL reg clear */
-	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
-
-	/* power_key check */
-	power_key = power_key_check();
-
-	/* key_scan */
-	for (i = 0; i < col_num; i++) {
-		value = col_mask;
-		value &= ~(1 << i) << col_mask_shift;
-
-		writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
-		udelay(1000);
-
-		value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
-		row_state[i] = ~value & ((1 << row_num) - 1);
-	}
-
-	/* KEYIFCOL reg clear */
-	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
-
-	if (mach_is_aquila() || mach_is_goni()) {
-		/* volume down */
-		if (row_state[1] & 0x2)
-			display_info = 1;
-		if (board_is_sdk() && hwrevision(0)) {
-			/* home & volume down
-			 * or hold key & volume down*/
-			if ((power_key || (row_state[1] & 0x1))
-						&& (row_state[1] & 0x2))
-				auto_download = 1;
-		} else if (board_is_sdk() && hwrevision(2)) {
-			/* cam full shot & volume down
-			 * or hold key & volume down */
-			if ((power_key || (row_state[1] & 0x6))
-						&& (row_state[2] & 0x4))
-				auto_download = 1;
-		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4) ||
-						hwrevision(6))) {
-			/* cam full shot & volume down
-			 * or hold key & volume down */
-			if ((power_key || (row_state[1] & 0x6))
-						&& (row_state[2] & 0x4))
-				auto_download = 1;
-		} else {
-			/* cam full shot & volume down
-			 * or hold key & volume down */
-			if ((power_key || (row_state[0] & 0x1))
-						&& (row_state[1] & 0x2))
-				auto_download = 1;
-		}
-	} else if (mach_is_geminus())
-		/* volume down & home or hold key & volume down */
-		if ((row_state[1] & 0x2) && ((power_key || row_state[2] & 0x1)))
-			auto_download = 1;
-
-	if (auto_download)
-		setenv("bootcmd", "usbdown");
-}
-
 static void check_battery(int mode)
 {
 	unsigned char val[2];
@@ -1102,6 +981,23 @@ static void max8998_clear_interrupt(void)
 	i2c_read(addr, 0x03, 1, val, 1);
 }
 
+static int poweron_key_check(void)
+{
+	unsigned char addr, val[2];
+
+	addr = 0xCC >> 1;
+	if (max8998_probe())
+		return 0;
+
+	i2c_read(addr, 0x02, 1, val, 1);
+	return val[0] & 0x1;
+}
+
+int check_exit_key(void)
+{
+	return poweron_key_check();
+}
+
 static int max8998_power_key(void)
 {
 	unsigned char addr, val[2];
@@ -1117,6 +1013,125 @@ static int max8998_power_key(void)
 
 	return 0;
 }
+
+static int power_key_check(void)
+{
+	unsigned char addr, val[2];
+
+	addr = 0xCC >> 1;
+
+	if (max8998_probe())
+		return 0;
+
+	/* power_key check */
+	i2c_read(addr, 0x00, 1, val, 1);
+	return val[0] & (1 << 7);
+}
+
+#define KBR3		(1 << 3)
+#define KBR2		(1 << 2)
+#define KBR1		(1 << 1)
+#define KBR0		(1 << 0)
+
+static void check_keypad(void)
+{
+	unsigned int reg, value;
+	unsigned int col_num, row_num;
+	unsigned int col_mask;
+	unsigned int col_mask_shift;
+	unsigned int row_state[4];
+	unsigned int i, power_key;
+	unsigned int auto_download = 0;
+
+	if (mach_is_wmg160())
+		return;
+
+	if (board_is_limo_real() || board_is_limo_universal()) {
+		row_num = 2;
+		col_num = 3;
+	} else {
+		row_num = 4;
+		col_num = 4;
+	}
+
+	for (i = 0; i < row_num; i++) {
+		if (board_is_sdk() &&
+				(hwrevision(3) || hwrevision(4)) && i == 0)
+			continue;
+
+		/* Set GPH3[3:0] to KP_ROW[3:0] */
+		gpio_cfg_pin(&gpio->h3, i, 0x3);
+		gpio_set_pull(&gpio->h3, i, GPIO_PULL_UP);
+	}
+
+	for (i = 0; i < col_num; i++)
+		/* Set GPH2[3:0] to KP_COL[3:0] */
+		gpio_cfg_pin(&gpio->h2, i, 0x3);
+
+	reg = S5PC110_KEYPAD_BASE;
+	col_mask = S5PC110_KEYIFCOLEN_MASK;
+	col_mask_shift = 8;
+
+	/* KEYIFCOL reg clear */
+	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+	/* power_key check */
+	power_key = power_key_check();
+
+	/* key_scan */
+	for (i = 0; i < col_num; i++) {
+		value = col_mask;
+		value &= ~(1 << i) << col_mask_shift;
+
+		writel(value, reg + S5PC1XX_KEYIFCOL_OFFSET);
+		udelay(1000);
+
+		value = readl(reg + S5PC1XX_KEYIFROW_OFFSET);
+		row_state[i] = ~value & ((1 << row_num) - 1);
+	}
+
+	/* KEYIFCOL reg clear */
+	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
+
+	if (mach_is_aquila() || mach_is_goni()) {
+		/* volume down */
+		if (row_state[1] & 0x2)
+			display_info = 1;
+		if (board_is_sdk() && hwrevision(0)) {
+			/* home & volume down
+			 * or hold key & volume down*/
+			if ((power_key || (row_state[1] & 0x1))
+						&& (row_state[1] & 0x2))
+				auto_download = 1;
+		} else if (board_is_sdk() && hwrevision(2)) {
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[1] & 0x6))
+						&& (row_state[2] & 0x4))
+				auto_download = 1;
+		} else if (board_is_sdk() && (hwrevision(3) || hwrevision(4) ||
+						hwrevision(6))) {
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[1] & 0x6))
+						&& (row_state[2] & 0x4))
+				auto_download = 1;
+		} else {
+			/* cam full shot & volume down
+			 * or hold key & volume down */
+			if ((power_key || (row_state[0] & 0x1))
+						&& (row_state[1] & 0x2))
+				auto_download = 1;
+		}
+	} else if (mach_is_geminus())
+		/* volume down & home or hold key & volume down */
+		if ((row_state[1] & 0x2) && ((power_key || row_state[2] & 0x1)))
+			auto_download = 1;
+
+	if (auto_download)
+		setenv("bootcmd", "usbdown");
+}
+
 
 static int max8998_has_ext_power_source(void)
 {
@@ -2854,6 +2869,9 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_CMD_USBDOWN
 int usb_board_init(void)
 {
+	/* interrupt clear */
+	poweron_key_check();
+
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);
 	run_command("pmic ldo 3 on", 0);

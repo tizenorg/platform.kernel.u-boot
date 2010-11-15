@@ -31,6 +31,7 @@
 
 static char tx_data[TX_DATA_LEN] = "MPL";
 static char rx_data[RX_DATA_LEN];
+static int downloading;
 
 extern int s5p_receive_done;
 extern int s5p_usb_connected;
@@ -47,6 +48,7 @@ extern int s5p_no_lcd_support(void);
 extern void s5pc_fimd_lcd_off(unsigned int win_id);
 extern void s5pc_fimd_window_off(unsigned int win_id);
 extern void get_rev_info(char *rev_info);
+extern int check_exit_key(void);
 
 #ifdef CONFIG_GENERIC_MMC
 #include <mmc.h>
@@ -100,11 +102,11 @@ static void s5p_usb_clear_dnfile_info(void)
 }
 
 /* start the usb controller */
-static void usb_init(void)
+static int usb_init(void)
 {
 	if (usb_board_init()) {
 		puts("Failed to usb_board_init\n");
-		return;
+		return 0;
 	}
 
 #ifdef CONFIG_S5PC1XXFB
@@ -125,7 +127,8 @@ static void usb_init(void)
 
 		fb_printf("\n");
 #endif
-		fb_printf("Ready to USB Connection\n");
+		fb_printf("USB Download Mode\n");
+		fb_printf("Press the POWERKEY to CANCEL the downloading\n");
 	}
 #endif
 
@@ -139,18 +142,16 @@ static void usb_init(void)
 			s5p_udc_int_hndlr();
 			s5p_usb_clear_irq();
 		}
+
+		if (check_exit_key())
+			return 0;
 	}
 
 	s5p_usb_clear_dnfile_info();
 
 	puts("Connected!!\n");
 
-#ifdef CONFIG_S5PC1XXFB
-	if (!s5p_no_lcd_support()) {
-		fb_printf("Download Start\n");
-		draw_progress(80, 0, FONT_WHITE);
-	}
-#endif
+	return 1;
 }
 
 static void usb_stop(void)
@@ -164,6 +165,31 @@ static void usb_stop(void)
 		s5pc_fimd_window_off(3);
 	}
 #endif
+}
+
+static void down_start(void)
+{
+	downloading = 1;
+
+#ifdef CONFIG_S5PC1XXFB
+	if (!s5p_no_lcd_support()) {
+		fb_printf("Download Start\n");
+		draw_progress(95, 0, FONT_WHITE);
+	}
+#endif
+}
+
+static void down_cancel(void)
+{
+#ifdef CONFIG_S5PC1XXFB
+	if (!s5p_no_lcd_support()) {
+		exit_font();
+
+		/* clear fb */
+		fb_clear(100);
+	}
+#endif
+	run_command("run ubifsboot", 0);
 }
 
 /*
@@ -182,6 +208,11 @@ static int usb_receive_packet(void)
 			s5p_receive_done = 0;
 			return otg.dn_filesize;
 		}
+
+		if (!downloading) {
+			if (check_exit_key())
+				return 0;
+		}
 	}
 }
 
@@ -198,9 +229,10 @@ static void recv_setup(char *addr, int len)
 #ifdef CONFIG_S5PC1XXFB
 static void set_progress(int progress)
 {
-	draw_progress(80, progress, FONT_WHITE);
+	draw_progress(95, progress, FONT_WHITE);
 }
 #endif
+
 /*
  * This function is interfaced between
  * USB Device Controller and USB Downloader
@@ -217,6 +249,8 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 	usbd->tx_len = TX_DATA_LEN;
 	usbd->rx_len = RX_DATA_LEN;
 	usbd->ram_addr = CONFIG_SYS_DOWN_ADDR;
+	usbd->down_cancel = down_cancel;
+	usbd->down_start = down_start;
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support())
 		usbd->set_progress = set_progress;
@@ -224,6 +258,7 @@ struct usbd_ops *usbd_set_interface(struct usbd_ops *usbd)
 #ifdef CONFIG_GENERIC_MMC
 	usbd_set_mmc_dev(usbd);
 #endif
+	downloading = 0;
 
 	return usbd;
 }

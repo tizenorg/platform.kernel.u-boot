@@ -1251,7 +1251,10 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	down_ram_addr = usbd->ram_addr;
 
 	/* init the usb controller */
-	usbd->usb_init();
+	if (!usbd->usb_init()) {
+		usbd->down_cancel();
+		return 0;
+	}
 
 	/* receive setting */
 	usbd->recv_setup(usbd->rx_data, usbd->rx_len);
@@ -1269,10 +1272,11 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 0;
 		}
 	} else {
-		printf("No download request from the Host PC!!\n");
+		usbd->down_cancel();
 		return 0;
 	}
 
+	usbd->down_start();
 	printf("Receive the packet\n");
 
 	/* receive the data from Host PC */

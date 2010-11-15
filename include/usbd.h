@@ -98,7 +98,7 @@ enum {
  * mmc_total	: mmc total blocks
  */
 struct usbd_ops {
-	void (*usb_init)(void);
+	int (*usb_init)(void);
 	void (*usb_stop)(void);
 	void (*send_data)(char *, int);
 	int (*recv_data)(void);
@@ -117,6 +117,8 @@ struct usbd_ops {
 
 	void (*set_progress)(int);
 	void (*cpu_reset)(void);
+	void (*down_start)(void);
+	void (*down_cancel)(void);
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader
