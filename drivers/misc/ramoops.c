@@ -25,7 +25,7 @@ static void ramoops_show(void)
 
 #ifdef CONFIG_S5PC1XXFB
 	init_font();
-	fb_clear();
+	fb_clear(0);
 	set_font_color(FONT_WHITE);
 	chars = get_chars();
 	printf("chars %d\n", chars);

@@ -315,12 +315,15 @@ void exit_font(void)
 	g_x = g_y = 0;
 }
 
-void fb_clear(void)
+void fb_clear(int range)
 {
 	int y;
 	int line_length = panel_info.vl_width * 4;
 
-	for (y = 0; y < panel_info.vl_height; y++)
+	if (!range)
+		range = panel_info.vl_height;
+
+	for (y = 0; y < range; y++)
 		memset(line_addr[y], 0x0, line_length);
 }
 

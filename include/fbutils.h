@@ -67,7 +67,7 @@ void draw_wheel(int x, int y, unsigned char color);
 void draw_progress(int y, int per, unsigned char color);
 
 /* clear the framebuffer */
-void fb_clear(void);
+void fb_clear(int range);
 
 unsigned int get_chars(void);
 
