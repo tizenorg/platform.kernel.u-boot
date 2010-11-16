@@ -234,9 +234,15 @@ static void check_auto_burn(void)
 	unsigned int count = 0;
 	char buf[64];
 
+	/* OneNAND */
 	if (readl(magic_base) == 0x426f6f74) {		/* ASICC: Boot */
 		puts("Auto buring bootloader\n");
 		count += sprintf(buf + count, "run updateb; ");
+	}
+	/* MMC */
+	if (readl(magic_base) == 0x654D4D43) {		/* ASICC: eMMC */
+		puts("Auto buring bootloader (eMMC) \n");
+		count += sprintf(buf + count, "run updatemmc; ");
 	}
 	if (readl(magic_base + 0x4) == 0x4b65726e) {	/* ASICC: Kern */
 		puts("Auto buring kernel\n");
