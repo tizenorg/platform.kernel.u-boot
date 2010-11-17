@@ -968,7 +968,7 @@ void fimd_clk_set(void)
 	/* set fimd ratio */
 	cfg = readl(&clk->div_lcd0);
 	cfg &= ~(0xf);
-	cfg |= 0x2;
+	cfg |= 0x1;
 	writel(cfg, &clk->div_lcd0);
 }
 

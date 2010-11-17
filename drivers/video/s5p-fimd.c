@@ -150,7 +150,7 @@ static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 		printf("get_pll_clk is null.\n");
 		return;
 	}
-	src_clock = get_pll_clk(MPLL);
+	src_clock = get_lcd_clk();
 
 	cfg = readl(ctrl_base + S5P_VIDCON0);
 	cfg &= ~(S5P_VIDCON0_CLKSEL_MASK | S5P_VIDCON0_CLKVALUP_MASK | \
@@ -188,8 +188,8 @@ static void s5pc_fimd_set_clock(vidinfo_t *pvid)
 	cfg |= S5P_VIDCON0_CLKVAL_F(div - 1);
 	writel(cfg, ctrl_base + S5P_VIDCON0);
 
-	udebug("fimd_ratio = %d, src_clock = %d, pixel_clock = %d, div = %d\n",
-		fimd_ratio, src_clock / (fimd_ratio + 1), pixel_clock, div);
+	udebug("src_clock = %d, pixel_clock = %d, div = %d\n",
+		src_clock, pixel_clock, div);
 
 	return;
 }
