@@ -292,7 +292,7 @@ struct partition_info {
 struct partition_header {
 	u8			fat32head[16];	/* RFSHEAD identifier */
 	struct partition_info	partition[EXTEND_MAX_PART];
-	u8			res[112];	/* reserved */
+	u8			res[112];	/* only data (without MBR) */
 } __attribute__((packed));
 
 struct partition_table {
@@ -311,7 +311,7 @@ struct mbr_table {
 } __attribute__((packed));
 
 struct mul_partition_info {
-	u32 lba_begin;
+	u32 lba_begin;		/* absolute address from 0 block */
 	u32 num_sectors;
 } __attribute__((packed));
 
@@ -467,10 +467,11 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 			/* build partition table */
 
 			mul_info[0].num_sectors =
-				usbd->mmc_total - mbr_blk_size * 2;
+				usbd->mmc_total - mbr_blk_size;
 			for (i = 1; i < mmc_parts; i++) {
 				mul_info[i].num_sectors =
-					part_info.partition[i].res;
+					part_info.partition[i].res +
+					mbr_blk_size; /* add MBR */
 			}
 
 			for (i = 1; i < mmc_parts; i++) {
@@ -478,18 +479,18 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 					mul_info[i].num_sectors;
 			}
 
-			mul_info[0].lba_begin = mbr->partition[0].lba_begin;
+			mul_info[0].lba_begin = mbr_blk_size;
 			for (i = 1; i < mmc_parts; i++) {
 				mul_info[i].lba_begin =
 					mul_info[i-1].lba_begin	+
 					mul_info[i-1].num_sectors;
 			}
 
-			/* modify main MBR */
+			/* modify MBR of extended partition: p1 */
 			mbr->partition[0].num_sectors =
 				usbd->mmc_total - mbr_blk_size;
 
-			/* modify MBR data of p1 */
+			/* modify MBR of first logical partition: p5 */
 			mbr = (struct mbr_table *)
 				(ram_addr + mbr_blk_size * usbd->mmc_blk);
 
@@ -498,7 +499,7 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 			mbr->partition[1].lba_begin =
 				mul_info[1].lba_begin - mbr_blk_size;
 
-			/* modify BPB data of p1 */
+			/* modify BPB data of p5 */
 			bs = (boot_sector *)
 				((u32)mbr + mbr_blk_size * usbd->mmc_blk);
 			memset(&bs->sectors, 0, 2);
@@ -542,7 +543,7 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				cur_blk_offset =
 					mul_info[cur_part].lba_begin;
 				/* modify MBR */
-				if (cur_part <= mmc_parts) {
+				if (cur_part < mmc_parts) {
 					mbr = (struct mbr_table *)ram_addr;
 					mbr->partition[1].lba_begin =
 						mul_info[cur_part+1].lba_begin -
