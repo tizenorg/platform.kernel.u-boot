@@ -48,17 +48,41 @@ static void ramoops_show(void)
 #endif
 }
 
+void ramoops_parser(char *raw)
+{
+	int i;
+	int start = 0;
+	int offset = 0;
+
+	for (i = 0; i < RAMOOPS_SIZE; i++) {
+		if (raw[i] == '[' && raw[i + 13] ==']') {
+			int size = i - 3 - start;
+
+			memcpy(msg + offset, raw + start, size);
+
+			offset += size;
+			start = i + 15;
+			i += 15;
+		}
+	}
+
+	memcpy(msg + offset, raw + start, RAMOOPS_SIZE - start);
+}
+
 int ramoops_init(unsigned int base)
 {
 	unsigned int *msg_header = (unsigned int *)base;
+	char raw[RAMOOPS_SIZE];
 
 	dumped = 0;
 
 	if (*msg_header != RAMOOPS_HEADER)
 		return -1;
 
-	memcpy(msg, (void *)base, RAMOOPS_SIZE);
+	memcpy(raw, (void *)base, RAMOOPS_SIZE);
 	memset((void *)base, 0x0, RAMOOPS_SIZE);
+
+	ramoops_parser(raw);
 
 	dumped = 1;
 
