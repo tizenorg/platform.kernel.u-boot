@@ -79,6 +79,50 @@ static void mmc_set_transfer_mode(struct mmc_host *host, struct mmc_data *data)
 	writew(mode, &host->reg->trnmod);
 }
 
+#ifdef CONFIG_MMC_ASYNC_WRITE
+static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
+			struct mmc_data *data);
+
+static void mmc_wait_async_write(struct mmc *mmc)
+{
+	struct mmc_host *host = (struct mmc_host *)mmc->priv;
+	struct mmc_cmd cmd;
+	unsigned int mask;
+
+	if (!host->async_write)
+		return;
+
+	while (1) {
+		mask = readl(&host->reg->norintsts);
+
+		if (mask & (1 << 15)) {
+			/* Error Interrupt */
+			writel(mask, &host->reg->norintsts);
+			printf("%s: error during transfer: 0x%08x\n",
+					__func__, mask);
+			return;
+		} else if (mask & (1 << 3)) {
+			/* DMA Interrupt */
+			debug("DMA end\n");
+			break;
+		} else if (mask & (1 << 1)) {
+			/* Transfer Complete */
+			debug("r/w is done\n");
+			break;
+		}
+	}
+	writel(mask, &host->reg->norintsts);
+
+	host->async_write = 0;
+
+	cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
+	cmd.cmdarg = 0;
+	cmd.resp_type = MMC_RSP_R1b;
+	cmd.flags = 0;
+	mmc_send_cmd(mmc, &cmd, NULL);
+}
+#endif
+
 static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 			struct mmc_data *data)
 {
@@ -87,6 +131,10 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	unsigned int timeout;
 	unsigned int mask;
 	unsigned int retry = 0x100000;
+
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	mmc_wait_async_write(mmc);
+#endif
 
 	/* Wait max 10 ms */
 	timeout = 10;
@@ -222,6 +270,13 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 	}
 
 	if (data) {
+#ifdef CONFIG_MMC_ASYNC_WRITE
+		if (cmd->cmdidx == MMC_CMD_WRITE_MULTIPLE_BLOCK) {
+			/* Don't wait, return immediately */
+			host->async_write = 1;
+			return 0;
+		}
+#endif
 		while (1) {
 			mask = readl(&host->reg->norintsts);
 
@@ -318,6 +373,10 @@ static void mmc_set_ios(struct mmc *mmc)
 	struct mmc_host *host = mmc->priv;
 	unsigned char ctrl;
 	unsigned long val;
+
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	mmc_wait_async_write(mmc);
+#endif
 
 	debug("bus_width: %x, clock: %d\n", mmc->bus_width, mmc->clock);
 
@@ -424,6 +483,10 @@ static int mmc_core_init(struct mmc *mmc)
 	struct mmc_host *host = (struct mmc_host *)mmc->priv;
 	unsigned int mask;
 
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	mmc_wait_async_write(mmc);
+#endif
+
 	mmc_reset(host);
 
 	host->version = readw(&host->reg->hcver);
@@ -484,6 +547,10 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 	mmc_host[dev_index].dev_index = dev_index;
 	mmc_host[dev_index].clock = 0;
 	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	mmc_host[dev_index].async_write = 0;
+#endif
+
 	mmc_register(mmc);
 
 	return 0;

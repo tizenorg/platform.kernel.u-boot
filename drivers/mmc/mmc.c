@@ -116,6 +116,7 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 		return err;
 	}
 
+#ifndef CONFIG_MMC_ASYNC_WRITE
 	if (blkcnt > 1) {
 		cmd.cmdidx = MMC_CMD_STOP_TRANSMISSION;
 		cmd.cmdarg = 0;
@@ -127,6 +128,7 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 			return err;
 		}
 	}
+#endif
 
 	return blkcnt;
 }

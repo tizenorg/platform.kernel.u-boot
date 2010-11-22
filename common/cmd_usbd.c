@@ -790,6 +790,11 @@ static int process_data(struct usbd_ops *usbd)
 		printf("Download to 0x%08x, %d bytes\n",
 				(uint)down_ram_addr + yaffs_len, (int)len);
 #else
+		if (arg)
+			down_ram_addr = usbd->ram_addr + 0x1000000;
+		else
+			down_ram_addr = usbd->ram_addr;
+
 		usbd->recv_setup((char *)down_ram_addr, (int)len);
 		printf("Download to 0x%08x, %d bytes\n",
 				(uint)down_ram_addr, (int)len);

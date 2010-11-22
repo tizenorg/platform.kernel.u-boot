@@ -156,6 +156,15 @@ static int usb_init(void)
 
 static void usb_stop(void)
 {
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	struct mmc *mmc;
+
+	/* We must wait until finish the writing */
+	if (!s5p_no_mmc_support()) {
+		mmc = find_mmc_device(0);
+		mmc_init(mmc);
+	}
+#endif
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
 		exit_font();

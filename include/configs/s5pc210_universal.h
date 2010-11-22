@@ -87,6 +87,7 @@
 #define CONFIG_GENERIC_MMC	1
 #define CONFIG_MMC		1
 #define CONFIG_S5P_MMC		1
+#define CONFIG_MMC_ASYNC_WRITE	1
 #endif
 
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
