@@ -332,8 +332,8 @@ unsigned int get_chars(void)
 	int chars;
 	int lines;
 
-	chars = panel_info.vl_width / font_vga_8x16.width - 10;
-	lines = panel_info.vl_height  / (font_vga_8x16.height + 2);
+	chars = panel_info.vl_width / font_vga_8x16.width - 3;
+	lines = panel_info.vl_height  / font_vga_8x16.height;
 
 	return chars * lines;
 }
