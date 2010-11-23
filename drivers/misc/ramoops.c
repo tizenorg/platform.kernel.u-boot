@@ -9,6 +9,7 @@
 #endif
 
 static char msg[RAMOOPS_SIZE];
+static char raw[RAMOOPS_SIZE];
 static int dumped;
 
 static void ramoops_show(void)
@@ -48,14 +49,14 @@ static void ramoops_show(void)
 #endif
 }
 
-void ramoops_parser(char *raw)
+static void ramoops_parser(char *raw)
 {
 	int i;
 	int start = 0;
 	int offset = 0;
 
 	for (i = 0; i < RAMOOPS_SIZE; i++) {
-		if (raw[i] == '[' && raw[i + 13] ==']') {
+		if (raw[i] == '[' && raw[i + 13] == ']') {
 			int size = i - 3 - start;
 
 			memcpy(msg + offset, raw + start, size);
@@ -72,12 +73,17 @@ void ramoops_parser(char *raw)
 int ramoops_init(unsigned int base)
 {
 	unsigned int *msg_header = (unsigned int *)base;
-	char raw[RAMOOPS_SIZE];
 
 	dumped = 0;
 
 	if (*msg_header != RAMOOPS_HEADER)
 		return -1;
+
+	/*
+	 * 1. Display the text at serial fully
+	 * 2. Display the required text at LCD since size limitation
+	 * Remove the Stack
+	 */
 
 	memcpy(raw, (void *)base, RAMOOPS_SIZE);
 	memset((void *)base, 0x0, RAMOOPS_SIZE);
