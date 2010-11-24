@@ -51,8 +51,10 @@ check_users()
 	if [ "$USER" = "marek" ]; then
 		CROSS_COMPILER=/home/marek/dev//arm-2008q3/bin/arm-none-linux-gnueabi-
 		TARGET=${TARGET:-s5pc110}
-		make clean clobber unconfig mrproper
-		make ${TARGET}_universal_config
+		if [ ! -z "$DOCONFIG" ] ; then
+			make clean clobber unconfig mrproper
+			make ${TARGET}_universal_config
+		fi
 		JOBS="-j 2"
 	fi
 	if [ "$USER" = "lukma" ]; then
@@ -144,24 +146,13 @@ elif [ "$USER" = "donggeun" ]; then
 elif [ "$USER" = "marek" ]; then
 	BOARD=`grep BOARD include/config.mk | awk -F'= ' '{printf $2}'`
 	DATE=`date +%Y%m%d`
+	tar cvf system_uboot.tar u-boot.bin
 	echo $BOARD
 	if [ "$BOARD" = "universal_c110" ] ; then
-		tar cfv universal-uboot-system-${DATE}.tar u-boot-onenand-evt0.bin
-		tar cfv universal-uboot-system-${DATE}-evt1-fused.tar u-boot-onenand-evt1-fused.bin
-		tar cfv universal-uboot-system-${DATE}-evt1.tar u-boot-onenand-evt1.bin
-		cp universal-uboot-system-${DATE}.tar ../image/w1
-		cp universal-uboot-system-${DATE}-evt1-fused.tar ../image/w1
-		cp universal-uboot-system-${DATE}-evt1.tar ../image/w1
+		cp system_uboot.tar ../image/w1/uboot-c110-`date +%Y%m%d`-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`.tar
 	fi
 	if [ "$BOARD" = "universal_c210" ] ; then
-		pushd ../s-boot
-		./build.sh
-		popd
-		mv s-boot-onenand.bin u-boot-onenand.bin
-		tar cfv universal-uboot-system-${DATE}-c210-sboot.tar u-boot-onenand.bin
-		cp universal-uboot-system-${DATE}-c210-sboot.tar ../image/w1
-		tar cfv universal-uboot-system-${DATE}-c210-raw.tar u-boot.bin
-		cp universal-uboot-system-${DATE}-c210-raw.tar ../image/w1
+		cp system_uboot.tar ../image/w1/uboot-c210-`date +%Y%m%d`-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`.tar
 	fi
 elif [ "$USER" = "lukma" ]; then
 	tar cvf system_uboot.tar u-boot.bin
