@@ -292,6 +292,7 @@
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
 	"sdboot=set bootargs root=/dev/mmcblk1p2 rootwait " CONFIG_COMMON_BOOT \
 	CONFIG_UBI_MTD	"; bootm 0x40007FC0\0" \
+	"mmcoops=mmc read 0 0x40000000 0x40 8; md 0x40000000 0x400\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
