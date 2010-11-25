@@ -280,9 +280,9 @@
 	 CONFIG_UBIFS_OPTION CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
 	 CONFIG_COMMON_BOOT "; tftp 0x40007FC0 uImage; bootm 0x40007FC0\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
-	"android=set bootargs root=ubi0!ramdisk " CONFIG_UBI_MTD \
+	"android=set bootargs root=ubi0!ramdisk" CONFIG_UBI_MTD \
 	 " rootfstype=ubifs init=/init.sh " CONFIG_COMMON_BOOT "; run bootk\0" \
-	"nfsboot=set bootargs root=/dev/nfs rw " CONFIG_UBI_MTD \
+	"nfsboot=set bootargs root=/dev/nfs rw" CONFIG_UBI_MTD \
 	 " nfsroot=${nfsroot},nolock,tcp ip=${ipaddr}:${serverip}:${gatewayip}:" \
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
@@ -296,7 +296,7 @@
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
-	"meminfo=mem=512M\0" \
+	"meminfo=crashkernel=32M@0x50000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
 	"bootblock=" CONFIG_BOOTBLOCK "\0" \
