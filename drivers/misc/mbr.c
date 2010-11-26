@@ -90,7 +90,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 		putc(msg[i]);
 	putc('\n');
 
-	if (p->lba)
+	if (p->lba && p->partition_type == 0x5)
 		ebr_show(mmc, p, 1);
 
 }
@@ -140,7 +140,7 @@ static void mbr_show(void)
 		printf("lba      0x%08x (%d), ", mp->lba, mp->lba);
 		printf("nsectors 0x%08x (%d)\n", mp->nsectors, mp->nsectors);
 
-		if (mp->lba)
+		if (mp->lba && mp->partition_type == 0x5)
 			ebr_show(mmc, mp, 0);
 	}
 }
