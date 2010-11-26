@@ -58,6 +58,7 @@ static unsigned int arch_number;
 static unsigned int board_rev;
 static unsigned int battery_soc;
 static struct s5pc110_gpio *gpio;
+extern vidinfo_t panel_info;
 
 enum {
 	I2C_2,
@@ -2607,6 +2608,10 @@ int board_init(void)
 int dram_init(void)
 {
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
+
+	/* Initialize the panel info */
+	memset(&panel_info, 0x0, sizeof(panel_info));
+
 	return 0;
 }
 
