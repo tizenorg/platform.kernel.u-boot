@@ -491,6 +491,8 @@ int s5p_usbctl_init(void)
 	d();
 	s5p_usb_init_base();
 
+	puts("DMA mode enabled\n");
+
 	reg = readl(s5p_get_usb_power_reg());
 
 	if (s5p_cpu_id == 0xc100)
