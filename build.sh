@@ -49,7 +49,7 @@ check_users()
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "marek" ]; then
-		CROSS_COMPILER=/home/marek/dev//arm-2008q3/bin/arm-none-linux-gnueabi-
+		CROSS_COMPILER=/home/marek/dev//arm-2009q3/bin/arm-none-linux-gnueabi-
 		TARGET=${TARGET:-s5pc110}
 		if [ ! -z "$DOCONFIG" ] ; then
 			make clean clobber unconfig mrproper
