@@ -29,8 +29,12 @@
 #define TX_DATA_LEN	4
 #define RX_DATA_LEN	64
 
+/* required for DMA transfers */
+__attribute__ ((__aligned__ (__alignof__ (long long))))
 static char tx_data[TX_DATA_LEN] = "MPL";
+__attribute__ ((__aligned__ (__alignof__ (long long))))
 static char rx_data[RX_DATA_LEN];
+
 static int downloading;
 
 extern int s5p_receive_done;

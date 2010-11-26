@@ -294,9 +294,9 @@ enum DESCRIPTOR_SIZE {
 static unsigned int phy_base;
 static unsigned int otg_base;
 
-/* force buffer alignment for DMA transfers */
-static long long _buf[128 / sizeof(long long)];
-static u8 *dma_buf = (void *)&_buf;
+/* required for DMA transfers */
+__attribute__ ((__aligned__ (__alignof__ (long long))))
+static u8 dma_buf[128];
 
 #define d() dbg("%s\n", __func__)
 
@@ -447,6 +447,9 @@ static void s5p_otg_pre_setup(void)
 	d();
 	dbg("EP0 DMA buf: %08x\n", (unsigned int)dma_buf);
 
+	if ((unsigned int)dma_buf & 0x7)
+		printf("ERROR: EP0 DMA buffer not aligned properly!\n");
+
 	s5p_otg_write_reg((1 << 19)|sizeof(device_req_t), OTG_DOEPTSIZ0);
 	s5p_otg_write_reg((unsigned long)dma_buf, OTG_DOEPDMA0);
 
@@ -512,9 +515,6 @@ int s5p_usbctl_init(void)
 		udelay(10);
 		s5p_usb_soft_disconnect(0);
 		s5p_usb_init_device();
-		return 0;
-	} else {
-		puts("Error : Current Mode is Host\n");
 		return 0;
 	}
 }
@@ -1090,6 +1090,9 @@ void s5p_usb_tx(char *tx_data, int tx_size)
 				INT_ENUMDONE | INT_RESET | INT_SUSPEND,
 				OTG_GINTMSK);
 
+		if ((unsigned int)otg.up_ptr & (unsigned int)0x7)
+			printf("ERROR: IN DMA buffer not aligned properly: %08x\n", (unsigned int)otg.up_ptr);
+
 		s5p_otg_write_reg((u32) otg.up_ptr, OTG_DIEPDMA_IN);
 
 		pktcnt = (u32) (otg.up_size / otg.bulkin_max_pktsize);
@@ -1121,6 +1124,9 @@ void s5p_usb_set_dn_addr(unsigned long addr, unsigned long size)
 
 	if (addr) {
 		int count;
+
+		if ((unsigned int)addr & (unsigned int)0x7)
+			printf("ERROR: OUT DMA buffer not aligned properly: %08x\n", (unsigned int)addr);
 
 		count = (size + otg.bulkout_max_pktsize - 1) / otg.bulkout_max_pktsize;
 		if (count == 0)
