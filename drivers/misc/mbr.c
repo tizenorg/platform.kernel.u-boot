@@ -34,6 +34,8 @@ static inline int get_cylinder(char chs1, char chs2, int *sector)
 	return ((chs1 & 0xc0) << 2) | chs2;
 }
 
+static int extended_lba;
+
 static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 {
 	struct mbr *ebr;
@@ -43,7 +45,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 	int lba = 0;
 
 	if (ebr_next)
-		lba = mp->l_chs[1] & 0x3f;
+		lba = extended_lba;
 
 	lba += mp->lba;
 	printf(">>> Read sector from 0x%08x (LBA: 0x%08x + 0x%x)\n",
@@ -86,7 +88,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 	lba += 16;
 	ret = mmc_read_blocks(mmc, msg, lba, 1);
 
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 8; i++)
 		putc(msg[i]);
 	putc('\n');
 
@@ -117,6 +119,7 @@ static void mbr_show(void)
 	if (mbr->signature != SIGNATURE)
 		printf("Signature error 0x%x\n", mbr->signature);
 
+	logical = 4;
 	printf("MBR partition info\n");
 	for (i = 0; i < 4; i++) {
 		mp = (struct mbr_partition *) &mbr->parts[i];
@@ -140,8 +143,10 @@ static void mbr_show(void)
 		printf("lba      0x%08x (%d), ", mp->lba, mp->lba);
 		printf("nsectors 0x%08x (%d)\n", mp->nsectors, mp->nsectors);
 
-		if (mp->lba && mp->partition_type == 0x5)
+		if (mp->lba && mp->partition_type == 0x5) {
+			extended_lba = mp->lba;
 			ebr_show(mmc, mp, 0);
+		}
 	}
 }
 
