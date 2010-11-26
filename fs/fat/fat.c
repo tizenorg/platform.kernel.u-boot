@@ -42,6 +42,7 @@ static void downcase (char *str)
 	}
 }
 
+#ifdef CONFIG_FAT_WRITE
 static void uppercase (char *str, int len)
 {
 	int i;
@@ -51,6 +52,7 @@ static void uppercase (char *str, int len)
 		str++;
 	}
 }
+#endif
 
 static block_dev_desc_t *cur_dev = NULL;
 
@@ -77,6 +79,7 @@ static int disk_read (__u32 startblock, __u32 getsize, __u8 * bufptr)
 	return -1;
 }
 
+#ifdef CONFIG_FAT_WRITE
 static int total_sector;
 static int disk_write (__u32 startblock, __u32 getsize, __u8 * bufptr)
 {
@@ -96,6 +99,7 @@ static int disk_write (__u32 startblock, __u32 getsize, __u8 * bufptr)
 	}
 	return -1;
 }
+#endif
 
 int fat_register_device (block_dev_desc_t * dev_desc, int part_no)
 {
@@ -204,6 +208,7 @@ static void get_name (dir_entry *dirent, char *s_name)
 	downcase(s_name);
 }
 
+#ifdef CONFIG_FAT_WRITE
 /*
  * Set short name in directory entry
  */
@@ -280,6 +285,7 @@ static int flush_fat_buffer(fsdata *mydata)
 
 	return 0;
 }
+#endif
 
 /*
  * Get the entry at index 'entry' in a FAT (12/16/32) table.
@@ -327,10 +333,12 @@ static __u32 get_fatent (fsdata *mydata, __u32 entry)
 		if (getsize > fatlength)
 			getsize = fatlength;
 
+#ifdef CONFIG_FAT_WRITE
 		if (mydata->fatbufnum != -1) {
 			if (flush_fat_buffer(mydata) < 0)
 				return -1;
 		}
+#endif
 
 		if (disk_read(startblock, getsize, bufptr) < 0) {
 			debug("Error reading FAT blocks\n");
@@ -537,6 +545,7 @@ static int slot2str (dir_slot *slotptr, char *l_name, int *idx)
 	return 0;
 }
 
+#ifdef CONFIG_FAT_WRITE
 /*
  * Set the file name information from 'name' into 'slot',
  */
@@ -605,6 +614,7 @@ name11_12:
 
 	return 1;
 }
+#endif
 
 /*
  * Extract the full long filename starting at 'retdent' (which is really
@@ -685,6 +695,7 @@ get_vfatname (fsdata *mydata, int curclust, __u8 *cluster,
 	return 0;
 }
 
+#ifdef CONFIG_FAT_WRITE
 /*
  * Fill dir_slot entries with appropriate name, id, and attr
  * The real directory entry is returned by dentptr
@@ -713,6 +724,7 @@ fill_dir_slot (dir_entry **dentptr, const char *l_name)
 		counter--;
 	}
 }
+#endif
 
 /* Calculate short name checksum */
 static __u8 mkcksum (const char *str)
@@ -728,6 +740,7 @@ static __u8 mkcksum (const char *str)
 	return ret;
 }
 
+#ifdef CONFIG_FAT_WRITE
 /*
  * Fill alias_checksum in dir_slot with calculated checksum value
  */
@@ -739,6 +752,7 @@ static void fill_alias_checksum(dir_slot *slotptr, char *name)
 	for (i = 0; i < counter; i++, slotptr++)
 		slotptr->alias_checksum = mkcksum(name);
 }
+#endif
 #endif	/* CONFIG_SUPPORT_VFAT */
 
 /*
@@ -929,8 +943,9 @@ read_bootsectandvi (boot_sector *bs, volume_info *volinfo, int *fatsize)
 	bs->secs_track = FAT2CPU16(bs->secs_track);
 	bs->heads = FAT2CPU16(bs->heads);
 	bs->total_sect = FAT2CPU32(bs->total_sect);
-
+#ifdef CONFIG_FAT_WRITE
 	total_sector = bs->total_sect;
+#endif
 
 	/* FAT32 entries */
 	if (bs->fat_length == 0) {
@@ -1357,6 +1372,7 @@ long file_fat_read (const char *filename, void *buffer, unsigned long maxsize)
 	return do_fat_read(filename, buffer, maxsize, LS_NO);
 }
 
+#ifdef CONFIG_FAT_WRITE
 /*
  * Set the entry at index 'entry' in a FAT (16/32) table.
  */
@@ -1792,4 +1808,4 @@ int file_fat_write (const char *filename, void *buffer, unsigned long maxsize)
 	printf("writing %s\n", filename);
 	return do_fat_write(filename, buffer, maxsize);
 }
-
+#endif
