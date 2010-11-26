@@ -207,6 +207,7 @@ static void down_cancel(void)
  */
 static int usb_receive_packet(void)
 {
+	s5p_usb_set_dn_addr(otg.dn_addr, otg.dn_filesize);
 	while (1) {
 		if (s5p_usb_detect_irq()) {
 			s5p_udc_int_hndlr();

@@ -265,6 +265,7 @@ void s5p_udc_int_hndlr(void);
 void s5p_usb_tx(char *tx_data, int tx_size);
 int s5p_usb_detect_irq(void);
 void s5p_usb_clear_irq(void);
+void s5p_usb_set_dn_addr(unsigned long addr, unsigned long size);
 
 /* in usbd-otg-hs.c */
 extern unsigned int s5p_usbd_dn_addr;
