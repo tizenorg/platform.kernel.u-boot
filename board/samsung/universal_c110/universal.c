@@ -2609,8 +2609,10 @@ int dram_init(void)
 {
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
 
+#ifdef CONFIG_LCD
 	/* Initialize the panel info */
 	memset(&panel_info, 0x0, sizeof(panel_info));
+#endif
 
 	return 0;
 }
