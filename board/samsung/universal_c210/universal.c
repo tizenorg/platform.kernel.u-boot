@@ -212,8 +212,10 @@ int dram_init(void)
 	/* Reset on fsa9480 */
 	check_micro_usb(1);
 
+#ifdef CONFIG_LCD
 	/* Initialize the panel info */
 	memset(&panel_info, 0x0, sizeof(panel_info));
+#endif
 
 	return 0;
 }
