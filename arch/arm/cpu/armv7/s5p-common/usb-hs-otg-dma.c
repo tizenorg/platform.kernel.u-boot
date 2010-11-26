@@ -445,7 +445,8 @@ static void s5p_otg_pre_setup(void)
 {
 	u32 ep_ctrl;
 	d();
-	
+	dbg("EP0 DMA buf: %08x\n", (unsigned int)dma_buf);
+
 	s5p_otg_write_reg((1 << 19)|sizeof(device_req_t), OTG_DOEPTSIZ0);
 	s5p_otg_write_reg((unsigned long)dma_buf, OTG_DOEPDMA0);
 
