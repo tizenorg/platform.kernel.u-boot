@@ -147,6 +147,8 @@ lowlevel_init:
 	/* PMU init */
 	bl	system_power_init
 
+	bl	tzpc_init
+
 #if 0
 	/* Enable NEON. Don't change the register r0 */
 	ldr	r0, =0x00F00000
@@ -469,6 +471,56 @@ system_power_init:
 	nop
 	nop
 	nop
+#endif
+
+#ifndef CONFIG_PRELOADER
+tzpc_init:
+	ldr	r0, =0x10110000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x0804]
+	str	r1, [r0, #0x0810]
+	str	r1, [r0, #0x081C]
+	str	r1, [r0, #0x0828]
+
+	ldr	r0, =0x10120000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x0804]
+	str	r1, [r0, #0x0810]
+	str	r1, [r0, #0x081C]
+	str	r1, [r0, #0x0828]
+
+	ldr	r0, =0x10130000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x0804]
+	str	r1, [r0, #0x0810]
+	str	r1, [r0, #0x081C]
+	str	r1, [r0, #0x0828]
+
+	ldr	r0, =0x10140000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x0804]
+	str	r1, [r0, #0x0810]
+	str	r1, [r0, #0x081C]
+	str	r1, [r0, #0x0828]
+
+	ldr	r0, =0x10150000
+	mov	r1, #0x0
+	str	r1, [r0]
+	mov	r1, #0xff
+	str	r1, [r0, #0x0804]
+	str	r1, [r0, #0x0810]
+	str	r1, [r0, #0x081C]
+	str	r1, [r0, #0x0828]
+
+	mov	pc, lr
 #endif
 
 #ifdef CONFIG_PRELOADER
