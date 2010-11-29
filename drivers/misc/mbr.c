@@ -27,6 +27,102 @@ struct mbr {
 	unsigned short signature;
 };
 
+void set_chs_value(struct mbr_partition *part, int part_num)
+{
+	/* FIXME */
+	if (part_num == 0) {
+		part->f_chs[0] = 0x01;
+		part->f_chs[1] = 0x01;
+		part->f_chs[2] = 0x00;
+	} else {
+		part->f_chs[0] = 0x03;
+		part->f_chs[1] = 0xd0;
+		part->f_chs[2] = 0xff;
+	}
+	part->l_chs[0] = 0x03;
+	part->l_chs[1] = 0xd0;
+	part->l_chs[2] = 0xff;
+}
+
+void set_mbr_table(unsigned int start_addr, int parts,
+		unsigned int *blocks, unsigned int *part_offset)
+{
+	struct mmc *mmc = find_mmc_device(0);
+	struct mbr mbr_table;
+	unsigned int offset = start_addr;
+	unsigned int max = 0;
+	unsigned int size = 0;
+	int i, j;
+
+	mmc_init(mmc);
+	max = mmc->capacity / mmc->read_bl_len;
+
+	memset(&mbr_table, 0, sizeof(struct mbr));
+
+	mbr_table.signature = SIGNATURE;
+
+	if (blocks[parts - 1] == 0) {
+		size = start_addr;
+		for (i = 0; i < parts; i++)
+			size += blocks[i];
+		blocks[parts - 1] = max - size;
+	}
+
+	/* Primary */
+	for (i = 0; i < 3; i++) {
+		mbr_table.parts[i].partition_type = 0x83;	/* Linux */
+		mbr_table.parts[i].lba = offset;
+		mbr_table.parts[i].nsectors = blocks[i];
+		part_offset[i] = offset;
+		offset += blocks[i];
+
+		set_chs_value(&mbr_table.parts[i], i);
+	}
+
+	if (parts < 4) {
+		mmc->block_dev.block_write(0, 0, 1, &mbr_table);
+		return;
+	}
+
+	/* Extended */
+	mbr_table.parts[i].partition_type = 0x05;	/* Extended */
+	mbr_table.parts[i].lba = offset;
+	mbr_table.parts[i].nsectors = max - offset;
+	set_chs_value(&mbr_table.parts[i], i);
+
+	mmc->block_dev.block_write(0, 0, 1, &mbr_table);
+
+	for (; i < parts; i++) {
+		struct mbr ebr_table;
+		memset(&ebr_table, 0, sizeof(struct mbr));
+
+		ebr_table.signature = SIGNATURE;
+
+		for (j = 0; j < 2; j++) {
+			if (j == 0) {
+				blocks[parts - 1] -= 0x10;
+				ebr_table.parts[j].partition_type = 0x83;
+				ebr_table.parts[j].lba = 0x10;
+				ebr_table.parts[j].nsectors = blocks[i];
+				set_chs_value(&ebr_table.parts[j], i);
+			} else {
+				if (parts != i + 1) {
+					ebr_table.parts[j].partition_type = 0x05;
+					ebr_table.parts[j].lba = 0x10 + blocks[i];
+					ebr_table.parts[j].nsectors = blocks[i + 1];
+					set_chs_value(&ebr_table.parts[j], i);
+				}
+			}
+		}
+
+		mmc->block_dev.block_write(0, offset, 1, &ebr_table);
+
+		offset += ebr_table.parts[0].lba;
+		part_offset[i] = offset;
+		offset += ebr_table.parts[0].nsectors;
+	}
+}
+
 static inline int get_cylinder(char chs1, char chs2, int *sector)
 {
 	*sector = chs1 & 0x3f;
