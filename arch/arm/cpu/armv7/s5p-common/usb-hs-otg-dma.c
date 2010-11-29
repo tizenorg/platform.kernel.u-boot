@@ -42,8 +42,8 @@ get_intf_t get_intf;
 
 static u32 out_size;
 
-//#define dbg(fmt, arg...) printf(fmt, ## arg) 
-#define dbg(fmt, arg...) 
+//#define dbg(fmt, arg...) printf(fmt, ## arg)
+#define dbg(fmt, arg...)
 
 enum EP_INDEX {
 	EP0, EP1, EP2, EP3, EP4
@@ -295,7 +295,7 @@ static unsigned int phy_base;
 static unsigned int otg_base;
 
 /* required for DMA transfers */
-static u8 dma_buf[128] __attribute__ ((aligned(8)));
+static u8 dma_buf[128] __attribute__ ((aligned(16)));
 
 #define d() dbg("%s\n", __func__)
 
@@ -462,7 +462,7 @@ static void s5p_otg_send_complete(void)
 {
 	u32 ep_ctrl;
 	d();
-	
+
 	s5p_otg_write_reg((1 << 19)|sizeof(device_req_t), OTG_DOEPTSIZ0);
 	s5p_otg_write_reg((unsigned long)dma_buf, OTG_DOEPDMA0);
 
