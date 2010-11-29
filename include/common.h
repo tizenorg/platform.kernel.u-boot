@@ -210,6 +210,18 @@ typedef void (interrupt_handler_t)(void *);
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
+#define INFO_ACTION_MAGIC	0xcafe
+
+struct info_action {
+	u16 magic;
+	u16 action;
+};
+
+enum {
+	INFO_ACTION_RESERVED,		/* Since action should be start 1 */
+	INFO_ACTION_SDCARD_BOOT,
+	INFO_ACTION_LCD_CONSOLE,
+};
 /*
  * Function Prototypes
  */
