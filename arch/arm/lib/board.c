@@ -671,31 +671,6 @@ void board_init_f (ulong bootflag)
 static char *failed = "*** failed ***\n";
 #endif
 
-static void info_action_check()
-{
-	struct info_action *ia = (struct info_action *) CONFIG_INFO_ADDRESS;
-	struct mmc *mmc = find_mmc_device(1);
-
-	if (ia->magic == INFO_ACTION_MAGIC) {
-		switch (ia->action) {
-		case INFO_ACTION_SDCARD_BOOT:
-			if (!mmc)
-				printf("sdcard scan failed\n");
-			else {
-				mmc_init(mmc);
-				printf("sdcard scan success\n");
-				run_command("run loaduimage", 0);
-				run_command("run sdboot", 0);
-			}
-			break;
-		case INFO_ACTION_LCD_CONSOLE:
-			break;
-		default:
-			break;
-		}
-	}
-}
-
 /************************************************************************
  *
  * This is the next part if the initialization sequence: we are now
@@ -898,7 +873,7 @@ extern void davinci_eth_set_mac_addr (const u_int8_t *addr);
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init();
 #endif
-	info_action_check();
+
 #if defined(CONFIG_CMD_NET)
 #if defined(CONFIG_NET_MULTI)
 	puts ("Net:   ");

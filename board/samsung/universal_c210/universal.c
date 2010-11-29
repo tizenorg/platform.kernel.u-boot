@@ -34,6 +34,7 @@
 #include <asm/arch/power.h>
 #include <asm/arch/clk.h>
 #include <ramoops.h>
+#include <info_action.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1282,6 +1283,10 @@ int misc_init_r(void)
 
 	/* check fsa9480 */
 	check_micro_usb(0);
+
+#ifdef CONFIG_INFO_ACTION
+	info_action_check();
+#endif
 
 	return 0;
 }

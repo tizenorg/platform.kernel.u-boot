@@ -35,6 +35,7 @@ COBJS-$(CONFIG_TWL4030_LED) += twl4030_led.o
 COBJS-$(CONFIG_FSL_PMIC) += fsl_pmic.o
 COBJS-$(CONFIG_CMD_RAMOOPS) += ramoops.o
 COBJS-$(CONFIG_CMD_MBR) += mbr.o
+COBJS-$(CONFIG_INFO_ACTION) += info_action.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
