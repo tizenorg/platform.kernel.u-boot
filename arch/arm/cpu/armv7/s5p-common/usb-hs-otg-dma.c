@@ -753,7 +753,7 @@ static void s5p_usb_ep0_int_hndlr(void)
 
 			/*ep0 enable, clear nak, next ep0, 8byte */
 			s5p_otg_write_reg(EPEN_CNAK_EP0_8, OTG_DIEPCTL0);
-			s5p_otg_write_reg(config_value, OTG_DIEPDMA0);
+			memcpy(dma_buf, &config_value, sizeof(config_value));
 			otg.ep0_state = EP0_STATE_INIT;
 			break;
 
