@@ -708,6 +708,7 @@ fill_dir_slot (dir_entry **dentptr, const char *l_name)
 	int idx = 0, ret;
 
 	do {
+		memset(slotptr, 0x00, sizeof(dir_slot));
 		ret = str2slot(slotptr, l_name, &idx);
 		slotptr->id = ++counter;
 		slotptr->attr = ATTR_VFAT;
