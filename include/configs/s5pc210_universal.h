@@ -77,6 +77,10 @@
 #define CONFIG_SERIAL_MULTI	1
 #define CONFIG_SERIAL2          1	/* we use SERIAL 2 on S5PC210 */
 
+/* INFORM0~3 registers are cleared by asserting XnRESET pin */
+/* INFORM4~7 registers are cleared only by power-up reset */
+#define CONFIG_INFO_ADDRESS		0x10020810	/* INFORM4 */
+
 /* 
  * spi gpio 
  */
@@ -226,13 +230,7 @@
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#define CONFIG_BOOTCOMMAND \
-	"if mmc rescan 1; then " \
-		"if run loaduimage; then " \
-			"run sdboot; " \
-		"else run ubifsboot; " \
-		"fi; " \
-	"else run ubifsboot; fi"
+#define CONFIG_BOOTCOMMAND "run ubifsboot"
 
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
 
