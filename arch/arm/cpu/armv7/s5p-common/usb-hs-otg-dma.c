@@ -295,8 +295,7 @@ static unsigned int phy_base;
 static unsigned int otg_base;
 
 /* required for DMA transfers */
-__attribute__ ((__aligned__ (__alignof__ (long long))))
-static u8 dma_buf[128];
+static u8 dma_buf[128] __attribute__ ((aligned(8)));
 
 #define d() dbg("%s\n", __func__)
 
@@ -754,7 +753,7 @@ static void s5p_usb_ep0_int_hndlr(void)
 
 			/*ep0 enable, clear nak, next ep0, 8byte */
 			s5p_otg_write_reg(EPEN_CNAK_EP0_8, OTG_DIEPCTL0);
-			s5p_otg_write_reg(config_value, OTG_EP0_FIFO);
+			s5p_otg_write_reg(config_value, OTG_DIEPDMA0);
 			otg.ep0_state = EP0_STATE_INIT;
 			break;
 
