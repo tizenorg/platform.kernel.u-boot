@@ -670,6 +670,86 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 }
 #endif
 
+static unsigned int mbr_parts[16];
+
+static unsigned long memsize_parse (const char *const ptr, const char **retptr)
+{
+	unsigned long ret = simple_strtoul(ptr, (char **)retptr, 0);
+
+	switch (**retptr) {
+		case 'G':
+		case 'g':
+			ret <<= 10;
+		case 'M':
+		case 'm':
+			ret <<= 10;
+		case 'K':
+		case 'k':
+			ret <<= 10;
+			(*retptr)++;
+		default:
+			break;
+	}
+
+	return ret;
+}
+
+static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len,
+		char *offset, char *length)
+{
+	char mbr_str[256];
+	char save[16][16];
+	char *p;
+	char *tok, *ptr;
+	unsigned int size[16];
+	int parts = 0;
+	int i = 0;
+
+	strncpy(mbr_str, (char *)down_ram_addr, len);
+	p = mbr_str;
+
+	for (i = 0; ; i++, p = NULL) {
+		tok = strtok(p, ",");
+		if (tok == NULL)
+			break;
+		strcpy(save[i], tok);
+		printf("part%d: %s\n", i, save[i]);
+	}
+
+	parts = i;
+
+	for (i = 0; i < parts; i++) {
+		p = save[i];
+		size[i] = memsize_parse(p, &p) / 512;
+	}
+
+	set_mbr_table(0x800, parts, size, mbr_parts);
+}
+
+static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr, u32 len,
+		char *offset, char *length, int part_num)
+{
+	int ret = 0;
+
+	sprintf(offset, "0x%x", mbr_parts[part_num] + fs_offset);
+	sprintf(length, "0x%x", len / usbd->mmc_blk);
+
+#if 0
+	/* modify size of UMS partition */
+	if (part_num == 4 && fs_offset == 0) {
+		boot_sector *bs;
+		bs = (boot_sector *)down_ram_addr;
+		memset(&bs->sectors, 0, 2);
+		bs->total_sect = usbd->mmc_total - mbr_parts[part_num];
+	}
+#endif
+	ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+
+	fs_offset += (len / usbd->mmc_blk);
+
+	return ret;
+}
+
 static int write_file_system(char *ramaddr, ulong len, char *offset,
 		char *length, int part_num, int ubi_update)
 {
@@ -923,6 +1003,50 @@ static int process_data(struct usbd_ops *usbd)
 		mmc_part_write = arg;
 		break;
 #endif
+
+	case COMMAND_WRITE_IMG_0:
+		printf("COMMAND_WRITE_MBR\n");
+		img_type = IMG_MBR;
+		break;
+
+	case COMMAND_WRITE_IMG_1:
+		printf("COMMAND_WRITE_BOOTLOADER\n");
+		/* TODO: Not support yet, just return */
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
+		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		return 1;
+
+	case COMMAND_WRITE_IMG_2:
+		printf("COMMAND_WRITE_KERNEL\n");
+		/* TODO: Not support yet, just return */
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
+		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		return 1;
+
+	case COMMAND_WRITE_IMG_3:
+		printf("COMMAND_WRITE_MODEM\n");
+		/* TODO: Not support yet, just return */
+		*((ulong *) usbd->tx_data) = STATUS_DONE;
+		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		return 1;
+
+	case COMMAND_WRITE_IMG_4:
+		printf("COMMAND_WRITE_BOOT_PART\n");
+		part_id = 1;
+		img_type = IMG_V2;
+		break;
+
+	case COMMAND_WRITE_IMG_5:
+		printf("COMMAND_WRITE_SYSTEM_PART\n");
+		part_id = 2;
+		img_type = IMG_V2;
+		break;
+
+	case COMMAND_WRITE_IMG_6:
+		printf("COMMAND_WRITE_UMS_PART\n");
+		part_id = 4;
+		img_type = IMG_V2;
+		break;
 
 	case COMMAND_WRITE_UBI_INFO:
 		printf("COMMAND_WRITE_UBI_INFO\n");
@@ -1205,6 +1329,13 @@ out:
 		erase_qboot_area();
 		break;
 #endif
+	case IMG_V2:
+		write_mmc_image(usbd, ramaddr, len, offset, length, part_id);
+		break;
+
+	case IMG_MBR:
+		set_mbr_info(usbd, ramaddr, len, offset, length);
+		break;
 
 	default:
 		/* Retry? */

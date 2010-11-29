@@ -36,6 +36,8 @@ enum {
 	IMG_FILESYSTEM,
 	IMG_MODEM,
 	IMG_MMC,
+	IMG_V2,
+	IMG_MBR,
 };
 
 /* Download command definition */
@@ -63,6 +65,18 @@ enum {
 #endif
 #define COMMAND_CSA_CLEAR	222
 #define COMMAND_PROGRESS	230
+
+/* version 2.0 */
+#define COMMAND_WRITE_IMG_0	250
+#define COMMAND_WRITE_IMG_1	251
+#define COMMAND_WRITE_IMG_2	252
+#define COMMAND_WRITE_IMG_3	253
+#define COMMAND_WRITE_IMG_4	254
+#define COMMAND_WRITE_IMG_5	255
+#define COMMAND_WRITE_IMG_6	256
+#define COMMAND_WRITE_IMG_7	257
+#define COMMAND_WRITE_IMG_8	258
+#define COMMAND_WRITE_IMG_9	259
 
 /* status definition */
 enum {
