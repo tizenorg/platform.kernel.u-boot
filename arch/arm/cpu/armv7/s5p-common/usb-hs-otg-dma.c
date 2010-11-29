@@ -517,8 +517,8 @@ int s5p_usbctl_init(void)
 		udelay(10);
 		s5p_usb_soft_disconnect(0);
 		s5p_usb_init_device();
-		return 0;
 	}
+	return 0;
 }
 
 static void s5p_usb_set_inep_xfersize(EP_TYPE type, u32 pktcnt, u32 xfersize)
