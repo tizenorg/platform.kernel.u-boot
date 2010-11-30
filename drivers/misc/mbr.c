@@ -18,6 +18,7 @@ struct mbr_partition {
 #define SIGNATURE	((unsigned short) 0xAA55)
 
 static int logical = 4;
+static int extended_lba;
 
 struct mbr {
 	char code_area[440];
@@ -123,14 +124,100 @@ void set_mbr_table(unsigned int start_addr, int parts,
 	}
 }
 
+static int get_ebr_table(struct mmc *mmc, struct mbr_partition *mp,
+		int ebr_next, unsigned int *part_offset, int parts)
+{
+	struct mbr *ebr;
+	struct mbr_partition *p;
+	char buf[512], msg[512];
+	int ret, i, sector, cylinder;
+	int lba = 0;
+
+	if (ebr_next)
+		lba = extended_lba;
+
+	lba += mp->lba;
+	ret = mmc_read_blocks(mmc, buf, lba , 1);
+	if (ret != 1) {
+		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
+		return 0;
+	}
+	ebr = (struct mbr *) buf;
+
+	if (ebr->signature != SIGNATURE) {
+		printf("Signature error 0x%x\n", ebr->signature);
+		return 0;
+	}
+
+	for (i = 0; i < 2; i++) {
+		p = (struct mbr_partition *) &ebr->parts[i];
+
+		if (i == 0) {
+			logical++;
+			lba += p->lba;
+			if (p->partition_type == 0x83) {
+				part_offset[parts] = lba;
+				parts++;
+			}
+		}
+	}
+
+	if (p->lba && p->partition_type == 0x5)
+		parts = get_ebr_table(mmc, p, 1, part_offset, parts);
+
+	return parts;
+}
+
+int get_mbr_table(unsigned int *part_offset)
+{
+	struct mmc *mmc = find_mmc_device(0);
+	struct mbr_partition *mp;
+	struct mbr *mbr;
+	char buf[512];
+	int ret, i;
+	int parts = 0;
+
+	mmc_init(mmc);
+
+	ret = mmc_read_blocks(mmc, buf, 0, 1);
+	if (ret != 1) {
+		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
+		return 0;
+	}
+
+	mbr = (struct mbr *) buf;
+
+	if (mbr->signature != SIGNATURE)
+		printf("Signature error 0x%x\n", mbr->signature);
+
+	logical = 4;
+
+	for (i = 0; i < 4; i++) {
+		mp = (struct mbr_partition *) &mbr->parts[i];
+
+		if (!mp->partition_type)
+			continue;
+
+		if (mp->partition_type == 0x83) {
+			part_offset[parts] = mp->lba;
+			parts++;
+		}
+
+		if (mp->lba && mp->partition_type == 0x5) {
+			extended_lba = mp->lba;
+			parts = get_ebr_table(mmc, mp, 0, part_offset, parts);
+		}
+	}
+
+	return parts;
+}
+
 static inline int get_cylinder(char chs1, char chs2, int *sector)
 {
 	*sector = chs1 & 0x3f;
 
 	return ((chs1 & 0xc0) << 2) | chs2;
 }
-
-static int extended_lba;
 
 static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 {

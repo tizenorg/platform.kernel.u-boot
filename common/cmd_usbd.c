@@ -1387,6 +1387,12 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (err)
 		return err;
 
+	/* get mbr info */
+	err = get_mbr_table(mbr_parts);
+	if (!err) {
+		/* TODO: set default mbr from env */
+	}
+
 	/* interface setting */
 	usbd = usbd_set_interface(&usbd_ops);
 	down_ram_addr = usbd->ram_addr;
