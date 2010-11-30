@@ -2342,11 +2342,11 @@ static void onenand_check_features(struct mtd_info *mtd)
 		this->options |= ONENAND_SYNC_MODE;
 	}
 
+#ifdef ONENAND_LINUX
 	if (this->options & ONENAND_HAS_CONT_LOCK)
 		printk(KERN_DEBUG "Lock scheme is Continuous Lock\n");
 	if (this->options & ONENAND_HAS_UNLOCK_ALL)
 		printk(KERN_DEBUG "Chip support all block unlock\n");
-#ifdef ONENAND_LINUX
 	if (this->options & ONENAND_HAS_2PLANE)
 		printk(KERN_DEBUG "Chip has 2 plane\n");
 #endif
