@@ -140,7 +140,11 @@ struct onenand_chip {
 #define ONENAND_SET_BUFFERRAM0(this)		(this->bufferram_index = 0)
 #define ONENAND_SET_BUFFERRAM1(this)		(this->bufferram_index = 1)
 
+#ifdef CONFIG_USE_FLEXONENAND
 #define FLEXONENAND(this)	(this->device_id & DEVICE_IS_FLEXONENAND)
+#else
+#define FLEXONENAND(this)			(0)
+#endif
 #define ONENAND_IS_MLC(this)	(this->technology & ONENAND_TECHNOLOGY_IS_MLC)
 #define ONENAND_IS_DDP(this)						\
 	(this->device_id & ONENAND_DEVICE_IS_DDP)
