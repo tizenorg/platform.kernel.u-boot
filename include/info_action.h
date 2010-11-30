@@ -14,6 +14,7 @@ enum {
 	INFO_ACTION_RESERVED,		/* Since action should be start 1 */
 	INFO_ACTION_SDCARD_BOOT,
 	INFO_ACTION_LCD_CONSOLE,
+	INFO_ACTION_UMS,
 };
 
 void info_action_check(void);

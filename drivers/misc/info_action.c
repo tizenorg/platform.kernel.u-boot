@@ -22,6 +22,8 @@ void info_action_check()
 			break;
 		case INFO_ACTION_LCD_CONSOLE:
 			break;
+		case INFO_ACTION_UMS:
+			break;
 		default:
 			break;
 		}
