@@ -5,27 +5,29 @@
 #include <common.h>
 #include <info_action.h>
 
-void info_action_check()
+void info_action_check(void)
 {
 	struct info_action *ia = (struct info_action *) CONFIG_INFO_ADDRESS;
 	char buf[64];
 	unsigned int count = 0;
 
-	if (ia->magic == INFO_ACTION_MAGIC) {
-		switch (ia->action) {
-		case INFO_ACTION_SDCARD_BOOT:
-			printf("sdcard boot\n");
-			count += sprintf(buf + count, "mmc rescan 1; ");
-			count += sprintf(buf + count, "run loaduimage; ");
-			count += sprintf(buf + count, "run sdboot; ");
-			setenv("bootcmd", buf);
-			break;
-		case INFO_ACTION_LCD_CONSOLE:
-			break;
-		case INFO_ACTION_UMS:
-			break;
-		default:
-			break;
-		}
+	if (ia->magic != INFO_ACTION_MAGIC)
+		return;
+
+	switch (ia->action) {
+	case INFO_ACTION_SDCARD_BOOT:
+		puts("sdcard boot\n");
+		/* Please add the parameters and just 'run sdboot' */
+		count += sprintf(buf + count, "mmc rescan 1; ");
+		count += sprintf(buf + count, "run loaduimage; ");
+		count += sprintf(buf + count, "run sdboot; ");
+		setenv("bootcmd", buf);
+		break;
+	case INFO_ACTION_LCD_CONSOLE:
+		break;
+	case INFO_ACTION_UMS:
+		break;
+	default:
+		break;
 	}
 }
