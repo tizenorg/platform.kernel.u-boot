@@ -36,7 +36,7 @@ static struct usbd_ops usbd_ops;
 
 static unsigned int part_id;
 static unsigned int write_part = 0;
-static unsigned long fs_offset = 0x0;
+static unsigned int fs_offset = 0x0;
 
 #ifdef CONFIG_USE_YAFFS
 static unsigned int yaffs_len = 0;
@@ -641,7 +641,6 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 			if (mmc_part_write == 1) {
 				boot_sector *bs;
 				u32 total_sect;
-				u8 *tmp;
 				/* modify BPB data of p1 */
 				sprintf(length, "%x", (unsigned int)
 					(sizeof(struct mbr_table) /
@@ -700,7 +699,7 @@ static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len)
 	char mbr_str[256];
 	char save[16][16];
 	char *p;
-	char *tok, *ptr;
+	char *tok;
 	unsigned int size[16];
 	int i = 0;
 
@@ -720,15 +719,15 @@ static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len)
 
 	for (i = 0; i < mbr_parts; i++) {
 		p = save[i];
-		size[i] = memsize_parse(p, &p) / 512;
+		size[i] = memsize_parse(p, (const char **)&p) / 512;
 	}
 
 	puts("save the MBR Table...\n");
 	set_mbr_table(0x800, mbr_parts, size, mbr_offset);
 }
 
-static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr, u32 len,
-		char *offset, char *length, int part_num)
+static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr,
+		unsigned int len, char *offset, char *length, int part_num)
 {
 	int ret = 0;
 
@@ -846,7 +845,7 @@ static void erase_qboot_area(void)
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
-	ulong cmd = 0, arg = 0, ofs = 0, len = 0, flag = 0;
+	unsigned int cmd = 0, arg = 0, ofs = 0, len = 0, flag = 0;
 	char offset[12], length[12], ramaddr[12];
 	int recvlen = 0;
 	unsigned int blocks = 0;
@@ -1394,6 +1393,10 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	if (err)
 		return err;
 
+	/* interface setting */
+	usbd = usbd_set_interface(&usbd_ops);
+	down_ram_addr = usbd->ram_addr;
+
 	/* get mbr info */
 	mbr_parts = get_mbr_table(mbr_offset);
 	if (!mbr_parts) {
@@ -1404,10 +1407,6 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		mbrparts = getenv("mbrparts");
 		set_mbr_info(usbd, mbrparts, strlen(mbrparts));
 	}
-
-	/* interface setting */
-	usbd = usbd_set_interface(&usbd_ops);
-	down_ram_addr = usbd->ram_addr;
 
 	/* init the usb controller */
 	if (!usbd->usb_init()) {

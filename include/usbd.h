@@ -125,9 +125,9 @@ struct usbd_ops {
 
 	/* mmc device info */
 	uint mmc_dev;
-	ulong mmc_max;
-	ulong mmc_blk;
-	ulong mmc_total;
+	uint mmc_max;
+	uint mmc_blk;
+	uint mmc_total;
 
 	void (*set_progress)(int);
 	void (*cpu_reset)(void);
