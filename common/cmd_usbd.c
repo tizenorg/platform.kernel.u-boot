@@ -670,7 +670,8 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 }
 #endif
 
-static unsigned int mbr_parts[16];
+static unsigned int mbr_offset[16];
+static int mbr_parts = 0;
 
 static unsigned long memsize_parse (const char *const ptr, const char **retptr)
 {
@@ -694,18 +695,16 @@ static unsigned long memsize_parse (const char *const ptr, const char **retptr)
 	return ret;
 }
 
-static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len,
-		char *offset, char *length)
+static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len)
 {
 	char mbr_str[256];
 	char save[16][16];
 	char *p;
 	char *tok, *ptr;
 	unsigned int size[16];
-	int parts = 0;
 	int i = 0;
 
-	strncpy(mbr_str, (char *)down_ram_addr, len);
+	strncpy(mbr_str, ramaddr, len);
 	p = mbr_str;
 
 	for (i = 0; ; i++, p = NULL) {
@@ -716,14 +715,16 @@ static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		printf("part%d: %s\n", i, save[i]);
 	}
 
-	parts = i;
+	mbr_parts = i;
+	printf("find %d partitions\n", mbr_parts);
 
-	for (i = 0; i < parts; i++) {
+	for (i = 0; i < mbr_parts; i++) {
 		p = save[i];
 		size[i] = memsize_parse(p, &p) / 512;
 	}
 
-	set_mbr_table(0x800, parts, size, mbr_parts);
+	puts("save the MBR Table...\n");
+	set_mbr_table(0x800, mbr_parts, size, mbr_offset);
 }
 
 static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr, u32 len,
@@ -731,7 +732,13 @@ static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr, u32 len,
 {
 	int ret = 0;
 
-	sprintf(offset, "0x%x", mbr_parts[part_num] + fs_offset);
+	if (mbr_parts <= part_num) {
+		printf("Error: MBR table have %d partitions (request %d)\n",
+				mbr_parts, part_num);
+		return 1;
+	}
+
+	sprintf(offset, "0x%x", mbr_offset[part_num] + fs_offset);
 	sprintf(length, "0x%x", len / usbd->mmc_blk);
 
 #if 0
@@ -740,7 +747,7 @@ static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr, u32 len,
 		boot_sector *bs;
 		bs = (boot_sector *)down_ram_addr;
 		memset(&bs->sectors, 0, 2);
-		bs->total_sect = usbd->mmc_total - mbr_parts[part_num];
+		bs->total_sect = usbd->mmc_total - mbr_offset[part_num];
 	}
 #endif
 	ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
@@ -1330,11 +1337,11 @@ out:
 		break;
 #endif
 	case IMG_V2:
-		write_mmc_image(usbd, ramaddr, len, offset, length, part_id);
+		ret = write_mmc_image(usbd, ramaddr, len, offset, length, part_id);
 		break;
 
 	case IMG_MBR:
-		set_mbr_info(usbd, ramaddr, len, offset, length);
+		set_mbr_info(usbd, (char *)down_ram_addr, len);
 		break;
 
 	default:
@@ -1388,9 +1395,14 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		return err;
 
 	/* get mbr info */
-	err = get_mbr_table(mbr_parts);
-	if (!err) {
-		/* TODO: set default mbr from env */
+	mbr_parts = get_mbr_table(mbr_offset);
+	if (!mbr_parts) {
+		char *mbrparts;
+
+		puts("using default MBR\n");
+
+		mbrparts = getenv("mbrparts");
+		set_mbr_info(usbd, mbrparts, strlen(mbrparts));
 	}
 
 	/* interface setting */
