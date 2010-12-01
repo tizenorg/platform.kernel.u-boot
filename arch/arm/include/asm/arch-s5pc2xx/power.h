@@ -35,7 +35,7 @@ enum reset_status {
 #define RESET_WDT		(0x1 << 20)
 #define RESET_PIN		(0x1 << 16)
 
-static unsigned int get_reset_status(void)
+static inline unsigned int get_reset_status(void)
 {
 	unsigned int val;
 
