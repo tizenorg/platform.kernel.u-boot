@@ -270,11 +270,11 @@
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
-	"updatek=onenand erase 0xc00000 0x600000;" \
-	" onenand write 0x41008000 0xc00000 0x600000\0" \
+	"updatek=onenand erase 0xc00000 0x500000;" \
+	" onenand write 0x41008000 0xc00000 0x500000\0" \
 	"updateu=onenand erase 0x01560000 0x1eaa0000;" \
 	" onenand write 0x42000000 0x1260000 0x8C0000\0" \
-	"bootk=onenand read 0x40007FC0 0xc00000 0x600000;" \
+	"bootk=onenand read 0x40007FC0 0xc00000 0x500000;" \
 	" bootm 0x40007FC0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
