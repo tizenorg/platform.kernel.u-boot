@@ -1344,7 +1344,7 @@ out:
 		break;
 
 	case IMG_BOOTLOADER:
-		sprintf(offset, "0x%x", 0x80);
+		sprintf(offset, "0x%x", CONFIG_BOOTLOADER_SECTOR);
 		sprintf(length, "0x%x", len / usbd->mmc_blk + 1);
 		ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
 		break;

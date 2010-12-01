@@ -237,6 +237,8 @@
 				",100M(swap)"\
 				",-(UMS)\0"
 
+#define CONFIG_BOOTLOADER_SECTOR 0x80
+
 #define CONFIG_BOOTCOMMAND "run ubifsboot"
 
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
