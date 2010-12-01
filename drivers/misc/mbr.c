@@ -235,6 +235,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 
 		if (i == 0) {
 			logical++;
+			lba += p->lba;
 			printf("Extended Part %d\n", logical);
 		} else
 			printf("Extended Part next\n");
@@ -253,16 +254,8 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 		printf("nsectors 0x%08x (%d)\n", p->nsectors, p->nsectors);
 	}
 
-	lba += 16;
-	ret = mmc->block_dev.block_read(0, lba, 1, msg);
-
-	for (i = 0; i < 8; i++)
-		putc(msg[i]);
-	putc('\n');
-
 	if (p->lba && p->partition_type == 0x5)
 		ebr_show(mmc, p, 1);
-
 }
 
 static void mbr_show(void)
