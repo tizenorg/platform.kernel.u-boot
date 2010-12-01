@@ -38,6 +38,7 @@ enum {
 	IMG_MMC,
 	IMG_V2,
 	IMG_MBR,
+	IMG_BOOTLOADER,	/* bootloader on mmc raw sector */
 };
 
 /* Download command definition */

@@ -1019,10 +1019,8 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_IMG_1:
 		printf("COMMAND_WRITE_BOOTLOADER\n");
-		/* TODO: Not support yet, just return */
-		*((ulong *) usbd->tx_data) = STATUS_DONE;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
-		return 1;
+		img_type = IMG_BOOTLOADER;
+		break;
 
 	case COMMAND_WRITE_IMG_2:
 		printf("COMMAND_WRITE_KERNEL\n");
@@ -1343,6 +1341,12 @@ out:
 
 	case IMG_MBR:
 		set_mbr_info(usbd, (char *)down_ram_addr, len);
+		break;
+
+	case IMG_BOOTLOADER:
+		sprintf(offset, "0x%x", 0x80);
+		sprintf(length, "0x%x", len / usbd->mmc_blk + 1);
+		ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
 		break;
 
 	default:
