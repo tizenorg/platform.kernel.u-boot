@@ -30,6 +30,8 @@ static struct part_info *parts[16];
 #include <ubinize.h>
 #endif
 
+#include <mbr.h>
+
 static const char pszMe[] = "usbd: ";
 
 static struct usbd_ops usbd_ops;

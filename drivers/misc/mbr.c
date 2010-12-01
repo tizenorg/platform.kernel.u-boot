@@ -28,7 +28,7 @@ struct mbr {
 	unsigned short signature;
 };
 
-void set_chs_value(struct mbr_partition *part, int part_num)
+static inline void set_chs_value(struct mbr_partition *part, int part_num)
 {
 	/* FIXME */
 	if (part_num == 0) {
@@ -129,15 +129,15 @@ static int get_ebr_table(struct mmc *mmc, struct mbr_partition *mp,
 {
 	struct mbr *ebr;
 	struct mbr_partition *p;
-	char buf[512], msg[512];
-	int ret, i, sector, cylinder;
+	char buf[512];
+	int ret, i;
 	int lba = 0;
 
 	if (ebr_next)
 		lba = extended_lba;
 
 	lba += mp->lba;
-	ret = mmc_read_blocks(mmc, buf, lba , 1);
+	ret = mmc->block_dev.block_read(0, lba, 1, buf);
 	if (ret != 1) {
 		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
 		return 0;
@@ -179,7 +179,7 @@ int get_mbr_table(unsigned int *part_offset)
 
 	mmc_init(mmc);
 
-	ret = mmc_read_blocks(mmc, buf, 0, 1);
+	ret = mmc->block_dev.block_read(0, 0, 1, buf);
 	if (ret != 1) {
 		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
 		return 0;
@@ -233,7 +233,8 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 	lba += mp->lba;
 	printf(">>> Read sector from 0x%08x (LBA: 0x%08x + 0x%x)\n",
 		lba, mp->lba, (lba == mp->lba) ? 0 : lba - mp->lba);
-	ret = mmc_read_blocks(mmc, buf, lba , 1);
+
+	ret = mmc->block_dev.block_read(0, lba, 1, buf);
 	if (ret != 1) {
 		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
 		return;
@@ -269,7 +270,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 	}
 
 	lba += 16;
-	ret = mmc_read_blocks(mmc, msg, lba, 1);
+	ret = mmc->block_dev.block_read(0, lba, 1, msg);
 
 	for (i = 0; i < 8; i++)
 		putc(msg[i]);
@@ -291,7 +292,7 @@ static void mbr_show(void)
 
 	mmc_init(mmc);
 
-	ret = mmc_read_blocks(mmc, buf, 0, 1);
+	ret = mmc->block_dev.block_read(0, 0, 1, buf);
 	if (ret != 1) {
 		printf("%s[%d] mmc_read_blocks %d\n", __func__, __LINE__, ret);
 		return;
@@ -333,7 +334,7 @@ static void mbr_show(void)
 	}
 }
 
-static int do_mbr(cmd_tbl_t *cmdtp, int flag, int argc, const char *argv[])
+static int do_mbr(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:
