@@ -2,6 +2,23 @@
  * Copyright (C) 2010 Samsung Electrnoics
  */
 
+struct mbr_partition {
+	char status;
+	char f_chs[3];
+	char partition_type;
+	char l_chs[3];
+	int lba;
+	int nsectors;
+} __attribute__((packed));
+
+struct mbr {
+	char code_area[440];
+	char disk_signature[4];
+	char nulls[2];
+	struct mbr_partition parts[4];
+	unsigned short signature;
+};
+
 void set_mbr_table(unsigned int start_addr, int parts,
 		unsigned int *blocks, unsigned int *part_offset);
 int get_mbr_table(unsigned int *part_offset);

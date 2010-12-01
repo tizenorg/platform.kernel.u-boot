@@ -4,29 +4,13 @@
  */
 
 #include <common.h>
+#include <mbr.h>
 #include <mmc.h>
-
-struct mbr_partition {
-	char status;
-	char f_chs[3];
-	char partition_type;
-	char l_chs[3];
-	int lba;
-	int nsectors;
-} __attribute__((packed));
 
 #define SIGNATURE	((unsigned short) 0xAA55)
 
 static int logical = 4;
 static int extended_lba;
-
-struct mbr {
-	char code_area[440];
-	char disk_signature[4];
-	char nulls[2];
-	struct mbr_partition parts[4];
-	unsigned short signature;
-};
 
 static inline void set_chs_value(struct mbr_partition *part, int part_num)
 {
