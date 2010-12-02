@@ -534,7 +534,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 
 	mmc = &mmc_dev[dev_index];
 
-	sprintf(mmc->name, "SAMSUNG SD/MMC");
+	sprintf(mmc->name, "SAMSUNG SDHCI");
 	mmc->priv = &mmc_host[dev_index];
 	mmc->send_cmd = mmc_send_cmd;
 	mmc->set_ios = mmc_set_ios;
