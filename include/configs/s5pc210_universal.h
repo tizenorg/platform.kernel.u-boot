@@ -299,7 +299,7 @@
 	"sdboot=set bootargs root=/dev/mmcblk1p2 rootwait " CONFIG_COMMON_BOOT \
 	CONFIG_UBI_MTD	"; bootm 0x40007FC0\0" \
 	"mmcboot=set bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} rootwait " \
-	"${console} ${meminfo} ${opts} ${lcdinfo}; mmcinfo; " \
+	"${console} ${meminfo} ${opts} ${lcdinfo}; " \
 	"run loaduimage; bootm 0x40007FC0\0" \
 	"mmcoops=mmc read 0 0x40000000 0x40 8; md 0x40000000 0x400\0" \
 	"verify=n\0" \
