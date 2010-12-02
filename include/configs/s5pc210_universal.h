@@ -251,7 +251,7 @@
 #define CONFIG_BOOTBLOCK	"9"
 #define CONFIG_UBIBLOCK		"8"
 #endif
-#define CONFIG_ENV_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
+#define CONFIG_ENV_UBIFS_OPTION	" rootflags=bulk_read,no_chk_data_crc "
 #define CONFIG_ENV_FLASHBOOT	CONFIG_ENV_UBI_MTD CONFIG_ENV_UBIFS_OPTION \
 				"${mtdparts}"
 
@@ -371,13 +371,6 @@
 #endif
 
 /* I2C */
-#if 0
-#define CONFIG_DRIVER_S5PC1XX_I2C
-#define CONFIG_HARD_I2C		1
-#define CONFIG_SYS_I2C_SPEED	50000
-#define CONFIG_SYS_I2C_SLAVE	0xFE
-#define CONFIG_SYS_I2C_0	1
-#else
 #include <i2c-gpio.h>
 #define CONFIG_S5P_GPIO_I2C	1
 #define CONFIG_SOFT_I2C		1
@@ -386,7 +379,6 @@
 #define CONFIG_SYS_I2C_SPEED	50000
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_SYS_MAX_I2C_BUS	15
-#endif
 
 /* USB Downloader */
 #define CONFIG_CMD_USBDOWN
@@ -395,31 +387,17 @@
 #define CONFIG_S5P_USB_DMA
 #define CONFIG_OTG_CLK_OSCC
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
-#if 1		/* For LCD test */
+#if 1
 #define CONFIG_LCD		1
 #define CONFIG_FB_RESERVED_MEM	0x52504000
 #define CONFIG_S5PC1XXFB	1
-#define CONFIG_S6E63M0		1
-#define CONFIG_S6D16A0X		1
 #define CONFIG_LD9040		1
 #define CONFIG_DSIM		1
-#define CONFIG_CMD_BMP
-#endif
-
-#if 0
-#define CONFIG_CMD_EXT2			1
-#define CONFIG_CMD_ONENAND_EXT2		1
-#endif
-
 /* Insert bmp animation compressed */
-#if 1
 #define CONFIG_VIDEO_BMP_GZIP
-#ifndef CONFIG_SYS_VIDEO_LOGO_MAX_SIZE
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)
-#endif
 #endif
 
 #define CONFIG_SYS_SP_ADDR	(CONFIG_SYS_LOAD_ADDR - 0x1000000)
