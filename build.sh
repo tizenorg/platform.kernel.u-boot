@@ -104,6 +104,26 @@ make_evt_image()
 	fi
 }
 
+check_size()
+{
+	SIZEFILE=".oldsize"
+	if [ -e "$PWD/$SIZEFILE" ]; then
+		OLDSIZE=`cat $SIZEFILE`
+	else
+		OLDSIZE=0
+	fi
+	SIZE=`ls -al u-boot.bin | awk -F' ' '{printf $5}'`
+	if [ "$SIZE" -gt "$OLDSIZE" ]; then
+		echo "New size $SIZE is bigger than prev $OLDSIZE"
+		echo "$SIZE" > $SIZEFILE
+	elif [ "$SIZE" -lt "$OLDSIZE" ]; then
+		echo "Good reduced size $SIZE is less than prev $OLDSIZE"
+		echo "$SIZE" > $SIZEFILE
+	else
+		echo "Size is $SIZE"
+	fi
+}
+
 check_ccache
 check_users
 #check_ipl $1
@@ -111,6 +131,7 @@ check_users
 build_uboot $*
 
 #make_evt_image
+check_size
 
 if [ "$IPL" != "mmc" -a -e "$PWD/u-boot-onenand.bin" ]; then
 	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
@@ -121,8 +142,7 @@ fi
 
 if [ "$USER" = "kmpark" ]; then
 	ls -al u-boot*.bin
-	cp -f u-boot.bin u-boot-onenand.bin /tftpboot
-	ls -al onenand_ipl
+	cp -f u-boot.bin /tftpboot
 	pushd ../images
 	./system.sh
 	popd
