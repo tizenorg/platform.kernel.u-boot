@@ -197,6 +197,7 @@ typedef struct {
 	u8 *up_ptr;
 	u32 set_config;
 	u32 req_length;
+	u8 ep0_zlp;
 } __attribute__ ((packed)) otg_dev_t;
 
 enum DEV_REQUEST_DIRECTION {
