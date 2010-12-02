@@ -474,10 +474,13 @@ int mmc_change_freq(struct mmc *mmc)
 		mmc->version |= EXT_CSD_REV_1_5;
 
 		/*
-		 * FIXME iNAND Specific (0x15 => Samsung)
-		 * if use other NAND flash, this should be changed.
+		 * iNAND Specific
+		 * if use iNAND 8G flash, this should be entered.
+		 * (0x2 => iNAND 8G flash)
+		 * Because iNAND 16G should be MMC v4.41,
+		 * need not check here. (already checked)
 		 */
-		if ((mmc->cid[0] >> 24) != 0x15) {
+		if ((mmc->cid[0] >> 24) == 0x2) {
 			if (ext_csd[95])
 				mmc->check_rev = MMC_REV_4_4_1;
 			else
