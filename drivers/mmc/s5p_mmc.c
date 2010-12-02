@@ -420,8 +420,15 @@ static void mmc_set_ios(struct mmc *mmc)
 
 	writel(val, &host->reg->control3);
 
-
 	mmc_change_clock(host, mmc->clock);
+
+	/*
+	 * eMMC spec calls for the host to send 74 clocks to the card
+	 * during initialization, right after voltage stabilization.
+	 * create the clocks manually right here.
+	 */
+	if (mmc->clock)
+		udelay(74 * 1000000 / mmc->clock);
 
 	ctrl = readb(&host->reg->hostctl);
 
