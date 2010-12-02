@@ -828,6 +828,8 @@ static int process_data(struct usbd_ops *usbd)
 	int ubi_mode = 0;
 	int img_type;
 
+	block_dev_desc_t *block_dev;
+
 	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
 
 	/* Parse command */
@@ -997,16 +999,16 @@ static int process_data(struct usbd_ops *usbd)
 	case COMMAND_WRITE_IMG_2:
 		printf("COMMAND_WRITE_KERNEL\n");
 		/* TODO: Not support yet, just return */
-		*((ulong *) usbd->tx_data) = STATUS_DONE;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
-		return 1;
+		img_type = IMG_KERNEL_V2;
+		part_id = 2;
+		break;
 
 	case COMMAND_WRITE_IMG_3:
 		printf("COMMAND_WRITE_MODEM\n");
 		/* TODO: Not support yet, just return */
-		*((ulong *) usbd->tx_data) = STATUS_DONE;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
-		return 1;
+		img_type = IMG_MODEM_V2;
+		part_id = 2;
+		break;
 
 	case COMMAND_WRITE_IMG_4:
 		printf("COMMAND_WRITE_BOOT_PART\n");
@@ -1322,6 +1324,56 @@ out:
 				len / usbd->mmc_blk + 1,
 				(void *)down_ram_addr);
 #endif
+		break;
+
+	case IMG_KERNEL_V2:
+		if (!block_dev)
+			block_dev = mmc_get_dev(0);
+
+		if (!block_dev) {
+			printf("no mmc block dev\n");
+			ret = 0;
+			break;
+		}
+
+		ret = fat_register_device(block_dev, part_id);
+		if (ret < 0) {
+			printf("error : fat_register_divce\n");
+			ret = 0;
+			break;
+		}
+
+		ret = file_fat_write("uImage", down_ram_addr, len);
+		if (ret < 0) {
+			printf("error : writing uImage\n");
+			ret = 0;
+			break;
+		}
+		break;
+
+	case IMG_MODEM_V2:
+		if (!block_dev)
+			block_dev = mmc_get_dev(0);
+
+		if (!block_dev) {
+			printf("no mmc block dev\n");
+			ret = 0;
+			break;
+		}
+
+		ret = fat_register_device(block_dev, part_id);
+		if (ret < 0) {
+			printf("error : fat_register_divce\n");
+			ret = 0;
+			break;
+		}
+
+		ret = file_fat_write("modem.bin", down_ram_addr, len);
+		if (ret < 0) {
+			printf("error : writing modem.bin\n");
+			ret = 0;
+			break;
+		}
 		break;
 
 	default:

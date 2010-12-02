@@ -57,6 +57,7 @@ static void uppercase (char *str, int len)
 static block_dev_desc_t *cur_dev = NULL;
 
 static unsigned long part_offset = 0;
+static unsigned long next_part_offset = 0;
 
 static int cur_part = 1;
 
@@ -133,6 +134,9 @@ int fat_register_device (block_dev_desc_t * dev_desc, int part_no)
 	if (!get_partition_info(dev_desc, part_no, &info)) {
 		part_offset = info.start;
 		cur_part = part_no;
+
+		if (!get_partition_info(dev_desc, part_no + 1, &info))
+			next_part_offset = info.start;
 	} else if ((strncmp((char *)&buffer[DOS_FS_TYPE_OFFSET], "FAT", 3) == 0) ||
 		   (strncmp((char *)&buffer[DOS_FS32_TYPE_OFFSET], "FAT32", 5) == 0)) {
 		/* ok, we assume we are on a PBR only */
@@ -1502,7 +1506,7 @@ set_cluster (fsdata *mydata, __u32 clustnum, __u8 *buffer,
  */
 static int find_empty_cluster(fsdata *mydata)
 {
-	__u32 fat_val, entry = 2;
+	__u32 fat_val, entry = 3;
 
 	while (1) {
 		fat_val = get_fatent(mydata, entry);
@@ -1595,7 +1599,10 @@ set_contents (fsdata *mydata, dir_entry *dentptr, __u8 *buffer,
 		gotsize += actsize;
 
 		/* Mark end of file in FAT */
-		newclust = 0xfffffff;
+		if (mydata->fatsize == 16)
+			newclust = 0xffff;
+		else if (mydata->fatsize == 32)
+			newclust = 0xfffffff;
 		set_fatent_value(mydata, endclust, newclust);
 
 		return gotsize;
@@ -1678,6 +1685,10 @@ static int do_fat_write (const char *filename, void *buffer,
 	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
 		debug("error: reading boot sector\n");
 		return 0;
+	}
+
+	if (total_sector == 0) {
+		total_sector = next_part_offset - part_offset;
 	}
 
 	root_cluster = bs.root_cluster;

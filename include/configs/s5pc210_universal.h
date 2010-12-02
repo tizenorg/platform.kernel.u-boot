@@ -164,6 +164,8 @@
 #define CONFIG_UBIFS_MK
 #define CONFIG_UBINIZE
 
+#define CONFIG_FAT_WRITE
+
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
 #undef CONFIG_CMD_NET
 
