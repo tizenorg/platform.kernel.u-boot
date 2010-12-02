@@ -32,6 +32,8 @@
 #include <linux/list.h>
 #include <div64.h>
 
+#define EXT_CSD_REV				192	/* RO */
+
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
 
@@ -450,7 +452,7 @@ int mmc_change_freq(struct mmc *mmc)
 		return err;
 
 	/* Check MMC version 4.X */
-	switch (ext_csd[192]) {
+	switch (ext_csd[EXT_CSD_REV]) {
 	case EXT_CSD_REV_1_0:
 		/* MMC v4.0 */
 		mmc->version |= EXT_CSD_REV_1_0;
@@ -472,19 +474,21 @@ int mmc_change_freq(struct mmc *mmc)
 		mmc->version |= EXT_CSD_REV_1_5;
 
 		/*
-		 * iNAND Specific
+		 * FIXME iNAND Specific (0x15 => Samsung)
 		 * if use other NAND flash, this should be changed.
 		 */
-		if (ext_csd[95])
-			mmc->check_rev = MMC_REV_4_4_1;
-		else
-			mmc->check_rev = MMC_REV_4_3_PLUS;
+		if ((mmc->cid[0] >> 24) != 0x15) {
+			if (ext_csd[95])
+				mmc->check_rev = MMC_REV_4_4_1;
+			else
+				mmc->check_rev = MMC_REV_4_3_PLUS;
+		}
 
 		break;
 	case EXT_CSD_REV_1_4:
 		/* Obsolete */
 	default:
-		printf("Unknown revision - %x\n", ext_csd[192]);
+		printf("Unknown revision - %x\n", ext_csd[EXT_CSD_REV]);
 		return 0;
 	}
 
@@ -801,7 +805,7 @@ int mmc_startup(struct mmc *mmc)
 	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
 		/* check  ext_csd version and capacity */
 		err = mmc_send_ext_csd(mmc, ext_csd);
-		if (!err & (ext_csd[192] >= 2)) {
+		if (!err & (ext_csd[EXT_CSD_REV] >= 2)) {
 			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
 					ext_csd[214] << 16 | ext_csd[215] << 24;
 			mmc->capacity *= 512;
