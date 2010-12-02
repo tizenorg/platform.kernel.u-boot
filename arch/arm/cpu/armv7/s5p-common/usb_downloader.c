@@ -162,8 +162,11 @@ static void usb_stop(void)
 {
 #ifdef CONFIG_MMC_ASYNC_WRITE
 	/* We must wait until finish the writing */
-	if (!s5p_no_mmc_support())
-		run_command("mbr show", 0);	/* Workaround */
+	if (!s5p_no_mmc_support()) {
+		struct mmc *mmc;
+		mmc = find_mmc_device(0);
+		mmc_init(mmc);
+	}
 #endif
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
