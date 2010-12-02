@@ -1310,14 +1310,18 @@ out:
 		break;
 
 	case IMG_MBR:
+#ifdef CONFIG_CMD_MBR
 		set_mbr_info(usbd, (char *)down_ram_addr, len);
+#endif
 		break;
 
 	case IMG_BOOTLOADER:
+#ifdef CONFIG_BOOTLADER_SECTOR
 		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
 				CONFIG_BOOTLOADER_SECTOR,
 				len / usbd->mmc_blk + 1,
 				(void *)down_ram_addr);
+#endif
 		break;
 
 	default:
@@ -1374,6 +1378,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	usbd = usbd_set_interface(&usbd_ops);
 	down_ram_addr = usbd->ram_addr;
 
+#ifdef CONFIG_CMD_MBR
 	/* get mbr info */
 	mbr_parts = get_mbr_table(mbr_offset);
 	if (!mbr_parts) {
@@ -1384,6 +1389,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		mbrparts = getenv("mbrparts");
 		set_mbr_info(usbd, mbrparts, strlen(mbrparts));
 	}
+#endif
 
 	/* init the usb controller */
 	if (!usbd->usb_init()) {
