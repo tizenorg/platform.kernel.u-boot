@@ -22,6 +22,8 @@ void info_action_check(void)
 		count += sprintf(buf + count, "run loaduimage; ");
 		count += sprintf(buf + count, "run sdboot; ");
 		setenv("bootcmd", buf);
+		setenv("mmcdev", "1");
+		setenv("mmcpart", "0");
 		break;
 	case INFO_ACTION_LCD_CONSOLE:
 		break;
