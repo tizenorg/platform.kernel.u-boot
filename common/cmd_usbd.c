@@ -250,21 +250,27 @@ int ubi_cmd(int part, char *p1, char *p2, char *p3)
 #endif
 
 #ifdef CONFIG_CMD_MMC
+#include <mmc.h>
 #include <fat.h>
 
-extern int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+static struct mmc *mmc;
 
-static int mmc_cmd(int ops, char *p1, char *p2, char *p3)
+static int mmc_cmd(int ops, int dev_num, ulong start, lbaint_t cnt, void *addr)
 {
 	int ret;
 
 	if (ops) {
-		char *argv[] = {"mmc", "write", "0", p1, p2, p3};
-		ret = do_mmcops(NULL, 0, 6, argv);
+		printf("mmc write 0x%x 0x%x\n", start, cnt);
+		ret = mmc->block_dev.block_write(dev_num, start, cnt, addr);
 	} else {
-		char *argv[] = {"mmc", "read", "0", p1, p2, p3};
-		ret = do_mmcops(NULL, 0, 6, argv);
+		printf("mmc read 0x%x 0x%x\n", start, cnt);
+		ret = mmc->block_dev.block_read(dev_num, start, cnt, addr);
 	}
+
+	if (ret > 0)
+		ret = 0;
+	else
+		ret = 1;
 
 	return ret;
 }
@@ -311,7 +317,6 @@ struct mul_partition_info mul_info[EXTEND_MAX_PART];
 static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 {
 	unsigned int blocks;
-	char offset[12], length[12], ramaddr[12];
 	int i;
 	int loop;
 	u32 cnt;
@@ -341,10 +346,8 @@ static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 			cnt = usbd->mmc_max;
 		}
 
-		sprintf(length, "%x", cnt);
-		sprintf(offset, "%x", cur_blk_offset);
-		sprintf(ramaddr, "0x%x", *ram_addr);
-		mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+		mmc_cmd(OPS_WRITE, usbd->mmc_dev, cur_blk_offset,
+				cnt, (void *)*ram_addr);
 
 		cur_blk_offset += cnt;
 
@@ -354,8 +357,7 @@ static int write_mmc_partition(struct usbd_ops *usbd, u32 *ram_addr, u32 len)
 	return ret;
 }
 
-static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
-		char *offset, char *length)
+static int write_file_mmc(struct usbd_ops *usbd, u32 len)
 {
 	u32 ram_addr;
 	int i;
@@ -417,10 +419,8 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 			}
 
 			/* write MBR */
-			sprintf(length, "%x", mbr_blk_size);
-			sprintf(offset, "%x", 0);
-			sprintf(ramaddr, "0x%x", (u32)ram_addr);
-			ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+			mmc_cmd(OPS_WRITE, usbd->mmc_dev, 0,
+					mbr_blk_size, (void *)ram_addr);
 
 			ram_addr += mbr_blk_size * usbd->mmc_blk;
 			len -= mbr_blk_size * usbd->mmc_blk;
@@ -553,8 +553,7 @@ static int write_file_mmc(struct usbd_ops *usbd, char *ramaddr, u32 len,
 	return 0;
 }
 
-static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
-		char *offset, char *length)
+static int write_file_mmc_part(struct usbd_ops *usbd, u32 len)
 {
 	u32 ram_addr;
 	u32 ofs;
@@ -567,11 +566,8 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 
 	if (cur_blk_offset == 0) {
 		/* read MBR */
-		sprintf(length, "%x", (unsigned int)
-			(sizeof(struct mbr)/usbd->mmc_blk));
-		sprintf(offset, "%x", 0);
-		sprintf(ramaddr, "0x%x", (u32)mbr);
-		mmc_cmd(OPS_READ, ramaddr, offset, length);
+		mmc_cmd(OPS_READ, usbd->mmc_dev, 0,
+			sizeof(struct mbr)/usbd->mmc_blk, (void *)mbr);
 
 		mbr_blk_size = mbr->parts[0].lba;
 
@@ -604,12 +600,9 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				ofs = mbr->parts[0].lba + mbr->parts[1].lba;
 				printf("P%d start blk: 0x%x, size: 0x%x\n", i,
 					ofs, mbr->parts[1].nsectors);
-				sprintf(length, "%x", (unsigned int)
-					(sizeof(struct mbr) /
-					usbd->mmc_blk));
-				sprintf(offset, "%x", ofs);
-				sprintf(ramaddr, "0x%x", (u32)mbr);
-				mmc_cmd(OPS_READ, ramaddr, offset, length);
+				mmc_cmd(OPS_READ, usbd->mmc_dev, ofs,
+					(sizeof(struct mbr) / usbd->mmc_blk),
+					(void *)mbr);
 			}
 
 			ofs = mbr->parts[0].lba + mbr->parts[1].lba;
@@ -627,12 +620,9 @@ static int write_file_mmc_part(struct usbd_ops *usbd, char *ramaddr, u32 len,
 				boot_sector *bs;
 				u32 total_sect;
 				/* modify BPB data of p1 */
-				sprintf(length, "%x", (unsigned int)
-					(sizeof(struct mbr) /
-					usbd->mmc_blk));
-				sprintf(offset, "%x", cur_blk_offset);
-				sprintf(ramaddr, "0x%x", (u32)mbr);
-				mmc_cmd(OPS_READ, ramaddr, offset, length);
+				mmc_cmd(OPS_READ, usbd->mmc_dev, cur_blk_offset,
+					(sizeof(struct mbr) / usbd->mmc_blk),
+					mbr);
 
 				bs = (boot_sector *)mbr;
 				total_sect = bs->total_sect;
@@ -711,8 +701,7 @@ static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len)
 	set_mbr_table(0x800, mbr_parts, size, mbr_offset);
 }
 
-static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr,
-		unsigned int len, char *offset, char *length, int part_num)
+static int write_mmc_image(struct usbd_ops *usbd, unsigned int len, int part_num)
 {
 	int ret = 0;
 
@@ -721,9 +710,6 @@ static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr,
 				mbr_parts, part_num);
 		return 1;
 	}
-
-	sprintf(offset, "0x%x", mbr_offset[part_num] + fs_offset);
-	sprintf(length, "0x%x", len / usbd->mmc_blk);
 
 #if 0
 	/* modify size of UMS partition */
@@ -734,7 +720,10 @@ static int write_mmc_image(struct usbd_ops *usbd, char *ramaddr,
 		bs->total_sect = usbd->mmc_total - mbr_offset[part_num];
 	}
 #endif
-	ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+	ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
+			mbr_offset[part_num] + fs_offset,
+			len / usbd->mmc_blk,
+			(void *)down_ram_addr);
 
 	fs_offset += (len / usbd->mmc_blk);
 
@@ -1309,17 +1298,15 @@ out:
 	case IMG_MMC:
 
 		if (mmc_part_write)
-			ret = write_file_mmc_part(usbd, ramaddr,
-						len, offset, length);
+			ret = write_file_mmc_part(usbd, len);
 		else
-			ret = write_file_mmc(usbd, ramaddr,
-						len, offset, length);
+			ret = write_file_mmc(usbd, len);
 
 		erase_qboot_area();
 		break;
 #endif
 	case IMG_V2:
-		ret = write_mmc_image(usbd, ramaddr, len, offset, length, part_id);
+		ret = write_mmc_image(usbd, len, part_id);
 		break;
 
 	case IMG_MBR:
@@ -1327,9 +1314,10 @@ out:
 		break;
 
 	case IMG_BOOTLOADER:
-		sprintf(offset, "0x%x", CONFIG_BOOTLOADER_SECTOR);
-		sprintf(length, "0x%x", len / usbd->mmc_blk + 1);
-		ret = mmc_cmd(OPS_WRITE, ramaddr, offset, length);
+		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
+				CONFIG_BOOTLOADER_SECTOR,
+				len / usbd->mmc_blk + 1,
+				(void *)down_ram_addr);
 		break;
 
 	default:
@@ -1402,6 +1390,8 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		usbd->down_cancel();
 		return 0;
 	}
+	mmc = find_mmc_device(usbd->mmc_dev);
+	mmc_init(mmc);
 
 	/* receive setting */
 	usbd->recv_setup(usbd->rx_data, usbd->rx_len);
