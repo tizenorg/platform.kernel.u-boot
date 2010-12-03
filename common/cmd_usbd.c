@@ -730,6 +730,29 @@ static int write_mmc_image(struct usbd_ops *usbd, unsigned int len, int part_num
 	return ret;
 }
 
+static int write_fat_file(struct usbd_ops *usbd, char *file_name,
+			int part_id, int len)
+{
+#ifdef CONFIG_FAT_WRITE
+	int ret;
+
+	ret = fat_register_device(&mmc->block_dev, part_id);
+	if (ret < 0) {
+		printf("error : fat_register_divce\n");
+		return 0;
+	}
+
+	ret = file_fat_write(file_name, down_ram_addr, len);
+	if (ret < 0) {
+		printf("error : writing uImage\n");
+		return 0;
+	}
+#else
+	printf("error: doesn't support fat_write\n");
+#endif
+	return 0;
+}
+
 static int write_file_system(char *ramaddr, ulong len, char *offset,
 		char *length, int part_num, int ubi_update)
 {
@@ -827,8 +850,6 @@ static int process_data(struct usbd_ops *usbd)
 	int ubi_update = 0;
 	int ubi_mode = 0;
 	int img_type;
-
-	block_dev_desc_t *block_dev;
 
 	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
 
@@ -1325,63 +1346,11 @@ out:
 		break;
 
 	case IMG_KERNEL_V2:
-#ifdef CONFIG_FAT_WRITE
-		if (!block_dev)
-			block_dev = mmc_get_dev(0);
-
-		if (!block_dev) {
-			printf("no mmc block dev\n");
-			ret = 0;
-			break;
-		}
-
-		ret = fat_register_device(block_dev, part_id);
-		if (ret < 0) {
-			printf("error : fat_register_divce\n");
-			ret = 0;
-			break;
-		}
-
-		ret = file_fat_write("uImage", down_ram_addr, len);
-		if (ret < 0) {
-			printf("error : writing uImage\n");
-			ret = 0;
-			break;
-		}
-#else
-		printf("error: doesn't support\n");
-		ret = 0;
-#endif
+		ret = write_fat_file(usbd, "uImage", part_id, len);
 		break;
 
 	case IMG_MODEM_V2:
-#ifdef CONFIG_FAT_WRITE
-		if (!block_dev)
-			block_dev = mmc_get_dev(0);
-
-		if (!block_dev) {
-			printf("no mmc block dev\n");
-			ret = 0;
-			break;
-		}
-
-		ret = fat_register_device(block_dev, part_id);
-		if (ret < 0) {
-			printf("error : fat_register_divce\n");
-			ret = 0;
-			break;
-		}
-
-		ret = file_fat_write("modem.bin", down_ram_addr, len);
-		if (ret < 0) {
-			printf("error : writing modem.bin\n");
-			ret = 0;
-			break;
-		}
-#else
-		printf("error: doesn't support\n");
-		ret = 0;
-#endif
+		ret = write_fat_file(usbd, "modem.bin", part_id, len);
 		break;
 
 	default:
