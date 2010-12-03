@@ -362,7 +362,7 @@
 #define CONFIG_ENV_IS_IN_MMC		1
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			4096
-#define CONFIG_ENV_OFFSET		(64 - 8)	/* 32KiB - 4KiB */
+#define CONFIG_ENV_OFFSET		((32 - 4) << 10)/* 32KiB - 4KiB */
 #endif
 
 #define CONFIG_DOS_PARTITION	1
