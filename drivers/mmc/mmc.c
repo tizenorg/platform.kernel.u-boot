@@ -32,8 +32,6 @@
 #include <linux/list.h>
 #include <div64.h>
 
-#define EXT_CSD_REV				192	/* RO */
-
 static struct list_head mmc_devices;
 static int cur_dev_num = -1;
 
