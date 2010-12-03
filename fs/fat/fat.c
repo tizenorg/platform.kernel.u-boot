@@ -42,18 +42,6 @@ static void downcase (char *str)
 	}
 }
 
-#ifdef CONFIG_FAT_WRITE
-static void uppercase (char *str, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++) {
-		TOUPPER(*str);
-		str++;
-	}
-}
-#endif
-
 static block_dev_desc_t *cur_dev = NULL;
 
 static unsigned long part_offset = 0;
@@ -79,28 +67,6 @@ static int disk_read (__u32 startblock, __u32 getsize, __u8 * bufptr)
 	}
 	return -1;
 }
-
-#ifdef CONFIG_FAT_WRITE
-static int total_sector;
-static int disk_write (__u32 startblock, __u32 getsize, __u8 * bufptr)
-{
-	if (cur_dev == NULL)
-		return -1;
-
-	if (startblock + getsize > total_sector) {
-		printf("error: overflow occurs\n");
-		return -1;
-	}
-
-	startblock += part_offset;
-
-	if (cur_dev->block_read) {
-		return cur_dev->block_write(cur_dev->dev, startblock, getsize,
-					   (unsigned long *) bufptr);
-	}
-	return -1;
-}
-#endif
 
 int fat_register_device (block_dev_desc_t * dev_desc, int part_no)
 {
@@ -212,85 +178,6 @@ static void get_name (dir_entry *dirent, char *s_name)
 	downcase(s_name);
 }
 
-#ifdef CONFIG_FAT_WRITE
-/*
- * Set short name in directory entry
- */
-static void set_name (dir_entry *dirent, const char *filename)
-{
-	char s_name[256];
-	char *period;
-	int period_location, len, i, ext_num;
-
-	if (filename == NULL)
-		return;
-
-	len = strlen(filename);
-	if (len == 0)
-		return;
-
-	memcpy(s_name, filename, len);
-	uppercase(s_name, len);
-
-	period = strchr(s_name, '.');
-	if (period == NULL) {
-		period_location = len - 1;
-		ext_num = 0;
-	} else {
-		period_location = period - s_name;
-		ext_num = len - period_location - 1;
-	}
-
-	/* Pad spaces when file name length is shortter than eight */
-	if (period_location < 8) {
-		memcpy(dirent->name, s_name, period_location);
-		for (i = period_location; i < 8; i++)
-			dirent->name[i] = ' ';
-	} else if (period_location == 8) {
-		memcpy(dirent->name, s_name, period_location);
-	} else {
-		memcpy(dirent->name, s_name, 6);
-		dirent->name[6] = '~';
-		dirent->name[7] = '1';
-	}
-
-	if (ext_num < 3) {
-		memcpy(dirent->ext, s_name + period_location + 1, ext_num);
-		for (i = ext_num; i < 3; i++)
-			dirent->name[i] = ' ';
-	} else
-		memcpy(dirent->ext, s_name + period_location + 1, 3);
-
-	debug("name : %s\n", dirent->name);
-	debug("ext : %s\n", dirent->ext);
-}
-
-/*
- * Write fat buffer into block device
- */
-static int flush_fat_buffer(fsdata *mydata)
-{
-	int getsize = FATBUFSIZE / FS_BLOCK_SIZE;
-	__u32 fatlength = mydata->fatlength;
-	__u8 *bufptr = mydata->fatbuf;
-	__u32 startblock = mydata->fatbufnum * FATBUFBLOCKS;
-
-	fatlength *= SECTOR_SIZE;
-	startblock += mydata->fat_sect;
-
-	if (getsize > fatlength)
-		getsize = fatlength;
-
-	/* Write FAT buf */
-	if (disk_write(startblock, getsize, bufptr) < 0) {
-		debug("error: writing FAT blocks\n");
-		return -1;
-	}
-
-	return 0;
-}
-#endif
-
 /*
  * Get the entry at index 'entry' in a FAT (12/16/32) table.
  * On failure 0x00 is returned.
@@ -336,13 +223,6 @@ static __u32 get_fatent (fsdata *mydata, __u32 entry)
 
 		if (getsize > fatlength)
 			getsize = fatlength;
-
-#ifdef CONFIG_FAT_WRITE
-		if (mydata->fatbufnum != -1) {
-			if (flush_fat_buffer(mydata) < 0)
-				return -1;
-		}
-#endif
 
 		if (disk_read(startblock, getsize, bufptr) < 0) {
 			debug("Error reading FAT blocks\n");
@@ -549,77 +429,6 @@ static int slot2str (dir_slot *slotptr, char *l_name, int *idx)
 	return 0;
 }
 
-#ifdef CONFIG_FAT_WRITE
-/*
- * Set the file name information from 'name' into 'slot',
- */
-static int str2slot (dir_slot *slotptr, const char *name, int *idx)
-{
-	int j, end_idx = 0;
-
-	for (j = 0; j <= 8; j += 2) {
-		if (name[*idx] == 0x00) {
-			slotptr->name0_4[j] = 0;
-			slotptr->name0_4[j + 1] = 0;
-			end_idx++;
-			goto name0_4;
-		}
-		slotptr->name0_4[j] = name[*idx];
-		(*idx)++;
-		end_idx++;
-	}
-	for (j = 0; j <= 10; j += 2) {
-		if (name[*idx] == 0x00) {
-			slotptr->name5_10[j] = 0;
-			slotptr->name5_10[j + 1] = 0;
-			end_idx++;
-			goto name5_10;
-		}
-		slotptr->name5_10[j] = name[*idx];
-		(*idx)++;
-		end_idx++;
-	}
-	for (j = 0; j <= 2; j += 2) {
-		if (name[*idx] == 0x00) {
-			slotptr->name11_12[j] = 0;
-			slotptr->name11_12[j + 1] = 0;
-			end_idx++;
-			goto name11_12;
-		}
-		slotptr->name11_12[j] = name[*idx];
-		(*idx)++;
-		end_idx++;
-	}
-
-	if (name[*idx] == 0x00)
-		return 1;
-
-	return 0;
-/* Not used characters are filled with 0xff 0xff */
-name0_4:
-	for (; end_idx < 5; end_idx++) {
-		slotptr->name0_4[end_idx * 2] = 0xff;
-		slotptr->name0_4[end_idx * 2 + 1] = 0xff;
-	}
-	end_idx = 5;
-name5_10:
-	end_idx -= 5;
-	for (; end_idx < 6; end_idx++) {
-		slotptr->name5_10[end_idx * 2] = 0xff;
-		slotptr->name5_10[end_idx * 2 + 1] = 0xff;
-	}
-	end_idx = 11;
-name11_12:
-	end_idx -= 11;
-	for (; end_idx < 2; end_idx++) {
-		slotptr->name11_12[end_idx * 2] = 0xff;
-		slotptr->name11_12[end_idx * 2 + 1] = 0xff;
-	}
-
-	return 1;
-}
-#endif
-
 /*
  * Extract the full long filename starting at 'retdent' (which is really
  * a slot) into 'l_name'. If successful also copy the real directory entry
@@ -713,38 +522,6 @@ get_vfatname (fsdata *mydata, int curclust, __u8 *cluster,
 	return 0;
 }
 
-#ifdef CONFIG_FAT_WRITE
-/*
- * Fill dir_slot entries with appropriate name, id, and attr
- * The real directory entry is returned by dentptr
- */
-static void
-fill_dir_slot (dir_entry **dentptr, const char *l_name)
-{
-	dir_slot *slotptr = (dir_slot *)get_vfatname_block;
-	__u8 counter;
-	int idx = 0, ret;
-
-	do {
-		memset(slotptr, 0x00, sizeof(dir_slot));
-		ret = str2slot(slotptr, l_name, &idx);
-		slotptr->id = ++counter;
-		slotptr->attr = ATTR_VFAT;
-		slotptr++;
-	} while (ret == 0);
-
-	slotptr--;
-	slotptr->id |= LAST_LONG_ENTRY_MASK;
-
-	while (counter >= 1) {
-		memcpy(*dentptr, slotptr, sizeof(dir_slot));
-		(*dentptr)++;
-		slotptr--;
-		counter--;
-	}
-}
-#endif
-
 /* Calculate short name checksum */
 static __u8 mkcksum (const char *str)
 {
@@ -758,20 +535,6 @@ static __u8 mkcksum (const char *str)
 
 	return ret;
 }
-
-#ifdef CONFIG_FAT_WRITE
-/*
- * Fill alias_checksum in dir_slot with calculated checksum value
- */
-static void fill_alias_checksum(dir_slot *slotptr, char *name)
-{
-	int i;
-	__u8 counter = (slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff;
-
-	for (i = 0; i < counter; i++, slotptr++)
-		slotptr->alias_checksum = mkcksum(name);
-}
-#endif
 #endif	/* CONFIG_SUPPORT_VFAT */
 
 /*
@@ -780,8 +543,6 @@ static void fill_alias_checksum(dir_slot *slotptr, char *name)
  */
 __attribute__ ((__aligned__ (__alignof__ (dir_entry))))
 __u8 get_dentfromdir_block[MAX_CLUSTSIZE];
-
-static dir_entry *empty_dentptr = NULL;
 
 static dir_entry *get_dentfromdir (fsdata *mydata, int startsect,
 				   char *filename, dir_entry *retdent,
@@ -870,7 +631,6 @@ static dir_entry *get_dentfromdir (fsdata *mydata, int startsect,
 						files, dirs);
 				}
 				debug("Dentname == NULL - %d\n", i);
-				empty_dentptr = dentptr;
 				return NULL;
 			}
 #ifdef CONFIG_SUPPORT_VFAT
@@ -962,9 +722,6 @@ read_bootsectandvi (boot_sector *bs, volume_info *volinfo, int *fatsize)
 	bs->secs_track = FAT2CPU16(bs->secs_track);
 	bs->heads = FAT2CPU16(bs->heads);
 	bs->total_sect = FAT2CPU32(bs->total_sect);
-#ifdef CONFIG_FAT_WRITE
-	total_sector = bs->total_sect;
-#endif
 
 	/* FAT32 entries */
 	if (bs->fat_length == 0) {
@@ -1027,11 +784,7 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		debug("Error: reading boot sector\n");
 		return -1;
 	}
-#ifdef CONFIG_FAT_WRITE
-	if (total_sector == 0) {
-		total_sector = next_part_offset - part_offset;
-	}
-#endif
+
 	root_cluster = bs.root_cluster;
 
 	if (mydata->fatsize == 32)
@@ -1407,6 +1160,296 @@ long file_fat_read (const char *filename, void *buffer, unsigned long maxsize)
 }
 
 #ifdef CONFIG_FAT_WRITE
+static void uppercase (char *str, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		TOUPPER(*str);
+		str++;
+	}
+}
+
+static int total_sector;
+static int disk_write (__u32 startblock, __u32 getsize, __u8 * bufptr)
+{
+	if (cur_dev == NULL)
+		return -1;
+
+	if (startblock + getsize > total_sector) {
+		printf("error: overflow occurs\n");
+		return -1;
+	}
+
+	startblock += part_offset;
+
+	if (cur_dev->block_read) {
+		return cur_dev->block_write(cur_dev->dev, startblock, getsize,
+					   (unsigned long *) bufptr);
+	}
+	return -1;
+}
+
+/*
+ * Set short name in directory entry
+ */
+static void set_name (dir_entry *dirent, const char *filename)
+{
+	char s_name[256];
+	char *period;
+	int period_location, len, i, ext_num;
+
+	if (filename == NULL)
+		return;
+
+	len = strlen(filename);
+	if (len == 0)
+		return;
+
+	memcpy(s_name, filename, len);
+	uppercase(s_name, len);
+
+	period = strchr(s_name, '.');
+	if (period == NULL) {
+		period_location = len - 1;
+		ext_num = 0;
+	} else {
+		period_location = period - s_name;
+		ext_num = len - period_location - 1;
+	}
+
+	/* Pad spaces when file name length is shortter than eight */
+	if (period_location < 8) {
+		memcpy(dirent->name, s_name, period_location);
+		for (i = period_location; i < 8; i++)
+			dirent->name[i] = ' ';
+	} else if (period_location == 8) {
+		memcpy(dirent->name, s_name, period_location);
+	} else {
+		memcpy(dirent->name, s_name, 6);
+		dirent->name[6] = '~';
+		dirent->name[7] = '1';
+	}
+
+	if (ext_num < 3) {
+		memcpy(dirent->ext, s_name + period_location + 1, ext_num);
+		for (i = ext_num; i < 3; i++)
+			dirent->name[i] = ' ';
+	} else
+		memcpy(dirent->ext, s_name + period_location + 1, 3);
+
+	debug("name : %s\n", dirent->name);
+	debug("ext : %s\n", dirent->ext);
+}
+
+/*
+ * Write fat buffer into block device
+ */
+static int flush_fat_buffer(fsdata *mydata)
+{
+	int getsize = FATBUFSIZE / FS_BLOCK_SIZE;
+	__u32 fatlength = mydata->fatlength;
+	__u8 *bufptr = mydata->fatbuf;
+	__u32 startblock = mydata->fatbufnum * FATBUFBLOCKS;
+
+	fatlength *= SECTOR_SIZE;
+	startblock += mydata->fat_sect;
+
+	if (getsize > fatlength)
+		getsize = fatlength;
+
+	/* Write FAT buf */
+	if (disk_write(startblock, getsize, bufptr) < 0) {
+		debug("error: writing FAT blocks\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_SUPPORT_VFAT
+/*
+ * Set the file name information from 'name' into 'slot',
+ */
+static int str2slot (dir_slot *slotptr, const char *name, int *idx)
+{
+	int j, end_idx = 0;
+
+	for (j = 0; j <= 8; j += 2) {
+		if (name[*idx] == 0x00) {
+			slotptr->name0_4[j] = 0;
+			slotptr->name0_4[j + 1] = 0;
+			end_idx++;
+			goto name0_4;
+		}
+		slotptr->name0_4[j] = name[*idx];
+		(*idx)++;
+		end_idx++;
+	}
+	for (j = 0; j <= 10; j += 2) {
+		if (name[*idx] == 0x00) {
+			slotptr->name5_10[j] = 0;
+			slotptr->name5_10[j + 1] = 0;
+			end_idx++;
+			goto name5_10;
+		}
+		slotptr->name5_10[j] = name[*idx];
+		(*idx)++;
+		end_idx++;
+	}
+	for (j = 0; j <= 2; j += 2) {
+		if (name[*idx] == 0x00) {
+			slotptr->name11_12[j] = 0;
+			slotptr->name11_12[j + 1] = 0;
+			end_idx++;
+			goto name11_12;
+		}
+		slotptr->name11_12[j] = name[*idx];
+		(*idx)++;
+		end_idx++;
+	}
+
+	if (name[*idx] == 0x00)
+		return 1;
+
+	return 0;
+/* Not used characters are filled with 0xff 0xff */
+name0_4:
+	for (; end_idx < 5; end_idx++) {
+		slotptr->name0_4[end_idx * 2] = 0xff;
+		slotptr->name0_4[end_idx * 2 + 1] = 0xff;
+	}
+	end_idx = 5;
+name5_10:
+	end_idx -= 5;
+	for (; end_idx < 6; end_idx++) {
+		slotptr->name5_10[end_idx * 2] = 0xff;
+		slotptr->name5_10[end_idx * 2 + 1] = 0xff;
+	}
+	end_idx = 11;
+name11_12:
+	end_idx -= 11;
+	for (; end_idx < 2; end_idx++) {
+		slotptr->name11_12[end_idx * 2] = 0xff;
+		slotptr->name11_12[end_idx * 2 + 1] = 0xff;
+	}
+
+	return 1;
+}
+
+/*
+ * Fill dir_slot entries with appropriate name, id, and attr
+ * The real directory entry is returned by dentptr
+ */
+static void
+fill_dir_slot (dir_entry **dentptr, const char *l_name)
+{
+	dir_slot *slotptr = (dir_slot *)get_vfatname_block;
+	__u8 counter;
+	int idx = 0, ret;
+
+	do {
+		memset(slotptr, 0x00, sizeof(dir_slot));
+		ret = str2slot(slotptr, l_name, &idx);
+		slotptr->id = ++counter;
+		slotptr->attr = ATTR_VFAT;
+		slotptr++;
+	} while (ret == 0);
+
+	slotptr--;
+	slotptr->id |= LAST_LONG_ENTRY_MASK;
+
+	while (counter >= 1) {
+		memcpy(*dentptr, slotptr, sizeof(dir_slot));
+		(*dentptr)++;
+		slotptr--;
+		counter--;
+	}
+}
+
+/*
+ * Fill alias_checksum in dir_slot with calculated checksum value
+ */
+static void fill_alias_checksum(dir_slot *slotptr, char *name)
+{
+	int i;
+	__u8 counter = (slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff;
+
+	for (i = 0; i < counter; i++, slotptr++)
+		slotptr->alias_checksum = mkcksum(name);
+}
+
+static int
+get_long_file_name (fsdata *mydata, int curclust, __u8 *cluster,
+	      dir_entry **retdent, char *l_name)
+{
+	dir_entry *realdent;
+	dir_slot *slotptr = (dir_slot *)(*retdent);
+	__u8 *nextclust = cluster + mydata->clust_size * SECTOR_SIZE;
+	__u8 counter = (slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff;
+	int idx = 0;
+
+	while ((__u8 *)slotptr < nextclust) {
+		if (counter == 0)
+			break;
+		if (((slotptr->id & ~LAST_LONG_ENTRY_MASK) & 0xff) != counter)
+			return -1;
+		slotptr++;
+		counter--;
+	}
+
+	if ((__u8 *)slotptr >= nextclust) {
+		dir_slot *slotptr2;
+
+		slotptr--;
+		curclust = get_fatent(mydata, curclust);
+		if (CHECK_CLUST(curclust, mydata->fatsize)) {
+			debug("curclust: 0x%x\n", curclust);
+			printf("Invalid FAT entry\n");
+			return -1;
+		}
+
+		if (get_cluster(mydata, curclust, get_vfatname_block,
+				mydata->clust_size * SECTOR_SIZE) != 0) {
+			debug("Error: reading directory block\n");
+			return -1;
+		}
+
+		slotptr2 = (dir_slot *)get_vfatname_block;
+		while (slotptr2->id > 0x01)
+			slotptr2++;
+
+		/* Save the real directory entry */
+		realdent = (dir_entry *)slotptr2 + 1;
+		while ((__u8 *)slotptr2 >= get_vfatname_block) {
+			slot2str(slotptr2, l_name, &idx);
+			slotptr2--;
+		}
+	} else {
+		/* Save the real directory entry */
+		realdent = (dir_entry *)slotptr;
+	}
+
+	do {
+		slotptr--;
+		if (slot2str(slotptr, l_name, &idx))
+			break;
+	} while (!(slotptr->id & LAST_LONG_ENTRY_MASK));
+
+	l_name[idx] = '\0';
+	if (*l_name == DELETED_FLAG)
+		*l_name = '\0';
+	else if (*l_name == aRING)
+		*l_name = DELETED_FLAG;
+	downcase(l_name);
+
+	/* Return the real directory entry */
+	*retdent = realdent;
+
+	return 0;
+}
+
+#endif
 /*
  * Set the entry at index 'entry' in a FAT (16/32) table.
  */
@@ -1468,19 +1511,61 @@ static int set_fatent_value (fsdata *mydata, __u32 entry, __u32 entry_value)
 	return 0;
 }
 
+static int writeback_fatbuf(fsdata *mydata, __u32 entry)
+{
+	__u32 bufnum, offset;
+	int getsize = FATBUFSIZE / FS_BLOCK_SIZE;
+	__u8 *bufptr = mydata->fatbuf;
+	__u32 fatlength = mydata->fatlength;
+	__u32 startblock = bufnum * FATBUFBLOCKS;
+
+	switch (mydata->fatsize) {
+	case 32:
+		bufnum = entry / FAT32BUFSIZE;
+		offset = entry - bufnum * FAT32BUFSIZE;
+		break;
+	case 16:
+		bufnum = entry / FAT16BUFSIZE;
+		offset = entry - bufnum * FAT16BUFSIZE;
+		break;
+	default:
+		/* Unsupported FAT size */
+		return -1;
+	}
+
+	/* Read a new block of FAT entries into the cache. */
+	if (bufnum != mydata->fatbufnum) {
+		fatlength *= SECTOR_SIZE;
+		startblock += mydata->fat_sect;
+
+		if (getsize > fatlength)
+			getsize = fatlength;
+
+		if (mydata->fatbufnum != -1) {
+			if (flush_fat_buffer(mydata) < 0)
+				return -1;
+		}
+		debug("bufnum : %d, offset : %d\n", bufnum, offset);
+	}
+
+	return 0;
+}
+
 /*
  * Determine the entry value at index 'entry' in a FAT (16/32) table
  */
 static __u32 determine_fatent (fsdata *mydata, __u32 entry)
 {
-	__u32 next_fat, next_entry = entry;
+	__u32 next_fat, next_entry = entry + 1;
 
 	while (1) {
-		next_fat = get_fatent(mydata, ++next_entry);
+		writeback_fatbuf(mydata, next_entry);
+		next_fat = get_fatent(mydata, next_entry);
 		if (next_fat == 0) {
 			set_fatent_value(mydata, entry, next_entry);
 			break;
 		}
+		next_entry++;
 	}
 	debug("FAT%d: entry: %08x, entry_value: %04x\n",
 	       mydata->fatsize, entry, next_entry);
@@ -1552,7 +1637,7 @@ static int find_empty_cluster(fsdata *mydata)
  */
 static int clear_fatent(fsdata *mydata, __u32 entry)
 {
-	__u32 fat_val;
+	__u32 fat_val, initial_fatbufnum = 0;
 
 	while (1) {
 		fat_val = get_fatent(mydata, entry);
@@ -1561,8 +1646,16 @@ static int clear_fatent(fsdata *mydata, __u32 entry)
 
 		if (fat_val == 0xfffffff || fat_val == 0xffff)
 			break;
-		entry++;
+
+		writeback_fatbuf(mydata, fat_val);
+		entry = fat_val;
 	}
+
+	/* Flush fat buffer */
+	if (flush_fat_buffer(mydata) < 0)
+		return -1;
+
+	mydata->fatbufnum = initial_fatbufnum;
 
 	return 0;
 }
@@ -1696,6 +1789,92 @@ static int check_overflow(fsdata *mydata, __u32 clustnum, unsigned long size)
 	return 0;
 }
 
+static dir_entry *empty_dentptr = NULL;
+
+static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
+				   char *filename, dir_entry *retdent)
+{
+	__u16 prevcksum = 0xffff;
+	__u32 curclust = startsect;
+	int files = 0, dirs = 0;
+
+	debug("get_dentfromdir: %s\n", filename);
+
+	while (1) {
+		dir_entry *dentptr;
+
+		int i;
+
+		if (disk_read(curclust, mydata->clust_size,
+			    get_dentfromdir_block) < 0) {
+			printf("Error: reading directory block\n");
+			return NULL;
+		}
+
+		dentptr = (dir_entry *)get_dentfromdir_block;
+
+		for (i = 0; i < DIRENTSPERCLUST; i++) {
+			char s_name[14], l_name[256];
+
+			l_name[0] = '\0';
+			if (dentptr->name[0] == DELETED_FLAG) {
+				dentptr++;
+				continue;
+			}
+			if ((dentptr->attr & ATTR_VOLUME)) {
+#ifdef CONFIG_SUPPORT_VFAT
+				if ((dentptr->attr & ATTR_VFAT) &&
+				    (dentptr-> name[0] & LAST_LONG_ENTRY_MASK)) {
+					prevcksum = ((dir_slot *)dentptr)->alias_checksum;
+					get_long_file_name(mydata, curclust,
+						     get_dentfromdir_block,
+						     &dentptr, l_name);
+					debug("vfatname: |%s|\n", l_name);
+				} else
+#endif
+				{
+					/* Volume label or VFAT entry */
+					dentptr++;
+					continue;
+				}
+			}
+			if (dentptr->name[0] == 0) {
+				debug("Dentname == NULL - %d\n", i);
+				empty_dentptr = dentptr;
+				return NULL;
+			}
+
+			get_name(dentptr, s_name);
+
+			if (strcmp(filename, s_name)
+			    && strcmp(filename, l_name)) {
+				debug("Mismatch: |%s|%s|\n", s_name, l_name);
+				dentptr++;
+				continue;
+			}
+
+			memcpy(retdent, dentptr, sizeof(dir_entry));
+
+			debug("DentName: %s", s_name);
+			debug(", start: 0x%x", START(dentptr));
+			debug(", size:  0x%x %s\n",
+			      FAT2CPU32(dentptr->size),
+			      (dentptr->attr & ATTR_DIR) ? "(DIR)" : "");
+
+			return dentptr;
+		}
+
+		curclust = get_fatent(mydata, curclust);
+		if (CHECK_CLUST(curclust, mydata->fatsize)) {
+			debug("curclust: 0x%x\n", curclust);
+			printf("Invalid FAT entry\n");
+			return NULL;
+		}
+	}
+
+	return NULL;
+}
+
 static int do_fat_write (const char *filename, void *buffer,
 	unsigned long size)
 {
@@ -1716,6 +1895,7 @@ static int do_fat_write (const char *filename, void *buffer,
 		return 0;
 	}
 
+	total_sector = bs.total_sect;
 	if (total_sector == 0) {
 		total_sector = next_part_offset - part_offset;
 	}
@@ -1761,8 +1941,8 @@ static int do_fat_write (const char *filename, void *buffer,
 	name_len = strlen(filename);
 	memcpy(l_filename, filename, name_len);
 	downcase(l_filename);
-	retdent = get_dentfromdir(mydata, startsect,
-				l_filename, dentptr, LS_NO);
+	retdent = find_directory_entry(mydata, startsect,
+				l_filename, dentptr);
 	if (retdent) {
 		/* Update file size and start_cluster in a directory entry */
 		retdent->size = cpu_to_le32(size);
@@ -1782,10 +1962,6 @@ static int do_fat_write (const char *filename, void *buffer,
 			printf("error: clearing FAT entries\n");
 			return 0;
 		}
-
-		/* Flush fat buffer */
-		if (flush_fat_buffer(mydata) < 0)
-			return 0;
 
 		ret = set_contents(mydata, retdent, buffer, size);
 		if (ret < 0) {
