@@ -148,6 +148,6 @@ void env_relocate_spec(void)
 static void use_default()
 {
 	puts ("*** Warning - bad CRC or MMC, using default environment\n\n");
-	set_default_env();
+	set_default_env(NULL);
 }
 #endif
