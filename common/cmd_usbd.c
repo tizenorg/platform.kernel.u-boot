@@ -1345,7 +1345,7 @@ out:
 		break;
 
 	case IMG_BOOTLOADER:
-#ifdef CONFIG_BOOTLADER_SECTOR
+#ifdef CONFIG_BOOTLOADER_SECTOR
 		erase_env_area(usbd);
 
 		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
