@@ -998,14 +998,12 @@ static int process_data(struct usbd_ops *usbd)
 
 	case COMMAND_WRITE_IMG_2:
 		printf("COMMAND_WRITE_KERNEL\n");
-		/* TODO: Not support yet, just return */
 		img_type = IMG_KERNEL_V2;
 		part_id = 2;
 		break;
 
 	case COMMAND_WRITE_IMG_3:
 		printf("COMMAND_WRITE_MODEM\n");
-		/* TODO: Not support yet, just return */
 		img_type = IMG_MODEM_V2;
 		part_id = 2;
 		break;
