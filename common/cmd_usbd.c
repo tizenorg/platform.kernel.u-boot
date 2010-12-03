@@ -833,6 +833,33 @@ static void erase_qboot_area(void)
 	}
 }
 
+/* Erase the environment */
+static void erase_env_area(struct usbd_ops *usbd)
+{
+#if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
+	int param_id;
+	char offset[12], length[12];
+
+	param_id = get_part_id("params");
+
+	if (param_id == -1) {
+		sprintf(offset, "%x", CONFIG_ENV_ADDR);
+		sprintf(length, "%x", CONFIG_ENV_SIZE);
+	} else {
+		sprintf(offset, "%x", parts[param_id]->offset);
+		sprintf(length, "%x", parts[param_id]->size);
+	}
+	nand_cmd(0, offset, length, NULL);
+#elif defined(CONFIG_ENV_IS_IN_MMC)
+	char buf[usbd->mmc_blk];
+
+	memset(buf, 0x0, usbd->mmc_blk);
+	mmc_cmd(OPS_WRITE, CONFIG_SYS_MMC_ENV_DEV,
+			CONFIG_ENV_OFFSET / usbd->mmc_blk,
+			1, (void *)buf);
+#endif
+}
+
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
@@ -1181,22 +1208,9 @@ static int process_data(struct usbd_ops *usbd)
 			}
 		}
 #endif
-#if defined(CONFIG_ENV_IS_IN_NAND) || defined(CONFIG_ENV_IS_IN_ONENAND)
-		/* Erase the environment also when write bootloader */
-		{
-			int param_id;
-			param_id = get_part_id("params");
 
-			if (param_id == -1) {
-				sprintf(offset, "%x", CONFIG_ENV_ADDR);
-				sprintf(length, "%x", CONFIG_ENV_SIZE);
-			} else {
-				sprintf(offset, "%x", parts[param_id]->offset);
-				sprintf(length, "%x", parts[param_id]->size);
-			}
-			nand_cmd(0, offset, length, NULL);
-		}
-#endif
+		erase_env_area(usbd);
+
 		sprintf(offset, "%x", (uint)ofs);
 		if (ofs != 0)
 			sprintf(length, "%x", parts[part_id]->size - (uint)ofs);
@@ -1332,6 +1346,8 @@ out:
 
 	case IMG_BOOTLOADER:
 #ifdef CONFIG_BOOTLADER_SECTOR
+		erase_env_area(usbd);
+
 		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
 				CONFIG_BOOTLOADER_SECTOR,
 				len / usbd->mmc_blk + 1,
