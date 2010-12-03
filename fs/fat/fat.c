@@ -88,7 +88,7 @@ static int disk_write (__u32 startblock, __u32 getsize, __u8 * bufptr)
 		return -1;
 
 	if (startblock + getsize > total_sector) {
-		debug("error: overflow occurs\n");
+		printf("error: overflow occurs\n");
 		return -1;
 	}
 
@@ -390,8 +390,8 @@ static __u32 get_fatent (fsdata *mydata, __u32 entry)
 		}
 		break;
 	}
-	debug("FAT%d: ret: %08x, offset: %04x\n",
-	       mydata->fatsize, ret, offset);
+	debug("FAT%d: ret: %08x, entry: %08x, offset: %04x\n",
+	       mydata->fatsize, ret, entry, offset);
 
 	return ret;
 }
@@ -1013,7 +1013,11 @@ do_fat_read (const char *filename, void *buffer, unsigned long maxsize,
 		debug("Error: reading boot sector\n");
 		return -1;
 	}
-
+#ifdef CONFIG_FAT_WRITE
+	if (total_sector == 0) {
+		total_sector = next_part_offset - part_offset;
+	}
+#endif
 	root_cluster = bs.root_cluster;
 
 	if (mydata->fatsize == 32)
