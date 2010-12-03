@@ -1325,6 +1325,7 @@ out:
 		break;
 
 	case IMG_KERNEL_V2:
+#ifdef CONFIG_FAT_WRITE
 		if (!block_dev)
 			block_dev = mmc_get_dev(0);
 
@@ -1347,9 +1348,14 @@ out:
 			ret = 0;
 			break;
 		}
+#else
+		printf("error: doesn't support\n");
+		ret = 0;
+#endif
 		break;
 
 	case IMG_MODEM_V2:
+#ifdef CONFIG_FAT_WRITE
 		if (!block_dev)
 			block_dev = mmc_get_dev(0);
 
@@ -1372,6 +1378,10 @@ out:
 			ret = 0;
 			break;
 		}
+#else
+		printf("error: doesn't support\n");
+		ret = 0;
+#endif
 		break;
 
 	default:
