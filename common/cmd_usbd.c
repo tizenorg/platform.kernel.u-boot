@@ -165,12 +165,6 @@ static void boot_cmd(char *addr)
 	do_bootm(NULL, 0, 2, argv);
 }
 
-static void run_cmd(char *cmd)
-{
-	char *argv[] = { "run", cmd };
-	do_run(NULL, 0, 2, argv);
-}
-
 #if defined(CONFIG_CMD_NAND)
 extern int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 #elif defined(CONFIG_CMD_ONENAND)
@@ -742,7 +736,7 @@ static int write_fat_file(struct usbd_ops *usbd, char *file_name,
 		return 0;
 	}
 
-	ret = file_fat_write(file_name, down_ram_addr, len);
+	ret = file_fat_write(file_name, (void *)down_ram_addr, len);
 	if (ret < 0) {
 		printf("error : writing uImage\n");
 		return 0;
@@ -1101,7 +1095,7 @@ static int process_data(struct usbd_ops *usbd)
 			down_ram_addr = usbd->ram_addr;
 		} else {
 			down_ram_addr = CONFIG_RAMDISK_ADDR;
-			run_cmd("ramboot");
+			run_command("run ramboot", 0);
 		}
 #endif
 		return 1;
