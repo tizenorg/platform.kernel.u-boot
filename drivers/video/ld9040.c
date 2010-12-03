@@ -390,17 +390,15 @@ void ld9040_cfg_ldo(void)
 	udelay(120);
 }
 
-void ld9040_enable_ldo(unsigned int onoff)
+void ld9040_enable_ldo(unsigned int on)
 {
 	char ret = 0;
-	if (onoff) {
+
+	if (on)
 		ld9040_panel_send_sequence(SEQ_DISPON, ARRAY_SIZE(SEQ_DISPON));
-	}
 
 	ret = ld9040_spi_read(SEQ_ID1, ARRAY_SIZE(SEQ_ID1));
-	if (ret == 0)
-		printf("LD9040 Module manufacturer ID: unknown\n");
-	else {
+	if (ret) {
 		printf("OLED Module manufacturer : \t%x\n", ret);
 		ret = ld9040_spi_read(SEQ_ID2, ARRAY_SIZE(SEQ_ID2));
 		printf("OLED Module/driver version : \t%x\n", ret);
@@ -413,7 +411,7 @@ void ld9040_enable_ldo(unsigned int onoff)
 void ld9040_set_platform_data(struct spi_platform_data *pd)
 {
 	if (pd == NULL) {
-		printf("pd is NULL.\n");
+		puts("pd is NULL.\n");
 		return;
 	}
 
