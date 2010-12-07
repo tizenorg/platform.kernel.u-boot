@@ -242,7 +242,7 @@
 #define CONFIG_BOOTLOADER_SECTOR 0x80
 
 #define CONFIG_BOOTARGS		"Please use defined boot"
-#define CONFIG_BOOTCOMMAND	"run ubifsboot"
+#define CONFIG_BOOTCOMMAND	"run mmcboot"
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
 #ifdef CONFIG_SBOOT
 #define CONFIG_ENV_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=4 ubi.mtd=7"
