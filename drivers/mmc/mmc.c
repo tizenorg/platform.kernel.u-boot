@@ -1010,6 +1010,8 @@ void print_mmc_devices(char separator)
 
 		printf("%s: %d", m->name, m->block_dev.dev);
 
+		mmc_init(m);
+
 		if (entry->next != &mmc_devices)
 			printf("%c ", separator);
 	}
