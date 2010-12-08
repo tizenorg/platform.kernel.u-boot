@@ -207,7 +207,7 @@ static void ebr_show(struct mmc *mmc, struct mbr_partition *mp, int ebr_next)
 {
 	struct mbr *ebr;
 	struct mbr_partition *p;
-	char buf[512], msg[512];
+	char buf[512];
 	int ret, i, sector, cylinder;
 	int lba = 0;
 
