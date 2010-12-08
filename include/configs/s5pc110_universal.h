@@ -139,6 +139,7 @@
 #define CONFIG_CMD_DEVICE_POWER
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_RAMOOPS
+#define CONFIG_INFO_ACTION
 
 /* disabled commands */
 //#define CONFIG_CMD_GPIO

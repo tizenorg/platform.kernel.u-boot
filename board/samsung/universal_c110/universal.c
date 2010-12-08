@@ -2563,6 +2563,10 @@ int misc_init_r(void)
 	/* check fsa9480 */
 	check_micro_usb(0);
 
+#ifdef CONFIG_INFO_ACTION
+	info_action_check();
+#endif
+
 	return 0;
 }
 #endif

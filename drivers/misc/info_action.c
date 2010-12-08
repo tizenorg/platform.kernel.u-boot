@@ -26,8 +26,10 @@ void info_action_check(void)
 		setenv("mmcpart", "0");
 		break;
 	case INFO_ACTION_LCD_CONSOLE:
+		printf("lcd console mode\n");
 		break;
 	case INFO_ACTION_UMS:
+		printf("ums mode\n");
 		break;
 	default:
 		break;
