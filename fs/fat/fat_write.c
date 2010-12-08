@@ -475,7 +475,7 @@ static int set_fatent_value (fsdata *mydata, __u32 entry, __u32 entry_value)
 		((__u32 *) mydata->fatbuf)[offset] = cpu_to_le32(entry_value);
 		break;
 	case 16:
-		((__u32 *) mydata->fatbuf)[offset] = cpu_to_le16(entry_value);
+		((__u16 *) mydata->fatbuf)[offset] = cpu_to_le16(entry_value);
 		break;
 	default:
 		return -1;
@@ -533,8 +533,9 @@ set_cluster (fsdata *mydata, __u32 clustnum, __u8 *buffer,
 	if (size % FS_BLOCK_SIZE) {
 		__u8 tmpbuf[FS_BLOCK_SIZE];
 
-		memcpy(tmpbuf, buffer, size % FS_BLOCK_SIZE);
 		idx = size / FS_BLOCK_SIZE;
+		buffer += idx * FS_BLOCK_SIZE;
+		memcpy(tmpbuf, buffer, size % FS_BLOCK_SIZE);
 
 		if (disk_write(startsect + idx, 1, tmpbuf) < 0) {
 			debug("Error writing data\n");
@@ -575,6 +576,8 @@ static int clear_fatent(fsdata *mydata, __u32 entry)
 		fat_val = get_fatent_value(mydata, entry);
 		if (fat_val != 0)
 			set_fatent_value(mydata, entry, 0);
+		else
+			break;
 
 		if (fat_val == 0xfffffff || fat_val == 0xffff)
 			break;

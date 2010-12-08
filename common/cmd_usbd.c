@@ -40,12 +40,6 @@ static unsigned int part_id;
 static unsigned int write_part = 0;
 static unsigned int fs_offset = 0x0;
 
-#ifdef CONFIG_USE_YAFFS
-static unsigned int yaffs_len = 0;
-static unsigned char yaffs_data[2112];
-#define YAFFS_PAGE 2112
-#endif
-
 #define NAND_PAGE_SIZE 2048
 
 static unsigned long down_ram_addr;
@@ -750,10 +744,6 @@ static int write_fat_file(struct usbd_ops *usbd, char *file_name,
 static int write_file_system(char *ramaddr, ulong len, char *offset,
 		char *length, int part_num, int ubi_update)
 {
-#ifdef CONFIG_USE_YAFFS
-	int actual_len = 0;
-	int yaffs_write = 0;
-#endif
 	int ret = 0;
 
 #ifdef CONFIG_CMD_UBI
@@ -772,41 +762,11 @@ static int write_file_system(char *ramaddr, ulong len, char *offset,
 		nand_cmd(0, offset, length, NULL);
 	}
 
-#ifdef CONFIG_USE_YAFFS
-	/* if using yaffs, wirte size must be 2112*X
-	 * so, must have to realloc, and writing */
-	if (!strcmp("yaffs", getenv(parts[part_num]->name))) {
-		yaffs_write = 1;
-
-		memcpy((void *)down_ram_addr, yaffs_data, yaffs_len);
-
-		actual_len = len + yaffs_len;
-		yaffs_len = actual_len % YAFFS_PAGE;
-		len = actual_len - yaffs_len;
-
-		memset(yaffs_data, 0x00, YAFFS_PAGE);
-		memcpy(yaffs_data, (char *)down_ram_addr + len, yaffs_len);
-	}
-#endif
-
 	sprintf(offset, "0x%x", (uint)(parts[part_num]->offset + fs_offset));
 	sprintf(length, "0x%x", (uint)len);
 
-#ifdef CONFIG_USE_YAFFS
-	if (yaffs_write)
-		ret = nand_cmd(2, ramaddr, offset, length);
-	else
-		ret = nand_cmd(1, ramaddr, offset, length);
-
-	if (!strcmp("yaffs", getenv(parts[part_num]->name)))
-		fs_offset += len / YAFFS_PAGE * NAND_PAGE_SIZE;
-	else
-		fs_offset += len;
-
-#else
 	fs_offset += len;
 	ret = nand_cmd(1, ramaddr, offset, length);
-#endif
 
 	return ret;
 }
@@ -860,6 +820,22 @@ static void erase_env_area(struct usbd_ops *usbd)
 #endif
 }
 
+static inline void send_ack(struct usbd_ops *usbd, int data)
+{
+	*((ulong *) usbd->tx_data) = data;
+	usbd->send_data(usbd->tx_data, usbd->tx_len);
+}
+
+static inline int check_mmc_device(struct usbd_ops *usbd)
+{
+	if (usbd->mmc_total)
+		return 0;
+
+	printf("\nError: Couldn't find the MMC device\n");
+	send_ack(usbd, STATUS_ERROR);
+	return 1;
+}
+
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
@@ -889,11 +865,6 @@ static int process_data(struct usbd_ops *usbd)
 	case COMMAND_DOWNLOAD_IMAGE:
 		printf("\nCOMMAND_DOWNLOAD_IMAGE\n");
 
-#ifdef CONFIG_USE_YAFFS
-		usbd->recv_setup((char *)down_ram_addr + yaffs_len, (int)len);
-		printf("Download to 0x%08x, %d bytes\n",
-				(uint)down_ram_addr + yaffs_len, (int)len);
-#else
 		if (arg)
 			down_ram_addr = usbd->ram_addr + 0x1000000;
 		else
@@ -902,9 +873,9 @@ static int process_data(struct usbd_ops *usbd)
 		usbd->recv_setup((char *)down_ram_addr, (int)len);
 		printf("Download to 0x%08x, %d bytes\n",
 				(uint)down_ram_addr, (int)len);
-#endif
+
 		/* response */
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, STATUS_DONE);
 
 		/* Receive image by using dma */
 		recvlen = usbd->recv_data();
@@ -913,11 +884,10 @@ static int process_data(struct usbd_ops *usbd)
 					(int)recvlen, (int)len);
 
 			/* Retry this commad */
-			*((ulong *) usbd->tx_data) = STATUS_RETRY;
+			send_ack(usbd, STATUS_RETRY);
 		} else
-			*((ulong *) usbd->tx_data) = STATUS_DONE;
+			send_ack(usbd, STATUS_DONE);
 
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
 		return 1;
 
 	/* Report partition info */
@@ -958,8 +928,7 @@ static int process_data(struct usbd_ops *usbd)
 		printf("COMMAND_PARTITION_SYNC - Part%d, %d blocks\n",
 				part_id, blocks);
 
-		*((ulong *) usbd->tx_data) = blocks;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, blocks);
 		return 1;
 
 	case COMMAND_WRITE_PART_0:
@@ -1082,9 +1051,8 @@ static int process_data(struct usbd_ops *usbd)
 			ret = 1;
 		}
 
-		*((ulong *) usbd->tx_data) = ret;
 		/* Write image success -> Report status */
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, ret);
 
 		return !ret;
 	/* Download complete -> reset */
@@ -1133,8 +1101,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		usbd_phone_down();
 
-		*((ulong *) usbd->tx_data) = STATUS_DONE;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, STATUS_DONE);
 		return 1;
 
 	case COMMAND_CHANGE_USB:
@@ -1187,8 +1154,7 @@ static int process_data(struct usbd_ops *usbd)
 					s5p_get_cpu_rev() == 2 ? "-Fused" : "",
 					img_rev ? "EVT1" : "EVT0",
 					img_rev == 2 ? "-Fused" : "");
-				*((ulong *) usbd->tx_data) = STATUS_ERROR;
-				usbd->send_data(usbd->tx_data, usbd->tx_len);
+				send_ack(usbd, STATUS_ERROR);
 				return 0;
 			}
 		}
@@ -1202,8 +1168,7 @@ static int process_data(struct usbd_ops *usbd)
 				printf("\n!!! ERROR !!!\n"
 					"Please download the u-boot.bin.\n"
 					"Other images are not allowed.\n\n");
-				*((ulong *) usbd->tx_data) = STATUS_ERROR;
-				usbd->send_data(usbd->tx_data, usbd->tx_len);
+				send_ack(usbd, STATUS_ERROR);
 				return 0;
 			}
 		}
@@ -1325,6 +1290,8 @@ out:
 
 #ifdef CONFIG_CMD_MMC
 	case IMG_MMC:
+		if (check_mmc_device(usbd))
+			return 0;
 
 		if (mmc_part_write)
 			ret = write_file_mmc_part(usbd, len);
@@ -1335,16 +1302,25 @@ out:
 		break;
 #endif
 	case IMG_V2:
+		if (check_mmc_device(usbd))
+			return 0;
+
 		ret = write_mmc_image(usbd, len, part_id);
 		break;
 
 	case IMG_MBR:
+		if (check_mmc_device(usbd))
+			return 0;
+
 #ifdef CONFIG_CMD_MBR
 		set_mbr_info(usbd, (char *)down_ram_addr, len);
 #endif
 		break;
 
 	case IMG_BOOTLOADER:
+		if (check_mmc_device(usbd))
+			return 0;
+
 #ifdef CONFIG_BOOTLOADER_SECTOR
 		erase_env_area(usbd);
 
@@ -1356,10 +1332,16 @@ out:
 		break;
 
 	case IMG_KERNEL_V2:
+		if (check_mmc_device(usbd))
+			return 0;
+
 		ret = write_fat_file(usbd, "uImage", part_id, len);
 		break;
 
 	case IMG_MODEM_V2:
+		if (check_mmc_device(usbd))
+			return 0;
+
 		ret = write_fat_file(usbd, "modem.bin", part_id, len);
 		break;
 
@@ -1370,14 +1352,10 @@ out:
 
 	if (ret) {
 		/* Retry this commad */
-		*((ulong *) usbd->tx_data) = STATUS_RETRY;
-		usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, STATUS_RETRY);
 		return 1;
 	} else
-		*((ulong *) usbd->tx_data) = STATUS_DONE;
-
-	/* Write image success -> Report status */
-	usbd->send_data(usbd->tx_data, usbd->tx_len);
+		send_ack(usbd, STATUS_DONE);
 
 	write_part++;
 
@@ -1385,9 +1363,6 @@ out:
 	if (flag) {
 		write_part = 0;
 		fs_offset = 0;
-#ifdef CONFIG_USE_YAFFS
-		yaffs_len = 0;
-#endif
 	}
 
 	return 1;

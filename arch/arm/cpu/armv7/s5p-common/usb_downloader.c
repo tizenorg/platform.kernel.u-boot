@@ -68,12 +68,19 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 		return;
 
 	usbd->mmc_dev = 0;
-	/* FIXME */
-	usbd->mmc_max = 0x8000;
 
 	mmc = find_mmc_device(usbd->mmc_dev);
 	mmc_init(mmc);
 
+	if (!mmc->read_bl_len) {
+		mmc_type = -1;
+		usbd->mmc_max = 0;
+		usbd->mmc_total = 0;
+		return;
+	}
+
+	/* FIXME */
+	usbd->mmc_max = 0x8000;
 	usbd->mmc_blk = mmc->read_bl_len;
 	usbd->mmc_total = mmc->capacity / mmc->read_bl_len;
 
@@ -82,6 +89,8 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 
 	if (!strncmp(mmc_name, "SEM", 3))
 		mmc_type = 1;
+	else
+		mmc_type = 0;
 }
 #endif
 
@@ -124,9 +133,9 @@ static int usb_init(void)
 		fb_printf(rev_info);
 
 #ifdef CONFIG_GENERIC_MMC
-		if (mmc_type)
+		if (mmc_type == 1)
 			fb_printf("MMC: iNAND\n");
-		else
+		else if (mmc_type == 0)
 			fb_printf("MMC: MoviNAND\n");
 
 		fb_printf("\n");

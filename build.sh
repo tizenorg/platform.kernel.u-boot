@@ -150,8 +150,8 @@ elif [ "$USER" = "dofmind" ]; then
 	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot*.tar /home/release
 elif [ "$USER" = "prom" ]; then
-	tar cvf system_uboot.tar u-boot.bin
-	mv -f system_uboot* /home/share/Work/bin
+	tar cvf boot_system_uboot.tar u-boot.bin
+	mv -f boot_system_uboot* /home/share/Work/bin
 elif [ "$USER" = "jaehoon" ]; then
 	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot* /home/jaehoon/shared/new/

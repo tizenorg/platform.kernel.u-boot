@@ -703,7 +703,6 @@ static void s5p_usb_ep0_int_hndlr(void)
 			s5p_otg_write_reg(1 << 18 | addr << 4 | otg.speed << 0,
 			       OTG_DCFG);
 			otg.ep0_state = EP0_STATE_INIT;
-			otg.ep0_zlp = 1;
 			break;
 
 		case STANDARD_SET_DESCRIPTOR:
@@ -714,7 +713,6 @@ static void s5p_usb_ep0_int_hndlr(void)
 			config_value = otg.dev_req.wValue_L;
 			otg.set_config = 1;
 			otg.ep0_state = EP0_STATE_INIT;
-			otg.ep0_zlp = 1;
 
 			s5p_usb_connected = 1;
 			break;
@@ -788,12 +786,10 @@ static void s5p_usb_transfer_ep0(void)
 {
 	switch (otg.ep0_state) {
 	case EP0_STATE_INIT:
-		if (otg.ep0_zlp) {
-			s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 0);
+		s5p_usb_set_inep_xfersize(EP_TYPE_CONTROL, 1, 0);
 
-			/*ep0 enable, clear nak, next ep0, 8byte */
-			s5p_otg_write_reg(EPEN_CNAK_EP0_8, OTG_DIEPCTL0);
-		}
+		/*ep0 enable, clear nak, next ep0, 8byte */
+		s5p_otg_write_reg(EPEN_CNAK_EP0_8, OTG_DIEPCTL0);
 		break;
 
 	case EP0_STATE_GD_DEV_0:
