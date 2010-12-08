@@ -741,8 +741,11 @@ static int write_fat_file(struct usbd_ops *usbd, char *file_name,
 	return 0;
 }
 
+
+static int ubi_update = 0;
+
 static int write_file_system(char *ramaddr, ulong len, char *offset,
-		char *length, int part_num, int ubi_update)
+		char *length, int part_num)
 {
 	int ret = 0;
 
@@ -832,21 +835,249 @@ static inline int check_mmc_device(struct usbd_ops *usbd)
 		return 0;
 
 	printf("\nError: Couldn't find the MMC device\n");
-	send_ack(usbd, STATUS_ERROR);
 	return 1;
+}
+
+static int write_mtd_image(struct usbd_ops *usbd, int img_type,
+		unsigned int len, unsigned int arg)
+{
+	unsigned int ofs = 0;
+	char offset[12], length[12], ramaddr[12];
+	int ret;
+
+	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
+
+	/* Erase and Write to NAND */
+	switch (img_type) {
+	case IMG_BOOT:
+		ofs = parts[part_id]->offset;
+#ifdef CONFIG_S5PC1XX
+		/* Workaround: for prevent revision mismatch */
+		if (cpu_is_s5pc110() && (down_mode != MODE_FORCE)) {
+			int img_rev = 1;
+			long *img_header = (long *)down_ram_addr;
+
+			if (*img_header == 0xea000012)
+				img_rev = 0;
+			else if (*(img_header + 0x400) == 0xea000012)
+				img_rev = 2;
+
+			if (img_rev != s5p_get_cpu_rev()) {
+				printf("CPU revision mismatch!\n"
+					"bootloader is %s%s\n"
+					"download image is %s%s\n",
+					s5p_get_cpu_rev() ? "EVT1" : "EVT0",
+					s5p_get_cpu_rev() == 2 ? "-Fused" : "",
+					img_rev ? "EVT1" : "EVT0",
+					img_rev == 2 ? "-Fused" : "");
+				return -1;
+			}
+		}
+#endif
+#ifdef CONFIG_SBOOT
+		/* Only u-boot.bin is allowed */
+		{
+			long *img_header = (long *)down_ram_addr;
+
+			if (*img_header != 0xea000018) {
+				printf("\n!!! ERROR !!!\n"
+					"Please download the u-boot.bin.\n"
+					"Other images are not allowed.\n\n");
+				return -1;
+			}
+		}
+#endif
+
+		erase_env_area(usbd);
+
+		sprintf(offset, "%x", (uint)ofs);
+		if (ofs != 0)
+			sprintf(length, "%x", parts[part_id]->size - (uint)ofs);
+		else
+			sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		nand_cmd(0, offset, length, NULL);
+		/* Write */
+		sprintf(length, "%x", (unsigned int) len);
+		ret = nand_cmd(1, ramaddr, offset, length);
+		break;
+
+	case IMG_KERNEL:
+		sprintf(offset, "%x", parts[part_id]->offset);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		nand_cmd(0, offset, length, NULL);
+		/* Write */
+		sprintf(length, "%x", (unsigned int) len);
+		ret = nand_cmd(1, ramaddr, offset, length);
+
+		erase_qboot_area();
+		break;
+
+	/* File Systems */
+	case IMG_FILESYSTEM:
+		ret = write_file_system(ramaddr, len, offset, length, part_id);
+
+		erase_qboot_area();
+		break;
+
+	case IMG_MODEM:
+		sprintf(offset, "%x", parts[part_id]->offset);
+		sprintf(length, "%x", parts[part_id]->size);
+
+		/* Erase */
+		if (!arg)
+			nand_cmd(0, offset, length, NULL);
+		else
+			printf("CSA Clear will be skipped temporary\n");
+
+		/* Check ubi image, 0x23494255 is UBI# */
+		{
+			long *img_header = (long *)down_ram_addr;
+
+			if (*img_header == 0x23494255)
+				goto ubi_img;
+		}
+
+#ifdef CONFIG_UBIFS_MK
+		void *dest_addr = (void *) down_ram_addr + 0xc00000;
+		void *src_addr = (void *) down_ram_addr;
+		int leb_size, max_leb_cnt, mkfs_min_io_size;
+		unsigned long ubifs_dest_size, ubi_dest_size;
+#ifdef CONFIG_S5PC110
+		mkfs_min_io_size = 4096;
+		leb_size = 248 * 1024;
+		max_leb_cnt = 4096;
+#elif CONFIG_S5PC210
+		mkfs_min_io_size = 2048;
+		leb_size = 126 * 1024;
+		max_leb_cnt = 4096;
+#endif
+		printf("Start making ubifs\n");
+		ret = mkfs(src_addr, len, dest_addr, &ubifs_dest_size,
+			   mkfs_min_io_size, leb_size, max_leb_cnt);
+		if (ret) {
+			printf("Error : making ubifs failed\n");
+			goto out;
+		}
+		printf("Complete making ubifs\n");
+#endif
+
+#ifdef CONFIG_UBINIZE
+		int peb_size, ubi_min_io_size, subpage_size, vid_hdr_offs;
+#ifdef CONFIG_S5PC110
+		ubi_min_io_size = 4096;
+		peb_size = 256 * 1024;
+		subpage_size = 4096;
+		vid_hdr_offs = 0;
+#elif CONFIG_S5PC210
+		ubi_min_io_size = 2048;
+		peb_size = 128 * 1024;
+		subpage_size = 512;
+		vid_hdr_offs = 512;
+#endif
+		printf("Start ubinizing\n");
+		ret = ubinize(dest_addr, ubifs_dest_size,
+			      src_addr, &ubi_dest_size,
+			      peb_size, ubi_min_io_size,
+			      subpage_size, vid_hdr_offs);
+		if (ret) {
+			printf("Error : ubinizing failed\n");
+			goto out;
+		}
+		printf("Complete ubinizing\n");
+
+		len = (unsigned int) ubi_dest_size;
+#endif
+
+ubi_img:
+		/* Write : arg (0 Modem) / (1 CSA) */
+		if (!arg) {
+			sprintf(length, "%x", (unsigned int) len);
+			ret = nand_cmd(1, ramaddr, offset, length);
+		}
+out:
+		break;
+
+#ifdef CONFIG_CMD_MMC
+	case IMG_MMC:
+		if (check_mmc_device(usbd))
+			return -1;
+
+		if (mmc_part_write)
+			ret = write_file_mmc_part(usbd, len);
+		else
+			ret = write_file_mmc(usbd, len);
+
+		erase_qboot_area();
+		break;
+#endif
+	default:
+		/* Retry? */
+		write_part--;
+	}
+
+	return ret;
+}
+
+static int write_v2_image(struct usbd_ops *usbd, int img_type,
+		unsigned int len, unsigned int arg)
+{
+	int ret;
+
+	if (check_mmc_device(usbd))
+		return -1;
+
+	switch (img_type) {
+	case IMG_V2:
+		ret = write_mmc_image(usbd, len, part_id);
+		break;
+
+	case IMG_MBR:
+#ifdef CONFIG_CMD_MBR
+		set_mbr_info(usbd, (char *)down_ram_addr, len);
+#endif
+		break;
+
+	case IMG_BOOTLOADER:
+#ifdef CONFIG_BOOTLOADER_SECTOR
+		erase_env_area(usbd);
+
+		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
+				CONFIG_BOOTLOADER_SECTOR,
+				len / usbd->mmc_blk + 1,
+				(void *)down_ram_addr);
+#endif
+		break;
+
+	case IMG_KERNEL_V2:
+		ret = write_fat_file(usbd, "uImage", part_id, len);
+		break;
+
+	case IMG_MODEM_V2:
+		ret = write_fat_file(usbd, "modem.bin", part_id, len);
+		break;
+
+	default:
+		/* Retry? */
+		write_part--;
+	}
+
+	return ret;
 }
 
 /* Parsing received data packet and Process data */
 static int process_data(struct usbd_ops *usbd)
 {
-	unsigned int cmd = 0, arg = 0, ofs = 0, len = 0, flag = 0;
-	char offset[12], length[12], ramaddr[12];
+	unsigned int cmd = 0, arg = 0, len = 0, flag = 0;
+	char ramaddr[12];
 	int recvlen = 0;
 	unsigned int blocks = 0;
 	int ret = 0;
-	int ubi_update = 0;
 	int ubi_mode = 0;
-	int img_type;
+	int img_type = -1;
 
 	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
 
@@ -1131,226 +1362,15 @@ static int process_data(struct usbd_ops *usbd)
 		return 1;
 	}
 
-	/* Erase and Write to NAND */
-	switch (img_type) {
-	case IMG_BOOT:
-		ofs = parts[part_id]->offset;
-#ifdef CONFIG_S5PC1XX
-		/* Workaround: for prevent revision mismatch */
-		if (cpu_is_s5pc110() && (down_mode != MODE_FORCE)) {
-			int img_rev = 1;
-			long *img_header = (long *)down_ram_addr;
+	if (img_type < IMG_V2)
+		ret = write_mtd_image(usbd, img_type, len, arg);
+	else
+		ret = write_v2_image(usbd, img_type, len, arg);
 
-			if (*img_header == 0xea000012)
-				img_rev = 0;
-			else if (*(img_header + 0x400) == 0xea000012)
-				img_rev = 2;
-
-			if (img_rev != s5p_get_cpu_rev()) {
-				printf("CPU revision mismatch!\n"
-					"bootloader is %s%s\n"
-					"download image is %s%s\n",
-					s5p_get_cpu_rev() ? "EVT1" : "EVT0",
-					s5p_get_cpu_rev() == 2 ? "-Fused" : "",
-					img_rev ? "EVT1" : "EVT0",
-					img_rev == 2 ? "-Fused" : "");
-				send_ack(usbd, STATUS_ERROR);
-				return 0;
-			}
-		}
-#endif
-#ifdef CONFIG_SBOOT
-		/* Only u-boot.bin is allowed */
-		{
-			long *img_header = (long *)down_ram_addr;
-
-			if (*img_header != 0xea000018) {
-				printf("\n!!! ERROR !!!\n"
-					"Please download the u-boot.bin.\n"
-					"Other images are not allowed.\n\n");
-				send_ack(usbd, STATUS_ERROR);
-				return 0;
-			}
-		}
-#endif
-
-		erase_env_area(usbd);
-
-		sprintf(offset, "%x", (uint)ofs);
-		if (ofs != 0)
-			sprintf(length, "%x", parts[part_id]->size - (uint)ofs);
-		else
-			sprintf(length, "%x", parts[part_id]->size);
-
-		/* Erase */
-		nand_cmd(0, offset, length, NULL);
-		/* Write */
-		sprintf(length, "%x", (unsigned int) len);
-		ret = nand_cmd(1, ramaddr, offset, length);
-		break;
-
-	case IMG_KERNEL:
-		sprintf(offset, "%x", parts[part_id]->offset);
-		sprintf(length, "%x", parts[part_id]->size);
-
-		/* Erase */
-		nand_cmd(0, offset, length, NULL);
-		/* Write */
-		sprintf(length, "%x", (unsigned int) len);
-		ret = nand_cmd(1, ramaddr, offset, length);
-
-		erase_qboot_area();
-		break;
-
-	/* File Systems */
-	case IMG_FILESYSTEM:
-		ret = write_file_system(ramaddr, len, offset, length,
-				part_id, ubi_update);
-
-		erase_qboot_area();
-		break;
-
-	case IMG_MODEM:
-		sprintf(offset, "%x", parts[part_id]->offset);
-		sprintf(length, "%x", parts[part_id]->size);
-
-		/* Erase */
-		if (!arg)
-			nand_cmd(0, offset, length, NULL);
-		else
-			printf("CSA Clear will be skipped temporary\n");
-
-		/* Check ubi image, 0x23494255 is UBI# */
-		{
-			long *img_header = (long *)down_ram_addr;
-
-			if (*img_header == 0x23494255)
-				goto ubi_img;
-		}
-
-#ifdef CONFIG_UBIFS_MK
-		void *dest_addr = (void *) down_ram_addr + 0xc00000;
-		void *src_addr = (void *) down_ram_addr;
-		int leb_size, max_leb_cnt, mkfs_min_io_size;
-		unsigned long ubifs_dest_size, ubi_dest_size;
-#ifdef CONFIG_S5PC110
-		mkfs_min_io_size = 4096;
-		leb_size = 248 * 1024;
-		max_leb_cnt = 4096;
-#elif CONFIG_S5PC210
-		mkfs_min_io_size = 2048;
-		leb_size = 126 * 1024;
-		max_leb_cnt = 4096;
-#endif
-		printf("Start making ubifs\n");
-		ret = mkfs(src_addr, len, dest_addr, &ubifs_dest_size,
-			   mkfs_min_io_size, leb_size, max_leb_cnt);
-		if (ret) {
-			printf("Error : making ubifs failed\n");
-			goto out;
-		}
-		printf("Complete making ubifs\n");
-#endif
-
-#ifdef CONFIG_UBINIZE
-		int peb_size, ubi_min_io_size, subpage_size, vid_hdr_offs;
-#ifdef CONFIG_S5PC110
-		ubi_min_io_size = 4096;
-		peb_size = 256 * 1024;
-		subpage_size = 4096;
-		vid_hdr_offs = 0;
-#elif CONFIG_S5PC210
-		ubi_min_io_size = 2048;
-		peb_size = 128 * 1024;
-		subpage_size = 512;
-		vid_hdr_offs = 512;
-#endif
-		printf("Start ubinizing\n");
-		ret = ubinize(dest_addr, ubifs_dest_size,
-			      src_addr, &ubi_dest_size,
-			      peb_size, ubi_min_io_size,
-			      subpage_size, vid_hdr_offs);
-		if (ret) {
-			printf("Error : ubinizing failed\n");
-			goto out;
-		}
-		printf("Complete ubinizing\n");
-
-		len = (unsigned int) ubi_dest_size;
-#endif
-
-ubi_img:
-		/* Write : arg (0 Modem) / (1 CSA) */
-		if (!arg) {
-			sprintf(length, "%x", (unsigned int) len);
-			ret = nand_cmd(1, ramaddr, offset, length);
-		}
-out:
-		break;
-
-#ifdef CONFIG_CMD_MMC
-	case IMG_MMC:
-		if (check_mmc_device(usbd))
-			return 0;
-
-		if (mmc_part_write)
-			ret = write_file_mmc_part(usbd, len);
-		else
-			ret = write_file_mmc(usbd, len);
-
-		erase_qboot_area();
-		break;
-#endif
-	case IMG_V2:
-		if (check_mmc_device(usbd))
-			return 0;
-
-		ret = write_mmc_image(usbd, len, part_id);
-		break;
-
-	case IMG_MBR:
-		if (check_mmc_device(usbd))
-			return 0;
-
-#ifdef CONFIG_CMD_MBR
-		set_mbr_info(usbd, (char *)down_ram_addr, len);
-#endif
-		break;
-
-	case IMG_BOOTLOADER:
-		if (check_mmc_device(usbd))
-			return 0;
-
-#ifdef CONFIG_BOOTLOADER_SECTOR
-		erase_env_area(usbd);
-
-		ret = mmc_cmd(OPS_WRITE, usbd->mmc_dev,
-				CONFIG_BOOTLOADER_SECTOR,
-				len / usbd->mmc_blk + 1,
-				(void *)down_ram_addr);
-#endif
-		break;
-
-	case IMG_KERNEL_V2:
-		if (check_mmc_device(usbd))
-			return 0;
-
-		ret = write_fat_file(usbd, "uImage", part_id, len);
-		break;
-
-	case IMG_MODEM_V2:
-		if (check_mmc_device(usbd))
-			return 0;
-
-		ret = write_fat_file(usbd, "modem.bin", part_id, len);
-		break;
-
-	default:
-		/* Retry? */
-		write_part--;
-	}
-
-	if (ret) {
+	if (ret < 0) {
+		send_ack(usbd, STATUS_ERROR);
+		return 0;
+	} else if (ret) {
 		/* Retry this commad */
 		send_ack(usbd, STATUS_RETRY);
 		return 1;
