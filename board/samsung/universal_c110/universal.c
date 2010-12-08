@@ -450,11 +450,12 @@ static char *display_features(int board, int board_rev)
 			if (hwrevision(9)) {
 				name = "Kessler";
 			} else {
-				name = "SLP SDK";
 				if (hwrevision(3))
-					strcat(name, " 4.3inch");
+					name = "SLP SDK 4.3inch";
 				else if (hwrevision(4))
-					strcat(name, " 4.5inch");
+					name = "SLP SDK 4.5inch";
+				else
+					name = "SLP SDK";
 			}
 		}
 		if (board_rev & S1_BOARD)
