@@ -1010,7 +1010,10 @@ void print_mmc_devices(char separator)
 
 		printf("%s: %d", m->name, m->block_dev.dev);
 
+#if defined(CONFIG_S5PC110) && defined(CONFIG_UNIVERSAL)
+		/* FIXME move to c110 universal board file */
 		mmc_init(m);
+#endif
 
 		if (entry->next != &mmc_devices)
 			printf("%c ", separator);
