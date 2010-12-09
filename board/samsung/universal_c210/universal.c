@@ -1220,7 +1220,10 @@ static void check_hw_revision(void)
 	hwrev = get_hw_revision();
 
 	board_rev |= hwrev;
+}
 
+static void show_hw_revision(void)
+{
 	printf("HW Revision:\t0x%x\n", board_rev);
 	printf("PCB Revision:\t%s\n", pcb_rev[board_rev & 0xf]);
 }
@@ -1277,6 +1280,7 @@ int misc_init_r(void)
 
 	check_auto_burn();
 
+	show_hw_revision();
 	check_keypad();
 
 	/* check max17040 */
