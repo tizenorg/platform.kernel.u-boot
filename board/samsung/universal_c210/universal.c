@@ -175,6 +175,8 @@ void i2c_init_board(void)
 	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
 }
 
+static void check_hw_revision(void);
+
 int board_init(void)
 {
 	gpio1 = (struct s5pc210_gpio_part1 *) S5PC210_GPIO_PART1_BASE;
@@ -193,6 +195,8 @@ int board_init(void)
 	 */
 	gd->fb_base = CONFIG_FB_RESERVED_MEM;
 #endif
+
+	check_hw_revision();
 
 	return 0;
 }
@@ -1180,8 +1184,6 @@ static unsigned int get_hw_revision(void)
 	mode0 = get_adc_value(1);		/* HWREV_MODE0 */
 	mode1 = get_adc_value(2);		/* HWREV_MODE1 */
 
-	pmic_ldo_control(0, 4, 0, 0);
-
 	/*
 	 * XXX Always set the default hwrev as the latest board
 	 * ADC = (voltage) / 3.3 * 4096
@@ -1275,7 +1277,6 @@ int misc_init_r(void)
 
 	check_auto_burn();
 
-	check_hw_revision();
 	check_keypad();
 
 	/* check max17040 */
@@ -1287,6 +1288,9 @@ int misc_init_r(void)
 #ifdef CONFIG_INFO_ACTION
 	info_action_check();
 #endif
+
+	/* pmic settings */
+	pmic_ldo_control(0, 4, 0, 0);	/* adc off */
 
 	return 0;
 }
