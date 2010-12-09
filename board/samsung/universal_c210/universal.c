@@ -1278,10 +1278,10 @@ int misc_init_r(void)
 	show_dump_msg();
 #endif
 
-	check_auto_burn();
-
 	show_hw_revision();
 	check_keypad();
+
+	check_auto_burn();
 
 	/* check max17040 */
 	check_battery(0);
