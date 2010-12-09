@@ -700,7 +700,7 @@ static void check_hw_revision(void)
 		arch_number = board;
 }
 
-static void show_hw_revision(void)
+static void check_cpu_revision(void)
 {
 	int board;
 
@@ -752,6 +752,19 @@ static void show_hw_revision(void)
 
 	writel(0xc1100000 | (0xffff & (s5p_get_cpu_rev() ? 1 : 0)),
 				S5PC110_INFORM3);
+
+}
+
+static void show_hw_revision(void)
+{
+	int board;
+
+	if (mach_is_goni() || mach_is_aquila())
+		board = arch_number;
+	else
+		board = arch_number - C110_MACH_START;
+
+	check_board_revision(board, board_rev);
 
 	empty_device_info_buffer();
 	dprintf("HW Revision:\t%x (%s%s) %s\n",
@@ -2607,6 +2620,8 @@ int board_init(void)
 	gd->bd->bi_arch_number = arch_number;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
+	check_cpu_revision();
+
 	return 0;
 }
 
@@ -2797,6 +2812,7 @@ void board_sleep_resume(void)
 	unsigned char addr;
 	unsigned char val[2];
 
+	check_cpu_revision();
 	show_hw_revision();
 
 	addr = 0xCC >> 1;
