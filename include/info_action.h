@@ -5,9 +5,10 @@
 
 #define INFO_ACTION_MAGIC	0xcafe
 
+/* use INFORM4~5 registers */
 struct info_action {
-	u16 magic;
-	u16 action;
+	u32 magic;
+	u32 action;
 };
 
 enum {
