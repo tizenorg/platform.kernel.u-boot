@@ -18,12 +18,10 @@ void info_action_check(void)
 	case INFO_ACTION_SDCARD_BOOT:
 		puts("sdcard boot\n");
 		/* Please add the parameters and just 'run mmcboot' */
-		count += sprintf(buf + count, "mmc rescan 1; ");
-		count += sprintf(buf + count, "run loaduimage; ");
 		count += sprintf(buf + count, "run mmcboot; ");
 		setenv("bootcmd", buf);
 		setenv("mmcdev", "1");
-		setenv("mmcpart", "0");
+		setenv("mmcrootpart", "0");
 		break;
 	case INFO_ACTION_LCD_CONSOLE:
 		printf("lcd console mode\n");
