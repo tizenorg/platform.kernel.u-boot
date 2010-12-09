@@ -271,6 +271,8 @@
 		" onenand write 0x41008000 0xc00000 0x500000\0" \
 	"bootk=onenand read 0x40007FC0 0xc00000 0x500000;" \
 		" bootm 0x40007FC0\0" \
+	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x42008000 0 0x200;" \
+		" mmc boot 0 1 1 0\0" \
 	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
 		CONFIG_ENV_FLASHBOOT " ${opts} ${lcdinfo} " \
 		CONFIG_ENV_COMMON_BOOT "; run bootk\0" \
