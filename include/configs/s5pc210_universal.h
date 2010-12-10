@@ -273,7 +273,8 @@
 		" bootm 0x40007FC0\0" \
 	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x42008000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
-	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
+	"lpj=lpj=3981312\0" \
+	"ubifsboot=set bootargs root=ubi0!rootfs rootfstype=ubifs ${lpj} " \
 		CONFIG_ENV_FLASHBOOT " ${opts} ${lcdinfo} " \
 		CONFIG_ENV_COMMON_BOOT "; run bootk\0" \
 	"tftpboot=set bootargs root=ubi0!rootfs rootfstype=ubifs " \
@@ -288,7 +289,7 @@
 	"ramfsboot=set bootargs root=/dev/ram0 rw rootfstype=ext2 " \
 		"${console} ${meminfo} " \
 		"initrd=0x43000000,8M ramdisk=8192\0" \
-	"mmcboot=set bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} " \
+	"mmcboot=set bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} ${lpj} " \
 		"rootwait ${console} ${meminfo} ${opts} ${lcdinfo}; " \
 		"run loaduimage; bootm 0x40007FC0\0" \
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
