@@ -175,6 +175,15 @@ elif [ "$USER" = "marek" ]; then
 		cp system_uboot.tar ../image/w1/uboot-c210-`date +%Y%m%d`-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`.tar
 	fi
 elif [ "$USER" = "lukma" ]; then
+# Check the built binary size if not exceeded.
+# Particularly needed when DEBUG enabled
+	size=`ls -al u-boot.bin | awk -F' ' '{printf $5}'`
+	if [ "$size" -ge "262144" ]; then
+		echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
+		echo "Remove u-boot.bin"
+		rm u-boot.bin
+		exit -1
+	fi
 	tar cvf system_uboot.tar u-boot.bin
 	cp system_uboot.tar ../image/w1/uboot-g`git log --pretty=oneline -1 --abbrev-commit | cut -c 1-7`-`date +%Y%m%d`.tar
 elif [ "$USER" = "mzx" ]; then
