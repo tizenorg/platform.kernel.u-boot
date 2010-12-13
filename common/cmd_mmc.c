@@ -107,11 +107,8 @@ static void print_mmcinfo(struct mmc *mmc)
 			mmc->check_rev? "+":"");
 
 	printf("High Capacity: %s\n", mmc->high_capacity ? "Yes" : "No");
-
-	if (mmc->high_capacity)
-		printf("Capacity: %lld MByte\n", mmc->capacity >> 20);
-	else
-		printf("Capacity: %lld\n", mmc->capacity);
+	puts("Capacity: ");
+	print_size(mmc->capacity, "\n");
 
 	printf("Bus Width: %d-bit\n", mmc->bus_width);
 }
