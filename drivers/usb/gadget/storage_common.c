@@ -81,11 +81,17 @@
 #define VLDBG(lun, fmt, args...) do { } while (0)
 #endif /* VERBOSE_DEBUG */
 
+/*
 #define LDBG(lun, fmt, args...)   dev_dbg (&(lun)->dev, fmt, ## args)
 #define LERROR(lun, fmt, args...) dev_err (&(lun)->dev, fmt, ## args)
 #define LWARN(lun, fmt, args...)  dev_warn(&(lun)->dev, fmt, ## args)
 #define LINFO(lun, fmt, args...)  dev_info(&(lun)->dev, fmt, ## args)
+*/
 
+#define LDBG(lun, fmt, args...) do { } while (0)
+#define LERROR(lun, fmt, args...) do { } while (0)
+#define LWARN(lun, fmt, args...) do { } while (0)
+#define LINFO(lun, fmt, args...) do { } while (0)
 /*
  * Keep those macros in sync with those in
  * include/linux/usb/composite.h or else GCC will complain.  If they
@@ -107,12 +113,20 @@
  * using MSF).  If someone changes them in composite.h it will produce
  * a warning in this file when building MSF.
  */
+
+/*
 #define DBG(d, fmt, args...)     dev_dbg(&(d)->gadget->dev , fmt , ## args)
 #define VDBG(d, fmt, args...)    dev_vdbg(&(d)->gadget->dev , fmt , ## args)
 #define ERROR(d, fmt, args...)   dev_err(&(d)->gadget->dev , fmt , ## args)
 #define WARNING(d, fmt, args...) dev_warn(&(d)->gadget->dev , fmt , ## args)
 #define INFO(d, fmt, args...)    dev_info(&(d)->gadget->dev , fmt , ## args)
+*/
 
+#define DBG(d, fmt, args...)     do { } while (0)
+#define VDBG(d, fmt, args...)    do { } while (0)
+#define ERROR(d, fmt, args...)   do { } while (0)
+#define WARNING(d, fmt, args...) do { } while (0)
+#define INFO(d, fmt, args...)    do { } while (0)
 
 
 #ifdef DUMP_MSGS
@@ -268,6 +282,13 @@ struct interrupt_data {
 #define ASC(x)		((u8) ((x) >> 8))
 #define ASCQ(x)		((u8) (x))
 
+
+struct device_attribute { int i; };
+struct rw_semaphore { int i; };
+#define down_write(...)			do { } while (0)
+#define up_write(...)			do { } while (0)
+#define down_read(...)			do { } while (0)
+#define up_read(...)			do { } while (0)
 
 /*-------------------------------------------------------------------------*/
 
@@ -584,7 +605,7 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 
 	size = 4096;
 	if (size < 0) {
-		LINFO(curlun, "unable to find file size: %s\n", filename);
+		//LINFO(curlun, "unable to find file size: %s\n", filename);
 		rc = (int) size;
 		goto out;
 	}
@@ -678,8 +699,8 @@ static ssize_t fsg_store_ro(struct device *dev, struct device_attribute *attr,
 	struct fsg_lun	*curlun = fsg_lun_from_dev(dev);
 	unsigned long	ro;
 
-	if (strict_strtoul(buf, 2, &ro))
-		return -EINVAL;
+	//if (strict_strtoul(buf, 2, &ro))
+	ro = simple_strtoul(buf, NULL, 2);
 
 	/*
 	 * Allow the write-enable status to change only while the
@@ -687,7 +708,7 @@ static ssize_t fsg_store_ro(struct device *dev, struct device_attribute *attr,
 	 */
 	curlun->ro = ro;
 	curlun->initially_ro = ro;
-	LDBG(curlun, "read-only status set to %d\n", curlun->ro);
+	//LDBG(curlun, "read-only status set to %d\n", curlun->ro);
 	return rc;
 }
 
@@ -698,8 +719,8 @@ static ssize_t fsg_store_nofua(struct device *dev,
 	struct fsg_lun	*curlun = fsg_lun_from_dev(dev);
 	unsigned long	nofua;
 
-	if (strict_strtoul(buf, 2, &nofua))
-		return -EINVAL;
+	//if (strict_strtoul(buf, 2, &nofua))
+	nofua = simple_strtoul(buf, NULL, 2);
 
 	/* Sync data when switching from async mode to sync */
 	if (!nofua && curlun->nofua)
@@ -714,7 +735,7 @@ static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 			      const char *buf, size_t count)
 {
 	struct fsg_lun	*curlun = fsg_lun_from_dev(dev);
-	struct rw_semaphore	*filesem = dev_get_drvdata(dev);
+	struct rw_semaphore	*filesem = NULL; //dev_get_drvdata(dev);
 	int		rc = 0;
 
 	/* Remove a trailing newline */

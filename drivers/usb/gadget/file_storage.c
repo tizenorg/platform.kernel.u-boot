@@ -250,11 +250,13 @@
 #include <linux/string.h>
 #include <linux/freezer.h>
 #include <linux/utsname.h>
+#include "gadget_chips.h"
+*/
 
+#include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-
-#include "gadget_chips.h" */
+#include <malloc.h>
 
 
 
@@ -299,9 +301,46 @@ MODULE_LICENSE("Dual BSD/GPL");*/
 
 
 #define spin_lock_irqsave(lock,flags) do {puts("spin_lock_irqsave no-op");} while (0)
-#define spin_lock_irqsave(lock,flags) do {puts("spin_lock_irqrestore no-op");} while (0)
+#define spin_unlock_irqrestore(lock,flags) do {puts("spin_lock_irqrestore no-op");} while (0)
+#define spin_lock_irq(lock) do {puts("spin_lock_irq no-op");} while (0)
+#define spin_unlock_irq(lock) do {puts("spin_lock_irq no-op");} while (0)
+#define spin_lock(lock) do {puts("spin_lock no-op");} while (0)
+#define spin_unlock(lock) do {puts("spin_lock no-op");} while (0)
+#define spin_lock_init(x)
+#define init_rwsem(x)
+#define init_completion(x)
 #define wake_up_process(thread_task) do {puts("wake_up_process no-op");} while (0)
 #define send_sig_info(sig,mode,thread_task) do {puts("send_sig_info no-op");} while (0)
+typedef int spinlock_t;
+#define GFP_ATOMIC ((gfp_t) 0)
+#define GFP_KERNEL ((gfp_t) 0)
+#define set_current_state(...)		do {puts("set_current_state no-op");} while (0)
+#define __set_current_state(...)	do {puts("__set_current_state no-op");} while (0)
+#define PAGE_CACHE_SHIFT	12
+#define PAGE_CACHE_SIZE		(1 << PAGE_CACHE_SHIFT)
+#define __user
+#define __init
+#define __exit
+#define __ref
+#define barrier() do {puts("barrier no-op");} while (0)
+#ifdef CONFIG_SMP
+#define smp_mb()	mb ()
+#define smp_rmb()	rmb ()
+#define smp_wmb()	wmb ()
+#else
+#define smp_mb()	barrier ()
+#define smp_rmb()	barrier ()
+#define smp_wmb()	barrier ()
+#endif
+#define try_to_freeze(...)		0
+#define set_freezable(...)		do { } while (0)
+#define kmalloc(x,y)			malloc(x)
+#define kfree(x)			free(x)
+#define kzalloc(size,flags)	calloc(size, 1)
+#define ENOTSUPP	524	/* Operation is not supported */
+#define kthread_create(...)	__builtin_return_address(0)
+
+
 /*-------------------------------------------------------------------------*/
 
 
@@ -392,11 +431,11 @@ MODULE_PARM_DESC(serial, "USB serial number"); */
 
 struct fsg_dev {
 	/* lock protects: state, all the req_busy's, and cbbuf_cmnd */
-	//spinlock_t		lock;
+	spinlock_t		lock;
 	struct usb_gadget	*gadget;
 
 	/* filesem protects: backing files in use */
-	//struct rw_semaphore	filesem;
+	struct rw_semaphore	filesem;
 
 	/* reference counting: wait until all LUNs are released */
 	//struct kref		ref;
@@ -650,8 +689,8 @@ static int ep0_queue(struct fsg_dev *fsg)
 	if (rc != 0 && rc != -ESHUTDOWN) {
 
 		/* We can't do much more than wait for a reset */
-		WARNING(fsg, "error in submission: %s --> %d\n",
-				fsg->ep0->name, rc);
+		//WARNING(fsg, "error in submission: %s --> %d\n",
+		//		fsg->ep0->name, rc);
 	}
 	return rc;
 }
@@ -1012,13 +1051,13 @@ static int sleep_thread(struct fsg_dev *fsg)
 	for (;;) {
 		try_to_freeze();
 		set_current_state(TASK_INTERRUPTIBLE);
-		if (signal_pending(current)) {
+		/*if (signal_pending(current)) {
 			rc = -EINTR;
 			break;
-		}
+		}*/
 		if (fsg->thread_wakeup_needed)
 			break;
-		schedule();
+		//schedule();
 	}
 	__set_current_state(TASK_RUNNING);
 	fsg->thread_wakeup_needed = 0;
@@ -1120,8 +1159,8 @@ static int do_read(struct fsg_dev *fsg)
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
 				(int) nread);
-		if (signal_pending(current))
-			return -EINTR;
+		/*if (signal_pending(current))
+			return -EINTR;*/
 
 		if (nread < 0) {
 			LDBG(curlun, "error in file read: %d\n",
@@ -1296,17 +1335,16 @@ static int do_write(struct fsg_dev *fsg)
 					(char __user *) bh->buf,
 					amount, &file_offset_tmp); */
 
-			printk("%s: about to write %d bytes\n", __func__, amount);
-			printk("%s: 0x%x 0x%x 0x%x...\n", __func__, *((char __user*)bh->buf), *((char __user*)(bh->buf + 1)), *((char __user*)(bh->buf + 2)));
-
 			nwritten = amount;
 			file_offset_tmp += amount;
 
 			VLDBG(curlun, "file write %u @ %llu -> %d\n", amount,
 					(unsigned long long) file_offset,
 					(int) nwritten);
+			/*
 			if (signal_pending(current))
 				return -EINTR;		// Interrupted!
+			*/
 
 			if (nwritten < 0) {
 				LDBG(curlun, "error in file write: %d\n",
@@ -1414,12 +1452,16 @@ static int do_verify(struct fsg_dev *fsg)
 
 	/* Write out all the dirty buffers before invalidating them */
 	fsg_lun_fsync_sub(curlun);
+	/*
 	if (signal_pending(current))
 		return -EINTR;
+	*/
 
 	//invalidate_sub(curlun);
+	/*
 	if (signal_pending(current))
 		return -EINTR;
+	*/
 
 	/* Just try to read the requested blocks */
 	while (amount_left > 0) {
@@ -1454,8 +1496,10 @@ static int do_verify(struct fsg_dev *fsg)
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
 				(int) nread);
+		/*
 		if (signal_pending(current))
 			return -EINTR;
+		*/
 
 		if (nread < 0) {
 			LDBG(curlun, "error in file verify: %d\n",
@@ -1805,8 +1849,8 @@ static int halt_bulk_in_endpoint(struct fsg_dev *fsg)
 		}
 
 		/* Wait for a short time and then try again */
-		if (msleep_interruptible(100) != 0)
-			return -EINTR;
+		/*if (msleep_interruptible(100) != 0)
+			return -EINTR;*/
 		rc = usb_ep_set_halt(fsg->bulk_in);
 	}
 	return rc;
@@ -1817,7 +1861,7 @@ static int wedge_bulk_in_endpoint(struct fsg_dev *fsg)
 	int	rc;
 
 	DBG(fsg, "bulk-in set wedge\n");
-	rc = usb_ep_set_wedge(fsg->bulk_in);
+	rc = 0; //usb_ep_set_wedge(fsg->bulk_in);
 	if (rc == -EAGAIN)
 		VDBG(fsg, "delayed bulk-in endpoint wedge\n");
 	while (rc != 0) {
@@ -1828,9 +1872,9 @@ static int wedge_bulk_in_endpoint(struct fsg_dev *fsg)
 		}
 
 		/* Wait for a short time and then try again */
-		if (msleep_interruptible(100) != 0)
-			return -EINTR;
-		rc = usb_ep_set_wedge(fsg->bulk_in);
+		/*if (msleep_interruptible(100) != 0)
+			return -EINTR;*/
+		//rc = usb_ep_set_wedge(fsg->bulk_in);
 	}
 	return rc;
 }
@@ -2471,7 +2515,7 @@ static int do_scsi_command(struct fsg_dev *fsg)
 	}
 	up_read(&fsg->filesem);
 
-	if (reply == -EINTR || signal_pending(current))
+	if (reply == -EINTR) // || signal_pending(current))
 		return -EINTR;
 
 	/* Set up the single reply buffer for finish_reply() */
@@ -2785,7 +2829,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 
 static void handle_exception(struct fsg_dev *fsg)
 {
-	siginfo_t		info;
+	//siginfo_t		info;
 	int			sig;
 	int			i;
 	int			num_active;
@@ -2799,14 +2843,14 @@ static void handle_exception(struct fsg_dev *fsg)
 	/* Clear the existing signals.  Anything but SIGUSR1 is converted
 	 * into a high-priority EXIT exception. */
 	for (;;) {
-		sig = dequeue_signal_lock(current, &current->blocked, &info);
+		sig = 0; //dequeue_signal_lock(current, &current->blocked, &info);
 		if (!sig)
 			break;
-		if (sig != SIGUSR1) {
+		/*if (sig != SIGUSR1) {
 			if (fsg->state < FSG_STATE_EXIT)
 				DBG(fsg, "Main thread exiting on signal\n");
 			raise_exception(fsg, FSG_STATE_EXIT);
-		}
+		}*/
 	}
 
 	/* Cancel all the pending transfers */
@@ -2950,10 +2994,10 @@ static int fsg_main_thread(void *fsg_)
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
 	 * to block everything but INT, TERM, KILL, and USR1. */
-	allow_signal(SIGINT);
+	/*allow_signal(SIGINT);
 	allow_signal(SIGTERM);
 	allow_signal(SIGKILL);
-	allow_signal(SIGUSR1);
+	allow_signal(SIGUSR1);*/
 
 	/* Allow the thread to be frozen */
 	set_freezable();
@@ -2961,11 +3005,11 @@ static int fsg_main_thread(void *fsg_)
 	/* Arrange for userspace references to be interpreted as kernel
 	 * pointers.  That way we can pass a kernel pointer to a routine
 	 * that expects a __user pointer and it will work okay. */
-	set_fs(get_ds());
+	//set_fs(get_ds());
 
 	/* The main loop */
 	while (fsg->state != FSG_STATE_TERMINATED) {
-		if (exception_in_progress(fsg) || signal_pending(current)) {
+		if (exception_in_progress(fsg)) { // || signal_pending(current)) {
 			handle_exception(fsg);
 			continue;
 		}
@@ -3010,7 +3054,8 @@ static int fsg_main_thread(void *fsg_)
 		usb_gadget_unregister_driver(&fsg_driver);
 
 	/* Let the unbind and cleanup routines know the thread has exited */
-	complete_and_exit(&fsg->thread_notifier, 0);
+	//complete_and_exit(&fsg->thread_notifier, 0);
+	return 0;
 }
 
 
@@ -3025,6 +3070,7 @@ static int fsg_main_thread(void *fsg_)
 
 /*-------------------------------------------------------------------------*/
 
+/*
 static void fsg_release(struct kref *ref)
 {
 	struct fsg_dev	*fsg = container_of(ref, struct fsg_dev, ref);
@@ -3041,6 +3087,7 @@ static void lun_release(struct device *dev)
 
 	kref_put(&fsg->ref, fsg_release);
 }
+*/
 
 static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 {
@@ -3056,10 +3103,10 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 	for (i = 0; i < fsg->nluns; ++i) {
 		curlun = &fsg->luns[i];
 		if (curlun->registered) {
-			device_remove_file(&curlun->dev, &dev_attr_ro);
-			device_remove_file(&curlun->dev, &dev_attr_file);
+			//device_remove_file(&curlun->dev, &dev_attr_ro);
+			//device_remove_file(&curlun->dev, &dev_attr_file);
 			fsg_lun_close(curlun);
-			device_unregister(&curlun->dev);
+			//device_unregister(&curlun->dev);
 			curlun->registered = 0;
 		}
 	}
@@ -3067,10 +3114,10 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 	/* If the thread isn't already dead, tell it to exit now */
 	if (fsg->state != FSG_STATE_TERMINATED) {
 		raise_exception(fsg, FSG_STATE_EXIT);
-		wait_for_completion(&fsg->thread_notifier);
+		//wait_for_completion(&fsg->thread_notifier);
 
 		/* The cleanup routine waits for this completion also */
-		complete(&fsg->thread_notifier);
+		//complete(&fsg->thread_notifier);
 	}
 
 	/* Free the data buffers */
@@ -3107,7 +3154,7 @@ static int __init check_parameters(struct fsg_dev *fsg)
 		mod_data.can_stall = 0;
 
 	if (mod_data.release == 0xffff) {	// Parameter wasn't set
-		gcnum = usb_gadget_controller_number(fsg->gadget);
+		gcnum = 1 ;// usb_gadget_controller_number(fsg->gadget);
 		if (gcnum >= 0)
 			mod_data.release = 0x0300 + gcnum;
 		else {
@@ -3192,18 +3239,18 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	if ((rc = check_parameters(fsg)) != 0)
 		goto out;
 
-	if (mod_data.removable) {	// Enable the store_xxx attributes
+	/*if (mod_data.removable) {	// Enable the store_xxx attributes
 		dev_attr_file.attr.mode = 0644;
 		dev_attr_file.store = fsg_store_file;
 		if (!mod_data.cdrom) {
 			dev_attr_ro.attr.mode = 0644;
 			dev_attr_ro.store = fsg_store_ro;
 		}
-	}
+	}*/
 
 	/* Only for removable media? */
-	dev_attr_nofua.attr.mode = 0644;
-	dev_attr_nofua.store = fsg_store_nofua;
+	//dev_attr_nofua.attr.mode = 0644;
+	//dev_attr_nofua.store = fsg_store_nofua;
 
 	/* Find out how many LUNs there should be */
 	i = mod_data.nluns;
@@ -3231,9 +3278,10 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		curlun->initially_ro = curlun->ro;
 		curlun->removable = mod_data.removable;
 		curlun->nofua = mod_data.nofua[i];
-		curlun->dev.release = lun_release;
-		curlun->dev.parent = &gadget->dev;
-		curlun->dev.driver = &fsg_driver.driver;
+		//curlun->dev.release = lun_release;
+		//curlun->dev.parent = &gadget->dev;
+		//curlun->dev.driver = &fsg_driver.driver;
+		/*
 		dev_set_drvdata(&curlun->dev, &fsg->filesem);
 		dev_set_name(&curlun->dev,"%s-lun%d",
 			     dev_name(&gadget->dev), i);
@@ -3250,9 +3298,9 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 					&dev_attr_file)) != 0) {
 			device_unregister(&curlun->dev);
 			goto out;
-		}
+		}*/
 		curlun->registered = 1;
-		kref_get(&fsg->ref);
+		//kref_get(&fsg->ref);
 
 		if (mod_data.file[i] && *mod_data.file[i]) {
 			if ((rc = fsg_lun_open(curlun,
@@ -3345,10 +3393,10 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	/* This should reflect the actual gadget power source */
 	usb_gadget_set_selfpowered(gadget);
 
-	snprintf(fsg_string_manufacturer, sizeof fsg_string_manufacturer,
+	/*snprintf(fsg_string_manufacturer, sizeof fsg_string_manufacturer,
 			"%s %s with %s",
 			init_utsname()->sysname, init_utsname()->release,
-			gadget->name);
+			gadget->name);*/
 
 	fsg->thread_task = kthread_create(fsg_main_thread, fsg,
 			"file-storage-gadget");
@@ -3384,7 +3432,7 @@ autoconf_fail:
 out:
 	fsg->state = FSG_STATE_TERMINATED;	// The thread is dead
 	fsg_unbind(gadget);
-	complete(&fsg->thread_notifier);
+	//complete(&fsg->thread_notifier);
 	return rc;
 }
 
@@ -3416,7 +3464,7 @@ static struct usb_gadget_driver		fsg_driver = {
 #else
 	.speed		= USB_SPEED_FULL,
 #endif
-	.function	= (char *) fsg_string_product,
+	//.function	= (char *) fsg_string_product,
 	.bind		= fsg_bind,
 	.unbind		= fsg_unbind,
 	.disconnect	= fsg_disconnect,
@@ -3424,13 +3472,14 @@ static struct usb_gadget_driver		fsg_driver = {
 	.suspend	= fsg_suspend,
 	.resume		= fsg_resume,
 
+	/*
 	.driver		= {
 		.name		= DRIVER_NAME,
 		.owner		= THIS_MODULE,
 		// .release = ...
 		// .suspend = ...
 		// .resume = ...
-	},
+	},*/
 };
 
 
@@ -3443,8 +3492,8 @@ static int __init fsg_alloc(void)
 		return -ENOMEM;
 	spin_lock_init(&fsg->lock);
 	init_rwsem(&fsg->filesem);
-	kref_init(&fsg->ref);
-	init_completion(&fsg->thread_notifier);
+	//kref_init(&fsg->ref);
+	//init_completion(&fsg->thread_notifier);
 
 	the_fsg = fsg;
 	return 0;
@@ -3460,10 +3509,11 @@ static int __init fsg_init(void)
 		return rc;
 	fsg = the_fsg;
 	if ((rc = usb_gadget_register_driver(&fsg_driver)) != 0)
-		kref_put(&fsg->ref, fsg_release);
+		//kref_put(&fsg->ref, fsg_release);
+		do { } while (0);
 	return rc;
 }
-module_init(fsg_init);
+//module_init(fsg_init);
 
 
 static void __exit fsg_cleanup(void)
@@ -3475,8 +3525,8 @@ static void __exit fsg_cleanup(void)
 		usb_gadget_unregister_driver(&fsg_driver);
 
 	/* Wait for the thread to finish up */
-	wait_for_completion(&fsg->thread_notifier);
+	//wait_for_completion(&fsg->thread_notifier);
 
-	kref_put(&fsg->ref, fsg_release);
+	//kref_put(&fsg->ref, fsg_release);
 }
-module_exit(fsg_cleanup);
+//module_exit(fsg_cleanup);
