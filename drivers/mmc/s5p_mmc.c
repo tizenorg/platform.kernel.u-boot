@@ -397,6 +397,13 @@ static void mmc_set_ios(struct mmc *mmc)
 		(1 << 14) |	/* Feedback Clock Enable for Rx Clock */
 		(1 << 8);	/* SDCLK hold enable */
 
+	/*
+	 * When entered boot mode, we used Tx Feedback Delay.
+	 * So We need to set Feedback clock enable for Tx Clock.
+	 * In normal mode, we need not Tx clock.
+	 * If set that in normal mode, we should find out some problem
+	 * (CRC error, Timeout error, etc..)
+	 */
        if (mmc->boot_config & 0x7)
 		val |= (1 << 15);       /* Feedback Clock Enable for Tx Clock */
 
