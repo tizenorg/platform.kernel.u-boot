@@ -1121,6 +1121,24 @@ static int process_data(struct usbd_ops *usbd)
 
 		return 1;
 
+	case COMMAND_DOWNLOAD_SPMODE:
+		printf("\nCOMMAND_DOWNLOAD_SPMODE\n");
+
+		down_ram_addr = usbd->ram_addr + 0x2008000;
+
+		usbd->recv_setup((char *)down_ram_addr, (int)len);
+		printf("Download to 0x%08x, %d bytes\n",
+				(uint)down_ram_addr, (int)len);
+
+		/* response */
+		send_ack(usbd, STATUS_DONE);
+
+		/* Receive image by using dma */
+		recvlen = usbd->recv_data();
+		send_ack(usbd, STATUS_DONE);
+
+		return 0;
+
 	/* Report partition info */
 	case COMMAND_PARTITION_SYNC:
 		part_id = arg;
