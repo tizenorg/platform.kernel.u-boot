@@ -394,9 +394,11 @@ static void mmc_set_ios(struct mmc *mmc)
 
 	val |=	(1 << 31) |	/* write status clear async mode enable */
 		(1 << 30) |	/* command conflict mask enable */
-		(1 << 15) |	/* Feedback Clock Enable for Tx Clock */
 		(1 << 14) |	/* Feedback Clock Enable for Rx Clock */
 		(1 << 8);	/* SDCLK hold enable */
+
+       if (mmc->boot_config & 0x7)
+		val |= (1 << 15);       /* Feedback Clock Enable for Tx Clock */
 
 	writel(val, &host->reg->control2);
 
