@@ -59,7 +59,6 @@ check_users()
 	fi
 	if [ "$USER" = "lukma" ]; then
 		CROSS_COMPILER=/home/lukma/work/arm-2009q3/bin/arm-none-eabi-
-		JOBS="-j 5"
 	fi
 	if [ "$USER" = "mzx" ]; then
 		CROSS_COMPILER=/opt/toolchains/arm-2009q3/bin/arm-none-linux-gnueabi-

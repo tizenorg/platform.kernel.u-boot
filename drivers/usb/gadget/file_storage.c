@@ -3500,7 +3500,7 @@ static int __init fsg_alloc(void)
 }
 
 
-static int __init fsg_init(void)
+int __init fsg_init(void)
 {
 	int		rc;
 	struct fsg_dev	*fsg;
