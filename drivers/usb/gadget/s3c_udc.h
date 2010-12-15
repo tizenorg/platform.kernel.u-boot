@@ -136,6 +136,7 @@ extern struct s3c_udc *the_controller;
 
 /*-------------------------------------------------------------------------*/
 
+#define DEBUG
 #ifdef DEBUG
 #define DBG(stuff...)		printf("udc: " stuff)
 #else

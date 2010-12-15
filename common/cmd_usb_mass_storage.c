@@ -4,6 +4,7 @@
 
 static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
+	int i = 0;
 	printf("ums command placeholder\n");
 	board_usb_init();
 	fsg_init();
@@ -17,8 +18,12 @@ static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[
 			goto fail;
 		}
 
+		if (0 == ++i % 1000) {
+			printf(".");
+			i = 0;
+		}
 		irq_res = usb_gadget_handle_interrupts();
-
+		fsg_main_thread(NULL);
 	}
 fail:
 	return -1;

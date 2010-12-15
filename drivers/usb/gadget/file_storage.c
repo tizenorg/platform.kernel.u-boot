@@ -258,7 +258,7 @@
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <malloc.h>
-#include <asm/bitops.h>
+//#include <asm/bitops.h>
 
 
 
@@ -535,7 +535,7 @@ typedef void (*fsg_routine_t)(struct fsg_dev *);
 
 static int exception_in_progress(struct fsg_dev *fsg)
 {
-	return 0; //(fsg->state > FSG_STATE_IDLE);
+	return fsg->state > FSG_STATE_IDLE;
 }
 
 /* Make bulk-out requests be divisible by the maxpacket size */
@@ -678,6 +678,8 @@ static void raise_exception(struct fsg_dev *fsg, enum fsg_state new_state)
 {
 	unsigned long		flags;
 
+	printf("raise_exception\n");
+
 	/* Do nothing if a higher-priority exception is already in progress.
 	 * If a lower-or-equal priority exception is in progress, preempt it
 	 * and notify the main thread by sending it a signal. */
@@ -685,6 +687,7 @@ static void raise_exception(struct fsg_dev *fsg, enum fsg_state new_state)
 	if (fsg->state <= new_state) {
 		fsg->exception_req_tag = fsg->ep0_req_tag;
 		fsg->state = new_state;
+		printf("set new state: %d\n", new_state);
 		if (fsg->thread_task)
 			send_sig_info(SIGUSR1, SEND_SIG_FORCED,
 					fsg->thread_task);
@@ -1076,6 +1079,7 @@ static int sleep_thread(struct fsg_dev *fsg)
 	int	rc = 0;
 
 	/* Wait until a signal arrives or we are woken up */
+	printf("need to sleep?\n");
 	for (;;) {
 		try_to_freeze();
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -2810,6 +2814,9 @@ reset:
 	for (i = 0; i < fsg->nluns; ++i)
 		fsg->luns[i].unit_attention_data = SS_RESET_OCCURRED;
 	return rc;
+
+
+
 }
 
 
@@ -2825,6 +2832,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 {
 	int	rc = 0;
 
+	printf("do_set_config\n");
 	/* Disable the single interface */
 	if (fsg->config != 0) {
 		DBG(fsg, "reset config\n");
@@ -2988,6 +2996,7 @@ static void handle_exception(struct fsg_dev *fsg)
 		break;
 
 	case FSG_STATE_CONFIG_CHANGE:
+		printf("handle_exception: CONFIG_CHANGE\n");
 		rc = do_set_config(fsg, new_config);
 		if (fsg->ep0_req_tag != exception_req_tag)
 			break;
@@ -3037,50 +3046,58 @@ int fsg_main_thread(void *fsg_)
 	//set_fs(get_ds());
 
 	/* The main loop */
-	while (fsg->state != FSG_STATE_TERMINATED) {
+	//while (fsg->state != FSG_STATE_TERMINATED) {
+	do {
 		if (exception_in_progress(fsg)) { // || signal_pending(current)) {
+			printf("1.\n");
 			handle_exception(fsg);
 			continue;
 		}
 
 		if (!fsg->running) {
-			sleep_thread(fsg);
+			//sleep_thread(fsg);
 			continue;
 		}
 
-		if (get_next_command(fsg))
+		if (get_next_command(fsg)) {
+			printf("3.\n");
 			continue;
+		}
 
 		spin_lock_irq(&fsg->lock);
 		if (!exception_in_progress(fsg))
 			fsg->state = FSG_STATE_DATA_PHASE;
 		spin_unlock_irq(&fsg->lock);
 
-		if (do_scsi_command(fsg) || finish_reply(fsg))
+		if (do_scsi_command(fsg) || finish_reply(fsg)) {
+			printf("4.\n");
 			continue;
+		}
 
 		spin_lock_irq(&fsg->lock);
 		if (!exception_in_progress(fsg))
 			fsg->state = FSG_STATE_STATUS_PHASE;
 		spin_unlock_irq(&fsg->lock);
 
-		if (send_status(fsg))
+		if (send_status(fsg)) {
+			printf("5.\n");
 			continue;
+		}
 
 		spin_lock_irq(&fsg->lock);
 		if (!exception_in_progress(fsg))
 			fsg->state = FSG_STATE_IDLE;
 		spin_unlock_irq(&fsg->lock);
-		}
+	} while (0);
 
-	spin_lock_irq(&fsg->lock);
+	/*spin_lock_irq(&fsg->lock);
 	fsg->thread_task = NULL;
-	spin_unlock_irq(&fsg->lock);
+	spin_unlock_irq(&fsg->lock);*/
 
 	/* If we are exiting because of a signal, unregister the
 	 * gadget driver. */
-	if (test_and_clear_bit(REGISTERED, &fsg->atomic_bitflags))
-		usb_gadget_unregister_driver(&fsg_driver);
+	/*if (test_and_clear_bit(REGISTERED, &fsg->atomic_bitflags))
+		usb_gadget_unregister_driver(&fsg_driver);*/
 
 	/* Let the unbind and cleanup routines know the thread has exited */
 	//complete_and_exit(&fsg->thread_notifier, 0);
