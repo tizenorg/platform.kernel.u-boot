@@ -253,10 +253,12 @@
 #include "gadget_chips.h"
 */
 
+#define unlikely(x) x
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <malloc.h>
+#include <asm/bitops.h>
 
 
 
@@ -300,29 +302,30 @@ MODULE_LICENSE("Dual BSD/GPL");*/
  */
 
 
-#define spin_lock_irqsave(lock,flags) do {puts("spin_lock_irqsave no-op");} while (0)
-#define spin_unlock_irqrestore(lock,flags) do {puts("spin_lock_irqrestore no-op");} while (0)
-#define spin_lock_irq(lock) do {puts("spin_lock_irq no-op");} while (0)
-#define spin_unlock_irq(lock) do {puts("spin_lock_irq no-op");} while (0)
-#define spin_lock(lock) do {puts("spin_lock no-op");} while (0)
-#define spin_unlock(lock) do {puts("spin_lock no-op");} while (0)
-#define spin_lock_init(x)
+#define spin_lock_irqsave(lock,flags) do {} while (0)
+#define spin_unlock_irqrestore(lock,flags) do {} while (0)
+#define spin_lock_irq(lock) do {} while (0)
+#define spin_unlock_irq(lock) do {} while (0)
+#define spin_lock(lock) do {} while (0)
+#define spin_unlock(lock) do {} while (0)
+#define local_irq_save(flags) do {} while (0)
+#define spin_lock_init(x) do {} while (0)
 #define init_rwsem(x)
 #define init_completion(x)
-#define wake_up_process(thread_task) do {puts("wake_up_process no-op");} while (0)
-#define send_sig_info(sig,mode,thread_task) do {puts("send_sig_info no-op");} while (0)
+#define wake_up_process(thread_task) do {} while (0)
+#define send_sig_info(sig,mode,thread_task) do {} while (0)
 typedef int spinlock_t;
 #define GFP_ATOMIC ((gfp_t) 0)
 #define GFP_KERNEL ((gfp_t) 0)
-#define set_current_state(...)		do {puts("set_current_state no-op");} while (0)
-#define __set_current_state(...)	do {puts("__set_current_state no-op");} while (0)
+#define set_current_state(...)		do {} while (0)
+#define __set_current_state(...)	do {} while (0)
 #define PAGE_CACHE_SHIFT	12
 #define PAGE_CACHE_SIZE		(1 << PAGE_CACHE_SHIFT)
 #define __user
 #define __init
 #define __exit
 #define __ref
-#define barrier() do {puts("barrier no-op");} while (0)
+#define barrier() do {} while (0)
 #ifdef CONFIG_SMP
 #define smp_mb()	mb ()
 #define smp_rmb()	rmb ()
@@ -334,12 +337,37 @@ typedef int spinlock_t;
 #endif
 #define try_to_freeze(...)		0
 #define set_freezable(...)		do { } while (0)
-#define kmalloc(x,y)			malloc(x)
-#define kfree(x)			free(x)
+//#define kmalloc(x,y)			malloc(x)
+//#define kfree(x)			free(x)
 #define kzalloc(size,flags)	calloc(size, 1)
 #define ENOTSUPP	524	/* Operation is not supported */
 #define kthread_create(...)	__builtin_return_address(0)
 
+inline void set_bit(int nr, volatile void * addr)
+{
+	int	mask;
+	volatile unsigned int *a = addr;
+	unsigned long flags;
+
+	a += nr >> 5;
+	mask = 1 << (nr & 0x1f);
+	local_irq_save(flags);
+	*a |= mask;
+	local_irq_restore(flags);
+}
+
+inline void clear_bit(int nr, volatile void * addr)
+{
+	int	mask;
+	volatile unsigned int *a = addr;
+	unsigned long flags;
+
+	a += nr >> 5;
+	mask = 1 << (nr & 0x1f);
+	local_irq_save(flags);
+	*a &= ~mask;
+	local_irq_restore(flags);
+}
 
 /*-------------------------------------------------------------------------*/
 
@@ -2988,9 +3016,10 @@ static void handle_exception(struct fsg_dev *fsg)
 
 /*-------------------------------------------------------------------------*/
 
-static int fsg_main_thread(void *fsg_)
+int fsg_main_thread(void *fsg_)
 {
 	struct fsg_dev		*fsg = fsg_;
+	fsg = &the_fsg;
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
 	 * to block everything but INT, TERM, KILL, and USR1. */
@@ -3158,7 +3187,7 @@ static int __init check_parameters(struct fsg_dev *fsg)
 		if (gcnum >= 0)
 			mod_data.release = 0x0300 + gcnum;
 		else {
-			WARNING(fsg, "controller '%s' not recognized\n",
+			printf(fsg, "controller '%s' not recognized\n",
 				fsg->gadget->name);
 			mod_data.release = 0x0399;
 		}
@@ -3183,7 +3212,7 @@ static int __init check_parameters(struct fsg_dev *fsg)
 			++len;
 			if ((*ch < '0' || *ch > '9') &&
 			    (*ch < 'A' || *ch > 'F')) { /* not uppercase hex */
-				WARNING(fsg,
+				printf(fsg,
 					"Invalid serial string character: %c; "
 					"Failing back to default\n",
 					*ch);
@@ -3193,14 +3222,14 @@ static int __init check_parameters(struct fsg_dev *fsg)
 		if (len > 126 ||
 		    (mod_data.transport_type == USB_PR_BULK && len < 12) ||
 		    (mod_data.transport_type != USB_PR_BULK && len > 12)) {
-			WARNING(fsg,
+			printf(fsg,
 				"Invalid serial string length; "
 				"Failing back to default\n");
 			goto fill_serial;
 		}
 		fsg_strings[FSG_STRING_SERIAL - 1].s = mod_data.serial;
 	} else {
-		WARNING(fsg,
+		printf(fsg,
 			"Userspace failed to provide serial number; "
 			"Failing back to default\n");
 fill_serial:
@@ -3231,13 +3260,17 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	struct usb_ep		*ep;
 	struct usb_request	*req;
 
+printf("%s\n", __func__);
+
 	fsg->gadget = gadget;
 	set_gadget_data(gadget, fsg);
 	fsg->ep0 = gadget->ep0;
 	fsg->ep0->driver_data = fsg;
 
-	if ((rc = check_parameters(fsg)) != 0)
+	if ((rc = check_parameters(fsg)) != 0) {
+		printf("check parameters failed\n");
 		goto out;
+	}
 
 	/*if (mod_data.removable) {	// Enable the store_xxx attributes
 		dev_attr_file.attr.mode = 0644;
@@ -3257,7 +3290,7 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	if (i == 0)
 		i = max(mod_data.num_filenames, 1u);
 	if (i > FSG_MAX_LUNS) {
-		ERROR(fsg, "invalid number of LUNs: %d\n", i);
+		printf("invalid number of LUNs: %d\n", i);
 		rc = -EINVAL;
 		goto out;
 	}
@@ -3266,6 +3299,7 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	 * LUN devices in sysfs. */
 	fsg->luns = kzalloc(i * sizeof(struct fsg_lun), GFP_KERNEL);
 	if (!fsg->luns) {
+		printf("not enough memory\n");
 		rc = -ENOMEM;
 		goto out;
 	}
@@ -3304,12 +3338,14 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 
 		if (mod_data.file[i] && *mod_data.file[i]) {
 			if ((rc = fsg_lun_open(curlun,
-					mod_data.file[i])) != 0)
+					mod_data.file[i])) != 0) {
+				printf("failed to open file\n");
 				goto out;
+			}
 		} else if (!mod_data.removable) {
-			ERROR(fsg, "no file given for LUN%d\n", i);
-			rc = -EINVAL;
-			goto out;
+			printf("no file given for LUN%d\n", i);
+			//rc = -EINVAL;
+			//goto out;
 		}
 	}
 
@@ -3369,11 +3405,15 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 
 	/* Allocate the request and buffer for endpoint 0 */
 	fsg->ep0req = req = usb_ep_alloc_request(fsg->ep0, GFP_KERNEL);
-	if (!req)
+	if (!req) {
+		printf("failed to usb_ep_alloc_request\n");
 		goto out;
+	}
 	req->buf = kmalloc(EP0_BUFSIZE, GFP_KERNEL);
-	if (!req->buf)
+	if (!req->buf) {
+		printf("failed to kmalloc req->buf\n");
 		goto out;
+	}
 	req->complete = ep0_complete;
 
 	/* Allocate the data buffers */
@@ -3384,8 +3424,10 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		 * the buffer will also work with the bulk-out (and
 		 * interrupt-in) endpoint. */
 		bh->buf = kmalloc(mod_data.buflen, GFP_KERNEL);
-		if (!bh->buf)
+		if (!bh->buf){
+			printf("failed to kmalloc bh->buf\n");
 			goto out;
+		}
 		bh->next = bh + 1;
 	}
 	fsg->buffhds[FSG_NUM_BUFFERS - 1].next = &fsg->buffhds[0];
@@ -3400,10 +3442,11 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 
 	fsg->thread_task = kthread_create(fsg_main_thread, fsg,
 			"file-storage-gadget");
+	/*
 	if (IS_ERR(fsg->thread_task)) {
 		rc = PTR_ERR(fsg->thread_task);
 		goto out;
-	}
+	}*/
 
 	INFO(fsg, DRIVER_DESC ", version: " DRIVER_VERSION "\n");
 	INFO(fsg, "Number of LUNs=%d\n", fsg->nluns);
@@ -3433,6 +3476,7 @@ out:
 	fsg->state = FSG_STATE_TERMINATED;	// The thread is dead
 	fsg_unbind(gadget);
 	//complete(&fsg->thread_notifier);
+	printf("Oops. bind failed.\n");
 	return rc;
 }
 
@@ -3508,9 +3552,14 @@ int __init fsg_init(void)
 	if ((rc = fsg_alloc()) != 0)
 		return rc;
 	fsg = the_fsg;
+	printf("> > > about to register the usb driver\n");
 	if ((rc = usb_gadget_register_driver(&fsg_driver)) != 0)
 		//kref_put(&fsg->ref, fsg_release);
 		do { } while (0);
+	printf("> > > about to connect the usb gadget\n");
+	usb_gadget_connect(the_fsg->gadget);
+
+	printf("> > > connected the usb gadget\n");
 	return rc;
 }
 //module_init(fsg_init);

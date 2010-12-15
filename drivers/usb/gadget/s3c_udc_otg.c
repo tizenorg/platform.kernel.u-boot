@@ -98,7 +98,7 @@ void cache_flush(void);
 #undef DEBUG_S3C_UDC
 
 //#define DEBUG_S3C_UDC_SETUP
-//#define DEBUG_S3C_UDC_EP0 *
+//#define DEBUG_S3C_UDC_EP0
 //#define DEBUG_S3C_UDC_ISR
 //#define DEBUG_S3C_UDC_OUT_EP
 //#define DEBUG_S3C_UDC_IN_EP
