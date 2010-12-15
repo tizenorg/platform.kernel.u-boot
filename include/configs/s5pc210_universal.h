@@ -269,8 +269,7 @@
 		" onenand write 0x42008000 0x0 0x100000\0" \
 	"updatek=onenand erase 0xc00000 0x500000;" \
 		" onenand write 0x41008000 0xc00000 0x500000\0" \
-	"bootk=onenand read 0x40007FC0 0xc00000 0x500000;" \
-		" bootm 0x40007FC0\0" \
+	"bootk=run loaduimage; bootm 0x40007FC0\0" \
 	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x42008000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
 	"lpj=lpj=3981312\0" \
