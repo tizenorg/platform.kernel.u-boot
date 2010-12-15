@@ -568,6 +568,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 #endif
 
 	mmc_register(mmc);
+	mmc->block_dev.dev = dev_index;
 
 	return 0;
 }
