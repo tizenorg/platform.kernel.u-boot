@@ -291,10 +291,11 @@
 	 "${netmask}:generic:usb0:off " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"ramboot=set bootargs " CONFIG_RAMDISK_BOOT \
 	 " initrd=0x33000000,8M ramdisk=8192\0" \
-	"mmcboot=set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
+	"mmcboot=set bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} " \
+		"rootwait ${console} ${meminfo} ${opts} ${lcdinfo}; " \
+		"run loaduimage; bootm 0x30007FC0\0" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
-	"sdboot=set bootargs root=/dev/mmcblk1p2 rootwait " CONFIG_COMMON_BOOT \
 	CONFIG_UBI_MTD "; bootm 0x30007FC0\0" \
 	"verify=n\0" \
 	"rootfstype=cramfs\0" \
@@ -306,7 +307,8 @@
 	"bootblock=" CONFIG_BOOTBLOCK "\0" \
 	"ubiblock=" CONFIG_UBIBLOCK" \0" \
 	"ubi=enabled\0" \
-	"loaduimage=fatload mmc 1 0x30007FC0 uImage\0" \
+	"loaduimage=fatload mmc ${mmcdev}:${mmcbootpart} 0x30007FC0 uImage\0" \
+	"mmcbootpart=2\0" \
 	"opts=always_resume=1"
 
 /*

@@ -36,6 +36,7 @@ void info_action_check(void)
 		setenv("bootcmd", buf);
 		setenv("mmcdev", "2");
 		setenv("mmcrootpart", "0");
+		setenv("mmcbootpart", "1");
 		break;
 	case INFO_ACTION_LCD_CONSOLE:
 		printf("lcd console mode\n");
