@@ -932,10 +932,7 @@ int mmc_register(struct mmc *mmc)
 {
 	/* Setup the universal parts of the block interface just once */
 	mmc->block_dev.if_type = IF_TYPE_MMC;
-
-	/* Device index didn't ensure to increase sequential */
-	if (!mmc->block_dev.dev)
-		mmc->block_dev.dev = cur_dev_num++;
+	mmc->block_dev.dev = cur_dev_num++;
 	mmc->block_dev.removable = 1;
 	mmc->block_dev.block_read = mmc_bread;
 	mmc->block_dev.block_write = mmc_bwrite;

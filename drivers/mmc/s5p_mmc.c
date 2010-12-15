@@ -566,7 +566,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 #ifdef CONFIG_MMC_ASYNC_WRITE
 	mmc_host[dev_index].async_write = 0;
 #endif
-	mmc->block_dev.dev = dev_index;
+
 	mmc_register(mmc);
 
 	return 0;
