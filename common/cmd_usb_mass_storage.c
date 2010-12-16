@@ -5,10 +5,10 @@
 static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int i = 0;
-	printf("ums command placeholder\n");
-	board_usb_init();
-	fsg_init();
-	printf("START LOOP\n");
+	struct board_ums_info* ums_info;
+
+	ums_info = board_ums_init();
+	fsg_init(ums_info);
 	while (1)
 	{
 		int irq_res;

@@ -603,7 +603,7 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 	/* R/W if we can, R/O if we must */
 	ro = curlun->initially_ro;
 
-	size = 4096;
+	size = 4096 * 1024;
 	if (size < 0) {
 		//LINFO(curlun, "unable to find file size: %s\n", filename);
 		rc = (int) size;

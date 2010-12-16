@@ -43,6 +43,7 @@
 
 #include "animation_frames.h"
 #include "gpio_setting.h"
+#include "usb_mass_storage.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -2213,9 +2214,32 @@ int board_eth_init(bd_t *bis)
 #endif
 
 #ifdef CONFIG_CMD_USB_MASS_STORAGE
-void board_usb_init(void)
+static int dummy_read_sector(unsigned int n, void *buf)
+{
+	return 0;
+}
+
+static int dummy_write_sector(unsigned int n, void *buf)
+{
+	return 0;
+}
+
+static int dummy_get_capacity(void)
+{
+	return 0;
+}
+
+static struct ums_board_info ums_board = {
+	.read_sector = dummy_read_sector,
+	.write_sector = dummy_write_sector,
+	.get_capacity = dummy_get_capacity,
+	.name = "u-Boot disk",
+};
+
+struct ums_board_info *board_ums_init(void)
 {
 	s3c_udc_probe(&s5pc110_otg_data);
+	return &ums_board;
 }
 #endif
 

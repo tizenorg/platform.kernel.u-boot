@@ -1,8 +1,15 @@
 #ifndef __USB_MASS_STORAGE_H__
 #define __USB_MASS_STORAGE_H__
 
-extern void fsg_init();
-extern void board_usb_init();
+struct ums_board_info {
+	int (*read_sector)(unsigned int n, void *buf);
+	int (*write_sector)(unsigned int n, void *buf);
+	int (*get_capacity)(void);
+	const char* name;
+};
+
+extern int fsg_init(struct ums_board_info*);
+extern struct ums_board_info *board_ums_init();
 extern int usb_gadget_handle_interrupts();
 extern int fsg_main_thread(void*);
 

@@ -259,6 +259,7 @@
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <malloc.h>
+#include <usb_mass_storage.h>
 //#include <asm/bitops.h>
 
 
@@ -404,7 +405,7 @@ static struct {
 } mod_data = {					// Default values
 	.transport_parm		= "BBB",
 	.protocol_parm		= "SCSI",
-	.removable		= 0,
+	.removable		= 1,
 	.can_stall		= 0,
 	.cdrom			= 0,
 	.vendor			= FSG_VENDOR_ID,
@@ -557,6 +558,7 @@ static void set_bulk_out_req_length(struct fsg_dev *fsg,
 
 static struct fsg_dev			*the_fsg;
 static struct usb_gadget_driver		fsg_driver;
+static struct ums_board_info		*ums_info;
 
 
 /*-------------------------------------------------------------------------*/
@@ -1576,7 +1578,6 @@ static int do_inquiry(struct fsg_dev *fsg, struct fsg_buffhd *bh)
 	u8	*buf = (u8 *) bh->buf;
 
 	static char vendor_id[] = "Linux   ";
-	static char product_disk_id[] = "File-Stor Gadget";
 	static char product_cdrom_id[] = "File-CD Gadget  ";
 
 	if (!fsg->curlun) {		// Unsupported LUNs are okay
@@ -1597,7 +1598,7 @@ static int do_inquiry(struct fsg_dev *fsg, struct fsg_buffhd *bh)
 				// No special options
 	sprintf(buf + 8, "%-8s%-16s%04x", vendor_id,
 			(mod_data.cdrom ? product_cdrom_id :
-				product_disk_id),
+				ums_info->name),
 			mod_data.release);
 	return 36;
 }
@@ -3067,10 +3068,9 @@ static void handle_exception(struct fsg_dev *fsg)
 
 /*-------------------------------------------------------------------------*/
 
-int fsg_main_thread(void *fsg_)
+int fsg_main_thread(void * _fsg)
 {
-	struct fsg_dev		*fsg = fsg_;
-	fsg = the_fsg;
+	struct fsg_dev		*fsg = the_fsg;
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
 	 * to block everything but INT, TERM, KILL, and USR1. */
@@ -3097,7 +3097,7 @@ int fsg_main_thread(void *fsg_)
 		}
 
 		if (!fsg->running) {
-			sleep_thread(fsg, __LINE__);
+			//sleep_thread(fsg, __LINE__);
 			continue;
 		}
 
@@ -3603,11 +3603,12 @@ static int __init fsg_alloc(void)
 }
 
 
-int __init fsg_init(void)
+int __init fsg_init(struct ums_board_info* _ums)
 {
 	int		rc;
 	struct fsg_dev	*fsg;
 
+	ums_info = _ums;
 	if ((rc = fsg_alloc()) != 0)
 		return rc;
 	fsg = the_fsg;
