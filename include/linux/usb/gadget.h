@@ -496,8 +496,10 @@ static inline int gadget_is_dualspeed(struct usb_gadget *g)
 	/* runtime test would check "g->is_dualspeed" ... that might be
 	 * useful to work around hardware bugs, but is mostly pointless
 	 */
+	printf("gadget_IS_dualspeed\n");
 	return 1;
 #else
+	printf("gadget_IS_LOWspeed\n");
 	return 0;
 #endif
 }

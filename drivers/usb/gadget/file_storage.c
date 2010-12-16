@@ -254,6 +254,7 @@
 */
 
 #define unlikely(x) x
+#include <config.h>
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -535,6 +536,9 @@ typedef void (*fsg_routine_t)(struct fsg_dev *);
 
 static int exception_in_progress(struct fsg_dev *fsg)
 {
+	static int i = 0;
+	if (i++ == 1000)
+		printf("exception in progress @0x%x\n", &fsg->state);
 	return fsg->state > FSG_STATE_IDLE;
 }
 
@@ -669,6 +673,7 @@ static void wakeup_thread(struct fsg_dev *fsg)
 {
 	/* Tell the main thread that something has happened */
 	fsg->thread_wakeup_needed = 1;
+	printf("wakeup_needed set\n");
 	if (fsg->thread_task)
 		wake_up_process(fsg->thread_task);
 }
@@ -688,9 +693,11 @@ static void raise_exception(struct fsg_dev *fsg, enum fsg_state new_state)
 		fsg->exception_req_tag = fsg->ep0_req_tag;
 		fsg->state = new_state;
 		printf("set new state: %d\n", new_state);
+		printf("@0x%x\n", &fsg->state);
 		if (fsg->thread_task)
 			send_sig_info(SIGUSR1, SEND_SIG_FORCED,
 					fsg->thread_task);
+		fsg->thread_wakeup_needed = 1;
 	}
 	spin_unlock_irqrestore(&fsg->lock, flags);
 }
@@ -1074,12 +1081,13 @@ static void start_transfer(struct fsg_dev *fsg, struct usb_ep *ep,
 }
 
 
-static int sleep_thread(struct fsg_dev *fsg)
+static int sleep_thread(struct fsg_dev *fsg, int line)
 {
 	int	rc = 0;
+	int i = 0;
 
 	/* Wait until a signal arrives or we are woken up */
-	printf("need to sleep?\n");
+	printf("need to sleep? %d\n", line);
 	for (;;) {
 		try_to_freeze();
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -1090,11 +1098,13 @@ static int sleep_thread(struct fsg_dev *fsg)
 		if (fsg->thread_wakeup_needed)
 			break;
 		//schedule();
+		usb_gadget_handle_interrupts();
 	}
 	__set_current_state(TASK_RUNNING);
 	fsg->thread_wakeup_needed = 0;
 	return rc;
 }
+//#define sleep_thread(x) (printf("sleep?:%d\n", __LINE__), 1)
 
 
 /*-------------------------------------------------------------------------*/
@@ -1158,7 +1168,7 @@ static int do_read(struct fsg_dev *fsg)
 		/* Wait for the next buffer to become available */
 		bh = fsg->next_buffhd_to_fill;
 		while (bh->state != BUF_STATE_EMPTY) {
-			rc = sleep_thread(fsg);
+			rc = sleep_thread(fsg, __LINE__);
 			if (rc)
 				return rc;
 		}
@@ -1409,7 +1419,7 @@ static int do_write(struct fsg_dev *fsg)
 		}
 
 		/* Wait for something to happen */
-		rc = sleep_thread(fsg);
+		rc = sleep_thread(fsg, __LINE__);
 		if (rc)
 			return rc;
 	}
@@ -1924,7 +1934,7 @@ static int pad_with_zeros(struct fsg_dev *fsg)
 
 		/* Wait for the next buffer to be free */
 		while (bh->state != BUF_STATE_EMPTY) {
-			rc = sleep_thread(fsg);
+			rc = sleep_thread(fsg, __LINE__);
 			if (rc)
 				return rc;
 		}
@@ -1985,7 +1995,7 @@ static int throw_away_data(struct fsg_dev *fsg)
 		}
 
 		/* Otherwise wait for something to happen */
-		rc = sleep_thread(fsg);
+		rc = sleep_thread(fsg, __LINE__);
 		if (rc)
 			return rc;
 	}
@@ -1997,6 +2007,12 @@ static int finish_reply(struct fsg_dev *fsg)
 {
 	struct fsg_buffhd	*bh = fsg->next_buffhd_to_fill;
 	int			rc = 0;
+	int i = 0;
+
+	if (i++ == 1000) {
+		i = 0;
+		printf("finish_reply\n");
+	}
 
 	switch (fsg->data_dir) {
 	case DATA_DIR_NONE:
@@ -2108,7 +2124,7 @@ static int send_status(struct fsg_dev *fsg)
 	/* Wait for the next buffer to become available */
 	bh = fsg->next_buffhd_to_fill;
 	while (bh->state != BUF_STATE_EMPTY) {
-		rc = sleep_thread(fsg);
+		rc = sleep_thread(fsg, __LINE__);
 		if (rc)
 			return rc;
 	}
@@ -2335,7 +2351,7 @@ static int do_scsi_command(struct fsg_dev *fsg)
 	/* Wait for the next buffer to become available for data or status */
 	bh = fsg->next_buffhd_to_drain = fsg->next_buffhd_to_fill;
 	while (bh->state != BUF_STATE_EMPTY) {
-		rc = sleep_thread(fsg);
+		rc = sleep_thread(fsg, __LINE__);
 		if (rc)
 			return rc;
 	}
@@ -2343,14 +2359,19 @@ static int do_scsi_command(struct fsg_dev *fsg)
 	fsg->short_packet_received = 0;
 
 	down_read(&fsg->filesem);	// We're using the backing file
+	printf("do_scsi_command:%d\n", fsg->cmnd[0]);
 	switch (fsg->cmnd[0]) {
 
 	case SC_INQUIRY:
+		printf("SC_INQUIRY\n");
 		fsg->data_size_from_cmnd = fsg->cmnd[4];
 		if ((reply = check_command(fsg, 6, DATA_DIR_TO_HOST,
 				(1<<4), 0,
-				"INQUIRY")) == 0)
+				"INQUIRY")) == 0) {
 			reply = do_inquiry(fsg, bh);
+		} else {
+			printf("check_command failed for SC_INQUIRY\n");
+		}
 		break;
 
 	case SC_MODE_SELECT_6:
@@ -2639,7 +2660,7 @@ static int get_next_command(struct fsg_dev *fsg)
 		/* Wait for the next buffer to become available */
 		bh = fsg->next_buffhd_to_fill;
 		while (bh->state != BUF_STATE_EMPTY) {
-			rc = sleep_thread(fsg);
+			rc = sleep_thread(fsg, __LINE__);
 			if (rc)
 				return rc;
 		}
@@ -2656,7 +2677,7 @@ static int get_next_command(struct fsg_dev *fsg)
 
 		/* Wait for the CBW to arrive */
 		while (bh->state != BUF_STATE_FULL) {
-			rc = sleep_thread(fsg);
+			rc = sleep_thread(fsg, __LINE__);
 			if (rc)
 				return rc;
 		}
@@ -2668,7 +2689,7 @@ static int get_next_command(struct fsg_dev *fsg)
 
 		/* Wait for the next command to arrive */
 		while (fsg->cbbuf_cmnd_size == 0) {
-			rc = sleep_thread(fsg);
+			rc = sleep_thread(fsg, __LINE__);
 			if (rc)
 				return rc;
 		}
@@ -2701,7 +2722,7 @@ static int enable_endpoint(struct fsg_dev *fsg, struct usb_ep *ep,
 	ep->driver_data = fsg;
 	rc = usb_ep_enable(ep, d);
 	if (rc)
-		ERROR(fsg, "can't enable %s, result %d\n", ep->name, rc);
+		printf("can't enable %s, result %d\n", ep->name, rc);
 	return rc;
 }
 
@@ -2711,7 +2732,7 @@ static int alloc_request(struct fsg_dev *fsg, struct usb_ep *ep,
 	*preq = usb_ep_alloc_request(ep, GFP_ATOMIC);
 	if (*preq)
 		return 0;
-	ERROR(fsg, "can't allocate request for %s\n", ep->name);
+	printf("can't allocate request for %s\n", ep->name);
 	return -ENOMEM;
 }
 
@@ -2727,7 +2748,7 @@ static int do_set_interface(struct fsg_dev *fsg, int altsetting)
 	const struct usb_endpoint_descriptor	*d;
 
 	if (fsg->running)
-		DBG(fsg, "reset interface\n");
+		printf("reset interface\n");
 
 reset:
 	/* Deallocate the requests */
@@ -2763,22 +2784,27 @@ reset:
 	}
 
 	fsg->running = 0;
+	printf("altsetting:%d rc:%d\n", altsetting, rc);
 	if (altsetting < 0 || rc != 0)
 		return rc;
 
-	DBG(fsg, "set interface %d\n", altsetting);
+	printf("set interface %d\n", altsetting);
 
 	/* Enable the endpoints */
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_in_desc, &fsg_hs_bulk_in_desc);
-	if ((rc = enable_endpoint(fsg, fsg->bulk_in, d)) != 0)
+	if ((rc = enable_endpoint(fsg, fsg->bulk_in, d)) != 0) {
+		printf("bulk_in enable failed!\n");
 		goto reset;
+	}
 	fsg->bulk_in_enabled = 1;
 
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_out_desc, &fsg_hs_bulk_out_desc);
-	if ((rc = enable_endpoint(fsg, fsg->bulk_out, d)) != 0)
+	if ((rc = enable_endpoint(fsg, fsg->bulk_out, d)) != 0) {
+		printf("bulk_out enable failed!\n");
 		goto reset;
+	}
 	fsg->bulk_out_enabled = 1;
 	fsg->bulk_out_maxpacket = le16_to_cpu(d->wMaxPacketSize);
 	clear_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags);
@@ -2786,8 +2812,10 @@ reset:
 	if (transport_is_cbi()) {
 		d = fsg_ep_desc(fsg->gadget,
 				&fsg_fs_intr_in_desc, &fsg_hs_intr_in_desc);
-		if ((rc = enable_endpoint(fsg, fsg->intr_in, d)) != 0)
+		if ((rc = enable_endpoint(fsg, fsg->intr_in, d)) != 0) {
+			printf("intr enable failed!\n");
 			goto reset;
+		}
 		fsg->intr_in_enabled = 1;
 	}
 
@@ -2835,17 +2863,20 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 	printf("do_set_config\n");
 	/* Disable the single interface */
 	if (fsg->config != 0) {
-		DBG(fsg, "reset config\n");
+		//DBG(fsg, "reset config\n");
+		printf("reset config\n");
 		fsg->config = 0;
 		rc = do_set_interface(fsg, -1);
 	}
 
 	/* Enable the interface */
+	printf("new_config:%d\n", new_config);
 	if (new_config != 0) {
 		fsg->config = new_config;
-		if ((rc = do_set_interface(fsg, 0)) != 0)
+		if ((rc = do_set_interface(fsg, 0)) != 0) {
 			fsg->config = 0;	// Reset on errors
-		else {
+			printf("new_config failed!\n");
+		} else {
 			char *speed;
 
 			switch (fsg->gadget->speed) {
@@ -2854,7 +2885,8 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 			case USB_SPEED_HIGH:	speed = "high";	break;
 			default: 		speed = "?";	break;
 			}
-			INFO(fsg, "%s speed config #%d\n", speed, fsg->config);
+			//INFO(fsg, "%s speed config #%d\n", speed, fsg->config);
+			printf("%s speed config #%d\n", speed, fsg->config);
 		}
 	}
 	return rc;
@@ -2876,6 +2908,7 @@ static void handle_exception(struct fsg_dev *fsg)
 	unsigned int		exception_req_tag;
 	int			rc;
 
+	printf("handle_exception\n");
 	/* Clear the existing signals.  Anything but SIGUSR1 is converted
 	 * into a high-priority EXIT exception. */
 	for (;;) {
@@ -2909,7 +2942,7 @@ static void handle_exception(struct fsg_dev *fsg)
 		}
 		if (num_active == 0)
 			break;
-		if (sleep_thread(fsg))
+		if (sleep_thread(fsg, __LINE__))
 			return;
 	}
 
@@ -3028,7 +3061,7 @@ static void handle_exception(struct fsg_dev *fsg)
 int fsg_main_thread(void *fsg_)
 {
 	struct fsg_dev		*fsg = fsg_;
-	fsg = &the_fsg;
+	fsg = the_fsg;
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
 	 * to block everything but INT, TERM, KILL, and USR1. */
@@ -3055,7 +3088,7 @@ int fsg_main_thread(void *fsg_)
 		}
 
 		if (!fsg->running) {
-			//sleep_thread(fsg);
+			sleep_thread(fsg, __LINE__);
 			continue;
 		}
 
