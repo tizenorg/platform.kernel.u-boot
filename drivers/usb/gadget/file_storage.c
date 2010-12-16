@@ -405,7 +405,7 @@ static struct {
 	.transport_parm		= "BBB",
 	.protocol_parm		= "SCSI",
 	.removable		= 0,
-	.can_stall		= 1,
+	.can_stall		= 0,
 	.cdrom			= 0,
 	.vendor			= FSG_VENDOR_ID,
 	.product		= FSG_PRODUCT_ID,
@@ -1098,6 +1098,10 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 		if (fsg->thread_wakeup_needed)
 			break;
 		//schedule();
+		if (++i == 10000) {
+			printf("+");
+			i = 0;
+		}
 		usb_gadget_handle_interrupts();
 	}
 	__set_current_state(TASK_RUNNING);
@@ -2007,12 +2011,8 @@ static int finish_reply(struct fsg_dev *fsg)
 {
 	struct fsg_buffhd	*bh = fsg->next_buffhd_to_fill;
 	int			rc = 0;
-	int i = 0;
 
-	if (i++ == 1000) {
-		i = 0;
-		printf("finish_reply\n");
-	}
+	printf("finish_reply\n");
 
 	switch (fsg->data_dir) {
 	case DATA_DIR_NONE:
@@ -2023,6 +2023,7 @@ static int finish_reply(struct fsg_dev *fsg)
 	 * try to send or receive any data.  So stall both bulk pipes
 	 * if we can and wait for a reset. */
 	case DATA_DIR_UNKNOWN:
+		printf("DATA_DIR_UNKNOWN\n");
 		if (mod_data.can_stall) {
 			fsg_set_halt(fsg, fsg->bulk_out);
 			rc = halt_bulk_in_endpoint(fsg);
@@ -2031,11 +2032,14 @@ static int finish_reply(struct fsg_dev *fsg)
 
 	/* All but the last buffer of data must have already been sent */
 	case DATA_DIR_TO_HOST:
-		if (fsg->data_size == 0)
+		printf("DATA_DIR_TO_HOST\n");
+		if (fsg->data_size == 0){
 			;		// Nothing to send
-
+			printf("data_size == 0\n");
+		}
 		/* If there's no residue, simply send the last buffer */
 		else if (fsg->residue == 0) {
+			printf("residue == 0\n");
 			bh->inreq->zero = 0;
 			start_transfer(fsg, fsg->bulk_in, bh->inreq,
 					&bh->inreq_busy, &bh->state);
@@ -2049,6 +2053,7 @@ static int finish_reply(struct fsg_dev *fsg)
 		 * sense data is set), then halt the bulk-in endpoint
 		 * instead. */
 		else if (!transport_is_bbb()) {
+			printf("transport NOT bbb\n");
 			if (mod_data.can_stall &&
 					fsg->residue == fsg->data_size &&
 	(!fsg->curlun || fsg->curlun->sense_data != SS_NO_SENSE)) {
@@ -2066,7 +2071,9 @@ static int finish_reply(struct fsg_dev *fsg)
 		 * short packet and halt the bulk-in endpoint.  If we can't
 		 * stall, pad out the remaining data with 0's. */
 		else {
+			printf("transport bbb\n");
 			if (mod_data.can_stall) {
+				printf("can stall\n");
 				bh->inreq->zero = 1;
 				start_transfer(fsg, fsg->bulk_in, bh->inreq,
 						&bh->inreq_busy, &bh->state);
@@ -2080,6 +2087,7 @@ static int finish_reply(struct fsg_dev *fsg)
 	/* We have processed all we want from the data the host has sent.
 	 * There may still be outstanding bulk-out requests. */
 	case DATA_DIR_FROM_HOST:
+		printf("DATA_DIR_FROM_HOST\n");
 		if (fsg->residue == 0)
 			;		// Nothing to receive
 
@@ -2567,6 +2575,7 @@ static int do_scsi_command(struct fsg_dev *fsg)
 		break;
 	}
 	up_read(&fsg->filesem);
+	printf("scsi_commmand done (almost)\n");
 
 	if (reply == -EINTR) // || signal_pending(current))
 		return -EINTR;
