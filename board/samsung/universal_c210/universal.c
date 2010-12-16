@@ -203,7 +203,8 @@ int board_init(void)
 
 int dram_init(void)
 {
-	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
+	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE -
+		CONFIG_SYS_RAM_CONSOLE_SIZE;
 
 	/* Early init for i2c devices - Where these funcions should go?? */
 
