@@ -3386,17 +3386,17 @@ printf("%s\n", __func__);
 		curlun->registered = 1;
 		//kref_get(&fsg->ref);
 
-		if (mod_data.file[i] && *mod_data.file[i]) {
+		//if (mod_data.file[i] && *mod_data.file[i]) {
 			if ((rc = fsg_lun_open(curlun,
 					mod_data.file[i])) != 0) {
 				printf("failed to open file\n");
 				goto out;
 			}
-		} else if (!mod_data.removable) {
-			printf("no file given for LUN%d\n", i);
+		//} else if (!mod_data.removable) {
+		//	printf("no file given for LUN%d\n", i);
 			//rc = -EINVAL;
 			//goto out;
-		}
+		//}
 	}
 
 	/* Find all the endpoints we will use */
