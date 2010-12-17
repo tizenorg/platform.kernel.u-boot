@@ -537,9 +537,6 @@ typedef void (*fsg_routine_t)(struct fsg_dev *);
 
 static int exception_in_progress(struct fsg_dev *fsg)
 {
-	static int i = 0;
-	if (i++ == 1000)
-		printf("exception in progress @0x%x\n", &fsg->state);
 	return fsg->state > FSG_STATE_IDLE;
 }
 
@@ -675,7 +672,6 @@ static void wakeup_thread(struct fsg_dev *fsg)
 {
 	/* Tell the main thread that something has happened */
 	fsg->thread_wakeup_needed = 1;
-	printf("wakeup_needed set\n");
 	if (fsg->thread_task)
 		wake_up_process(fsg->thread_task);
 }
@@ -685,8 +681,6 @@ static void raise_exception(struct fsg_dev *fsg, enum fsg_state new_state)
 {
 	unsigned long		flags;
 
-	printf("raise_exception\n");
-
 	/* Do nothing if a higher-priority exception is already in progress.
 	 * If a lower-or-equal priority exception is in progress, preempt it
 	 * and notify the main thread by sending it a signal. */
@@ -694,8 +688,6 @@ static void raise_exception(struct fsg_dev *fsg, enum fsg_state new_state)
 	if (fsg->state <= new_state) {
 		fsg->exception_req_tag = fsg->ep0_req_tag;
 		fsg->state = new_state;
-		printf("set new state: %d\n", new_state);
-		printf("@0x%x\n", &fsg->state);
 		if (fsg->thread_task)
 			send_sig_info(SIGUSR1, SEND_SIG_FORCED,
 					fsg->thread_task);
@@ -1089,7 +1081,6 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 	int i = 0;
 
 	/* Wait until a signal arrives or we are woken up */
-	printf("need to sleep? %d\n", line);
 	for (;;) {
 		try_to_freeze();
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -1195,7 +1186,7 @@ static int do_read(struct fsg_dev *fsg)
 		amount_tmp = amount;
 		nread = 0;
 		while (amount_tmp > 0) {
-			ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			ums_info->read_sector((file_offset_tmp + nread) / SECTOR_SIZE, (char __user *)bh->buf + nread);
 			amount_tmp -= SECTOR_SIZE;
 			nread += SECTOR_SIZE;
 		}
@@ -1379,7 +1370,7 @@ static int do_write(struct fsg_dev *fsg)
 			amount_tmp = amount;
 			nwritten = 0;
 			while (amount_tmp > 0) {
-				ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nwritten);
+				ums_info->write_sector((file_offset_tmp + nwritten) / SECTOR_SIZE, (char __user *)bh->buf + nwritten);
 				amount_tmp -= SECTOR_SIZE;
 				nwritten += SECTOR_SIZE;
 			}
@@ -1535,7 +1526,7 @@ static int do_verify(struct fsg_dev *fsg)
 		amount_tmp = amount;
 		nread = 0;
 		while (amount_tmp > 0) {
-			ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			ums_info->read_sector((file_offset_tmp + nread) / SECTOR_SIZE, (char __user *)bh->buf + nread);
 			amount_tmp -= SECTOR_SIZE;
 			nread += SECTOR_SIZE;
 		}
@@ -2013,8 +2004,6 @@ static int finish_reply(struct fsg_dev *fsg)
 	struct fsg_buffhd	*bh = fsg->next_buffhd_to_fill;
 	int			rc = 0;
 
-	printf("finish_reply\n");
-
 	switch (fsg->data_dir) {
 	case DATA_DIR_NONE:
 		break;			// Nothing to send
@@ -2024,7 +2013,6 @@ static int finish_reply(struct fsg_dev *fsg)
 	 * try to send or receive any data.  So stall both bulk pipes
 	 * if we can and wait for a reset. */
 	case DATA_DIR_UNKNOWN:
-		printf("DATA_DIR_UNKNOWN\n");
 		if (mod_data.can_stall) {
 			fsg_set_halt(fsg, fsg->bulk_out);
 			rc = halt_bulk_in_endpoint(fsg);
@@ -2033,14 +2021,11 @@ static int finish_reply(struct fsg_dev *fsg)
 
 	/* All but the last buffer of data must have already been sent */
 	case DATA_DIR_TO_HOST:
-		printf("DATA_DIR_TO_HOST\n");
 		if (fsg->data_size == 0){
 			;		// Nothing to send
-			printf("data_size == 0\n");
 		}
 		/* If there's no residue, simply send the last buffer */
 		else if (fsg->residue == 0) {
-			printf("residue == 0\n");
 			bh->inreq->zero = 0;
 			start_transfer(fsg, fsg->bulk_in, bh->inreq,
 					&bh->inreq_busy, &bh->state);
@@ -2054,7 +2039,6 @@ static int finish_reply(struct fsg_dev *fsg)
 		 * sense data is set), then halt the bulk-in endpoint
 		 * instead. */
 		else if (!transport_is_bbb()) {
-			printf("transport NOT bbb\n");
 			if (mod_data.can_stall &&
 					fsg->residue == fsg->data_size &&
 	(!fsg->curlun || fsg->curlun->sense_data != SS_NO_SENSE)) {
@@ -2072,9 +2056,7 @@ static int finish_reply(struct fsg_dev *fsg)
 		 * short packet and halt the bulk-in endpoint.  If we can't
 		 * stall, pad out the remaining data with 0's. */
 		else {
-			printf("transport bbb\n");
 			if (mod_data.can_stall) {
-				printf("can stall\n");
 				bh->inreq->zero = 1;
 				start_transfer(fsg, fsg->bulk_in, bh->inreq,
 						&bh->inreq_busy, &bh->state);
@@ -2088,7 +2070,6 @@ static int finish_reply(struct fsg_dev *fsg)
 	/* We have processed all we want from the data the host has sent.
 	 * There may still be outstanding bulk-out requests. */
 	case DATA_DIR_FROM_HOST:
-		printf("DATA_DIR_FROM_HOST\n");
 		if (fsg->residue == 0)
 			;		// Nothing to receive
 
@@ -2368,11 +2349,9 @@ static int do_scsi_command(struct fsg_dev *fsg)
 	fsg->short_packet_received = 0;
 
 	down_read(&fsg->filesem);	// We're using the backing file
-	printf("do_scsi_command:%d\n", fsg->cmnd[0]);
 	switch (fsg->cmnd[0]) {
 
 	case SC_INQUIRY:
-		printf("SC_INQUIRY\n");
 		fsg->data_size_from_cmnd = fsg->cmnd[4];
 		if ((reply = check_command(fsg, 6, DATA_DIR_TO_HOST,
 				(1<<4), 0,
@@ -2576,7 +2555,6 @@ static int do_scsi_command(struct fsg_dev *fsg)
 		break;
 	}
 	up_read(&fsg->filesem);
-	printf("scsi_commmand done (almost)\n");
 
 	if (reply == -EINTR) // || signal_pending(current))
 		return -EINTR;
@@ -2804,7 +2782,6 @@ reset:
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_in_desc, &fsg_hs_bulk_in_desc);
 	if ((rc = enable_endpoint(fsg, fsg->bulk_in, d)) != 0) {
-		printf("bulk_in enable failed!\n");
 		goto reset;
 	}
 	fsg->bulk_in_enabled = 1;
@@ -2812,7 +2789,6 @@ reset:
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_out_desc, &fsg_hs_bulk_out_desc);
 	if ((rc = enable_endpoint(fsg, fsg->bulk_out, d)) != 0) {
-		printf("bulk_out enable failed!\n");
 		goto reset;
 	}
 	fsg->bulk_out_enabled = 1;
@@ -2823,7 +2799,6 @@ reset:
 		d = fsg_ep_desc(fsg->gadget,
 				&fsg_fs_intr_in_desc, &fsg_hs_intr_in_desc);
 		if ((rc = enable_endpoint(fsg, fsg->intr_in, d)) != 0) {
-			printf("intr enable failed!\n");
 			goto reset;
 		}
 		fsg->intr_in_enabled = 1;
@@ -2870,22 +2845,18 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 {
 	int	rc = 0;
 
-	printf("do_set_config\n");
 	/* Disable the single interface */
 	if (fsg->config != 0) {
 		//DBG(fsg, "reset config\n");
-		printf("reset config\n");
 		fsg->config = 0;
 		rc = do_set_interface(fsg, -1);
 	}
 
 	/* Enable the interface */
-	printf("new_config:%d\n", new_config);
 	if (new_config != 0) {
 		fsg->config = new_config;
 		if ((rc = do_set_interface(fsg, 0)) != 0) {
 			fsg->config = 0;	// Reset on errors
-			printf("new_config failed!\n");
 		} else {
 			char *speed;
 
@@ -2918,7 +2889,6 @@ static void handle_exception(struct fsg_dev *fsg)
 	unsigned int		exception_req_tag;
 	int			rc;
 
-	printf("handle_exception\n");
 	/* Clear the existing signals.  Anything but SIGUSR1 is converted
 	 * into a high-priority EXIT exception. */
 	for (;;) {
@@ -3039,7 +3009,6 @@ static void handle_exception(struct fsg_dev *fsg)
 		break;
 
 	case FSG_STATE_CONFIG_CHANGE:
-		printf("handle_exception: CONFIG_CHANGE\n");
 		rc = do_set_config(fsg, new_config);
 		if (fsg->ep0_req_tag != exception_req_tag)
 			break;
@@ -3091,7 +3060,6 @@ int fsg_main_thread(void * _fsg)
 	//while (fsg->state != FSG_STATE_TERMINATED) {
 	do {
 		if (exception_in_progress(fsg)) { // || signal_pending(current)) {
-			printf("1.\n");
 			handle_exception(fsg);
 			continue;
 		}
@@ -3102,7 +3070,6 @@ int fsg_main_thread(void * _fsg)
 		}
 
 		if (get_next_command(fsg)) {
-			printf("3.\n");
 			continue;
 		}
 
@@ -3112,7 +3079,6 @@ int fsg_main_thread(void * _fsg)
 		spin_unlock_irq(&fsg->lock);
 
 		if (do_scsi_command(fsg) || finish_reply(fsg)) {
-			printf("4.\n");
 			continue;
 		}
 
@@ -3122,7 +3088,6 @@ int fsg_main_thread(void * _fsg)
 		spin_unlock_irq(&fsg->lock);
 
 		if (send_status(fsg)) {
-			printf("5.\n");
 			continue;
 		}
 
@@ -3325,7 +3290,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	fsg->ep0->driver_data = fsg;
 
 	if ((rc = check_parameters(fsg)) != 0) {
-		printf("check parameters failed\n");
 		goto out;
 	}
 
@@ -3356,7 +3320,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	 * LUN devices in sysfs. */
 	fsg->luns = kzalloc(i * sizeof(struct fsg_lun), GFP_KERNEL);
 	if (!fsg->luns) {
-		printf("not enough memory\n");
 		rc = -ENOMEM;
 		goto out;
 	}
@@ -3393,7 +3356,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		//if (mod_data.file[i] && *mod_data.file[i]) {
 			if ((rc = fsg_lun_open(curlun,
 					mod_data.file[i])) != 0) {
-				printf("failed to open file\n");
 				goto out;
 			}
 		//} else if (!mod_data.removable) {
@@ -3460,12 +3422,10 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	/* Allocate the request and buffer for endpoint 0 */
 	fsg->ep0req = req = usb_ep_alloc_request(fsg->ep0, GFP_KERNEL);
 	if (!req) {
-		printf("failed to usb_ep_alloc_request\n");
 		goto out;
 	}
 	req->buf = kmalloc(EP0_BUFSIZE, GFP_KERNEL);
 	if (!req->buf) {
-		printf("failed to kmalloc req->buf\n");
 		goto out;
 	}
 	req->complete = ep0_complete;
@@ -3479,7 +3439,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		 * interrupt-in) endpoint. */
 		bh->buf = kmalloc(mod_data.buflen, GFP_KERNEL);
 		if (!bh->buf){
-			printf("failed to kmalloc bh->buf\n");
 			goto out;
 		}
 		bh->next = bh + 1;
@@ -3530,7 +3489,6 @@ out:
 	fsg->state = FSG_STATE_TERMINATED;	// The thread is dead
 	fsg_unbind(gadget);
 	//complete(&fsg->thread_notifier);
-	printf("Oops. bind failed.\n");
 	return rc;
 }
 
@@ -3607,14 +3565,11 @@ int __init fsg_init(struct ums_board_info* _ums)
 	if ((rc = fsg_alloc()) != 0)
 		return rc;
 	fsg = the_fsg;
-	printf("> > > about to register the usb driver\n");
 	if ((rc = usb_gadget_register_driver(&fsg_driver)) != 0)
 		//kref_put(&fsg->ref, fsg_release);
 		do { } while (0);
-	printf("> > > about to connect the usb gadget\n");
 	usb_gadget_connect(the_fsg->gadget);
 
-	printf("> > > connected the usb gadget\n");
 	return rc;
 }
 //module_init(fsg_init);

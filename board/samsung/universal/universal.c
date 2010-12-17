@@ -44,6 +44,7 @@
 #include "animation_frames.h"
 #include "gpio_setting.h"
 #include "usb_mass_storage.h"
+#define SECTOR_SIZE	512
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -2216,11 +2217,16 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_CMD_USB_MASS_STORAGE
 static int dummy_read_sector(unsigned int n, void *buf)
 {
+	memset(buf, n % 16, SECTOR_SIZE);
 	return 0;
 }
 
 static int dummy_write_sector(unsigned int n, void *buf)
 {
+	printf("%c", *((char*)buf + 0));
+	printf("%c", *((char*)buf + 1));
+	printf("%c", *((char*)buf + 2));
+	printf("\n");
 	return 0;
 }
 
