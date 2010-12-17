@@ -344,6 +344,7 @@ typedef int spinlock_t;
 #define kzalloc(size,flags)	calloc(size, 1)
 #define ENOTSUPP	524	/* Operation is not supported */
 #define kthread_create(...)	__builtin_return_address(0)
+#define SECTOR_SIZE	512
 
 inline void set_bit(int nr, volatile void * addr)
 {
@@ -468,7 +469,6 @@ struct fsg_dev {
 	struct rw_semaphore	filesem;
 
 	/* reference counting: wait until all LUNs are released */
-	//struct kref		ref;
 
 	struct usb_ep		*ep0;		// Handy copy of gadget->ep0
 	struct usb_request	*ep0req;	// For control responses
@@ -558,7 +558,7 @@ static void set_bulk_out_req_length(struct fsg_dev *fsg,
 
 static struct fsg_dev			*the_fsg;
 static struct usb_gadget_driver		fsg_driver;
-static struct ums_board_info		*ums_info;
+struct ums_board_info			*ums_info;
 
 
 /*-------------------------------------------------------------------------*/
@@ -1110,7 +1110,6 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 	fsg->thread_wakeup_needed = 0;
 	return rc;
 }
-//#define sleep_thread(x) (printf("sleep?:%d\n", __LINE__), 1)
 
 
 /*-------------------------------------------------------------------------*/
@@ -1123,7 +1122,7 @@ static int do_read(struct fsg_dev *fsg)
 	int			rc;
 	u32			amount_left;
 	loff_t			file_offset, file_offset_tmp;
-	unsigned int		amount;
+	unsigned int		amount, amount_tmp;
 	unsigned int		partial_page;
 	ssize_t			nread;
 
@@ -1193,15 +1192,13 @@ static int do_read(struct fsg_dev *fsg)
 
 		/* Perform the read */
 		file_offset_tmp = file_offset;
-		/*nread = vfs_read(curlun->filp,
-				(char __user *) bh->buf,
-				amount, &file_offset_tmp);*/
-		memset((char __user*) bh->buf, 0, amount);
-		*((char __user*) bh->buf) = 'A';
-		*((char __user*) bh->buf + 1) = 'B';
-		*((char __user*) bh->buf + 2) = 'C';
-
-		nread = amount;
+		amount_tmp = amount;
+		nread = 0;
+		while (amount_tmp > 0) {
+			ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			amount_tmp -= SECTOR_SIZE;
+			nread += SECTOR_SIZE;
+		}
 		file_offset_tmp += amount;
 
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
@@ -1257,7 +1254,7 @@ static int do_write(struct fsg_dev *fsg)
 	int			get_some_more;
 	u32			amount_left_to_req, amount_left_to_write;
 	loff_t			usb_offset, file_offset, file_offset_tmp;
-	unsigned int		amount;
+	unsigned int		amount, amount_tmp;
 	unsigned int		partial_page;
 	ssize_t			nwritten;
 	int			rc;
@@ -1379,11 +1376,13 @@ static int do_write(struct fsg_dev *fsg)
 
 			/* Perform the write */
 			file_offset_tmp = file_offset;
-			/* nwritten = vfs_write(curlun->filp,
-					(char __user *) bh->buf,
-					amount, &file_offset_tmp); */
-
-			nwritten = amount;
+			amount_tmp = amount;
+			nwritten = 0;
+			while (amount_tmp > 0) {
+				ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nwritten);
+				amount_tmp -= SECTOR_SIZE;
+				nwritten += SECTOR_SIZE;
+			}
 			file_offset_tmp += amount;
 
 			VLDBG(curlun, "file write %u @ %llu -> %d\n", amount,
@@ -1472,7 +1471,7 @@ static int do_verify(struct fsg_dev *fsg)
 	struct fsg_buffhd	*bh = fsg->next_buffhd_to_fill;
 	loff_t			file_offset, file_offset_tmp;
 	u32			amount_left;
-	unsigned int		amount;
+	unsigned int		amount, amount_tmp;
 	ssize_t			nread;
 
 	/* Get the starting Logical Block Address and check that it's
@@ -1533,12 +1532,13 @@ static int do_verify(struct fsg_dev *fsg)
 
 		/* Perform the read */
 		file_offset_tmp = file_offset;
-		 /* nread = vfs_read(curlun->filp,
-				(char __user *) bh->buf,
-				amount, &file_offset_tmp); */
-
-		memset((char __user*) bh->buf, 0, amount);
-		nread = amount;
+		amount_tmp = amount;
+		nread = 0;
+		while (amount_tmp > 0) {
+			ums_info->read_sector(file_offset_tmp / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			amount_tmp -= SECTOR_SIZE;
+			nread += SECTOR_SIZE;
+		}
 		file_offset_tmp += amount;
 
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
@@ -3319,8 +3319,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	struct usb_ep		*ep;
 	struct usb_request	*req;
 
-printf("%s\n", __func__);
-
 	fsg->gadget = gadget;
 	set_gadget_data(gadget, fsg);
 	fsg->ep0 = gadget->ep0;
@@ -3371,9 +3369,6 @@ printf("%s\n", __func__);
 		curlun->initially_ro = curlun->ro;
 		curlun->removable = mod_data.removable;
 		curlun->nofua = mod_data.nofua[i];
-		//curlun->dev.release = lun_release;
-		//curlun->dev.parent = &gadget->dev;
-		//curlun->dev.driver = &fsg_driver.driver;
 		/*
 		dev_set_drvdata(&curlun->dev, &fsg->filesem);
 		dev_set_name(&curlun->dev,"%s-lun%d",

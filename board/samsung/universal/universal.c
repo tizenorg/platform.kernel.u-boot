@@ -2226,7 +2226,7 @@ static int dummy_write_sector(unsigned int n, void *buf)
 
 static int dummy_get_capacity(void)
 {
-	return 0;
+	return 4096 * 1024;
 }
 
 static struct ums_board_info ums_board = {
