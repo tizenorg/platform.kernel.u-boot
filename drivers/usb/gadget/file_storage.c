@@ -233,26 +233,6 @@
 /* #define DUMP_MSGS */
 
 
-/* #include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/dcache.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/fcntl.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/kref.h>
-#include <linux/kthread.h>
-#include <linux/limits.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/freezer.h>
-#include <linux/utsname.h>
-#include "gadget_chips.h"
-*/
-
 #define unlikely(x) x
 #include <config.h>
 #include <linux/err.h>
@@ -260,8 +240,6 @@
 #include <linux/usb/gadget.h>
 #include <malloc.h>
 #include <usb_mass_storage.h>
-//#include <asm/bitops.h>
-
 
 
 /*
@@ -292,10 +270,6 @@ static const char fsg_string_interface[] = "Mass Storage";
 
 #include "storage_common.c"
 
-
-/*MODULE_DESCRIPTION(DRIVER_DESC);
-MODULE_AUTHOR("Alan Stern");
-MODULE_LICENSE("Dual BSD/GPL");*/
 
 /*
  * This driver assumes self-powered hardware and has no way for users to
@@ -345,6 +319,15 @@ typedef int spinlock_t;
 #define ENOTSUPP	524	/* Operation is not supported */
 #define kthread_create(...)	__builtin_return_address(0)
 #define SECTOR_SIZE	512
+#define signal_pending(x) 0
+#define schedule(x)	do {} while (0)
+#define msleep_interruptible(x)	0
+#define siginfo_t int
+#define allow_signal(x) do {} while (0)
+#define complete_and_exit(...) do {} while (0)
+
+struct kref {int;};
+struct completion {int;};
 
 inline void set_bit(int nr, volatile void * addr)
 {
@@ -416,32 +399,6 @@ static struct {
 	};
 
 
-/* module_param_array_named(file, mod_data.file, charp, &mod_data.num_filenames,
-		S_IRUGO);
-MODULE_PARM_DESC(file, "names of backing files or devices");
-
-module_param_array_named(ro, mod_data.ro, bool, &mod_data.num_ros, S_IRUGO);
-MODULE_PARM_DESC(ro, "true to force read-only");
-
-module_param_array_named(nofua, mod_data.nofua, bool, &mod_data.num_nofuas,
-		S_IRUGO);
-MODULE_PARM_DESC(nofua, "true to ignore SCSI WRITE(10,12) FUA bit");
-
-module_param_named(luns, mod_data.nluns, uint, S_IRUGO);
-MODULE_PARM_DESC(luns, "number of LUNs");
-
-module_param_named(removable, mod_data.removable, bool, S_IRUGO);
-MODULE_PARM_DESC(removable, "true to simulate removable media");
-
-module_param_named(stall, mod_data.can_stall, bool, S_IRUGO);
-MODULE_PARM_DESC(stall, "false to prevent bulk stalls");
-
-module_param_named(cdrom, mod_data.cdrom, bool, S_IRUGO);
-MODULE_PARM_DESC(cdrom, "true to emulate cdrom instead of disk");
-
-module_param_named(serial, mod_data.serial, charp, S_IRUGO);
-MODULE_PARM_DESC(serial, "USB serial number"); */
-
 /* In the non-TEST version, only the module parameters listed above
  * are available. */
 
@@ -469,6 +426,7 @@ struct fsg_dev {
 	struct rw_semaphore	filesem;
 
 	/* reference counting: wait until all LUNs are released */
+	struct kref		ref;
 
 	struct usb_ep		*ep0;		// Handy copy of gadget->ep0
 	struct usb_request	*ep0req;	// For control responses
@@ -507,7 +465,7 @@ struct fsg_dev {
 	struct fsg_buffhd	buffhds[FSG_NUM_BUFFERS];
 
 	int			thread_wakeup_needed;
-	//struct completion	thread_notifier;
+	struct completion	thread_notifier;
 	struct task_struct	*thread_task;
 
 	int			cmnd_size;
@@ -721,8 +679,8 @@ static int ep0_queue(struct fsg_dev *fsg)
 	if (rc != 0 && rc != -ESHUTDOWN) {
 
 		/* We can't do much more than wait for a reset */
-		//WARNING(fsg, "error in submission: %s --> %d\n",
-		//		fsg->ep0->name, rc);
+		WARNING(fsg, "error in submission: %s --> %d\n",
+				fsg->ep0->name, rc);
 	}
 	return rc;
 }
@@ -1084,13 +1042,13 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 	for (;;) {
 		try_to_freeze();
 		set_current_state(TASK_INTERRUPTIBLE);
-		/*if (signal_pending(current)) {
+		if (signal_pending(current)) {
 			rc = -EINTR;
 			break;
-		}*/
+		}
 		if (fsg->thread_wakeup_needed)
 			break;
-		//schedule();
+		schedule();
 		if (++i == 10000) {
 			printf("+");
 			i = 0;
@@ -1195,8 +1153,8 @@ static int do_read(struct fsg_dev *fsg)
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
 				(int) nread);
-		/*if (signal_pending(current))
-			return -EINTR;*/
+		if (signal_pending(current))
+			return -EINTR;
 
 		if (nread < 0) {
 			LDBG(curlun, "error in file read: %d\n",
@@ -1379,10 +1337,8 @@ static int do_write(struct fsg_dev *fsg)
 			VLDBG(curlun, "file write %u @ %llu -> %d\n", amount,
 					(unsigned long long) file_offset,
 					(int) nwritten);
-			/*
 			if (signal_pending(current))
 				return -EINTR;		// Interrupted!
-			*/
 
 			if (nwritten < 0) {
 				LDBG(curlun, "error in file write: %d\n",
@@ -1442,18 +1398,6 @@ static int do_synchronize_cache(struct fsg_dev *fsg)
 
 /*-------------------------------------------------------------------------*/
 
-#if 0
-static void invalidate_sub(struct fsg_lun *curlun)
-{
-	struct file	*filp = curlun->filp;
-	struct inode	*inode = filp->f_path.dentry->d_inode;
-	unsigned long	rc;
-
-	rc = invalidate_mapping_pages(inode->i_mapping, 0, -1);
-	VLDBG(curlun, "invalidate_mapping_pages -> %ld\n", rc);
-}
-#endif
-
 static int do_verify(struct fsg_dev *fsg)
 {
 	struct fsg_lun		*curlun = fsg->curlun;
@@ -1490,16 +1434,11 @@ static int do_verify(struct fsg_dev *fsg)
 
 	/* Write out all the dirty buffers before invalidating them */
 	fsg_lun_fsync_sub(curlun);
-	/*
 	if (signal_pending(current))
 		return -EINTR;
-	*/
 
-	//invalidate_sub(curlun);
-	/*
 	if (signal_pending(current))
 		return -EINTR;
-	*/
 
 	/* Just try to read the requested blocks */
 	while (amount_left > 0) {
@@ -1535,10 +1474,8 @@ static int do_verify(struct fsg_dev *fsg)
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
 				(int) nread);
-		/*
 		if (signal_pending(current))
 			return -EINTR;
-		*/
 
 		if (nread < 0) {
 			LDBG(curlun, "error in file verify: %d\n",
@@ -1887,8 +1824,8 @@ static int halt_bulk_in_endpoint(struct fsg_dev *fsg)
 		}
 
 		/* Wait for a short time and then try again */
-		/*if (msleep_interruptible(100) != 0)
-			return -EINTR;*/
+		if (msleep_interruptible(100) != 0)
+			return -EINTR;
 		rc = usb_ep_set_halt(fsg->bulk_in);
 	}
 	return rc;
@@ -1910,8 +1847,8 @@ static int wedge_bulk_in_endpoint(struct fsg_dev *fsg)
 		}
 
 		/* Wait for a short time and then try again */
-		/*if (msleep_interruptible(100) != 0)
-			return -EINTR;*/
+		if (msleep_interruptible(100) != 0)
+			return -EINTR;
 		//rc = usb_ep_set_wedge(fsg->bulk_in);
 	}
 	return rc;
@@ -2355,11 +2292,8 @@ static int do_scsi_command(struct fsg_dev *fsg)
 		fsg->data_size_from_cmnd = fsg->cmnd[4];
 		if ((reply = check_command(fsg, 6, DATA_DIR_TO_HOST,
 				(1<<4), 0,
-				"INQUIRY")) == 0) {
+				"INQUIRY")) == 0)
 			reply = do_inquiry(fsg, bh);
-		} else {
-			printf("check_command failed for SC_INQUIRY\n");
-		}
 		break;
 
 	case SC_MODE_SELECT_6:
@@ -2710,7 +2644,7 @@ static int enable_endpoint(struct fsg_dev *fsg, struct usb_ep *ep,
 	ep->driver_data = fsg;
 	rc = usb_ep_enable(ep, d);
 	if (rc)
-		printf("can't enable %s, result %d\n", ep->name, rc);
+		ERROR(fsg, "can't enable %s, result %d\n", ep->name, rc);
 	return rc;
 }
 
@@ -2720,7 +2654,7 @@ static int alloc_request(struct fsg_dev *fsg, struct usb_ep *ep,
 	*preq = usb_ep_alloc_request(ep, GFP_ATOMIC);
 	if (*preq)
 		return 0;
-	printf("can't allocate request for %s\n", ep->name);
+	ERROR(fsg, "can't allocate request for %s\n", ep->name);
 	return -ENOMEM;
 }
 
@@ -2736,7 +2670,7 @@ static int do_set_interface(struct fsg_dev *fsg, int altsetting)
 	const struct usb_endpoint_descriptor	*d;
 
 	if (fsg->running)
-		printf("reset interface\n");
+		DBG(fsg, "reset interface\n");
 
 reset:
 	/* Deallocate the requests */
@@ -2772,25 +2706,22 @@ reset:
 	}
 
 	fsg->running = 0;
-	printf("altsetting:%d rc:%d\n", altsetting, rc);
 	if (altsetting < 0 || rc != 0)
 		return rc;
 
-	printf("set interface %d\n", altsetting);
+	DBG(fsg, "set interface %d\n", altsetting);
 
 	/* Enable the endpoints */
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_in_desc, &fsg_hs_bulk_in_desc);
-	if ((rc = enable_endpoint(fsg, fsg->bulk_in, d)) != 0) {
+	if ((rc = enable_endpoint(fsg, fsg->bulk_in, d)) != 0)
 		goto reset;
-	}
 	fsg->bulk_in_enabled = 1;
 
 	d = fsg_ep_desc(fsg->gadget,
 			&fsg_fs_bulk_out_desc, &fsg_hs_bulk_out_desc);
-	if ((rc = enable_endpoint(fsg, fsg->bulk_out, d)) != 0) {
+	if ((rc = enable_endpoint(fsg, fsg->bulk_out, d)) != 0)
 		goto reset;
-	}
 	fsg->bulk_out_enabled = 1;
 	fsg->bulk_out_maxpacket = le16_to_cpu(d->wMaxPacketSize);
 	clear_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags);
@@ -2798,9 +2729,8 @@ reset:
 	if (transport_is_cbi()) {
 		d = fsg_ep_desc(fsg->gadget,
 				&fsg_fs_intr_in_desc, &fsg_hs_intr_in_desc);
-		if ((rc = enable_endpoint(fsg, fsg->intr_in, d)) != 0) {
+		if ((rc = enable_endpoint(fsg, fsg->intr_in, d)) != 0)
 			goto reset;
-		}
 		fsg->intr_in_enabled = 1;
 	}
 
@@ -2827,9 +2757,6 @@ reset:
 	for (i = 0; i < fsg->nluns; ++i)
 		fsg->luns[i].unit_attention_data = SS_RESET_OCCURRED;
 	return rc;
-
-
-
 }
 
 
@@ -2847,7 +2774,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 
 	/* Disable the single interface */
 	if (fsg->config != 0) {
-		//DBG(fsg, "reset config\n");
+		DBG(fsg, "reset config\n");
 		fsg->config = 0;
 		rc = do_set_interface(fsg, -1);
 	}
@@ -2866,8 +2793,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 			case USB_SPEED_HIGH:	speed = "high";	break;
 			default: 		speed = "?";	break;
 			}
-			//INFO(fsg, "%s speed config #%d\n", speed, fsg->config);
-			printf("%s speed config #%d\n", speed, fsg->config);
+			INFO(fsg, "%s speed config #%d\n", speed, fsg->config);
 		}
 	}
 	return rc;
@@ -2878,7 +2804,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 
 static void handle_exception(struct fsg_dev *fsg)
 {
-	//siginfo_t		info;
+	siginfo_t		info;
 	int			sig;
 	int			i;
 	int			num_active;
@@ -3043,10 +2969,10 @@ int fsg_main_thread(void * _fsg)
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
 	 * to block everything but INT, TERM, KILL, and USR1. */
-	/*allow_signal(SIGINT);
+	allow_signal(SIGINT);
 	allow_signal(SIGTERM);
 	allow_signal(SIGKILL);
-	allow_signal(SIGUSR1);*/
+	allow_signal(SIGUSR1);
 
 	/* Allow the thread to be frozen */
 	set_freezable();
@@ -3057,7 +2983,6 @@ int fsg_main_thread(void * _fsg)
 	//set_fs(get_ds());
 
 	/* The main loop */
-	//while (fsg->state != FSG_STATE_TERMINATED) {
 	do {
 		if (exception_in_progress(fsg)) { // || signal_pending(current)) {
 			handle_exception(fsg);
@@ -3097,17 +3022,17 @@ int fsg_main_thread(void * _fsg)
 		spin_unlock_irq(&fsg->lock);
 	} while (0);
 
-	/*spin_lock_irq(&fsg->lock);
+	spin_lock_irq(&fsg->lock);
 	fsg->thread_task = NULL;
-	spin_unlock_irq(&fsg->lock);*/
+	spin_unlock_irq(&fsg->lock);
 
 	/* If we are exiting because of a signal, unregister the
 	 * gadget driver. */
-	/*if (test_and_clear_bit(REGISTERED, &fsg->atomic_bitflags))
-		usb_gadget_unregister_driver(&fsg_driver);*/
+	if (test_and_clear_bit(REGISTERED, &fsg->atomic_bitflags))
+		; //usb_gadget_unregister_driver(&fsg_driver);
 
 	/* Let the unbind and cleanup routines know the thread has exited */
-	//complete_and_exit(&fsg->thread_notifier, 0);
+	complete_and_exit(&fsg->thread_notifier, 0);
 	return 0;
 }
 
