@@ -325,6 +325,15 @@ typedef int spinlock_t;
 #define siginfo_t int
 #define allow_signal(x) do {} while (0)
 #define complete_and_exit(...) do {} while (0)
+#define DEVICE_ATTR(x,...) int dummy_##x
+#define kref_put(...) do {} while (0)
+#define complete(...) do {} while (0)
+#define dev_set_drvdata(...) do {} while (0)
+#define dev_set_name(...) do {} while (0)
+#define device_register(...) 0
+#define device_unregister(...) 0
+#define device_create_file(...) 0
+#define kref_get(...) do {} while (0)
 
 struct kref {int;};
 struct completion {int;};
@@ -3041,14 +3050,13 @@ int fsg_main_thread(void * _fsg)
 
 
 /* The write permissions and store_xxx pointers are set in fsg_bind() */
-//static DEVICE_ATTR(ro, 0444, fsg_show_ro, NULL);
-//static DEVICE_ATTR(nofua, 0644, fsg_show_nofua, NULL);
-//static DEVICE_ATTR(file, 0444, fsg_show_file, NULL);
+static DEVICE_ATTR(ro, 0444, fsg_show_ro, NULL);
+static DEVICE_ATTR(nofua, 0644, fsg_show_nofua, NULL);
+static DEVICE_ATTR(file, 0444, fsg_show_file, NULL);
 
 
 /*-------------------------------------------------------------------------*/
 
-/*
 static void fsg_release(struct kref *ref)
 {
 	struct fsg_dev	*fsg = container_of(ref, struct fsg_dev, ref);
@@ -3065,7 +3073,6 @@ static void lun_release(struct device *dev)
 
 	kref_put(&fsg->ref, fsg_release);
 }
-*/
 
 static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 {
@@ -3084,7 +3091,7 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 			//device_remove_file(&curlun->dev, &dev_attr_ro);
 			//device_remove_file(&curlun->dev, &dev_attr_file);
 			fsg_lun_close(curlun);
-			//device_unregister(&curlun->dev);
+			device_unregister(&curlun->dev);
 			curlun->registered = 0;
 		}
 	}
@@ -3095,7 +3102,7 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 		//wait_for_completion(&fsg->thread_notifier);
 
 		/* The cleanup routine waits for this completion also */
-		//complete(&fsg->thread_notifier);
+		complete(&fsg->thread_notifier);
 	}
 
 	/* Free the data buffers */
@@ -3218,14 +3225,14 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		goto out;
 	}
 
-	/*if (mod_data.removable) {	// Enable the store_xxx attributes
-		dev_attr_file.attr.mode = 0644;
-		dev_attr_file.store = fsg_store_file;
+	if (mod_data.removable) {	// Enable the store_xxx attributes
+		//dev_attr_file.attr.mode = 0644;
+		//dev_attr_file.store = fsg_store_file;
 		if (!mod_data.cdrom) {
-			dev_attr_ro.attr.mode = 0644;
-			dev_attr_ro.store = fsg_store_ro;
+			//dev_attr_ro.attr.mode = 0644;
+			//dev_attr_ro.store = fsg_store_ro;
 		}
-	}*/
+	}
 
 	/* Only for removable media? */
 	//dev_attr_nofua.attr.mode = 0644;
@@ -3236,7 +3243,7 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	if (i == 0)
 		i = max(mod_data.num_filenames, 1u);
 	if (i > FSG_MAX_LUNS) {
-		printf("invalid number of LUNs: %d\n", i);
+		ERROR(fsg, "invalid number of LUNs: %d\n", i);
 		rc = -EINVAL;
 		goto out;
 	}
@@ -3257,7 +3264,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		curlun->initially_ro = curlun->ro;
 		curlun->removable = mod_data.removable;
 		curlun->nofua = mod_data.nofua[i];
-		/*
 		dev_set_drvdata(&curlun->dev, &fsg->filesem);
 		dev_set_name(&curlun->dev,"%s-lun%d",
 			     dev_name(&gadget->dev), i);
@@ -3274,9 +3280,9 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 					&dev_attr_file)) != 0) {
 			device_unregister(&curlun->dev);
 			goto out;
-		}*/
+		}
 		curlun->registered = 1;
-		//kref_get(&fsg->ref);
+		kref_get(&fsg->ref);
 
 		//if (mod_data.file[i] && *mod_data.file[i]) {
 			if ((rc = fsg_lun_open(curlun,
@@ -3346,13 +3352,11 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 
 	/* Allocate the request and buffer for endpoint 0 */
 	fsg->ep0req = req = usb_ep_alloc_request(fsg->ep0, GFP_KERNEL);
-	if (!req) {
+	if (!req)
 		goto out;
-	}
 	req->buf = kmalloc(EP0_BUFSIZE, GFP_KERNEL);
-	if (!req->buf) {
+	if (!req->buf)
 		goto out;
-	}
 	req->complete = ep0_complete;
 
 	/* Allocate the data buffers */
