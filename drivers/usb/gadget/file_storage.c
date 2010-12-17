@@ -334,6 +334,11 @@ typedef int spinlock_t;
 #define device_unregister(...) 0
 #define device_create_file(...) 0
 #define kref_get(...) do {} while (0)
+#define kref_init(...) do {} while (0)
+#define module_init(...)
+#define module_exit(...)
+#define wait_for_completion(...) do {} while (0)
+#define dev_get_drvdata(...) NULL
 
 struct kref {int;};
 struct completion {int;};
@@ -3099,7 +3104,7 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 	/* If the thread isn't already dead, tell it to exit now */
 	if (fsg->state != FSG_STATE_TERMINATED) {
 		raise_exception(fsg, FSG_STATE_EXIT);
-		//wait_for_completion(&fsg->thread_notifier);
+		wait_for_completion(&fsg->thread_notifier);
 
 		/* The cleanup routine waits for this completion also */
 		complete(&fsg->thread_notifier);
@@ -3367,9 +3372,8 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 		 * the buffer will also work with the bulk-out (and
 		 * interrupt-in) endpoint. */
 		bh->buf = kmalloc(mod_data.buflen, GFP_KERNEL);
-		if (!bh->buf){
+		if (!bh->buf)
 			goto out;
-		}
 		bh->next = bh + 1;
 	}
 	fsg->buffhds[FSG_NUM_BUFFERS - 1].next = &fsg->buffhds[0];
@@ -3384,11 +3388,10 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 
 	fsg->thread_task = kthread_create(fsg_main_thread, fsg,
 			"file-storage-gadget");
-	/*
 	if (IS_ERR(fsg->thread_task)) {
 		rc = PTR_ERR(fsg->thread_task);
-		goto out;
-	}*/
+		//goto out;
+	}
 
 	INFO(fsg, DRIVER_DESC ", version: " DRIVER_VERSION "\n");
 	INFO(fsg, "Number of LUNs=%d\n", fsg->nluns);
@@ -3417,7 +3420,7 @@ autoconf_fail:
 out:
 	fsg->state = FSG_STATE_TERMINATED;	// The thread is dead
 	fsg_unbind(gadget);
-	//complete(&fsg->thread_notifier);
+	complete(&fsg->thread_notifier);
 	return rc;
 }
 
@@ -3477,8 +3480,8 @@ static int __init fsg_alloc(void)
 		return -ENOMEM;
 	spin_lock_init(&fsg->lock);
 	init_rwsem(&fsg->filesem);
-	//kref_init(&fsg->ref);
-	//init_completion(&fsg->thread_notifier);
+	kref_init(&fsg->ref);
+	init_completion(&fsg->thread_notifier);
 
 	the_fsg = fsg;
 	return 0;
@@ -3495,13 +3498,12 @@ int __init fsg_init(struct ums_board_info* _ums)
 		return rc;
 	fsg = the_fsg;
 	if ((rc = usb_gadget_register_driver(&fsg_driver)) != 0)
-		//kref_put(&fsg->ref, fsg_release);
-		do { } while (0);
+		kref_put(&fsg->ref, fsg_release);
 	usb_gadget_connect(the_fsg->gadget);
 
 	return rc;
 }
-//module_init(fsg_init);
+module_init(fsg_init);
 
 
 static void __exit fsg_cleanup(void)
@@ -3513,8 +3515,8 @@ static void __exit fsg_cleanup(void)
 		usb_gadget_unregister_driver(&fsg_driver);
 
 	/* Wait for the thread to finish up */
-	//wait_for_completion(&fsg->thread_notifier);
+	wait_for_completion(&fsg->thread_notifier);
 
-	//kref_put(&fsg->ref, fsg_release);
+	kref_put(&fsg->ref, fsg_release);
 }
-//module_exit(fsg_cleanup);
+module_exit(fsg_cleanup);

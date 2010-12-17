@@ -289,6 +289,7 @@ struct rw_semaphore { int i; };
 #define up_write(...)			do { } while (0)
 #define down_read(...)			do { } while (0)
 #define up_read(...)			do { } while (0)
+#define ETOOSMALL	525
 
 #include <usb_mass_storage.h>
 extern struct ums_board_info		*ums_info;
@@ -608,22 +609,22 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 
 	size = ums_info->get_capacity();
 	if (size < 0) {
-		//LINFO(curlun, "unable to find file size: %s\n", filename);
+		LINFO(curlun, "unable to find file size: %s\n", filename);
 		rc = (int) size;
 		goto out;
 	}
 	num_sectors = size >> 9;	/* File size in 512-byte blocks */
 	min_sectors = 1;
-	/*if (num_sectors < min_sectors) {
+	if (num_sectors < min_sectors) {
 		LINFO(curlun, "file too small: %s\n", filename);
 		rc = -ETOOSMALL;
 		goto out;
-	}*/
+	}
 
 	curlun->ro = ro;
 	curlun->file_length = size;
 	curlun->num_sectors = num_sectors;
-	//LDBG(curlun, "open backing file: %s\n", filename);
+	LDBG(curlun, "open backing file: %s\n", filename);
 	rc = 0;
 
 out:
@@ -702,7 +703,6 @@ static ssize_t fsg_store_ro(struct device *dev, struct device_attribute *attr,
 	struct fsg_lun	*curlun = fsg_lun_from_dev(dev);
 	unsigned long	ro;
 
-	//if (strict_strtoul(buf, 2, &ro))
 	ro = simple_strtoul(buf, NULL, 2);
 
 	/*
@@ -711,7 +711,7 @@ static ssize_t fsg_store_ro(struct device *dev, struct device_attribute *attr,
 	 */
 	curlun->ro = ro;
 	curlun->initially_ro = ro;
-	//LDBG(curlun, "read-only status set to %d\n", curlun->ro);
+	LDBG(curlun, "read-only status set to %d\n", curlun->ro);
 	return rc;
 }
 
@@ -722,7 +722,6 @@ static ssize_t fsg_store_nofua(struct device *dev,
 	struct fsg_lun	*curlun = fsg_lun_from_dev(dev);
 	unsigned long	nofua;
 
-	//if (strict_strtoul(buf, 2, &nofua))
 	nofua = simple_strtoul(buf, NULL, 2);
 
 	/* Sync data when switching from async mode to sync */
