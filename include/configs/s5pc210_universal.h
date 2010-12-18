@@ -343,7 +343,7 @@
 #define PHYS_SDRAM_2		0x50000000		/* LPDDR2 DMC 1 */
 #define PHYS_SDRAM_2_SIZE	(256 << 20)		/* 256 MB in CS 0 */
 
-#define CONFIG_SYS_RAM_CONSOLE_SIZE	(1 << 20)	/* 1MB */
+#define CONFIG_SYS_MEM_TOP_HIDE	(1 << 20)	/* 1MB for ram console */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 

@@ -204,9 +204,6 @@ int board_init(void)
 int dram_init(void)
 {
 	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE;
-#ifdef CONFIG_SYS_RAM_CONSOLE_SIZE
-	gd->ram_size -= CONFIG_SYS_RAM_CONSOLE_SIZE;
-#endif
 
 	/* Early init for i2c devices - Where these funcions should go?? */
 
@@ -234,9 +231,6 @@ void dram_init_banksize(void)
 	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = PHYS_SDRAM_2_SIZE;
-#ifdef CONFIG_SYS_RAM_CONSOLE_SIZE
-	gd->bd->bi_dram[1].size -= CONFIG_SYS_RAM_CONSOLE_SIZE;
-#endif
 
 	gd->ram_size = gd->bd->bi_dram[0].size + gd->bd->bi_dram[1].size;
 }
