@@ -213,7 +213,7 @@ static void down_cancel(int mode)
 	if (mode)
 		run_command("usbdown", 0);
 	else
-		run_command("run ubifsboot", 0);
+		run_command("run bootcmd", 0);
 }
 
 /*
