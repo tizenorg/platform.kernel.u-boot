@@ -136,7 +136,7 @@ struct usbd_ops {
 	void (*set_progress)(int);
 	void (*cpu_reset)(void);
 	void (*down_start)(void);
-	void (*down_cancel)(void);
+	void (*down_cancel)(int);
 };
 
 /* This function is interfaced between USB Device Controller and USB Downloader

@@ -1110,7 +1110,10 @@ static int process_data(struct usbd_ops *usbd)
 
 		/* Receive image by using dma */
 		recvlen = usbd->recv_data();
-		if (recvlen < len) {
+		if (recvlen == 0) {
+			send_ack(usbd, STATUS_ERROR);
+			return 0;
+		} else if (recvlen < len) {
 			printf("Error: wrong image size -> %d/%d\n",
 					(int)recvlen, (int)len);
 
@@ -1445,7 +1448,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	/* init the usb controller */
 	if (!usbd->usb_init()) {
-		usbd->down_cancel();
+		usbd->down_cancel(0);
 		return 0;
 	}
 	mmc = find_mmc_device(usbd->mmc_dev);
@@ -1467,7 +1470,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 0;
 		}
 	} else {
-		usbd->down_cancel();
+		usbd->down_cancel(1);
 		return 0;
 	}
 
@@ -1479,8 +1482,13 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		usbd->recv_setup(usbd->rx_data, usbd->rx_len);
 
 		if (usbd->recv_data()) {
-			if (process_data(usbd) == 0)
+			if (process_data(usbd) == 0) {
+				usbd->down_cancel(1);
 				return 0;
+			}
+		} else {
+			usbd->down_cancel(1);
+			return 0;
 		}
 	}
 

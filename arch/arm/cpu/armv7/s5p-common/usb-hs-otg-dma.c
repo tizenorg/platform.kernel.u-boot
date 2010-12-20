@@ -1247,6 +1247,8 @@ static void s5p_usb_reset(void)
 	/*clear device address */
 	s5p_otg_write_reg(s5p_otg_read_reg(OTG_DCFG) & ~(0x7f << 4),
 			OTG_DCFG);
+
+	s5p_usb_connected = 0;
 }
 
 static int s5p_usb_set_init(void)
@@ -1259,8 +1261,7 @@ static int s5p_usb_set_init(void)
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		s5p_usb_set_max_pktsize(USB_HIGH);
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
-		puts("Error: Don't support Full_Speed\n");
-		return 0;
+		s5p_usb_set_max_pktsize(USB_FULL);
 	} else {
 		puts("Error: Neither High_Speed nor Full_Speed\n");
 		return 0;
@@ -1350,14 +1351,14 @@ void s5p_udc_int_hndlr(void)
 	s5p_otg_write_reg(int_status, OTG_GINTSTS);
 
 	if (int_status & INT_RESET) {
+		debug("INT RESET\n");
 		s5p_otg_write_reg(INT_RESET, OTG_GINTSTS);
 		s5p_usb_reset();
-		debug("INT RESET\n");
 	}
 
 	if (int_status & INT_ENUMDONE) {
-		s5p_otg_write_reg(INT_ENUMDONE, OTG_GINTSTS);
 		debug("INT ENUMDONE\n");
+		s5p_otg_write_reg(INT_ENUMDONE, OTG_GINTSTS);
 
 		tmp = s5p_usb_set_init();
 		if (tmp == 0)

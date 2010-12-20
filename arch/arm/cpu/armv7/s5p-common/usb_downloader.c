@@ -200,17 +200,20 @@ static void down_start(void)
 #endif
 }
 
-static void down_cancel(void)
+static void down_cancel(int mode)
 {
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
 		exit_font();
 
 		/* clear fb */
-		fb_clear(100);
+		fb_clear(120);
 	}
 #endif
-	run_command("run ubifsboot", 0);
+	if (mode)
+		run_command("usbdown", 0);
+	else
+		run_command("run ubifsboot", 0);
 }
 
 /*
@@ -224,6 +227,11 @@ static int usb_receive_packet(void)
 		if (s5p_usb_detect_irq()) {
 			s5p_udc_int_hndlr();
 			s5p_usb_clear_irq();
+		}
+
+		if (!s5p_usb_connected) {
+			puts("Disconnected!!\n");
+			return 0;
 		}
 
 		if (s5p_receive_done) {
