@@ -184,3 +184,46 @@ U_BOOT_CMD(
 	"<interface> <dev[:part]>\n"
 	"    - print information about filesystem from 'dev' on 'interface'"
 );
+
+int do_fat_table (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int dev = 0;
+	int part = 1;
+	char *ep;
+	block_dev_desc_t *dev_desc=NULL;
+
+	if (argc < 2) {
+		printf("usage: fattable <interface> <dev[:part]>\n");
+		return 0;
+	}
+	dev = (int)simple_strtoul(argv[2], &ep, 16);
+	dev_desc = get_dev(argv[1], dev);
+	if (dev_desc == NULL) {
+		puts("\n** Invalid boot device **\n");
+		return 1;
+	}
+	if (*ep) {
+		if (*ep != ':') {
+			puts("\n** Invalid boot device, use `dev[:part]' **\n");
+			return 1;
+		}
+		part = (int)simple_strtoul(++ep, NULL, 16);
+	}
+	if (fat_register_device(dev_desc,part)!=0) {
+		printf("\n** Unable to use %s %d:%d for fattable **\n",
+			argv[1], dev, part);
+		return 1;
+	}
+
+	file_fat_table();
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	fattable,	3,	1,	do_fat_table,
+	"print fat range of files ",
+	"<interface> <dev[:part]>\n"
+	"    - list files from 'dev' on 'interface' in a 'directory'"
+);
+
