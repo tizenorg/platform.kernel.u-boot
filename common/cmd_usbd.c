@@ -1110,7 +1110,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		/* Receive image by using dma */
 		recvlen = usbd->recv_data();
-		if (recvlen == 0) {
+		if (recvlen < 0) {
 			send_ack(usbd, STATUS_ERROR);
 			return 0;
 		} else if (recvlen < len) {
@@ -1416,6 +1416,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct usbd_ops *usbd;
 	int err;
+	int ret;
 
 	if (argc > 1)
 		down_mode = simple_strtoul(argv[1], NULL, 10);
@@ -1458,7 +1459,8 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	usbd->recv_setup(usbd->rx_data, usbd->rx_len);
 
 	/* detect the download request from Host PC */
-	if (usbd->recv_data()) {
+	ret = usbd->recv_data();
+	if (ret > 0) {
 		if (strncmp(usbd->rx_data, recv_key, strlen(recv_key)) == 0) {
 			printf("Download request from the Host PC\n");
 			msleep(30);
@@ -1469,8 +1471,11 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			printf("No download request from the Host PC!! 1\n");
 			return 0;
 		}
-	} else {
+	} else if (ret < 0) {
 		usbd->down_cancel(1);
+		return 0;
+	} else {
+		usbd->down_cancel(0);
 		return 0;
 	}
 
@@ -1481,13 +1486,17 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	while (1) {
 		usbd->recv_setup(usbd->rx_data, usbd->rx_len);
 
-		if (usbd->recv_data()) {
+		ret = usbd->recv_data();
+		if (ret > 0) {
 			if (process_data(usbd) == 0) {
 				usbd->down_cancel(1);
 				return 0;
 			}
-		} else {
+		} else if (ret < 0) {
 			usbd->down_cancel(1);
+			return 0;
+		} else {
+			usbd->down_cancel(0);
 			return 0;
 		}
 	}

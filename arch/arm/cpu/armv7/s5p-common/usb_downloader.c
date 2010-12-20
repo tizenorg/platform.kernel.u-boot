@@ -231,7 +231,7 @@ static int usb_receive_packet(void)
 
 		if (!s5p_usb_connected) {
 			puts("Disconnected!!\n");
-			return 0;
+			return -1;
 		}
 
 		if (s5p_receive_done) {
