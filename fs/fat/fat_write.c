@@ -29,6 +29,8 @@
 #include <part.h>
 #include "fat.c"
 
+static int fragmented_count;
+
 static void uppercase (char *str, int len)
 {
 	int i;
@@ -676,6 +678,7 @@ getit:
 		}
 		actsize = bytesperclust;
 		curclust = endclust = newclust;
+		fragmented_count++;
 	} while (1);
 }
 
@@ -723,8 +726,13 @@ static int check_overflow(fsdata *mydata, __u32 clustnum, unsigned long size)
 
 static dir_entry *empty_dentptr = NULL;
 
+/*
+ * Find a directory entry based on filename or start cluster number
+ * If the directory entry is not found,
+ * the new position for writing a directory entry will be returned
+ */
 static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
-				   char *filename, dir_entry *retdent)
+	char *filename, dir_entry *retdent, __u32 start, int find_name)
 {
 	__u16 prevcksum = 0xffff;
 	__u32 curclust = startsect;
@@ -774,25 +782,32 @@ static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
 				empty_dentptr = dentptr;
 				return NULL;
 			}
+			if (find_name) {
+				get_name(dentptr, s_name);
 
-			get_name(dentptr, s_name);
+				if (strcmp(filename, s_name)
+				    && strcmp(filename, l_name)) {
+					debug("Mismatch: |%s|%s|\n", s_name, l_name);
+					dentptr++;
+					continue;
+				}
 
-			if (strcmp(filename, s_name)
-			    && strcmp(filename, l_name)) {
-				debug("Mismatch: |%s|%s|\n", s_name, l_name);
-				dentptr++;
+				memcpy(retdent, dentptr, sizeof(dir_entry));
+
+				debug("DentName: %s", s_name);
+				debug(", start: 0x%x", START(dentptr));
+				debug(", size:  0x%x %s\n",
+				      FAT2CPU32(dentptr->size),
+				      (dentptr->attr & ATTR_DIR) ? "(DIR)" : "");
+
+				return dentptr;
+			} else {
+				if (start == START(dentptr))
+					return dentptr;
+				else
+					dentptr++;
 				continue;
 			}
-
-			memcpy(retdent, dentptr, sizeof(dir_entry));
-
-			debug("DentName: %s", s_name);
-			debug(", start: 0x%x", START(dentptr));
-			debug(", size:  0x%x %s\n",
-			      FAT2CPU32(dentptr->size),
-			      (dentptr->attr & ATTR_DIR) ? "(DIR)" : "");
-
-			return dentptr;
 		}
 
 		curclust = get_fatent_value(mydata, curclust);
@@ -804,6 +819,199 @@ static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
 	}
 
 	return NULL;
+}
+
+/*
+ * Find a fregmented area for a file
+ * An area is seperated by three parameters (start, middle, end)
+ * The data for a file is located from middle to end
+ * The data for other files is located from start + 1 to middle - 1
+ */
+static void find_fragmented_area (fsdata *mydata, __u32 *start,
+			__u32 *middle, __u32 *end)
+{
+	__u32 entry = *start;
+	__u32 fat_val;
+	int fragmented = 0;
+
+	while (1) {
+		fat_val = get_fatent_value(mydata, entry);
+		if (fat_val == 0xfffffff || fat_val == 0xffff) {
+			*end = entry;
+			break;
+		}
+
+		if ((fat_val - 1) != entry) {
+			if (!fragmented) {
+				*start = entry;
+				*middle = fat_val;
+				fragmented = 1;
+
+			} else {
+				*end = entry;
+				break;
+			}
+		}
+
+		entry = fat_val;
+	}
+
+	debug("start : %d, middle : %d, end : %d\n", *start, *middle, *end);
+}
+
+static void *memory_for_swap;
+
+/*
+ * Change location between the data for other files and the data for target file
+ * Fetch the whole data of the fragmented area from a block device to memory
+ * Write the target file data into the first part of the area
+ * and write the data for other files into the second part of the area 
+ */
+static void swap_file_contents (fsdata *mydata,
+		__u32 start, __u32 middle, __u32 end)
+{
+	int first_area_size, second_area_size, total_size;
+	__u32 clust_num_first, clust_num_second;
+
+	first_area_size = (middle - 1 - start) *
+			mydata->clust_size * FS_BLOCK_SIZE;
+	second_area_size = (end + 1 - middle) *
+			mydata->clust_size * FS_BLOCK_SIZE;
+	total_size = first_area_size + second_area_size;
+
+	clust_num_first = start + 1;
+	clust_num_second = clust_num_first + end + 1 - middle;
+
+	memset(memory_for_swap, 0x0, 0x2800000); /* 40 MB */
+	get_cluster(mydata, start + 1, memory_for_swap, total_size);
+
+	set_cluster(mydata, clust_num_second,
+		memory_for_swap, first_area_size);
+
+	memory_for_swap += first_area_size;
+	set_cluster(mydata, clust_num_first,
+		memory_for_swap, second_area_size);
+
+}
+
+/*
+ * Get the fat entry based on the fat entry value
+ */
+static __u32 get_reverse_fatent (fsdata *mydata, __u32 entry_value)
+{
+	__u32 entry = entry_value - 1;
+	__u32 fat_val = get_fatent_value(mydata, entry);
+
+	if (entry_value == 0)
+		return 0;
+
+	if (fat_val == entry_value) {
+		debug("entry : %d, entry_value : %d\n", entry, entry_value);
+		return entry;
+	}
+
+	entry = 3;
+	while (1) {
+		if (entry > entry_value) {
+			entry = 1;
+			break;
+		}
+		fat_val = get_fatent_value(mydata, entry);
+		if (entry_value == fat_val)
+			break;
+		entry++;
+	}
+
+	debug("entry : %d, entry_value : %d\n", entry, entry_value);
+	return entry;
+}
+
+/*
+ * Swap the fat entry value for a target file
+ * with the fat entry value for the other files
+ */
+static __u32 swap_fat_values (fsdata *mydata,
+		__u32 start, __u32 middle, __u32 end)
+{
+	__u32 start_second = start + 1 + (end + 1 - middle);
+	__u32 start_first = middle - 1;
+	__u32 num_fatent_first = middle - (start + 1);
+	__u32 num_fatent_second = (end + 1) - middle;
+	__u32 reverse_fatent, new_fat_val;
+	__u32 end_first_fatval = get_fatent_value(mydata, middle - 1);
+	__u32 end_second_fatval = get_fatent_value(mydata, end);
+	__u32 startsect = mydata->rootdir_sect;
+	__u32 fat_val;
+	dir_entry *dentptr;
+	int i;
+
+	for (i = 0; i < num_fatent_first; i++) {
+		fat_val = get_fatent_value(mydata, start_first - i);
+
+		if (fat_val == 0)
+			continue;
+
+		if (fat_val != start_first - i + 1)
+			set_fatent_value(mydata, end - i, fat_val);
+
+		reverse_fatent = get_reverse_fatent(mydata, start_first - i);
+
+		new_fat_val = end - i;
+
+		/* find directory entry to update the start cluster number */
+		if (reverse_fatent == 1) {
+			dentptr = find_directory_entry(mydata, startsect,
+					"", dentptr, start_first - i, 0);
+			if (dentptr == NULL) {
+				printf("error : no matching dir entry\n");
+				return 0;
+			}
+
+			if (mydata->fatsize == 32)
+				dentptr->starthi =
+				    cpu_to_le16(new_fat_val & 0xffff0000);
+			dentptr->start = cpu_to_le16(new_fat_val & 0xffff);
+
+			if (disk_write(startsect, mydata->clust_size,
+				    get_dentfromdir_block) < 0) {
+				printf("error: wrinting directory entry\n");
+				return 0;
+			}
+		} else {
+			if (reverse_fatent == (start_first - i - 1))
+				set_fatent_value(mydata,
+					new_fat_val - 1, new_fat_val);
+			else
+				set_fatent_value(mydata,
+					reverse_fatent, new_fat_val);
+		}
+	}
+
+	for (i = 0; i < num_fatent_second; i++)
+		set_fatent_value(mydata, start + i, start + i + 1);
+	set_fatent_value(mydata, start + i, end_second_fatval);
+
+	flush_fat_buffer(mydata);
+
+	return start_second;
+}
+
+/*
+ * Remove fragments for a file
+ */
+static int defragment_file (fsdata *mydata, dir_entry *dentptr)
+{
+	__u32 start = 0, middle = 0, end = 0;
+
+	start = end = START(dentptr);
+	while (1) {
+		find_fragmented_area(mydata, &start, &middle, &end);
+		if (middle == 0)
+			break;
+		swap_file_contents(mydata, start, middle, end);
+		swap_fat_values(mydata, start, middle, end);
+		middle = 0;
+	}
 }
 
 static int do_fat_write (const char *filename, void *buffer,
@@ -820,6 +1028,8 @@ static int do_fat_write (const char *filename, void *buffer,
 	int cursect;
 	int root_cluster, ret, name_len;
 	char l_filename[256];
+
+	fragmented_count = 0;
 
 	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
 		debug("error: reading boot sector\n");
@@ -869,11 +1079,13 @@ static int do_fat_write (const char *filename, void *buffer,
 	}
 	dentptr = (dir_entry *) do_fat_read_block;
 
+	memory_for_swap = buffer + size;
+
 	name_len = strlen(filename);
 	memcpy(l_filename, filename, name_len);
 	downcase(l_filename);
 	retdent = find_directory_entry(mydata, startsect,
-				l_filename, dentptr);
+				l_filename, dentptr, 0, 1);
 	if (retdent) {
 		/* Update file size and start_cluster in a directory entry */
 		retdent->size = cpu_to_le32(size);
@@ -904,8 +1116,14 @@ static int do_fat_write (const char *filename, void *buffer,
 		if (flush_fat_buffer(mydata) < 0)
 			return 0;
 
+		if (fragmented_count > 0) {
+			defragment_file(mydata, retdent);
+			retdent->size = cpu_to_le32(size);
+		}
+
 		/* Write directory table to device */
-		if (disk_write(cursect, mydata->clust_size, get_dentfromdir_block) < 0) {
+		if (disk_write(cursect, mydata->clust_size,
+			    get_dentfromdir_block) < 0) {
 			printf("error: wrinting directory entry\n");
 			return 0;
 		}
@@ -942,9 +1160,23 @@ static int do_fat_write (const char *filename, void *buffer,
 			return 0;
 
 		/* Write directory table to device */
-		if (disk_write(cursect, mydata->clust_size, get_dentfromdir_block) < 0) {
+		if (disk_write(cursect, mydata->clust_size,
+			    get_dentfromdir_block) < 0) {
 			printf("error: writing directory entry\n");
 			return 0;
+		}
+
+		if (fragmented_count > 0) {
+			defragment_file(mydata, empty_dentptr);
+			empty_dentptr->size = cpu_to_le32(size);
+
+			/* Write directory table to device */
+			if (disk_write(cursect, mydata->clust_size,
+				    get_dentfromdir_block) < 0) {
+				printf("error: writing directory entry\n");
+				return 0;
+			}
+
 		}
 	}
 
