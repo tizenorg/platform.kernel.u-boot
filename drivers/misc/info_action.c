@@ -14,7 +14,7 @@ void info_action_check(void)
 	struct mmc *mmc;
 
 	if (ia->magic != INFO_ACTION_MAGIC)
-		return;
+		goto done;
 
 	switch (ia->action) {
 	case INFO_ACTION_SDCARD_BOOT:
@@ -27,7 +27,7 @@ void info_action_check(void)
 		mmc = find_mmc_device(2);
 		if (!mmc) {
 			printf("Not found SD-card..insert SD-card!!\n");
-			return;
+			goto done;
 		}
 		mmc_init(mmc);
 
@@ -47,4 +47,7 @@ void info_action_check(void)
 	default:
 		break;
 	}
+
+done:
+	memset(ia, 0x0, sizeof(struct info_action));
 }
