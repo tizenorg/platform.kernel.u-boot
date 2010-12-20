@@ -724,6 +724,39 @@ static int check_overflow(fsdata *mydata, __u32 clustnum, unsigned long size)
 	return 0;
 }
 
+static void find_fragmented_area (fsdata *mydata, __u32 *start,
+			__u32 *middle, __u32 *end);
+
+static void print_fat_range (fsdata *mydata, dir_entry *dentptr)
+{
+	char s_name[16];
+	__u32 start = 0, middle = 0, end = 0, pre_end = 0;
+
+	start = end = START(dentptr);
+
+	get_name(dentptr, s_name);
+	printf("%16s : ", s_name);
+	printf("%5d - ", start);
+
+	while (1) {
+		find_fragmented_area(mydata, &start, &middle, &end);
+		if (middle == 0) {
+			if (start != end)
+				printf("%5d ", end);
+			break;
+		}
+
+		if (pre_end != start)
+			printf("%5d ", start);
+		printf(", %5d - %5d ", middle, end);
+
+		start = end;
+		pre_end = end;
+		middle = 0;
+	}
+	printf("(size : %d)\n", FAT2CPU32(dentptr->size));
+}
+
 static dir_entry *empty_dentptr = NULL;
 
 /*
@@ -732,12 +765,16 @@ static dir_entry *empty_dentptr = NULL;
  * the new position for writing a directory entry will be returned
  */
 static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
-	char *filename, dir_entry *retdent, __u32 start, int find_name)
+	char *filename, dir_entry *retdent, __u32 start, int find_name,
+	int scan_table)
 {
 	__u16 prevcksum = 0xffff;
 	__u32 curclust = startsect;
 
 	debug("get_dentfromdir: %s\n", filename);
+
+	if (scan_table)
+		printf("%16s : start -  end (cluster #)\n", "file name");
 
 	while (1) {
 		dir_entry *dentptr;
@@ -784,6 +821,9 @@ static dir_entry *find_directory_entry (fsdata *mydata, int startsect,
 			}
 			if (find_name) {
 				get_name(dentptr, s_name);
+
+				if (scan_table)
+					print_fat_range(mydata, dentptr);
 
 				if (strcmp(filename, s_name)
 				    && strcmp(filename, l_name)) {
@@ -960,7 +1000,7 @@ static __u32 swap_fat_values (fsdata *mydata,
 		/* find directory entry to update the start cluster number */
 		if (reverse_fatent == 1) {
 			dentptr = find_directory_entry(mydata, startsect,
-					"", dentptr, start_first - i, 0);
+					"", dentptr, start_first - i, 0, 0);
 			if (dentptr == NULL) {
 				printf("error : no matching dir entry\n");
 				return 0;
@@ -1084,7 +1124,7 @@ static int do_fat_write (const char *filename, void *buffer,
 	memcpy(l_filename, filename, name_len);
 	downcase(l_filename);
 	retdent = find_directory_entry(mydata, startsect,
-				l_filename, dentptr, 0, 1);
+				l_filename, dentptr, 0, 1, 0);
 	if (retdent) {
 		/* Update file size and start_cluster in a directory entry */
 		retdent->size = cpu_to_le32(size);
@@ -1186,4 +1226,46 @@ int file_fat_write (const char *filename, void *buffer, unsigned long maxsize)
 {
 	printf("writing %s\n", filename);
 	return do_fat_write(filename, buffer, maxsize);
+}
+
+void file_fat_table (void)
+{
+	dir_entry *dentptr;
+	__u32 startsect;
+	boot_sector bs;
+	volume_info volinfo;
+	fsdata datablock;
+	fsdata *mydata = &datablock;
+	int cursect;
+
+	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
+		debug("error: reading boot sector\n");
+	}
+
+	total_sector = bs.total_sect;
+	if (total_sector == 0) {
+		total_sector = next_part_offset - part_offset;
+	}
+
+	if (mydata->fatsize == 32)
+		mydata->fatlength = bs.fat32_length;
+	else
+		mydata->fatlength = bs.fat_length;
+
+	mydata->fat_sect = bs.reserved;
+
+	cursect = mydata->rootdir_sect
+		= mydata->fat_sect + mydata->fatlength * bs.fats;
+
+	mydata->clust_size = bs.cluster_size;
+	mydata->fatbufnum = -1;
+	startsect = mydata->rootdir_sect;
+
+	if (disk_read(cursect, mydata->clust_size, do_fat_read_block) < 0) {
+		printf("error: reading rootdir block\n");
+	}
+	dentptr = (dir_entry *) do_fat_read_block;
+
+	find_directory_entry(mydata, startsect,
+				"", dentptr, 0, 1, 1);
 }
