@@ -606,7 +606,7 @@ set_contents (fsdata *mydata, dir_entry *dentptr, __u8 *buffer,
 	unsigned long filesize = FAT2CPU32(dentptr->size), gotsize = 0;
 	unsigned int bytesperclust = mydata->clust_size * SECTOR_SIZE;
 	__u32 curclust = START(dentptr);
-	__u32 endclust, newclust;
+	__u32 endclust = 0, newclust = 0;
 	unsigned long actsize;
 
 	debug("Filesize: %ld bytes\n", filesize);
@@ -938,7 +938,6 @@ static __u32 swap_fat_values (fsdata *mydata,
 	__u32 num_fatent_first = middle - (start + 1);
 	__u32 num_fatent_second = (end + 1) - middle;
 	__u32 reverse_fatent, new_fat_val;
-	__u32 end_first_fatval = get_fatent_value(mydata, middle - 1);
 	__u32 end_second_fatval = get_fatent_value(mydata, end);
 	__u32 startsect = mydata->rootdir_sect;
 	__u32 fat_val;
@@ -999,7 +998,7 @@ static __u32 swap_fat_values (fsdata *mydata,
 /*
  * Remove fragments for a file
  */
-static int defragment_file (fsdata *mydata, dir_entry *dentptr)
+static void defragment_file (fsdata *mydata, dir_entry *dentptr)
 {
 	__u32 start = 0, middle = 0, end = 0;
 
