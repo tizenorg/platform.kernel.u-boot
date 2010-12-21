@@ -639,7 +639,7 @@ int check_exit_key(void)
 
 static int power_key_check(void)
 {
-	unsigned char addr, val[2];
+	unsigned char addr, val[4];
 	int tmp;
 
 	addr = 0xCC >> 1;
@@ -647,7 +647,8 @@ static int power_key_check(void)
 		return -1;
 
 	/* power_key check */
-	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 1);
+	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 4);
+
 	tmp = ((val[0] & (1 << 7)) >> 7);
 
 	return tmp;
