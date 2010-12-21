@@ -156,8 +156,8 @@ elif [ "$USER" = "jaehoon" ]; then
 	tar cvf system_uboot.tar u-boot.bin
 	mv -f system_uboot* /home/jaehoon/shared/new/
 elif [ "$USER" = "leedonghwa" ]; then
-	tar cvf system_uboot.tar u-boot.bin
-	mv -f system_uboot* /home/leedonghwa/Build-Binaries/
+	tar cvf boot_system_uboot.tar u-boot.bin
+	mv -f boot_system_uboot* /home/leedonghwa/Build-Binaries
 elif [ "$USER" = "cwchoi00" ]; then
 	tar cvf system_uboot.tar u-boot.bin
 elif [ "$USER" = "donggeun" ]; then
