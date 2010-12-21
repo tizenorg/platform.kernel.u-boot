@@ -1112,7 +1112,7 @@ static int process_data(struct usbd_ops *usbd)
 		recvlen = usbd->recv_data();
 		if (recvlen < 0) {
 			send_ack(usbd, STATUS_ERROR);
-			return 0;
+			return -1;
 		} else if (recvlen < len) {
 			printf("Error: wrong image size -> %d/%d\n",
 					(int)recvlen, (int)len);
@@ -1328,7 +1328,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		/* Stop USB */
 		usbd->usb_stop();
-		return 0;
+		return -1;
 
 	case COMMAND_RAM_BOOT:
 		usbd->usb_stop();
@@ -1390,7 +1390,7 @@ static int process_data(struct usbd_ops *usbd)
 
 	if (ret < 0) {
 		send_ack(usbd, STATUS_ERROR);
-		return 0;
+		return -1;
 	} else if (ret) {
 		/* Retry this commad */
 		send_ack(usbd, STATUS_RETRY);
@@ -1449,7 +1449,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 	/* init the usb controller */
 	if (!usbd->usb_init()) {
-		usbd->down_cancel(0);
+		usbd->down_cancel(END_BOOT);
 		return 0;
 	}
 	mmc = find_mmc_device(usbd->mmc_dev);
@@ -1472,10 +1472,10 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 0;
 		}
 	} else if (ret < 0) {
-		usbd->down_cancel(1);
+		usbd->down_cancel(END_RETRY);
 		return 0;
 	} else {
-		usbd->down_cancel(0);
+		usbd->down_cancel(END_BOOT);
 		return 0;
 	}
 
@@ -1488,15 +1488,19 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 		ret = usbd->recv_data();
 		if (ret > 0) {
-			if (process_data(usbd) == 0) {
-				usbd->down_cancel(1);
+			ret = process_data(usbd);
+			if (ret < 0) {
+				usbd->down_cancel(END_RETRY);
+				return 0;
+			} else if (ret == 0) {
+				usbd->down_cancel(END_NORMAL);
 				return 0;
 			}
 		} else if (ret < 0) {
-			usbd->down_cancel(1);
+			usbd->down_cancel(END_RETRY);
 			return 0;
 		} else {
-			usbd->down_cancel(0);
+			usbd->down_cancel(END_BOOT);
 			return 0;
 		}
 	}

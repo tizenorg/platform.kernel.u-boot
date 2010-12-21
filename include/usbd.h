@@ -95,6 +95,12 @@ enum {
 	MODE_FORCE,
 };
 
+/* end mode */
+enum {
+	END_BOOT = 0,
+	END_RETRY,
+	END_NORMAL,
+};
 /*
  * USB Downloader Operations
  * All functions and valuable are mandatory

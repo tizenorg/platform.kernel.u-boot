@@ -210,10 +210,16 @@ static void down_cancel(int mode)
 		fb_clear(120);
 	}
 #endif
-	if (mode)
-		run_command("usbdown", 0);
-	else
+	switch (mode) {
+	case END_BOOT:
 		run_command("run bootcmd", 0);
+		break;
+	case END_RETRY:
+		run_command("usbdown", 0);
+		break;
+	default:
+		break;
+	}
 }
 
 /*
