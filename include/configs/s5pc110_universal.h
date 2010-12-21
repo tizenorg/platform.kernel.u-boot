@@ -245,6 +245,8 @@
 
 #define CONFIG_COMMON_BOOT	"${console} ${meminfo} ${mtdparts}"
 
+#define CONFIG_BOOTLOADER_SECTOR	0x80
+
 #define CONFIG_BOOTARGS	"root=/dev/mtdblock8 ubi.mtd=8 ubi.mtd=3 ubi.mtd=6" \
 		" rootfstype=cramfs " CONFIG_COMMON_BOOT
 
@@ -266,6 +268,7 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_ENV_AUTOSAVE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_SYS_CONSOLE_INFO_QUIET
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_UPDATEB \
 	"updatek=onenand erase 0xc00000 0x600000;" \
