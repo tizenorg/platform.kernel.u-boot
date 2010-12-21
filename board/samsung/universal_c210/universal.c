@@ -640,6 +640,7 @@ int check_exit_key(void)
 static int power_key_check(void)
 {
 	unsigned char addr, val[2];
+	int tmp;
 
 	addr = 0xCC >> 1;
 	if (lp3974_probe())
@@ -647,7 +648,9 @@ static int power_key_check(void)
 
 	/* power_key check */
 	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 1);
-	return (~val[0] & (1 << 6)) >> 6;
+	tmp = ((val[0] & (1 << 7)) >> 7);
+
+	return tmp;
 }
 
 static void check_keypad(void)
