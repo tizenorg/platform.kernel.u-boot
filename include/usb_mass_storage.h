@@ -1,6 +1,8 @@
 #ifndef __USB_MASS_STORAGE_H__
 #define __USB_MASS_STORAGE_H__
 
+#define SECTOR_SIZE		0x200
+
 struct ums_board_info {
 	int (*read_sector)(unsigned int n, void *buf);
 	int (*write_sector)(unsigned int n, void *buf);

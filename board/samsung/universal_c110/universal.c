@@ -48,6 +48,7 @@
 
 #include "animation_frames.h"
 #include "gpio_setting.h"
+#include "usb_mass_storage.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -2840,7 +2841,6 @@ void board_sleep_resume(void)
 	check_micro_usb(0);
 }
 
-#if defined(CONFIG_USB_GADGET_S3C_UDC_OTG)
 
 static int s5pc1xx_phy_control(int on)
 {
@@ -2885,6 +2885,7 @@ struct s3c_plat_otg_data s5pc110_otg_data = {
 	.regs_otg = S5PC110_OTG_BASE,
 };
 
+#if defined(CONFIG_USB_ETHER)
 int board_eth_init(bd_t *bis)
 {
 	int res = -1;
@@ -2893,6 +2894,41 @@ int board_eth_init(bd_t *bis)
 	if (usb_eth_initialize(bis) >= 0)
 		res = 0;
 	return res;
+}
+#endif
+
+#ifdef CONFIG_CMD_USB_MASS_STORAGE
+static int dummy_read_sector(unsigned int n, void *buf)
+{
+	memset(buf, n % 16, SECTOR_SIZE);
+	return 0;
+}
+
+static int dummy_write_sector(unsigned int n, void *buf)
+{
+	printf("%c", *((char*)buf + 0));
+	printf("%c", *((char*)buf + 1));
+	printf("%c", *((char*)buf + 2));
+	printf("\n");
+	return 0;
+}
+
+static int dummy_get_capacity(void)
+{
+	return 4096 * 1024;
+}
+
+static struct ums_board_info ums_board = {
+	.read_sector = dummy_read_sector,
+	.write_sector = dummy_write_sector,
+	.get_capacity = dummy_get_capacity,
+	.name = "u-Boot disk",
+};
+
+struct ums_board_info *board_ums_init(void)
+{
+	s3c_udc_probe(&s5pc110_otg_data);
+	return &ums_board;
 }
 #endif
 

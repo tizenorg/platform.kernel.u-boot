@@ -232,15 +232,16 @@
 /* #define VERBOSE_DEBUG */
 /* #define DUMP_MSGS */
 
+#include <config.h>
+#include <malloc.h>
+#include <common.h>
 
 #define unlikely(x) x
-#include <config.h>
+
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-#include <malloc.h>
 #include <usb_mass_storage.h>
-
 
 /*
  * Kbuild is not very cooperative with respect to linking separately
@@ -526,7 +527,6 @@ static void set_bulk_out_req_length(struct fsg_dev *fsg,
 }
 
 static struct fsg_dev			*the_fsg;
-static struct usb_gadget_driver		fsg_driver;
 struct ums_board_info			*ums_info;
 
 
@@ -3148,7 +3148,7 @@ static int __init check_parameters(struct fsg_dev *fsg)
 		if (gcnum >= 0)
 			mod_data.release = 0x0300 + gcnum;
 		else {
-			printf(fsg, "controller '%s' not recognized\n",
+			printf("controller '%s' not recognized\n",
 				fsg->gadget->name);
 			mod_data.release = 0x0399;
 		}
@@ -3173,7 +3173,7 @@ static int __init check_parameters(struct fsg_dev *fsg)
 			++len;
 			if ((*ch < '0' || *ch > '9') &&
 			    (*ch < 'A' || *ch > 'F')) { /* not uppercase hex */
-				printf(fsg,
+				printf(
 					"Invalid serial string character: %c; "
 					"Failing back to default\n",
 					*ch);
@@ -3183,14 +3183,14 @@ static int __init check_parameters(struct fsg_dev *fsg)
 		if (len > 126 ||
 		    (mod_data.transport_type == USB_PR_BULK && len < 12) ||
 		    (mod_data.transport_type != USB_PR_BULK && len > 12)) {
-			printf(fsg,
+			printf(
 				"Invalid serial string length; "
 				"Failing back to default\n");
 			goto fill_serial;
 		}
 		fsg_strings[FSG_STRING_SERIAL - 1].s = mod_data.serial;
 	} else {
-		printf(fsg,
+		printf(
 			"Userspace failed to provide serial number; "
 			"Failing back to default\n");
 fill_serial:
