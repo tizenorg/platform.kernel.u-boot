@@ -2848,6 +2848,7 @@ static int s5pc1xx_phy_control(int on)
 
 	if (on && !status) {
 #ifdef CONFIG_CMD_PMIC
+		run_command("pmic ldo 8 on", 0);
 		run_command("pmic ldo 3 on", 0);
 #endif
 		/* S5PC110 */
@@ -2869,6 +2870,7 @@ static int s5pc1xx_phy_control(int on)
 	} else if (!on && status) {
 #ifdef CONFIG_CMD_PMIC
 		run_command("pmic ldo 3 off", 0);
+		run_command("pmic ldo 8 off", 0);
 #endif
 		status = 0;
 	}

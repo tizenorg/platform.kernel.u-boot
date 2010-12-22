@@ -9,7 +9,8 @@
  *                      Remy Bohmer <linux@bohmer.net>
  */
 
-
+#ifndef _UBOOT_RNDIS_H
+#define _UBOOT_RNDIS_H
 
 #define USB_CDC_SUBCLASS_ACM			0x02
 #define USB_CDC_SUBCLASS_ETHERNET		0x06
@@ -221,4 +222,6 @@ struct usb_cdc_notification {
 	__le16	wIndex;
 	__le16	wLength;
 } __attribute__ ((packed));
+
+#endif
 

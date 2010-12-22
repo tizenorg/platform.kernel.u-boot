@@ -150,6 +150,11 @@
 #define	gadget_is_m66592(g)	0
 #endif
 
+#ifdef CONFIG_USB_GADGET_S3C_UDC_OTG
+#define	gadget_is_s3c_udc_otg(g)	!strcmp("s3c-udc", (g)->name)
+#else
+#define	gadget_is_s3c_udc_otg(g)	0
+#endif
 
 /*
  * CONFIG_USB_GADGET_SX2

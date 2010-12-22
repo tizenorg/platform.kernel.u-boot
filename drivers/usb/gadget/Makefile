@@ -26,8 +26,10 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libusb_gadget.a
 
 # new USB gadget layer dependencies
-ifdef CONFIG_USB_ETHER
-COBJS-y += ether.o epautoconf.o config.o usbstring.o
+ifdef CONFIG_USB_GADGET
+COBJS-$(CONFIG_USB_ETHER) += ether.o epautoconf.o config.o usbstring.o rndis.o
+COBJS-$(CONFIG_USB_GADGET_AT91) += at91_udc.o
+COBJS-$(CONFIG_USB_GADGET_S3C_UDC_OTG) += s3c_udc_otg.o
 else
 # Devices not related to the new gadget layer depend on CONFIG_USB_DEVICE
 ifdef CONFIG_USB_DEVICE

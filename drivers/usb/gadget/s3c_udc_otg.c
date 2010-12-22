@@ -73,7 +73,7 @@ void cache_flush(void);
 
 #include <asm/byteorder.h>
 #include <asm/io.h>
-#include <asm-arm/proc-armv/system.h>
+//#include <asm-arm/proc-armv/system.h>
 #include <asm/mach-types.h>
 
 #include <asm/arch/gpio.h>
