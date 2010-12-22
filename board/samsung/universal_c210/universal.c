@@ -248,7 +248,7 @@ static void check_auto_burn(void)
 	}
 	/* MMC */
 	if (readl(magic_base) == 0x654D4D43) {		/* ASICC: eMMC */
-		puts("Auto buring bootloader (eMMC) \n");
+		puts("Auto buring bootloader (eMMC)\n");
 		count += sprintf(buf + count, "run updatemmc; ");
 	}
 	if (readl(magic_base + 0x4) == 0x4b65726e) {	/* ASICC: Kern */
@@ -989,7 +989,7 @@ struct spi_platform_data spi_pd;
 
 static void lcd_cfg_gpio(void)
 {
-	unsigned int i, f3_end = 4;
+	unsigned int i;
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
@@ -1010,7 +1010,7 @@ static void lcd_cfg_gpio(void)
 		gpio_set_rate(&gpio1->f2, i, GPIO_DRV_SLOW);
 	}
 
-	for (i = 0; i < f3_end; i++) {
+	for (i = 0; i < 4; i++) {
 		/* set GPF3[0:3] for RGB Interface and Data lines (32bit) */
 		gpio_cfg_pin(&gpio1->f3, i, GPIO_PULL_UP);
 		/* pull-up/down disable */
@@ -1019,8 +1019,6 @@ static void lcd_cfg_gpio(void)
 		gpio_set_drv(&gpio1->f3, i, GPIO_DRV_4X);
 		gpio_set_rate(&gpio1->f3, i, GPIO_DRV_SLOW);
 	}
-	/* display output path selection (only [1:0] valid) */
-	//writel(0x2, 0xE0107008);
 
 	/* gpio pad configuration for LCD reset. */
 	gpio_direction_output(&gpio2->y4, 5, 1);
@@ -1029,7 +1027,6 @@ static void lcd_cfg_gpio(void)
 	 * gpio pad configuration for
 	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
 	 */
-
 	gpio_cfg_pin(&gpio2->y4, 3, GPIO_OUTPUT);
 	gpio_cfg_pin(&gpio2->y3, 1, GPIO_OUTPUT);
 	gpio_cfg_pin(&gpio2->y3, 3, GPIO_OUTPUT);
@@ -1051,60 +1048,11 @@ static void lcd_cfg_gpio(void)
 	return;
 }
 
-#if 0
-static void reset_lcd(void)
-{
-	gpio_set_value(&gpio2->y4, 5, 1);
-	udelay(10000);
-	gpio_set_value(&gpio2->y4, 5, 0);
-	udelay(10000);
-	gpio_set_value(&gpio2->y4, 5, 1);
-	udelay(100);
-}
-
-static void lcd_power_on(unsigned int onoff)
-{
-	unsigned char addr;
-	unsigned char val[2];
-
-	addr = 0xCC >> 1;	/* lp3974 */
-	if (lp3974_probe())
-		return;
-
-	if (onoff) {
-		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
-		val[0] &= ~(LP3974_LDO17);
-		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
-
-		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
-		val[0] |= LP3974_LDO17;
-		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
-
-		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
-		val[0] &= ~(LP3974_LDO7);
-		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
-
-		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
-		val[0] |= LP3974_LDO7;
-		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
-	} else {
-		i2c_read_r(addr, LP3974_REG_ONOFF3, 1, val, 1);
-		val[0] &= ~(LP3974_LDO17);
-		i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
-
-		i2c_read_r(addr, LP3974_REG_ONOFF2, 1, val, 1);
-		val[0] &= ~(LP3974_LDO7);
-		i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
-	}
-}
-#endif
-
 extern void ld9040_cfg_ldo(void);
 extern void ld9040_enable_ldo(unsigned int onoff);
 
 int s5p_no_lcd_support(void)
 {
-
 	return 0;
 }
 
