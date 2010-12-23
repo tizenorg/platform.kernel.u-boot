@@ -797,9 +797,15 @@ static void check_auto_burn(void)
 	unsigned int count = 0;
 	char buf[64];
 
+	/* OneNAND */
 	if (readl(magic_base) == 0x426f6f74) {	/* ASICC: Boot */
 		puts("Auto burning bootloader\n");
 		count += sprintf(buf + count, "run updateb; ");
+	}
+	/* MMC */
+	if (readl(magic_base) == 0x654D4D43) {	/* ASICC: eMMC */
+		puts("Auto burning bootloader (eMMC)\n");
+		count += sprintf(buf + count, "run updatemmc; ");
 	}
 	if (readl(magic_base + 0x04) == 0x4b65726e) {	/* ASICC: Kern */
 		puts("Auto burning kernel\n");
@@ -812,8 +818,7 @@ static void check_auto_burn(void)
 	}
 
 	/* Clear the magic value */
-	writel(0xa5a55a5a, magic_base);
-	writel(0xa5a55a5a, magic_base + 0x4);
+	memset((void*) magic_base, 0, 2);
 }
 
 static void pmic_pin_init(void)
