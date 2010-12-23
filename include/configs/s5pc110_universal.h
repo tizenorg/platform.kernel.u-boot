@@ -286,6 +286,8 @@
 	" onenand write 0x32000000 0x1260000 0x8C0000\0" \
 	"bootk=onenand read 0x30007FC0 0xbc0000 0x600000;" \
 	" bootm 0x30007FC0\0" \
+	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x32008000 0 0x200;" \
+		" mmc boot 0 1 1 0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
