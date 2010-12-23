@@ -44,6 +44,8 @@
 #define MMC_MODE_HS_52MHz	0x010
 #define MMC_MODE_4BIT		0x100
 #define MMC_MODE_8BIT		0x200
+#define MMC_BOOT_4BIT		0x1
+#define MMC_BOOT_8BIT		0x2
 
 #define SD_DATA_4BIT	0x00040000
 
@@ -282,6 +284,7 @@ struct mmc {
 	u64 capacity;
 	block_dev_desc_t block_dev;
 	uint boot_config;
+	uint boot_buswidth;
 	int check_rev;	/* check version 4.3+ or 4.41 (1: 4.3+, 0: 4.41) */
 	int (*send_cmd)(struct mmc *mmc,
 			struct mmc_cmd *cmd, struct mmc_data *data);

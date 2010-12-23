@@ -438,7 +438,7 @@ int mmc_change_freq(struct mmc *mmc)
 	 */
 	if (mmc->boot_config & 0x7) {
 		err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
-				EXT_CSD_BOOT_BUS_WIDTH, 0x2);
+				EXT_CSD_BOOT_BUS_WIDTH, mmc->boot_buswidth);
 		if (err)
 			return err;
 	}
