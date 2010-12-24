@@ -132,6 +132,8 @@ uchar default_environment[] = {
 	"\0"
 };
 
+struct hsearch_data env_htab;
+
 static uchar env_get_char_init (int index)
 {
 	uchar c;
@@ -190,7 +192,7 @@ void set_default_env(const char *s)
 		puts("Using default environment\n\n");
 	}
 
-	if (himport((char *)default_environment,
+	if (himport_r(&env_htab, (char *)default_environment,
 		    sizeof(default_environment), '\0', 0) == 0) {
 		error("Environment import failed: errno = %d\n", errno);
 	}
@@ -220,7 +222,7 @@ int env_import(const char *buf, int check)
 		}
 	}
 
-	if (himport((char *)ep->data, ENV_SIZE, '\0', 0)) {
+	if (himport_r(&env_htab, (char *)ep->data, ENV_SIZE, '\0', 0)) {
 		gd->flags |= GD_FLG_ENV_READY;
 		return 1;
 	}
@@ -234,13 +236,18 @@ int env_import(const char *buf, int check)
 
 void env_relocate (void)
 {
+#if defined(CONFIG_NEEDS_MANUAL_RELOC)
+	extern void env_reloc(void);
+
+	env_reloc();
+#endif
 	if (gd->env_valid == 0) {
 #if defined(CONFIG_ENV_IS_NOWHERE)	/* Environment not changable */
 		set_default_env(NULL);
 #else
 		show_boot_progress (-60);
-#endif
 		set_default_env("!bad CRC");
+#endif
 	} else {
 		env_relocate_spec ();
 	}

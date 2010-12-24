@@ -81,12 +81,9 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 {
 	struct mmc_cmd cmd;
 	struct mmc_data data;
-	int blklen, err;
-
-	blklen = mmc->write_bl_len;
 
 	if ((start + blkcnt) > mmc->block_dev.lba) {
-		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
+		printf("MMC: block number 0x%lx exceeds max(0x%lx)\n",
 			start + blkcnt, mmc->block_dev.lba);
 		return 0;
 	}
@@ -99,21 +96,19 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 	if (mmc->high_capacity)
 		cmd.cmdarg = start;
 	else
-		cmd.cmdarg = start * blklen;
+		cmd.cmdarg = start * mmc->write_bl_len;
 
 	cmd.resp_type = MMC_RSP_R1;
 	cmd.flags = 0;
 
 	data.src = src;
 	data.blocks = blkcnt;
-	data.blocksize = blklen;
+	data.blocksize = mmc->write_bl_len;
 	data.flags = MMC_DATA_WRITE;
 
-	err = mmc_send_cmd(mmc, &cmd, &data);
-
-	if (err) {
-		printf("mmc write failed\n\r");
-		return err;
+	if (mmc_send_cmd(mmc, &cmd, &data)) {
+		printf("mmc write failed\n");
+		return 0;
 	}
 
 #ifndef CONFIG_MMC_ASYNC_WRITE
@@ -122,10 +117,9 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 		cmd.cmdarg = 0;
 		cmd.resp_type = MMC_RSP_R1b;
 		cmd.flags = 0;
-		err = mmc_send_cmd(mmc, &cmd, NULL);
-		if (err) {
-			printf("mmc fail to send stop cmd\n\r");
-			return err;
+		if (mmc_send_cmd(mmc, &cmd, NULL)) {
+			printf("mmc fail to send stop cmd\n");
+			return 0;
 		}
 	}
 #endif
@@ -136,18 +130,14 @@ mmc_write_blocks(struct mmc *mmc, ulong start, lbaint_t blkcnt, const void*src)
 static ulong
 mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 {
-	int err;
-	struct mmc *mmc = find_mmc_device(dev_num);
 	lbaint_t cur, blocks_todo = blkcnt;
 
+	struct mmc *mmc = find_mmc_device(dev_num);
 	if (!mmc)
-		return -1;
+		return 0;
 
-	err = mmc_set_blocklen(mmc, mmc->write_bl_len);
-	if (err) {
-		printf("set write bl len failed\n\r");
-		return err;
-	}
+	if (mmc_set_blocklen(mmc, mmc->write_bl_len))
+		return 0;
 
 	do {
 		/*
@@ -156,7 +146,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 		 */
 		cur = (blocks_todo > 65535) ? 65535 : blocks_todo;
 		if(mmc_write_blocks(mmc, start, cur, src) != cur)
-			return -1;
+			return 0;
 		blocks_todo -= cur;
 		start += cur;
 		src += cur * mmc->write_bl_len;
@@ -806,7 +796,7 @@ int mmc_startup(struct mmc *mmc)
 	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
 		/* check  ext_csd version and capacity */
 		err = mmc_send_ext_csd(mmc, ext_csd);
-		if (!err & (ext_csd[EXT_CSD_REV] >= 2)) {
+		if (!err & (ext_csd[192] >= 2)) {
 			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
 					ext_csd[214] << 16 | ext_csd[215] << 24;
 			mmc->capacity *= 512;

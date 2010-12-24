@@ -2608,7 +2608,6 @@ int board_init(void)
 	/* Set Initial global variables */
 	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
-
 #ifdef CONFIG_LCD
 	/*
 	 * set reserved memory region for framebuffer.

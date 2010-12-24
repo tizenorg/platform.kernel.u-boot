@@ -1551,6 +1551,7 @@ static void rx_complete (struct usb_ep *ep, struct usb_request *req)
 	dprintf("%s\n", __func__);
 	dprintf("rx status %d, len %d\n", req->status, req->actual);
 
+<<<<<<< HEAD
 	packet_received=1;
 	if (!req)
 		return;
@@ -1565,6 +1566,9 @@ static void rx_complete (struct usb_ep *ep, struct usb_request *req)
 	}
 	req->actual = length;
 	dev->rx_req=req;
+=======
+	packet_received = 1;
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 }
 
 
@@ -1574,17 +1578,24 @@ static int alloc_requests (struct eth_dev *dev, unsigned n, gfp_t gfp_flags)
 	dev->tx_req = usb_ep_alloc_request (dev->in_ep, 0);
 
 	if (!dev->tx_req)
-		goto fail;
+		goto fail1;
 
 	dev->rx_req = usb_ep_alloc_request (dev->out_ep, 0);
 
 	if (!dev->rx_req)
-		goto fail;
+		goto fail2;
 
 	return 0;
 
+<<<<<<< HEAD
 fail:
 	DEBUG (dev, "can't alloc requests\n");
+=======
+fail2:
+	usb_ep_free_request(dev->in_ep, dev->tx_req);
+fail1:
+	error("can't alloc requests");
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 	return -1;
 }
 
@@ -2262,8 +2273,6 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 	usb_gadget_handle_interrupts();
 
 	dev->network_started = 0;
-	dev->tx_req = NULL;
-	dev->rx_req = NULL;
 
 	packet_received = 0;
 	packet_sent = 1;
@@ -2294,6 +2303,7 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 			printf(".");
 	}
 
+<<<<<<< HEAD
 	if (rndis_active(dev)) {
 		printf("Waiting for RNDIS link...");
 
@@ -2307,6 +2317,10 @@ static int usb_eth_init(struct eth_device* netdev, bd_t* bd)
 		printf("\n");
 	}
 	rx_submit (dev, dev->rx_req, 0);
+=======
+	packet_received = 0;
+	rx_submit(dev, dev->rx_req, 0);
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 	return 0;
 fail:
 	return -1;
@@ -2315,7 +2329,14 @@ fail:
 static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int length)
 {
 	int			retval;
+<<<<<<< HEAD
 	struct usb_request	*req = NULL;
+=======
+	struct eth_dev		*dev = &l_ethdev;
+	struct usb_request	*req = dev->tx_req;
+	unsigned long ts;
+	unsigned long timeout = USB_CONNECT_TIMEOUT;
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 
 	struct eth_dev *dev = &l_ethdev;
 	rndis_packet_buffer *rndis_buf = NULL;
@@ -2328,6 +2349,7 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 		dprintf("^");
 	}
 
+<<<<<<< HEAD
 	req = dev->tx_req;
 
 	if (rndis_active(dev)) {
@@ -2339,6 +2361,8 @@ static int usb_eth_send(struct eth_device* netdev, volatile void* packet, int le
 		packet = (void*) rndis_buf->data;
 		length = rndis_buf->len;
 	}
+=======
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 	req->buf = (void *)packet;
 	req->context = NULL;
 	req->complete = tx_complete;
@@ -2378,6 +2402,7 @@ static int usb_eth_recv(struct eth_device* netdev)
 
 	usb_gadget_handle_interrupts();
 
+<<<<<<< HEAD
 	if (packet_received)
 	{
 		dprintf("%s: packet received \n",__func__);
@@ -2391,6 +2416,11 @@ static int usb_eth_recv(struct eth_device* netdev)
 			dprintf("-");
 		}
 		else printf("dev->rx_req invalid\n");
+=======
+			rx_submit(dev, dev->rx_req, 0);
+		} else
+			error("dev->rx_req invalid");
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 	}
 	dprintf("done\n");
 	return 0;
@@ -2476,4 +2506,3 @@ fail:
 	printf("%s failed\n", __func__ );
 	return status;
 }
-

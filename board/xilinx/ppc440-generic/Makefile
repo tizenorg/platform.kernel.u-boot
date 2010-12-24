@@ -33,7 +33,7 @@ INCS		:=
 CFLAGS		+= $(INCS)
 HOSTCFLAGS	+= $(INCS)
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
 COBJS	+= ../../xilinx/ppc440-generic/xilinx_ppc440_generic.o
 
@@ -43,8 +43,10 @@ SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
-$(LIB):	$(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $^
+all: $(LIB) $(SOBJS)
+
+$(LIB):	$(OBJS)
+	$(call cmd_link_o_target, $^)
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

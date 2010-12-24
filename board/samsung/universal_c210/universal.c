@@ -59,7 +59,7 @@ enum {
 	I2C_0, I2C_1, I2C_2, I2C_3,
 	I2C_4, I2C_5, I2C_6, I2C_7,
 	I2C_8, I2C_9, I2C_10, I2C_11,
-	I2C_12, I2C_13,
+	I2C_12, I2C_13, I2C_NUM,
 };
 
 /* i2c0 (CAM)	SDA: GPD1[0] SCL: GPD1[1] */
@@ -128,22 +128,7 @@ static struct i2c_gpio_bus_data i2c_13 = {
 	.scl_pin	= 3,
 };
 
-static struct i2c_gpio_bus i2c_gpio[] = {
-	{ .bus	= &i2c_0, },
-	{ .bus	= &i2c_1, },
-	{ .bus	= NULL, },		/* Not used */
-	{ .bus	= &i2c_3, },
-	{ .bus	= &i2c_4, },
-	{ .bus	= &i2c_5, },
-	{ .bus	= &i2c_6, },
-	{ .bus	= &i2c_7, },
-	{ .bus	= NULL, },		/* For dedicated HDMI */
-	{ .bus	= &i2c_9, },
-	{ .bus	= &i2c_10, },
-	{ .bus	= NULL, },		/* Not used */
-	{ .bus	= &i2c_12, },
-	{ .bus	= &i2c_13, },
-};
+static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
 
 static void check_battery(int mode);
 static void check_micro_usb(int intr);
@@ -153,12 +138,23 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on);
 
 void i2c_init_board(void)
 {
-	int num_bus;
-
 	gpio1 = (struct s5pc210_gpio_part1 *) S5PC210_GPIO_PART1_BASE;
 	gpio2 = (struct s5pc210_gpio_part2 *) S5PC210_GPIO_PART2_BASE;
 
-	num_bus = ARRAY_SIZE(i2c_gpio);
+	i2c_gpio[I2C_0].bus = &i2c_0;
+	i2c_gpio[I2C_1].bus = &i2c_1;
+	i2c_gpio[I2C_2].bus = NULL;
+	i2c_gpio[I2C_3].bus = &i2c_3;
+	i2c_gpio[I2C_4].bus = &i2c_4;
+	i2c_gpio[I2C_5].bus = &i2c_5;
+	i2c_gpio[I2C_6].bus = &i2c_6;
+	i2c_gpio[I2C_7].bus = &i2c_7;
+	i2c_gpio[I2C_8].bus = NULL;
+	i2c_gpio[I2C_9].bus = &i2c_9;
+	i2c_gpio[I2C_10].bus = &i2c_10;
+	i2c_gpio[I2C_11].bus = NULL;
+	i2c_gpio[I2C_12].bus = &i2c_12;
+	i2c_gpio[I2C_13].bus = &i2c_13;
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
 	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->d1;
@@ -172,7 +168,7 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_12].bus->gpio_base = (unsigned int)&gpio1->e4;
 	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
-	i2c_gpio_init(i2c_gpio, num_bus, I2C_5);
+	i2c_gpio_init(i2c_gpio, I2C_NUM, I2C_5);
 }
 
 static void check_hw_revision(void);

@@ -29,7 +29,7 @@ struct stack {
 	u32 irq[3];
 	u32 abt[3];
 	u32 und[3];
-} ____cacheline_aligned;
+};
 
 static struct stack stacks[1];
 

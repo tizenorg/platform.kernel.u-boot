@@ -24,8 +24,8 @@
 #include <asm/errno.h>
 #include "usb-hs-otg.h"
 
-u32 remode_wakeup;
-u16 config_value;
+static u32 remode_wakeup;
+static u16 config_value;
 
 int s5p_receive_done;
 int s5p_usb_connected;
@@ -48,7 +48,7 @@ enum dma_state_t {
 	ep0_idle, ep0_setup, ep0_data, ep0_complete
 };
 
-int dma_state;
+static int dma_state;
 
 /*------------------------------------------------*/
 /* EP0 state */

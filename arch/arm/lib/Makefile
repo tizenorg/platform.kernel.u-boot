@@ -23,8 +23,8 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(ARCH).a
-LIBGCC	= $(obj)libgcc.a
+LIB	= $(obj)lib$(ARCH).o
+LIBGCC	= $(obj)libgcc.o
 
 GLSOBJS	+= _ashldi3.o
 GLSOBJS	+= _ashrdi3.o
@@ -53,7 +53,7 @@ OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
 LGOBJS	:= $(addprefix $(obj),$(GLSOBJS)) \
 	   $(addprefix $(obj),$(GLCOBJS))
 
-# Always build libarm.a
+# Always build libarm.o
 TARGETS	:= $(LIB)
 
 # Build private libgcc only when asked for
@@ -68,11 +68,11 @@ endif
 
 all:	$(TARGETS)
 
-$(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+$(LIB):	$(obj).depend $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 $(LIBGCC): $(obj).depend $(LGOBJS)
-	$(AR) $(ARFLAGS) $@ $(LGOBJS)
+	$(call cmd_link_o_target, $(LGOBJS))
 
 #########################################################################
 

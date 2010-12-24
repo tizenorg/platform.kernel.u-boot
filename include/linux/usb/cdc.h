@@ -9,9 +9,12 @@
  *                      Remy Bohmer <linux@bohmer.net>
  */
 
+<<<<<<< HEAD
 #ifndef _UBOOT_RNDIS_H
 #define _UBOOT_RNDIS_H
 
+=======
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59
 #define USB_CDC_SUBCLASS_ACM			0x02
 #define USB_CDC_SUBCLASS_ETHERNET		0x06
 #define USB_CDC_SUBCLASS_WHCM			0x08
@@ -200,7 +203,6 @@ struct usb_cdc_line_coding {
 #define	USB_CDC_PACKET_TYPE_BROADCAST		(1 << 3)
 #define	USB_CDC_PACKET_TYPE_MULTICAST		(1 << 4) /* filtered */
 
-
 /*-------------------------------------------------------------------------*/
 
 /*
@@ -222,6 +224,9 @@ struct usb_cdc_notification {
 	__le16	wIndex;
 	__le16	wLength;
 } __attribute__ ((packed));
+<<<<<<< HEAD
 
 #endif
 
+=======
+>>>>>>> cdc51c294ad33879c4e57edf4c9d2155381b1d59

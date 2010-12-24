@@ -37,11 +37,11 @@
 
 #define TCON_TIMER4_SHIFT	20
 
-static unsigned long count_value;
+static unsigned long count_value = 1;
 
 /* Internal tick units */
-static unsigned long long timestamp;	/* Monotonic incrementing timer */
-static unsigned long lastdec;		/* Last decremneter snapshot */
+static unsigned long long timestamp = 1;	/* Monotonic incrementing timer */
+static unsigned long lastdec = 1;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
 static inline struct s5p_timer *s5p_get_base_timer(void)

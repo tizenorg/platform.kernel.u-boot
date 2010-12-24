@@ -108,6 +108,8 @@ cmd_tbl_t *find_cmd_tbl (const char *cmd, cmd_tbl_t *table, int table_len)
 	int len;
 	int n_found = 0;
 
+	if (!cmd)
+		return NULL;
 	/*
 	 * Some commands allow length modifiers (like "cp.b");
 	 * compare command name only until first dot.
@@ -173,30 +175,6 @@ int var_complete(int argc, char * const argv[], char last_char, int maxv, char *
 		return env_complete(argv[1], maxv, cmdv, sizeof(tmp_buf), tmp_buf);
 #endif
 	return 0;
-}
-
-static void install_auto_complete_handler(const char *cmd,
-		int (*complete)(int argc, char * const argv[], char last_char, int maxv, char *cmdv[]))
-{
-	cmd_tbl_t *cmdtp;
-
-	cmdtp = find_cmd(cmd);
-	if (cmdtp == NULL)
-		return;
-
-	cmdtp->complete = complete;
-}
-
-void install_auto_complete(void)
-{
-#if defined(CONFIG_CMD_EDITENV)
-	install_auto_complete_handler("editenv", var_complete);
-#endif
-	install_auto_complete_handler("printenv", var_complete);
-	install_auto_complete_handler("setenv", var_complete);
-#if defined(CONFIG_CMD_RUN)
-	install_auto_complete_handler("run", var_complete);
-#endif
 }
 
 /*************************************************************************************/
@@ -466,7 +444,7 @@ int cmd_get_data_size(char* arg, int default_size)
 }
 #endif
 
-#if !defined(CONFIG_RELOC_FIXUP_WORKS)
+#if defined(CONFIG_NEEDS_MANUAL_RELOC)
 DECLARE_GLOBAL_DATA_PTR;
 
 void fixup_cmdtable(cmd_tbl_t *cmdtp, int size)

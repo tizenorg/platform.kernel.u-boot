@@ -347,8 +347,7 @@ static void mmc_change_clock(struct mmc_host *host, uint clock)
 	clk = (div << 8) | (1 << 0);
 	writew(clk, &host->reg->clkcon);
 
-	if (set_mmc_clk)
-		set_mmc_clk(host->dev_index, div);
+	set_mmc_clk(host->dev_index, div);
 
 	/* Wait max 10 ms */
 	timeout = 10;
@@ -445,7 +444,6 @@ static void mmc_set_ios(struct mmc *mmc)
 	 * WIDE8[5]
 	 * 0 = Depend on WIDE4
 	 * 1 = 8-bit mode
-	 *
 	 * WIDE4[1]
 	 * 1 = 4-bit mode
 	 * 0 = 1-bit mode

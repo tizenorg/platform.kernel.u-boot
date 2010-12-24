@@ -46,13 +46,25 @@ static unsigned long down_ram_addr;
 
 static int down_mode;
 
-/* cpu/${CPU} dependent */
-extern void do_reset(void);
-
 /* common commands */
-extern int do_bootm(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 extern int do_run(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]);
 
+#ifdef CONFIG_CMD_UBI
+static int check_ubi_mode(void)
+{
+	char *env_ubifs;
+	int ubi_mode;
+
+	env_ubifs = getenv("ubi");
+	ubi_mode = !strcmp(env_ubifs, "enabled");
+
+	return ubi_mode;
+}
+#else
+#define check_ubi_mode()		0
+#endif
+
+#ifdef CONFIG_CMD_MTDPARTS
 int mtdparts_init(void);
 int find_dev_and_part(const char*, struct mtd_device**, u8*, struct part_info**);
 
@@ -76,22 +88,6 @@ static u8 count_mtdparts(void)
 	return part_num;
 }
 
-#ifdef CONFIG_CMD_UBI
-static int check_ubi_mode(void)
-{
-	char *env_ubifs;
-	int ubi_mode;
-
-	env_ubifs = getenv("ubi");
-	ubi_mode = !strcmp(env_ubifs, "enabled");
-
-	return ubi_mode;
-}
-#else
-#define check_ubi_mode()		0
-#endif
-
-#ifdef CONFIG_MTD_PARTITIONS
 static int get_part_info(void)
 {
 	struct mtd_device *dev;
@@ -760,6 +756,7 @@ static int write_file_system(char *ramaddr, ulong len, char *offset,
 {
 	int ret = 0;
 
+#ifdef CONFIG_CMD_MTDPARTS
 #ifdef CONFIG_CMD_UBI
 	/* UBI Update */
 	if (ubi_update) {
@@ -781,6 +778,7 @@ static int write_file_system(char *ramaddr, ulong len, char *offset,
 
 	fs_offset += len;
 	ret = nand_cmd(1, ramaddr, offset, length);
+#endif
 
 	return ret;
 }
@@ -790,6 +788,7 @@ static int qboot_erase = 0;
 /* Erase the qboot */
 static void erase_qboot_area(void)
 {
+#ifdef CONFIG_CMD_MTDPARTS
 	char offset[12], length[12];
 	int qboot_id;
 
@@ -805,6 +804,7 @@ static void erase_qboot_area(void)
 		nand_cmd(0, offset, length, NULL);
 		qboot_erase = 1;
 	}
+#endif
 }
 
 /* Erase the environment */
@@ -852,9 +852,10 @@ static inline int check_mmc_device(struct usbd_ops *usbd)
 static int write_mtd_image(struct usbd_ops *usbd, int img_type,
 		unsigned int len, unsigned int arg)
 {
+	int ret = -1;
+#ifdef CONFIG_CMD_MTDPARTS
 	unsigned int ofs = 0;
 	char offset[12], length[12], ramaddr[12];
-	int ret;
 
 	sprintf(ramaddr, "0x%x", (uint) down_ram_addr);
 
@@ -1029,7 +1030,7 @@ out:
 		/* Retry? */
 		write_part--;
 	}
-
+#endif
 	return ret;
 }
 
@@ -1187,7 +1188,9 @@ static int process_data(struct usbd_ops *usbd)
 #endif
 		printf("COMMAND_PARTITION_SYNC - Part%d\n", part_id);
 
+#ifdef CONFIG_CMD_MTDPARTS
 		blocks = parts[part_id]->size / 1024 / 128;
+#endif
 		printf("COMMAND_PARTITION_SYNC - Part%d, %d blocks\n",
 				part_id, blocks);
 
@@ -1328,7 +1331,7 @@ static int process_data(struct usbd_ops *usbd)
 		if (usbd->cpu_reset)
 			usbd->cpu_reset();
 		else
-			do_reset();
+			run_command("reset", 0);
 
 		return 0;
 
@@ -1375,7 +1378,7 @@ static int process_data(struct usbd_ops *usbd)
 
 		usbd_path_change();
 
-		do_reset();
+		run_command("reset", 0);
 		return 0;
 #endif
 	case COMMAND_CSA_CLEAR:

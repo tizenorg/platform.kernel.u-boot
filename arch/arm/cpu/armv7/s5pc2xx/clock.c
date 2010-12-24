@@ -30,15 +30,6 @@
 #define CONFIG_SYS_CLK_FREQ_C210	24000000
 #endif
 
-void (*set_mmc_clk)(int dev_index, unsigned int div);
-int (*set_lcd_clk)(const unsigned int dev_index,
-			const unsigned int pclk_name, const unsigned int div);
-unsigned long (*get_lcd_clk)(void);
-unsigned long (*get_uart_clk)(int dev_index);
-unsigned long (*get_pwm_clk)(void);
-unsigned long (*get_arm_clk)(void);
-unsigned long (*get_pll_clk)(int);
-
 /* s5pc210: return pll clock frequency */
 static unsigned long s5pc210_get_pll_clk(int pllreg)
 {
@@ -331,15 +322,38 @@ static void s5pc210_set_mmc_clk(int dev_index, unsigned int div)
 	writel(val, addr);
 }
 
-void s5p_clock_init(void)
+unsigned long get_pll_clk(int pllreg)
 {
-	if (cpu_is_s5pc210()) {
-		get_pll_clk = s5pc210_get_pll_clk;
-		get_arm_clk = s5pc210_get_arm_clk;
-		get_uart_clk = s5pc210_get_uart_clk;
-		get_pwm_clk = s5pc210_get_pwm_clk;
-		get_lcd_clk = s5pc210_get_lcd_clk;
-		set_mmc_clk = s5pc210_set_mmc_clk;
-		set_lcd_clk = s5pc210_set_lcd_clk;
-	}
+	return s5pc210_get_pll_clk(pllreg);
+}
+
+unsigned long get_arm_clk(void)
+{
+	return s5pc210_get_arm_clk();
+}
+
+unsigned long get_pwm_clk(void)
+{
+	return s5pc210_get_pwm_clk();
+}
+
+unsigned long get_uart_clk(int dev_index)
+{
+	return s5pc210_get_uart_clk(dev_index);
+}
+
+unsigned long get_lcd_clk(void)
+{
+	return s5pc210_get_lcd_clk();
+}
+
+void set_mmc_clk(int dev_index, unsigned int div)
+{
+	s5pc210_set_mmc_clk(dev_index, div);
+}
+
+int set_lcd_clk(const unsigned int dev_index,
+			const unsigned int pclk_name, const unsigned int div)
+{
+	return s5pc210_set_lcd_clk(dev_index, pclk_name, div);
 }

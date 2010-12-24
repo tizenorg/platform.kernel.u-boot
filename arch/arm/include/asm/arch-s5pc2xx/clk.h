@@ -28,15 +28,12 @@
 #define HPLL	3
 #define VPLL	4
 
-void s5p_clock_init(void);
-
-extern unsigned long (*get_pll_clk)(int pllreg);
-extern unsigned long (*get_arm_clk)(void);
-extern unsigned long (*get_pwm_clk)(void);
-extern unsigned long (*get_uart_clk)(int dev_index);
-extern unsigned long (*get_lcd_clk)(void);
-extern void (*set_mmc_clk)(int dev_index, unsigned int div);
-extern int (*set_lcd_clk)(const unsigned int dev_index,
+unsigned long get_pll_clk(int pllreg);
+unsigned long get_arm_clk(void);
+unsigned long get_pwm_clk(void);
+unsigned long get_uart_clk(int dev_index);
+unsigned long get_lcd_clk(void);
+void set_mmc_clk(int dev_index, unsigned int div);
+int set_lcd_clk(const unsigned int dev_index,
 			const unsigned int pclk_name, const unsigned int div);
-
 #endif

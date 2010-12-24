@@ -28,8 +28,6 @@
 #include <command.h>
 #include <net.h>
 
-extern int do_bootm (cmd_tbl_t *, int, int, char * const []);
-
 static int netboot_common (proto_t, cmd_tbl_t *, int , char * const []);
 
 int do_bootp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -54,6 +52,7 @@ U_BOOT_CMD(
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
 
+#ifdef CONFIG_CMD_RARP
 int do_rarpb (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	return netboot_common (RARP, cmdtp, argc, argv);
@@ -64,6 +63,7 @@ U_BOOT_CMD(
 	"boot image via network using RARP/TFTP protocol",
 	"[loadAddress] [[hostIPaddr:]bootfilename]"
 );
+#endif
 
 #if defined(CONFIG_CMD_DHCP)
 int do_dhcp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -211,7 +211,7 @@ netboot_common (proto_t proto, cmd_tbl_t *cmdtp, int argc, char * const argv[])
 	flush_cache(load_addr, size);
 
 	/* Loading ok, check if we should attempt an auto-start */
-	if (((s = getenv("autostart")) != NULL) && (strcmp(s,"yes") == 0)) {
+	if (getenv_yesno("autostart")) {
 		char *local_args[2];
 		local_args[0] = argv[0];
 		local_args[1] = NULL;
