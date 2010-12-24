@@ -1408,3 +1408,333 @@ U_BOOT_CMD(
 	"    - list files from 'dev' on 'interface' in a 'directory'"
 );
 
+#define MAX_CLUST_32    0x0FFFFFF0
+#define NUM_FATS        2
+
+void unsupported_field_size(void);
+#define STORE_LE(field, value) \
+do { \
+	if (sizeof(field) == 4) \
+		field = cpu_to_le32(value); \
+	else if (sizeof(field) == 2) \
+		field = cpu_to_le16(value); \
+	else if (sizeof(field) == 1) \
+		field = (value); \
+	else \
+		unsupported_field_size(); \
+} while (0)
+
+#define BOOT_SIGN 0xAA55
+
+#define FAT_FSINFO_SIG1 0x41615252
+#define FAT_FSINFO_SIG2 0x61417272
+
+/* 
+ * mkfs_vfat function derives from mkfs_vfat.c in busybox
+ * file systems type is FAT32
+ */
+int mkfs_vfat (block_dev_desc_t *dev_desc, int part_no)
+{
+	disk_partition_t info;
+	boot_sector *bs;
+	volume_info *volinfo;
+	void *fsinfo;
+	const char *volume_label = "";
+	__u8 *buf;
+	__u64 volume_size_bytes;
+	__u32 volume_size_sect;
+	__u32 total_clust;
+	__u32 volume_id;
+	__u32 bytes_per_sect;
+	__u32 sect_per_fat;
+	__u32 temp;
+	__u16 sect_per_track;
+	__u8 media_byte;
+	__u8 sect_per_clust;
+	__u8 heads;
+	__u32 reserved_sect = 6;
+	__u32 info_sector_number = 1;
+	__u32 backup_boot_sector = 3;
+	__u32 start_sect;
+	unsigned i, j, remainder;
+	unsigned char *fat;
+
+	/* volume_id is fixed */
+	volume_id = 0x386d43bf;
+
+	/* Get image size and sector size */
+	bytes_per_sect = SECTOR_SIZE;
+
+	if (!get_partition_info(dev_desc, part_no, &info)) {
+		volume_size_bytes = info.size * info.blksz;
+		volume_size_sect = volume_size_bytes / bytes_per_sect;
+
+		total_sector = volume_size_sect;
+	} else {
+		printf("error : get partition info\n");
+		return 1;
+	}
+
+	/* 
+	 * FIXME heads and sect_per_track should be set
+	 * according to each block device
+	 */
+	media_byte = 0xf8;
+	heads = 4;
+	sect_per_track = 16;
+	sect_per_clust = 1;
+
+	/* clust_size <= 260M: 512 bytes
+	 * clust_size <=   8G: 4k  bytes
+	 * clust_size <=  16G: 8k  bytes
+	 * clust_size >   16G: 16k bytes
+	 */
+	sect_per_clust = 1;
+
+	if (volume_size_bytes >= 260 * 1024 * 1024) {
+		sect_per_clust = 8;
+
+		temp = (volume_size_bytes >> 32);
+		if (temp >= 2)
+			sect_per_clust = 16;
+		if (temp >= 4)
+			sect_per_clust = 32;
+	}
+
+	/*
+	 * Calculate number of clusters, sectors/cluster, sectors/FAT
+	 * minimum: 2 sectors for FATs and 2 data sectors
+	 */
+	if ((volume_size_sect - reserved_sect) < 4) {
+		printf("the image is too small for FAT32\n");
+		return 1;
+	}
+
+	sect_per_fat = 1;
+	while (1) {
+		while (1) {
+			int spf_adj;
+			__u32 tcl = (volume_size_sect - reserved_sect -
+				NUM_FATS * sect_per_fat) / sect_per_clust;
+			/* tcl may be > MAX_CLUST_32 here, but it may be
+			 * because sect_per_fat is underestimated,
+			 * and with increased sect_per_fat it still may become
+			 * <= MAX_CLUST_32. Therefore, we do not check
+			 * against MAX_CLUST_32, but against a bigger const */
+			if (tcl > 0x80ffffff)
+				goto next;
+			total_clust = tcl; /* fits in __u32 */
+			/* Every cluster needs 4 bytes in FAT. +2 entries since
+			 * FAT has space for non-existent clusters 0 and 1.
+			 * Let's see how many sectors that needs.
+			 * May overflow at "*4": 
+			 * spf_adj = ((total_clust+2) * 4 + bytes_per_sect-1) /
+			 * bytes_per_sect - sect_per_fat;
+			 * Same in the more obscure, non-overflowing form: */
+			spf_adj = ((total_clust+2) + (bytes_per_sect/4)-1) /
+				(bytes_per_sect/4) - sect_per_fat;
+			if (spf_adj <= 0) {
+				/* do not need to adjust sect_per_fat.
+				 * so, was total_clust too big after all? */
+				if (total_clust <= MAX_CLUST_32)
+					goto found_total_clust; /* no */
+				/* yes, total_clust is _a bit_ too big */
+				goto next;
+			}
+			/* adjust sect_per_fat, go back and recalc total_clust
+			 * (note: just "sect_per_fat += spf_adj" isn't ok) */
+			sect_per_fat += ((__u32)spf_adj / 2) | 1;
+		}
+next:
+		if (sect_per_clust == 128) {
+			printf("can't make FAT32 with >128 sectors/cluster");
+			return 1;
+		}
+		sect_per_clust *= 2;
+		sect_per_fat = (sect_per_fat / 2) | 1;
+	}
+found_total_clust:
+	debug("heads:%u, sectors/track:%u, bytes/sector:%u\n"
+		"media descriptor:%02x\n"
+		"total sectors:%u, clusters:%u, sectors/cluster:%u\n"
+		"FATs:2, sectors/FAT:%u\n"
+		"volumeID:%08x, label:'%s'\n",
+		heads, sect_per_track, bytes_per_sect,
+		(int)media_byte,
+		volume_size_sect, (int)total_clust, (int)sect_per_clust,
+		sect_per_fat,
+		(int)volume_id, volume_label
+	);
+
+	/*
+	 * Write filesystem image
+	 */
+	buf = do_fat_read_block;
+	memset(buf, 0, sizeof(do_fat_read_block));
+
+	/* boot and fsinfo sectors, and their copies */
+	bs = (void*)buf;
+	volinfo = (void*)(buf + 0x40);
+	fsinfo = (void*)(buf + bytes_per_sect);
+
+	bs->ignored[0] = 0xeb;
+	bs->ignored[1] = 0x58;
+	bs->ignored[2] = 0x90;
+	strncpy(bs->system_id, "mkdosfs", 8);
+
+	bs->sector_size[0] = cpu_to_le16(bytes_per_sect) & 0xff;
+	bs->sector_size[1] = (cpu_to_le16(bytes_per_sect) & 0xff00) >> 8;
+
+	STORE_LE(bs->cluster_size, sect_per_clust);
+	STORE_LE(bs->reserved, (__u16)reserved_sect);
+	STORE_LE(bs->fats, 2);
+
+	if (volume_size_sect <= 0xffff) {
+		bs->sectors[0] = cpu_to_le16(volume_size_sect) & 0xff;
+		bs->sectors[1] = (cpu_to_le16(volume_size_sect) & 0xff00) >> 8;
+	}
+
+	STORE_LE(bs->media, media_byte);
+	STORE_LE(bs->secs_track, sect_per_track);
+	STORE_LE(bs->heads, heads);
+
+	STORE_LE(bs->total_sect, volume_size_sect);
+	STORE_LE(bs->fat32_length, sect_per_fat);
+
+	STORE_LE(bs->root_cluster, 2);
+	STORE_LE(bs->info_sector, info_sector_number);
+	STORE_LE(bs->backup_boot, backup_boot_sector);
+
+	STORE_LE(volinfo->ext_boot_sign, 0x29);
+	volinfo->volume_id[0] = cpu_to_le32(volume_id) & 0xff;
+	volinfo->volume_id[1] = (cpu_to_le32(volume_id) & 0xff00) >> 8;
+	volinfo->volume_id[2] = (cpu_to_le32(volume_id) & 0xff0000) >> 16;
+	volinfo->volume_id[3] = (cpu_to_le32(volume_id) & 0xff000000) >> 24;
+
+	strncpy(volinfo->fs_type, "FAT32   ", sizeof(volinfo->fs_type));
+	strncpy(volinfo->volume_label, volume_label,
+		sizeof(volinfo->volume_label));
+	memset(buf + 0x1fe, (cpu_to_le16(BOOT_SIGN) & 0xff), 1);
+	memset(buf + 0x1ff, (cpu_to_le16(BOOT_SIGN) & 0xff00) >> 8, 1);
+
+	memset(fsinfo, (cpu_to_le32(FAT_FSINFO_SIG1) & 0xff), 1);
+
+	memset(fsinfo + 0x1, (cpu_to_le32(FAT_FSINFO_SIG1) & 0xff00) >> 8, 1);
+	memset(fsinfo + 0x2,
+		(cpu_to_le32(FAT_FSINFO_SIG1) & 0xff0000) >> 16, 1);
+	memset(fsinfo + 0x3,
+		(cpu_to_le32(FAT_FSINFO_SIG1) & 0xff000000) >> 24, 1);
+
+	memset(fsinfo + 0x1e4, (cpu_to_le32(FAT_FSINFO_SIG2) & 0xff), 1);
+	memset(fsinfo + 0x1e5,
+		(cpu_to_le32(FAT_FSINFO_SIG2) & 0xff00) >> 8, 1);
+	memset(fsinfo + 0x1e6,
+		(cpu_to_le32(FAT_FSINFO_SIG2) & 0xff0000) >> 16, 1);
+	memset(fsinfo + 0x1e7,
+		(cpu_to_le32(FAT_FSINFO_SIG2) & 0xff000000) >> 24, 1);
+
+	memset(fsinfo + 0x1e8, cpu_to_le32(total_clust - 1) & 0xff, 1);
+	memset(fsinfo + 0x1e9,
+		(cpu_to_le32(total_clust - 1) & 0xff00) >> 8, 1);
+	memset(fsinfo + 0x1ea,
+		(cpu_to_le32(total_clust - 1) & 0xff0000) >> 16, 1);
+	memset(fsinfo + 0x1eb,
+		(cpu_to_le32(total_clust - 1) & 0xff000000) >> 24, 1);
+
+	memset(fsinfo + 0x1ec, cpu_to_le32(2) & 0xff, 1);
+
+	memset(fsinfo + 0x1fe, cpu_to_le16(BOOT_SIGN) & 0xff, 1);
+	memset(fsinfo + 0x1ff, (cpu_to_le16(BOOT_SIGN) & 0xff00) >> 8, 1);
+
+	/* Write boot and fsinfo sectors */
+	if (disk_write(0, backup_boot_sector, buf) < 0)
+		return 1;
+	if (disk_write(3, backup_boot_sector, buf) < 0)
+		return 1;
+
+	/* file allocation tables */
+	fat = buf;
+	memset(buf, 0, bytes_per_sect * 2);
+	/* initial FAT entries */
+	((__u32 *)fat)[0] = cpu_to_le32(0x0fffff00 | media_byte);
+	((__u32 *)fat)[1] = cpu_to_le32(0x0fffffff);
+	/* mark cluster 2 as EOF (used for root dir) */
+	((__u32 *)fat)[2] = cpu_to_le32(0x0ffffff8);
+
+	memset(get_vfatname_block, 0, MAX_CLUSTSIZE);
+	start_sect = reserved_sect;
+	for (i = 0; i < NUM_FATS; i++) {
+		temp = sect_per_fat / (MAX_CLUSTSIZE / SECTOR_SIZE);
+		remainder = sect_per_fat % (MAX_CLUSTSIZE / SECTOR_SIZE);
+
+		for (j = 0; j < temp; j++) {
+			if (disk_write(start_sect, MAX_CLUSTSIZE / SECTOR_SIZE,
+				get_vfatname_block) < 0)
+				return 1;
+			start_sect += MAX_CLUSTSIZE / SECTOR_SIZE;
+		}
+		if (remainder) {
+			if (disk_write(start_sect, remainder,
+				get_vfatname_block) < 0)
+				return 1;
+			start_sect += remainder;
+		}
+	}
+
+	if (disk_write(reserved_sect, 1, buf) < 0)
+		return 1;
+	if (disk_write(reserved_sect + sect_per_fat, 1, buf) < 0)
+		return 1;
+
+	/* root directory */
+	/* empty directory is just a set of zero bytes */
+	if (disk_write(start_sect, sect_per_clust, get_vfatname_block) < 0)
+		return 1;
+
+	return 0;
+}
+
+int do_fat_format (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int dev = 0;
+	int part = 1;
+	char *ep;
+	block_dev_desc_t *dev_desc=NULL;
+
+	if (argc < 2) {
+		printf("usage: fatformat <interface> <dev[:part]>\n");
+		return 0;
+	}
+	dev = (int)simple_strtoul(argv[2], &ep, 16);
+	dev_desc = get_dev(argv[1], dev);
+	if (dev_desc == NULL) {
+		puts("\n** Invalid boot device **\n");
+		return 1;
+	}
+	if (*ep) {
+		if (*ep != ':') {
+			puts("\n** Invalid boot device, use `dev[:part]' **\n");
+			return 1;
+		}
+		part = (int)simple_strtoul(++ep, NULL, 16);
+	}
+	if (fat_register_device(dev_desc,part)!=0) {
+		printf("\n** Unable to use %s %d:%d for fattable **\n",
+			argv[1], dev, part);
+		return 1;
+	}
+
+	printf("formatting\n");
+	if (mkfs_vfat(dev_desc, part))
+		return 1;
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	fatformat,	3,	1,	do_fat_format,
+	"format device as FAT32 filesystem",
+	"<interface> <dev[:part]>\n"
+	"    - format device as FAT32 filesystem on 'dev'"
+);
+

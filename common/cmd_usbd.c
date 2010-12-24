@@ -731,6 +731,17 @@ static int write_fat_file(struct usbd_ops *usbd, char *file_name,
 	}
 
 	ret = file_fat_write(file_name, (void *)down_ram_addr, len);
+
+	/* format and write again */
+	if (ret == 1) {
+		printf("formatting\n");
+		if (mkfs_vfat(&mmc->block_dev, part_id)) {
+			printf("error : format device\n");
+			return 0;
+		}
+		ret = file_fat_write(file_name, (void *)down_ram_addr, len);
+	}
+
 	if (ret < 0) {
 		printf("error : writing uImage\n");
 		return 0;

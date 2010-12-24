@@ -220,4 +220,5 @@ int fat_register_device(block_dev_desc_t *dev_desc, int part_no);
 int file_fat_write(const char *filename, void *buffer, unsigned long size);
 
 void file_fat_table(void);
+int mkfs_vfat(block_dev_desc_t *dev_desc, int part_no);
 #endif /* _FAT_H_ */
