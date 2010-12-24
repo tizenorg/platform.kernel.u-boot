@@ -85,7 +85,7 @@ static void set_name (dir_entry *dirent, const char *filename)
 
 	period = strchr(s_name, '.');
 	if (period == NULL) {
-		period_location = len - 1;
+		period_location = len;
 		ext_num = 0;
 	} else {
 		period_location = period - s_name;
@@ -108,7 +108,7 @@ static void set_name (dir_entry *dirent, const char *filename)
 	if (ext_num < 3) {
 		memcpy(dirent->ext, s_name + period_location + 1, ext_num);
 		for (i = ext_num; i < 3; i++)
-			dirent->name[i] = ' ';
+			dirent->ext[i] = ' ';
 	} else
 		memcpy(dirent->ext, s_name + period_location + 1, 3);
 
