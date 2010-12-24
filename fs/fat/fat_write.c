@@ -1147,7 +1147,7 @@ static int do_fat_write (const char *filename, void *buffer,
 
 	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
 		debug("error: reading boot sector\n");
-		return 0;
+		return 1;
 	}
 
 	total_sector = bs.total_sect;
@@ -1212,24 +1212,24 @@ static int do_fat_write (const char *filename, void *buffer,
 		ret = check_overflow(mydata, start_cluster, size);
 		if (ret) {
 			printf("error: %ld overflow\n", size);
-			return 0;
+			return -1;
 		}
 
 		ret = clear_fatent(mydata, start_cluster);
 		if (ret < 0) {
 			printf("error: clearing FAT entries\n");
-			return 0;
+			return -1;
 		}
 
 		ret = set_contents(mydata, retdent, buffer, size);
 		if (ret < 0) {
 			printf("error: writing contents\n");
-			return 0;
+			return -1;
 		}
 
 		/* Flush fat buffer */
 		if (flush_fat_buffer(mydata) < 0)
-			return 0;
+			return -1;
 
 		if (fragmented_count > 0) {
 			defragment_file(mydata, retdent);
@@ -1241,7 +1241,7 @@ static int do_fat_write (const char *filename, void *buffer,
 			    get_dentfromdir_block,
 			    mydata->clust_size * SECTOR_SIZE) != 0) {
 			printf("error: wrinting directory entry\n");
-			return 0;
+			return -1;
 		}
 	} else {
 		slotptr = (dir_slot *)empty_dentptr;
@@ -1253,13 +1253,13 @@ static int do_fat_write (const char *filename, void *buffer,
 		ret = start_cluster = find_empty_cluster(mydata);
 		if (ret < 0) {
 			printf("error: finding empty cluster\n");
-			return 0;
+			return -1;
 		}
 
 		ret = check_overflow(mydata, start_cluster, size);
 		if (ret) {
 			printf("error: %ld overflow\n", size);
-			return 0;
+			return -1;
 		}
 
 		/* Set attribute as archieve for regular file */
@@ -1269,19 +1269,19 @@ static int do_fat_write (const char *filename, void *buffer,
 		ret = set_contents(mydata, empty_dentptr, buffer, size);
 		if (ret < 0) {
 			printf("error: writing contents\n");
-			return 0;
+			return -1;
 		}
 
 		/* Flush fat buffer */
 		if (flush_fat_buffer(mydata) < 0)
-			return 0;
+			return -1;
 
 		/* Write directory table to device */
 		if (set_cluster(mydata, dir_curclust,
 			    get_dentfromdir_block,
 			    mydata->clust_size * SECTOR_SIZE) != 0) {
 			printf("error: writing directory entry\n");
-			return 0;
+			return -1;
 		}
 
 		if (fragmented_count > 0) {
@@ -1293,7 +1293,7 @@ static int do_fat_write (const char *filename, void *buffer,
 				    get_dentfromdir_block,
 				    mydata->clust_size * SECTOR_SIZE) != 0) {
 				printf("error: writing directory entry\n");
-				return 0;
+				return -1;
 			}
 
 		}
