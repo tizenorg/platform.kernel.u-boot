@@ -1159,7 +1159,7 @@ static int do_fat_write (const char *filename, void *buffer,
 
 	total_sector = bs.total_sect;
 	if (total_sector == 0) {
-		total_sector = next_part_offset - part_offset;
+		total_sector = part_size;
 	}
 
 	root_cluster = bs.root_cluster;
@@ -1331,7 +1331,7 @@ void file_fat_table (void)
 
 	total_sector = bs.total_sect;
 	if (total_sector == 0) {
-		total_sector = next_part_offset - part_offset;
+		total_sector = part_size;
 	}
 
 	if (mydata->fatsize == 32)
@@ -1474,7 +1474,7 @@ int mkfs_vfat (block_dev_desc_t *dev_desc, int part_no)
 
 	if (!get_partition_info(dev_desc, part_no, &info)) {
 		volume_size_bytes = info.size * info.blksz;
-		volume_size_sect = volume_size_bytes / bytes_per_sect;
+		volume_size_sect = info.size;
 
 		total_sector = volume_size_sect;
 	} else {
