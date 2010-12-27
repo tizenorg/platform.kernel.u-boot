@@ -69,6 +69,7 @@ enum {
 	I2C_GPIO6,
 	I2C_GPIO7,
 	I2C_GPIO10,
+	I2C_NUM,
 };
 
 /*
@@ -151,24 +152,7 @@ static struct i2c_gpio_bus_data i2c_gpio10 = {
 	.scl_pin	= 1,
 };
 
-
-static struct i2c_gpio_bus i2c_gpio[] = {
-	{
-		.bus	= &i2c_2,
-	}, {
-		.bus	= &i2c_gpio3,
-	}, {
-		.bus	= &i2c_pmic,
-	}, {
-		.bus	= &i2c_gpio5,
-	}, {
-		.bus	= &i2c_gpio6,
-	}, {
-		.bus	= &i2c_gpio7,
-	}, {
-		.bus	= &i2c_gpio10,
-	},
-};
+static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
 
 u32 get_board_rev(void)
 {
@@ -303,11 +287,33 @@ static int board_has_AVS(void)
 static void check_battery(int mode);
 static void check_micro_usb(int intr);
 
+static struct i2c_gpio_bus i2c_gpio[] = {
+	{
+		.bus	= &i2c_2,
+	}, {
+		.bus	= &i2c_gpio3,
+	}, {
+		.bus	= &i2c_pmic,
+	}, {
+		.bus	= &i2c_gpio5,
+	}, {
+		.bus	= &i2c_gpio6,
+	}, {
+		.bus	= &i2c_gpio7,
+	}, {
+		.bus	= &i2c_gpio10,
+	},
+};
+
 void i2c_init_board(void)
 {
-	int num_bus;
-
-	num_bus = ARRAY_SIZE(i2c_gpio);
+	i2c_gpio[I2C_2].bus = &i2c_2;
+	i2c_gpio[I2C_GPIO3].bus = &i2c_gpio3;
+	i2c_gpio[I2C_PMIC].bus = &i2c_pmic;
+	i2c_gpio[I2C_GPIO5].bus = &i2c_gpio5;
+	i2c_gpio[I2C_GPIO6].bus = &i2c_gpio6;
+	i2c_gpio[I2C_GPIO7].bus = &i2c_gpio7;
+	i2c_gpio[I2C_GPIO10].bus = &i2c_gpio10;
 
 	if (mach_is_aquila()) {
 		i2c_gpio[I2C_GPIO6].bus->gpio_base = 0;
@@ -350,7 +356,7 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_GPIO6].bus->gpio_base =
 		(unsigned int)&gpio->j3;
 
-	i2c_gpio_init(i2c_gpio, num_bus, I2C_PMIC);
+	i2c_gpio_init(i2c_gpio, I2C_NUM, I2C_PMIC);
 
 	/* Reset on fsa9480 early */
 	check_micro_usb(1);
