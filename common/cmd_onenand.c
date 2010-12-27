@@ -116,7 +116,7 @@ static int onenand_block_read(loff_t from, ssize_t len,
 }
 
 static int onenand_write_oneblock_withoob(loff_t to, const u_char * buf,
-					  size_t *retlen)
+					  ssize_t *retlen)
 {
 	struct mtd_oob_ops ops = {
 		.len = mtd->writesize,
@@ -139,8 +139,8 @@ static int onenand_write_oneblock_withoob(loff_t to, const u_char * buf,
 	return ret;
 }
 
-static int onenand_block_write(loff_t to, size_t len,
-			       size_t *retlen, const u_char * buf, int withoob)
+static int onenand_block_write(loff_t to, ssize_t len,
+			       ssize_t *retlen, const u_char * buf, int withoob)
 {
 	struct onenand_chip *this = mtd->priv;
 	int blocksize = (1 << this->erase_shift);
@@ -150,7 +150,7 @@ static int onenand_block_write(loff_t to, size_t len,
 	};
 	loff_t ofs;
 	size_t thislen;
-	size_t _retlen = 0;
+	ssize_t _retlen = 0;
 	int ret;
 
 	if (to == next_ofs) {
@@ -174,10 +174,10 @@ static int onenand_block_write(loff_t to, size_t len,
 			goto next;
 		}
 
-		if (!withoob)
-			ret = mtd->write(mtd, ofs, blocksize, &_retlen, buf);
-		else
-			ret = onenand_write_oneblock_withoob(ofs, buf, &_retlen);
+		ops.datbuf = (u_char *) buf;
+		ops.len = thislen;
+		ops.retlen = 0;
+		ret = mtd->write_oob(mtd, ofs, &ops);
 		if (ret) {
 			printk("Write failed 0x%x, %d", (u32)ofs, ret);
 			skip_ofs += thislen;
@@ -239,7 +239,7 @@ static int onenand_block_test(u32 start, u32 size)
 	loff_t ofs;
 	int blocksize = 1 << this->erase_shift;
 	int start_block, end_block;
-	size_t retlen;
+	ssize_t retlen;
 	u_char *buf;
 	u_char *verify_buf;
 	int ret;
@@ -423,9 +423,9 @@ static int do_onenand_read(cmd_tbl_t * cmdtp, int flag, int argc, char * const a
 static int do_onenand_write(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr, ofs;
-	size_t len;
+	ssize_t len;
 	int ret = 0, withoob = 0;
-	size_t retlen = 0;
+	ssize_t retlen = 0;
 
 	if (argc < 3)
 		return cmd_usage(cmdtp);
