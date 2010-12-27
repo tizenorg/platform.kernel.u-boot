@@ -784,6 +784,13 @@ static void print_fat_range (fsdata *mydata, dir_entry *dentptr)
 	printf("%16s : ", s_name);
 	printf("%5d - ", start);
 
+	end = get_fatent_value(mydata, start);
+	if ((end >= 0xffffff8) || (end >= 0xfff8)) {
+		printf("%5d ", start);
+		printf("(size : %d)\n", FAT2CPU32(dentptr->size));
+		return;
+	}
+
 	while (1) {
 		find_fragmented_area(mydata, &start, &middle, &end);
 		if (middle == 0) {
