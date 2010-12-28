@@ -195,8 +195,11 @@ copy_loop:
 	add	r3, r3, r0		/* r3 <- rel dyn end in FLASH */
 fixloop:
 	ldr	r0, [r2]		/* r0 <- location to fix up, IN FLASH! */
-	cmp	r0, #0
-	beq	fixskip
+	ldr	r7, _TEXT_BASE
+	cmp	r0, r7
+	blo	fixskip
+	cmp	r0, r6
+	bhs	fixskip
 	add	r0, r0, r9		/* r0 <- location to fix up in RAM */
 	ldr	r1, [r2, #4]
 	and	r7, r1, #0xff
