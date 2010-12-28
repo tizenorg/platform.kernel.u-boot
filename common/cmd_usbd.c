@@ -886,19 +886,6 @@ static int write_mtd_image(struct usbd_ops *usbd, int img_type,
 			}
 		}
 #endif
-#ifdef CONFIG_SBOOT
-		/* Only u-boot.bin is allowed */
-		{
-			long *img_header = (long *)down_ram_addr;
-
-			if (*img_header != 0xea000018) {
-				printf("\n!!! ERROR !!!\n"
-					"Please download the u-boot.bin.\n"
-					"Other images are not allowed.\n\n");
-				return -1;
-			}
-		}
-#endif
 
 		erase_env_area(usbd);
 
