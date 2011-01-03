@@ -33,13 +33,9 @@
  * Register usages:
  *
  * r5 has zero always
- * r6 is used at memory configuration
  * r7 has GPIO part1 base 0x11400000
- * r8 has GPIO part2 base 0x11000000
+ * r6 has GPIO part2 base 0x11000000
  */
-
-_TEXT_BASE:
-	.word	CONFIG_SYS_TEXT_BASE
 
 	.globl lowlevel_init
 lowlevel_init:
@@ -49,7 +45,7 @@ lowlevel_init:
 	mov	r5, #0
 
 	ldr	r7, =S5PC210_GPIO_PART1_BASE
-	ldr	r8, =S5PC210_GPIO_PART2_BASE
+	ldr	r6, =S5PC210_GPIO_PART2_BASE
 
 	/* System Timer */
 	ldr	r0, =S5PC210_SYSTIMER_BASE
@@ -63,7 +59,7 @@ lowlevel_init:
 #ifndef CONFIG_PRELOADER
 	/* Workaround: PMIC manual reset */
 	/* nPOWER: XEINT_23: GPX2[7] */
-	add	r0, r8, #0xC40			@ S5PC210_GPIO_X2_OFFSET
+	add	r0, r6, #0xC40			@ S5PC210_GPIO_X2_OFFSET
 	ldr	r1, [r0, #0x0]
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
@@ -203,7 +199,7 @@ uart_asm_init:
 	str	r1, [r0, #0x20]			@ S5PC210_GPIO_A1_OFFSET
 
 	/* UART_SEL GPY4[7] (part2) at S5PC210 */
-	add	r0, r8, #0x1A0			@ S5PC210_GPIO_Y4_OFFSET
+	add	r0, r6, #0x1A0			@ S5PC210_GPIO_Y4_OFFSET
 	ldr	r1, [r0, #0x0]
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)
