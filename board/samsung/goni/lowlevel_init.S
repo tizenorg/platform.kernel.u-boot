@@ -34,7 +34,7 @@
  *
  * r5 has zero always
  * r7 has S5PC100 GPIO base, 0xE0300000
- * r8 has real GPIO base, 0xE0300000, 0xE0200000 at S5PC100, S5PC110 repectively
+ * r6 has real GPIO base, 0xE0300000, 0xE0200000 at S5PC100, S5PC110 repectively
  * r9 has Mobile DDR size, 1 means 1GiB, 2 means 2GiB and so on
  */
 
@@ -49,7 +49,7 @@ lowlevel_init:
 	mov	r5, #0
 
 	ldr	r7, =S5PC100_GPIO_BASE
-	ldr	r8, =S5PC100_GPIO_BASE
+	ldr	r6, =S5PC100_GPIO_BASE
 	/* Read CPU ID */
 	ldr	r2, =S5PC110_PRO_ID
 	ldr	r0, [r2]
@@ -57,10 +57,10 @@ lowlevel_init:
 	and	r0, r0, r1
 	cmp	r0, r5
 	beq	100f
-	ldr	r8, =S5PC110_GPIO_BASE
+	ldr	r6, =S5PC110_GPIO_BASE
 100:
 	/* Turn on KEY_LED_ON [GPJ4(1)] XMSMWEN */
-	cmp	r7, r8
+	cmp	r7, r6
 	beq	skip_check_didle			@ Support C110 only
 
 	ldr	r0, =S5PC110_RST_STAT
@@ -68,11 +68,11 @@ lowlevel_init:
 	and	r1, r1, #0x000D0000
 	cmp	r1, #(0x1 << 19)			@ DEEPIDLE_WAKEUP
 	beq	didle_wakeup
-	cmp	r7, r8
+	cmp	r7, r6
 
 skip_check_didle:
-	addeq	r0, r8, #0x280				@ S5PC100_GPIO_J4
-	addne	r0, r8, #0x2C0				@ S5PC110_GPIO_J4
+	addeq	r0, r6, #0x280				@ S5PC100_GPIO_J4
+	addne	r0, r6, #0x2C0				@ S5PC110_GPIO_J4
 	ldr	r1, [r0, #0x0]				@ GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 4)			@ 1 * 4-bit
 	orr	r1, r1, #(0x1 << 4)
@@ -238,7 +238,7 @@ skip_check_didle:
 	 * HF[2]	: High Frequency Enable (Over 66MHz)
 	 * WM[1]	: Sync Write
 	 */
-	cmp	r7, r8
+	cmp	r7, r6
 	ldrne	r1, =0xE006
 	ldrne	r0, =0xB001E442
 	strneh	r1, [r0]
@@ -254,7 +254,7 @@ skip_check_didle:
 	strne	r1, [r0, #0x108]
 
 	/* Board detection to set proper memory configuration */
-	cmp	r7, r8
+	cmp	r7, r6
 	moveq	r9, #1		/* r9 has 1Gib default at s5pc100 */
 	movne	r9, #2		/* r9 has 2Gib default at s5pc110 */
 
@@ -308,7 +308,7 @@ wakeup:
 	/* turn off L2 cache */
 	bl	l2_cache_disable
 
-	cmp	r7, r8
+	cmp	r7, r6
 	ldreq	r0, =0xC100
 	ldrne	r0, =0xC110
 
@@ -318,7 +318,7 @@ wakeup:
 	/* turn on L2 cache */
 	bl	l2_cache_enable
 
-	cmp	r7, r8
+	cmp	r7, r6
 	/* Load return address and jump to kernel */
 	ldreq	r0, =S5PC100_INFORM0
 	ldrne	r0, =S5PC110_INFORM0
@@ -331,7 +331,7 @@ wakeup:
 	nop
 	nop
 #else
-	cmp	r7, r8
+	cmp	r7, r6
 	/* Clear wakeup status register */
 	ldreq	r0, =S5PC100_WAKEUP_STAT
 	ldrne	r0, =S5PC110_WAKEUP_STAT
@@ -380,7 +380,7 @@ system_clock_init:
 	ldr	r0, =S5PC110_CLOCK_BASE		@ 0xE0100000
 
 	/* Check S5PC100 */
-	cmp	r7, r8
+	cmp	r7, r6
 	bne	110f
 100:
 	/* Set Lock Time */
@@ -533,18 +533,18 @@ internal_ram_init:
  */
 uart_asm_init:
 	/* set GPIO to enable UART0-UART4 */
-	mov	r0, r8
+	mov	r0, r6
 	ldr	r1, =0x22222222
 	str	r1, [r0, #0x0]			@ S5PC100_GPIO_A0_OFFSET
 	ldr	r1, =0x00002222
 	str	r1, [r0, #0x20]			@ S5PC100_GPIO_A1_OFFSET
 
 	/* Check S5PC100 */
-	cmp	r7, r8
+	cmp	r7, r6
 	bne	110f
 
 	/* UART_SEL GPK0[5] at S5PC100 */
-	add	r0, r8, #0x2A0			@ S5PC100_GPIO_K0_OFFSET
+	add	r0, r6, #0x2A0			@ S5PC100_GPIO_K0_OFFSET
 	ldr	r1, [r0, #0x0]			@ S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 20)		@ 20 = 5 * 4-bit
 	orr	r1, r1, #(0x1 << 20)		@ Output
@@ -566,7 +566,7 @@ uart_asm_init:
 	 * 0xE020'0360 is reserved address at S5PC100
 	 */
 	/* UART_SEL MP0_5[7] at S5PC110 */
-	add	r0, r8, #0x360			@ S5PC110_GPIO_MP0_5_OFFSET
+	add	r0, r6, #0x360			@ S5PC110_GPIO_MP0_5_OFFSET
 	ldr	r1, [r0, #0x0]			@ S5PC1XX_GPIO_CON_OFFSET
 	bic	r1, r1, #(0xf << 28)		@ 28 = 7 * 4-bit
 	orr	r1, r1, #(0x1 << 28)		@ Output
