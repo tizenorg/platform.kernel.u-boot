@@ -132,10 +132,10 @@ build_uboot $*
 #make_evt_image
 check_size
 
-if [ "$IPL" != "mmc" -a -e "$PWD/u-boot-onenand.bin" ]; then
-	size=`ls -al u-boot-onenand.bin | awk -F' ' '{printf $5}'`
+if [ "$IPL" != "mmc" -a -e "$PWD/u-boot.bin" ]; then
+	size=`ls -al u-boot.bin | awk -F' ' '{printf $5}'`
 	if [ "$size" -ge "262144" ]; then
-		echo "u-boot-onenand.bin execced the 256KiB 262144 -> $size"
+		echo "u-boot.bin execced the 256KiB 262144 -> $size"
 	fi
 fi
 
