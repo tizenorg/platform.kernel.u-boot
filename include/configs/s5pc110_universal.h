@@ -96,7 +96,7 @@
 #define CONFIG_MMC		1
 #define CONFIG_S5P_MMC		1
 
-#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
+//#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #ifdef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #endif
