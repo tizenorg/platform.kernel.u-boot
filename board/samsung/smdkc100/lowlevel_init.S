@@ -43,7 +43,7 @@ lowlevel_init:
 	/* r5 has always zero */
 	mov	r5, #0
 
-	ldr	r8, =S5PC100_GPIO_BASE
+	ldr	r6, =S5PC100_GPIO_BASE
 
 	/* Disable Watchdog */
 	ldr	r0, =S5PC100_WATCHDOG_BASE		@0xEA200000
@@ -131,45 +131,45 @@ wakeup_reset:
  * void system_clock_init(void)
  */
 system_clock_init:
-	ldr	r8, =S5PC100_CLOCK_BASE		@ 0xE0100000
+	ldr	r6, =S5PC100_CLOCK_BASE		@ 0xE0100000
 
 	/* Set Clock divider */
 	ldr	r1, =0x00011110
-	str	r1, [r8, #0x304]
+	str	r1, [r6, #0x304]
 	ldr	r1, =0x1
-	str	r1, [r8, #0x308]
+	str	r1, [r6, #0x308]
 	ldr	r1, =0x00011301
-	str	r1, [r8, #0x300]
+	str	r1, [r6, #0x300]
 
 	/* Set Lock Time */
 	ldr	r1, =0xe10			@ Locktime : 0xe10 = 3600
-	str	r1, [r8, #0x000]		@ APLL_LOCK
-	str	r1, [r8, #0x004]		@ MPLL_LOCK
-	str	r1, [r8, #0x008]		@ EPLL_LOCK
-	str	r1, [r8, #0x00C]		@ HPLL_LOCK
+	str	r1, [r6, #0x000]		@ APLL_LOCK
+	str	r1, [r6, #0x004]		@ MPLL_LOCK
+	str	r1, [r6, #0x008]		@ EPLL_LOCK
+	str	r1, [r6, #0x00C]		@ HPLL_LOCK
 
 	/* APLL_CON */
 	ldr	r1, =0x81bc0400		@ SDIV 0, PDIV 4, MDIV 444 (1332MHz)
-	str	r1, [r8, #0x100]
+	str	r1, [r6, #0x100]
 	/* MPLL_CON */
 	ldr	r1, =0x80590201		@ SDIV 1, PDIV 2, MDIV 89 (267MHz)
-	str	r1, [r8, #0x104]
+	str	r1, [r6, #0x104]
 	/* EPLL_CON */
 	ldr	r1, =0x80870303		@ SDIV 3, PDIV 3, MDIV 135 (67.5MHz)
-	str	r1, [r8, #0x108]
+	str	r1, [r6, #0x108]
 	/* HPLL_CON */
 	ldr	r1, =0x80600603
-	str	r1, [r8, #0x10C]
+	str	r1, [r6, #0x10C]
 
 	/* Set Source Clock */
 	ldr	r1, =0x1111			@ A, M, E, HPLL Muxing
-	str	r1, [r8, #0x200]		@ CLK_SRC0
+	str	r1, [r6, #0x200]		@ CLK_SRC0
 
 	ldr	r1, =0x1000001			@ Uart Clock & CLK48M Muxing
-	str	r1, [r8, #0x204]		@ CLK_SRC1
+	str	r1, [r6, #0x204]		@ CLK_SRC1
 
 	ldr	r1, =0x9000			@ ARMCLK/4
-	str	r1, [r8, #0x400]		@ CLK_OUT
+	str	r1, [r6, #0x400]		@ CLK_OUT
 
 	/* wait at least 200us to stablize all clock */
 	mov	r2, #0x10000
@@ -183,7 +183,7 @@ system_clock_init:
  * uart_asm_init: Initialize UART's pins
  */
 uart_asm_init:
-	mov	r0, r8
+	mov	r0, r6
 	ldr	r1, =0x22222222
 	str	r1, [r0, #0x0]			@ GPA0_CON
 	ldr	r1, =0x00022222
