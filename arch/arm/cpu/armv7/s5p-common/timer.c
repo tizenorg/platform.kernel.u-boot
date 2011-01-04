@@ -28,6 +28,8 @@
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 #define PRESCALER_1		(16 - 1)	/* prescaler of timer 2, 3, 4 */
 #define MUX_DIV_2		1		/* 1/2 period */
 #define MUX_DIV_4		2		/* 1/4 period */
@@ -36,12 +38,6 @@
 #define MUX4_DIV_SHIFT		16
 
 #define TCON_TIMER4_SHIFT	20
-
-static unsigned long count_value = 1;
-
-/* Internal tick units */
-static unsigned long long timestamp = 1;	/* Monotonic incrementing timer */
-static unsigned long lastdec = 1;		/* Last decremneter snapshot */
 
 /* macro to read the 16 bit timer */
 static inline struct s5p_timer *s5p_get_base_timer(void)
@@ -71,16 +67,16 @@ int timer_init(void)
 	val |= (MUX_DIV_2 & 0xF) << MUX4_DIV_SHIFT;
 	writel(val, &timer->tcfg1);
 
-	/* count_value = 2085937.5(HZ) (per 1 sec)*/
-	count_value = get_pwm_clk() / ((PRESCALER_1 + 1) *
+	/* timer_rate_hz = 2085937.5(HZ) (per 1 sec)*/
+	gd->timer_rate_hz = get_pwm_clk() / ((PRESCALER_1 + 1) *
 			(MUX_DIV_2 + 1));
 
-	/* count_value / 100 = 20859.375(HZ) (per 10 msec) */
-	count_value = count_value / 100;
+	/* timer_rate_hz / 100 = 20859.375(HZ) (per 10 msec) */
+	gd->timer_rate_hz = gd->timer_rate_hz / 100;
 
 	/* set count value */
-	writel(count_value, &timer->tcntb4);
-	lastdec = count_value;
+	writel(gd->timer_rate_hz, &timer->tcntb4);
+	gd->lastinc = gd->timer_rate_hz;
 
 	val = (readl(&timer->tcon) & ~(0x07 << TCON_TIMER4_SHIFT)) |
 		TCON4_AUTO_RELOAD;
@@ -91,7 +87,7 @@ int timer_init(void)
 	/* start PWM timer 4 */
 	writel(val | TCON4_START, &timer->tcon);
 
-	timestamp = 0;
+	gd->timer_reset_value = 0;
 
 	return 0;
 }
@@ -111,7 +107,7 @@ unsigned long get_timer(unsigned long base)
 
 void set_timer(unsigned long t)
 {
-	timestamp = t;
+	gd->timer_reset_value = t;
 }
 
 /* delay x useconds */
@@ -120,7 +116,7 @@ void __udelay(unsigned long usec)
 	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long tmo, tmp, now, until;
 
-	count_value = readl(&timer->tcntb4);
+	gd->timer_rate_hz = readl(&timer->tcntb4);
 
 	if (usec >= 1000) {
 		/*
@@ -131,21 +127,21 @@ void __udelay(unsigned long usec)
 		 * 3. finish normalize.
 		 */
 		tmo = usec / 1000;
-		tmo *= (CONFIG_SYS_HZ * count_value / 10);
+		tmo *= (CONFIG_SYS_HZ * gd->timer_rate_hz / 10);
 		tmo /= 1000;
 	} else {
 		/* else small number, don't kill it prior to HZ multiply */
-		tmo = usec * CONFIG_SYS_HZ * count_value / 10;
+		tmo = usec * CONFIG_SYS_HZ * gd->timer_rate_hz / 10;
 		tmo /= (1000 * 1000);
 	}
 
-	/* get current timestamp */
+	/* get current timer_reset_value */
 	tmp = get_timer_masked();
 
 	/* if setting this fordward will roll time stamp */
-	/* reset "advancing" timestamp to 0, set lastdec value */
+	/* reset "advancing" timer_reset_value to 0, set lastinc value */
 	/* else, set advancing stamp wake up time */
-	until = tmo + tmp + count_value;
+	until = tmo + tmp + gd->timer_rate_hz;
 	if (until < tmp) {
 		reset_timer_masked();
 		tmp = get_timer_masked();
@@ -165,8 +161,8 @@ void reset_timer_masked(void)
 	struct s5p_timer *const timer = s5p_get_base_timer();
 
 	/* reset time */
-	lastdec = readl(&timer->tcnto4);
-	timestamp = 0;
+	gd->lastinc = readl(&timer->tcnto4);
+	gd->timer_reset_value = 0;
 }
 
 unsigned long get_timer_masked(void)
@@ -174,14 +170,14 @@ unsigned long get_timer_masked(void)
 	struct s5p_timer *const timer = s5p_get_base_timer();
 	unsigned long now = readl(&timer->tcnto4);
 
-	if (lastdec >= now)
-		timestamp += lastdec - now;
+	if (gd->lastinc >= now)
+		gd->timer_reset_value += gd->lastinc - now;
 	else
-		timestamp += lastdec + count_value - now;
+		gd->timer_reset_value += gd->lastinc + gd->timer_rate_hz - now;
 
-	lastdec = now;
+	gd->lastinc = now;
 
-	return timestamp;
+	return gd->timer_reset_value;
 }
 
 /*
