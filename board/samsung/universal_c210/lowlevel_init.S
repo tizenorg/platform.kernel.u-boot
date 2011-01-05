@@ -56,7 +56,6 @@ lowlevel_init:
 	ldr	r1, =0x49
 	str	r1, [r0, #0x4]
 
-#ifndef CONFIG_PRELOADER
 	/* Workaround: PMIC manual reset */
 	/* nPOWER: XEINT_23: GPX2[7] */
 	add	r0, r6, #0xC40			@ S5PC210_GPIO_X2_OFFSET
@@ -68,78 +67,17 @@ lowlevel_init:
 	ldr	r1, [r0, #0x4]
 	orr	r1, r1, #(1 << 7)		@ 7 = 7 * 1-bit
 	str	r1, [r0, #0x4]
-#endif
-
-#ifdef CONFIG_PRELOADER
-	/* INFORM7 is 0xBAD if slept. */
-	ldr	r0, =S5PC210_POWER_BASE
-	ldr	r1, [r0, #0x81C]
-	ldr	r0, =0xBAD
-	cmp	r0, r1
-	beq	wakeup
-#endif
-
-#ifdef CONFIG_PRELOADER
-	bl	mem_ctrl_asm_init
-#endif
 
 	/* init system clock */
 	bl	system_clock_init
 
-#ifdef CONFIG_PRELOADER
-	bl	mem_ctrl_asm_init2
-#endif
-
-#ifdef CONFIG_PRELOADER
-	ldr	r0, =0x0C600000
-
-	ldr	r1, =0x1212
-	str	r1, [r0, #0x108]
-
-1:	ldr	r1, [r0, #0x10C]			@ ONENAND_IF_STATUS
-	and	r1, r1, #1
-	cmp	r1, #1
-	beq	1b
-
-	/*
-	 * OneNAND Sync Read Support
-	 * RM[15]	: Sync Read
-	 * BRWL[14:12]	: 4 CLK
-	 * BL[11:9]	: Continuous
-	 * VHF[3]	: Very High Frequency Enable (Over 83MHz)
-	 * HF[2]	: High Frequency Enable (Over 66MHz)
-	 * WM[1]	: Sync Write
-	 */
-        ldr	r1, =0xE006
-        ldr	r2, =0x0C01E442
-        strh	r1, [r2]
-	/* Dummy read required */
-	ldr	r2, =0x0C000000
-	ldrh	r1, [r2]
-
-	/* XXX: Must insert 2 nop */
-	nop
-	nop
-
-	/*
-	 * GCE[26]	: Gated Clock Enable
-	 * RPE[17]	: Enables Read Prefetch
-	 * HF[2]	: High Frequency
-	 */
-	ldr	r1, =((1 << 26) | (1 << 17) | 0xE006)
-	str	r1, [r0, #0x100]                        @ ONENAND_IF_CTRL
-#endif
-
-#ifndef CONFIG_PRELOADER
 	/* Disable Watchdog */
 	ldr	r0, =S5PC210_WATCHDOG_BASE		@0x10060000
 	str	r5, [r0]
 
 	/* UART */
 	bl	uart_asm_init
-#endif
 
-#ifndef CONFIG_PRELOADER
 	/* PMU init */
 	bl	system_power_init
 
@@ -153,7 +91,6 @@ lowlevel_init:
 	.word	0xeee80a10	/* VMSR_FPSCR_r0 */
 	.word	0xeef80a10	/* VMRS_r0_FPSCR */
 #endif
-#endif
 
 	mov	lr, r11
 	mov	pc, lr
@@ -161,28 +98,6 @@ lowlevel_init:
 	nop
 	nop
 
-#ifdef CONFIG_PRELOADER
-wakeup:
-	bl	l2_cache_disable
-	bl	invalidate_dcache
-	bl	l2_cache_enable
-
-	bl	mem_ctrl_asm_init
-	bl	system_clock_init
-	bl	mem_ctrl_asm_init2
-
-	bl	io_retention_release
-
-	/* INFORM0 is the continue address */
-	ldr	r0, =S5PC210_POWER_BASE
-	ldr	r1, [r0, #0x800]
-	mov	pc, r1
-	nop
-	nop
-	nop
-#endif
-
-#ifndef CONFIG_PRELOADER
 /*
  * uart_asm_init: Initialize UART's pins
  */
@@ -238,7 +153,6 @@ uart_asm_init:
 	nop
 	nop
 	nop
-#endif
 
 system_clock_init:
 	ldr	r0, =S5PC210_CLOCK_BASE
@@ -365,7 +279,6 @@ system_clock_init:
 	ldr	r2, =0x0C120			@ VPLL_CON0
 	str	r1, [r0, r2]
 
-#ifndef CONFIG_PRELOADER
 	/*
 	 * SMMUJPEG[11], JPEG[6], CSIS1[5]		: 0111 1001
 	 * Turn off all
@@ -437,13 +350,11 @@ system_clock_init:
 	ldr	r1, =0xFFFFFFD1
 	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
 	str	r1, [r0, r2]
-#endif
 	mov	pc, lr
 	nop
 	nop
 	nop
 
-#ifndef CONFIG_PRELOADER
 system_power_init:
 	ldr	r0, =S5PC210_POWER_BASE		@ 0x10020000
 
@@ -467,9 +378,7 @@ system_power_init:
 	nop
 	nop
 	nop
-#endif
 
-#ifndef CONFIG_PRELOADER
 tzpc_init:
 	ldr	r0, =0x10110000
 	mov	r1, #0x0
@@ -517,37 +426,3 @@ tzpc_init:
 	str	r1, [r0, #0x0828]
 
 	mov	pc, lr
-#endif
-
-#ifdef CONFIG_PRELOADER
-io_retention_release:
-	ldr	r0, =0x10020000
-	ldr	r2, =(1 << 28)
-	ldr	r3, =0x3108
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x3108
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x3128
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x3148
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x3168
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x3188
-	add	r1, r0, r3
-	str	r2, [r1]
-	ldr	r3, =0x31A8
-	add	r1, r0, r3
-	str	r2, [r1]
-
-	mov	pc, lr
-	nop
-	nop
-	nop
-#endif
-
