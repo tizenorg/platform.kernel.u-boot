@@ -42,6 +42,7 @@
 /u-boot-recovery-evt1.bin
 /u-boot-recovery-evt1-fused.bin
 /u-boot-flexonenand.bin
+/s-boot-onenand.bin
 
 #
 # Generated files
