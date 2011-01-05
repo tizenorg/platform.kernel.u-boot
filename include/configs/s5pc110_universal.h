@@ -284,7 +284,7 @@
 	" bootm 0x30007FC0\0" \
 	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x32008000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
-	"updatebackup=mmc boot 0 1 1 2; mmc write 0 0x32000000 0 0x200;" \
+	"updatebackup=mmc boot 0 1 1 2; mmc write 0 0x32004000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \

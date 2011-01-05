@@ -813,14 +813,14 @@ static void check_auto_burn(void)
 		puts("Auto burning bootloader (eMMC)\n");
 		count += sprintf(buf + count, "run updatemmc; ");
 	}
-	/* Backup u-boot in eMMC */
-	if (readl(magic_base) == 0x4261636B) {		/* ASICC: Back */
-		puts("Auto buring u-boot image (boot partition2 in eMMC)\n");
-		count += sprintf(buf + count, "run updatebackup; ");
-	}
 	if (readl(magic_base + 0x04) == 0x4b65726e) {	/* ASICC: Kern */
 		puts("Auto burning kernel\n");
 		count += sprintf(buf + count, "run updatek; ");
+	}
+	/* Backup u-boot in eMMC */
+	if (readl(magic_base + 0x8) == 0x4261636B) {	/* ASICC: Back */
+		puts("Auto buring u-boot image (boot partition2 in eMMC)\n");
+		count += sprintf(buf + count, "run updatebackup; ");
 	}
 
 	if (count) {
