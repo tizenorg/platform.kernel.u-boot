@@ -19,6 +19,10 @@ struct mbr {
 	unsigned short signature;
 };
 
+extern unsigned int mbr_offset[16];
+extern unsigned int mbr_parts;
+
+void set_mbr_info(char *ramaddr, unsigned int len);
 void set_mbr_table(unsigned int start_addr, int parts,
 		unsigned int *blocks, unsigned int *part_offset);
 int get_mbr_table(unsigned int *part_offset);

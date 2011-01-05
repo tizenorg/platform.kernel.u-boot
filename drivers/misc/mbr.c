@@ -9,6 +9,9 @@
 
 #define SIGNATURE	((unsigned short) 0xAA55)
 
+unsigned int mbr_offset[16];
+unsigned int mbr_parts = 0;
+
 static int logical = 4;
 static int extended_lba;
 
@@ -311,14 +314,79 @@ static void mbr_show(void)
 	}
 }
 
+static unsigned long memsize_parse (const char *const ptr, const char **retptr)
+{
+	unsigned long ret = simple_strtoul(ptr, (char **)retptr, 0);
+
+	switch (**retptr) {
+		case 'G':
+		case 'g':
+			ret <<= 10;
+		case 'M':
+		case 'm':
+			ret <<= 10;
+		case 'K':
+		case 'k':
+			ret <<= 10;
+			(*retptr)++;
+		default:
+			break;
+	}
+
+	return ret;
+}
+
+void set_mbr_info(char *ramaddr, unsigned int len)
+{
+	char mbr_str[256];
+	char save[16][16];
+	char *p;
+	char *tok;
+	unsigned int size[16];
+	int i = 0;
+
+	strncpy(mbr_str, ramaddr, len);
+	p = mbr_str;
+
+	for (i = 0; ; i++, p = NULL) {
+		tok = strtok(p, ",");
+		if (tok == NULL)
+			break;
+		strcpy(save[i], tok);
+		printf("part%d: %s\n", i, save[i]);
+	}
+
+	mbr_parts = i;
+	printf("find %d partitions\n", mbr_parts);
+
+	for (i = 0; i < mbr_parts; i++) {
+		p = save[i];
+		size[i] = memsize_parse(p, (const char **)&p) / 512;
+	}
+
+	puts("save the MBR Table...\n");
+	set_mbr_table(0x800, mbr_parts, size, mbr_offset);
+}
+
+static void mbr_default(void)
+{
+	char *mbrparts;
+
+	puts("using default MBR\n");
+
+	mbrparts = getenv("mbrparts");
+	set_mbr_info(mbrparts, strlen(mbrparts));
+}
+
 static int do_mbr(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:
-		if (strncmp(argv[1], "show", 2) == 0) {
+		if (strncmp(argv[1], "show", 2) == 0)
 			mbr_show();
-			break;
-		}
+		else if (strncmp(argv[1], "default", 3) == 0)
+			mbr_default();
+		break;
 	default:
 		cmd_usage(cmdtp);
 		return 1;
@@ -331,4 +399,5 @@ U_BOOT_CMD(
 	mbr,	CONFIG_SYS_MAXARGS,	1, do_mbr,
 	"Master Boot Record",
 	"show - show MBR\n"
+	"mbr default - reset MBR partition to defaults\n"
 );

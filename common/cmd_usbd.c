@@ -628,63 +628,6 @@ static int write_file_mmc_part(struct usbd_ops *usbd, u32 len)
 }
 #endif
 
-static unsigned int mbr_offset[16];
-static int mbr_parts = 0;
-
-static unsigned long memsize_parse (const char *const ptr, const char **retptr)
-{
-	unsigned long ret = simple_strtoul(ptr, (char **)retptr, 0);
-
-	switch (**retptr) {
-		case 'G':
-		case 'g':
-			ret <<= 10;
-		case 'M':
-		case 'm':
-			ret <<= 10;
-		case 'K':
-		case 'k':
-			ret <<= 10;
-			(*retptr)++;
-		default:
-			break;
-	}
-
-	return ret;
-}
-
-static void set_mbr_info(struct usbd_ops *usbd, char *ramaddr, u32 len)
-{
-	char mbr_str[256];
-	char save[16][16];
-	char *p;
-	char *tok;
-	unsigned int size[16];
-	int i = 0;
-
-	strncpy(mbr_str, ramaddr, len);
-	p = mbr_str;
-
-	for (i = 0; ; i++, p = NULL) {
-		tok = strtok(p, ",");
-		if (tok == NULL)
-			break;
-		strcpy(save[i], tok);
-		printf("part%d: %s\n", i, save[i]);
-	}
-
-	mbr_parts = i;
-	printf("find %d partitions\n", mbr_parts);
-
-	for (i = 0; i < mbr_parts; i++) {
-		p = save[i];
-		size[i] = memsize_parse(p, (const char **)&p) / 512;
-	}
-
-	puts("save the MBR Table...\n");
-	set_mbr_table(0x800, mbr_parts, size, mbr_offset);
-}
-
 static int write_mmc_image(struct usbd_ops *usbd, unsigned int len, int part_num)
 {
 	int ret = 0;
@@ -1036,7 +979,7 @@ static int write_v2_image(struct usbd_ops *usbd, int img_type,
 
 	case IMG_MBR:
 #ifdef CONFIG_CMD_MBR
-		set_mbr_info(usbd, (char *)down_ram_addr, len);
+		set_mbr_info((char *)down_ram_addr, len);
 #endif
 		break;
 
@@ -1438,14 +1381,8 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef CONFIG_CMD_MBR
 	/* get mbr info */
 	mbr_parts = get_mbr_table(mbr_offset);
-	if (!mbr_parts) {
-		char *mbrparts;
-
-		puts("using default MBR\n");
-
-		mbrparts = getenv("mbrparts");
-		set_mbr_info(usbd, mbrparts, strlen(mbrparts));
-	}
+	if (!mbr_parts)
+		run_command("mbr default", 0);
 #endif
 
 	/* init the usb controller */
