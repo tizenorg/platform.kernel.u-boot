@@ -875,10 +875,6 @@ static void setup_limo_real_gpios(void)
 	else
 		/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
 		gpio_direction_output(&gpio->mp0_1, 2, 1);
-
-	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&gpio->h3, 4, GPIO_IRQ);
-	gpio_set_pull(&gpio->h3, 4, GPIO_PULL_UP);
 }
 
 static void setup_media_gpios(void)
@@ -891,10 +887,6 @@ static void setup_media_gpios(void)
 	 */
 	/* RESET_REQ_N: XM0CSn_2: MP0_1[2] output high */
 	gpio_direction_output(&gpio->mp0_1, 2, 1);
-
-	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
-	gpio_cfg_pin(&gpio->h3, 4, GPIO_IRQ);
-	gpio_set_pull(&gpio->h3, 4, GPIO_PULL_UP);
 }
 
 static void check_battery(int mode)
@@ -3030,8 +3022,8 @@ int board_mmc_init(bd_t *bis)
 		gpio_set_pull(&gpio->j2, 7, GPIO_PULL_NONE);
 	}
 
-	/* T-flash detect */
-	gpio_cfg_pin(&gpio->h3, 4, 0xf);
+	/* T_FLASH_DETECT: EINT28: GPH3[4] interrupt mode */
+	gpio_cfg_pin(&gpio->h3, 4, GPIO_IRQ);
 	gpio_set_pull(&gpio->h3, 4, GPIO_PULL_UP);
 
 	err = s5p_mmc_init(0, buswidth);
