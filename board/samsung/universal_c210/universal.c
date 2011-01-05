@@ -35,6 +35,7 @@
 #include <asm/arch/clk.h>
 #include <ramoops.h>
 #include <info_action.h>
+#include <max8998.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

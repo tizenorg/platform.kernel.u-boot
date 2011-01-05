@@ -45,6 +45,7 @@
 #include <spi.h>
 #include <bmp_layout.h>
 #include <ramoops.h>
+#include <max8998.h>
 
 #include "animation_frames.h"
 #include "gpio_setting.h"
