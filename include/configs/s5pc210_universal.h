@@ -159,13 +159,6 @@
 #define CONFIG_LZO
 #endif
 
-/* To enable make ubifs and ubinized image*/
-#if 0
-#define CONFIG_LZO_COMPRESSION
-#define CONFIG_UBIFS_MK
-#define CONFIG_UBINIZE
-#endif
-
 #define CONFIG_FAT_WRITE
 
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
