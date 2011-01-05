@@ -284,8 +284,9 @@
 	" bootm 0x30007FC0\0" \
 	"updatemmc=mmc boot 0 1 1 1; mmc write 0 0x32008000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
-	"updatebackup=mmc boot 0 1 1 2; mmc write 0 0x32004000 0 0x200;" \
+	"updatebackup=mmc boot 0 1 1 2; mmc write 0 0x32100000 0 0x200;" \
 		" mmc boot 0 1 1 0\0" \
+	"updatebootb=mmc read 0 0x32100000 0x80 0x200; run updatebackup\0" \
 	"flashboot=set bootargs root=/dev/mtdblock${bootblock}" \
 	 " rootfstype=${rootfstype}" \
 	 CONFIG_UBI_MTD " ${opts} ${lcdinfo} " CONFIG_COMMON_BOOT "; run bootk\0" \
