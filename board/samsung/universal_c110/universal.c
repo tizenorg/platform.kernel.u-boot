@@ -2571,6 +2571,7 @@ int misc_init_r(void)
 	check_keypad();
 
 	/* check max8998 */
+	max8998_init(I2C_PMIC);
 	init_pmic();
 
 #ifdef CONFIG_S5PC1XXFB
@@ -3051,148 +3052,6 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#ifdef CONFIG_CMD_PMIC
-static int pmic_status(void)
-{
-	unsigned char addr, val[2];
-	int reg, i;
-
-	addr = 0xCC >> 1;
-
-	if (max8998_probe())
-		return -1;
-
-	reg = 0x11;
-	i2c_read(addr, reg, 1, val, 1);
-	for (i = 7; i >= 4; i--)
-		printf("BUCK%d %s\n", 7 - i + 1,
-			val[0] & (1 << i) ? "on" : "off");
-	for (; i >= 0; i--)
-		printf("LDO%d %s\n", 5 - i,
-			val[0] & (1 << i) ? "on" : "off");
-	reg = 0x12;
-	i2c_read(addr, reg, 1, val, 1);
-	for (i = 7; i >= 0; i--)
-		printf("LDO%d %s\n", 7 - i + 6,
-			val[0] & (1 << i) ? "on" : "off");
-	reg = 0x13;
-	i2c_read(addr, reg, 1, val, 1);
-	for (i = 7; i >= 4; i--)
-		printf("LDO%d %s\n", 7 - i + 14,
-			val[0] & (1 << i) ? "on" : "off");
-
-	reg = 0xd;
-	i2c_read(addr, reg, 1, val, 1);
-	for (i = 7; i >= 6; i--)
-		printf("SAFEOUT%d %s\n", 7 - i + 1,
-			val[0] & (1 << i) ? "on" : "off");
-	return 0;
-}
-
-static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
-{
-	unsigned char addr, val[2];
-	unsigned int reg, shift;
-
-	if (ldo) {
-		if (ldo < 2)
-			return -1;
-		if (ldo <= 5) {
-			reg = 0x11;
-			shift = 5 - ldo;
-		} else if (ldo <= 13) {
-			reg = 0x12;
-			shift = 13 - ldo;
-		} else if (ldo <= 17) {
-			reg = 0x13;
-			shift = 17 - ldo + 4;
-		} else
-			return -1;
-	} else if (buck) {
-		if (buck > 4)
-			return -1;
-		reg = 0x11;
-		shift = 4 - buck + 4;
-	} else if (safeout) {
-		if (safeout > 3)
-			return -1;
-		reg = 0xd;
-		shift = 8 - safeout;
-	} else
-		return -1;
-
-	addr = 0xCC >> 1;
-
-	if (max8998_probe())
-		return -1;
-
-	i2c_read(addr, reg, 1, val, 1);
-	if (on)
-		val[0] |= (1 << shift);
-	else
-		val[0] &= ~(1 << shift);
-	i2c_write(addr, reg, 1, val, 1);
-	i2c_read(addr, reg, 1, val, 1);
-
-	if (ldo)
-		printf("ldo %d value 0x%x, %s\n", ldo, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-	else if (buck)
-		printf("buck %d value 0x%x, %s\n", buck, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-	else if (safeout)
-		printf("safeout %d value 0x%x, %s\n", safeout, val[0],
-			val[0] & (1 << shift) ? "on" : "off");
-
-	return 0;
-}
-
-static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	int buck = 0, ldo = 0, safeout = 0, on = -1;
-
-	switch (argc) {
-	case 2:
-		if (strncmp(argv[1], "status", 6) == 0)
-			return pmic_status();
-		break;
-	case 4:
-		if (strncmp(argv[1], "ldo", 3) == 0)
-			ldo = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "buck", 4) == 0)
-			buck = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "safeout", 7) == 0)
-			safeout = simple_strtoul(argv[2], NULL, 10);
-		else
-			break;
-
-		if (strncmp(argv[3], "on", 2) == 0)
-			on = 1;
-		else if (strncmp(argv[3], "off", 3) == 0)
-			on = 0;
-		else
-			break;
-
-		return pmic_ldo_control(buck, ldo, safeout, on);
-
-	default:
-		break;
-	}
-
-	cmd_usage(cmdtp);
-	return 1;
-}
-
-U_BOOT_CMD(
-	pmic,		4,	1, do_pmic,
-	"PMIC LDO & BUCK control",
-	"status - Display PMIC LDO & BUCK status\n"
-	"pmic ldo num on/off - Turn on/off the LDO\n"
-	"pmic buck num on/off - Turn on/off the BUCK\n"
-	"pmic safeout num on/off - Turn on/off the SAFEOUT\n"
-);
-#endif
-
 #ifdef CONFIG_CMD_DEVICE_POWER
 static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
@@ -3200,11 +3059,11 @@ static int do_microusb(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	case 2:
 		if (strncmp(argv[1], "cp", 2) == 0) {
 			micro_usb_switch(1);
-			pmic_ldo_control(0, 0, 2, 1);
+			run_command("pmic safeout 2 on", 0);
 			setenv("usb", "cp");
 		} else if (strncmp(argv[1], "ap", 2) == 0) {
 			micro_usb_switch(0);
-			pmic_ldo_control(0, 0, 2, 0);
+			run_command("pmic safeout 2 off", 0);
 			setenv("usb", "ap");
 		}
 		break;
