@@ -628,6 +628,7 @@ static int write_file_mmc_part(struct usbd_ops *usbd, u32 len)
 }
 #endif
 
+#ifdef CONFIG_CMD_MBR
 static int write_mmc_image(struct usbd_ops *usbd, unsigned int len, int part_num)
 {
 	int ret = 0;
@@ -656,6 +657,7 @@ static int write_mmc_image(struct usbd_ops *usbd, unsigned int len, int part_num
 
 	return ret;
 }
+#endif
 
 static int write_fat_file(struct usbd_ops *usbd, char *file_name,
 			int part_id, int len)
@@ -974,7 +976,9 @@ static int write_v2_image(struct usbd_ops *usbd, int img_type,
 
 	switch (img_type) {
 	case IMG_V2:
+#ifdef CONFIG_CMD_MBR
 		ret = write_mmc_image(usbd, len, part_id);
+#endif
 		break;
 
 	case IMG_MBR:
