@@ -228,9 +228,9 @@
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#define MBRPARTS_DEFAULT	"10M(permanent)"\
+#define MBRPARTS_DEFAULT	"20M(permanent)"\
 				",20M(boot)"\
-				",600M(system)"\
+				",1G(system)"\
 				",100M(swap)"\
 				",-(UMS)\0"
 
