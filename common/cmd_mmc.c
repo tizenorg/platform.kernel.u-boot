@@ -272,6 +272,25 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			mmc->boot_config = (ack << 6) | (enable << 3) | access;
 
 			mmc_init(mmc);
+		} else if (strcmp(argv[1], "erase") == 0) {
+			int dev = simple_strtoul(argv[2], NULL, 10);
+			u32 blk = simple_strtoul(argv[3], NULL, 16);
+			u32 cnt = simple_strtoul(argv[4], NULL, 16);
+			u32 n;
+			struct mmc *mmc = find_mmc_device(dev);
+			void *addr = (void *)CONFIG_SYS_SDRAM_BASE + 0x02200000;
+
+			if (!mmc)
+				return 1;
+
+			printf("\nMMC erase: dev # %d, block # %d, count %d ... ",
+				dev, blk, cnt);
+
+			n = mmc->block_dev.block_write(dev, blk, cnt, addr);
+
+			printf("%d blocks erased: %s\n",
+				n, (n == cnt) ? "OK" : "ERROR");
+
 		} else
 			rc = cmd_usage(cmdtp);
 
@@ -287,5 +306,6 @@ U_BOOT_CMD(
 	"mmc rescan <device num>\n"
 	"mmc part <device num> - lists available partition on mmc\n"
 	"mmc boot <device num> ack en access\n"
-	"mmc list - lists available devices");
+	"mmc list - lists available devices\n"
+	"mmc erase <device num> blk# cnt");
 #endif
