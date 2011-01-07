@@ -64,6 +64,10 @@ check_users()
 		CROSS_COMPILER=/opt/toolchains/arm-2009q3/bin/arm-none-linux-gnueabi-
 		JOBS="-j 4"
 	fi
+	if [ "$USER" = "daeinki" ]; then
+		CROSS_COMPILER=/usr/local/arm/arm-2010q1/bin/arm-none-linux-gnueabi-
+		JOBS="-j 5"
+	fi
 }
 
 check_ipl()
