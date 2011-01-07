@@ -280,8 +280,8 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			struct mmc *mmc = find_mmc_device(dev);
 			void *addr = (void *)CONFIG_SYS_SDRAM_BASE + 0x02200000;
 
-			/* clear random address (10 blocks)*/
-			memset((void *)addr, 0, 0x1400);
+			/* clear random address */
+			memset((void *)addr, 0, (mmc->write_bl_len << max_cnt));
 
 			if (!mmc)
 				return 1;
@@ -290,8 +290,8 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 				dev, blk, cnt);
 
 			for (i = 0; i < cnt; i += max_cnt) {
-				if (i < 10)
-					max_cnt = cnt;
+				if ((cnt - i) < max_cnt)
+					max_cnt = cnt - i;
 
 				n = mmc->block_dev.block_write(dev, blk, max_cnt, addr);
 				blk += n;
