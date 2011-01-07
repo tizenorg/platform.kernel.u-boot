@@ -276,20 +276,31 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			int dev = simple_strtoul(argv[2], NULL, 10);
 			u32 blk = simple_strtoul(argv[3], NULL, 16);
 			u32 cnt = simple_strtoul(argv[4], NULL, 16);
-			u32 n;
+			u32 n, i, max_cnt;
 			struct mmc *mmc = find_mmc_device(dev);
 			void *addr = (void *)CONFIG_SYS_SDRAM_BASE + 0x02200000;
+
+			/* clear random address (10 blocks)*/
+			memset((void *)addr, 0, 0x1400);
 
 			if (!mmc)
 				return 1;
 
+			if (cnt < 10)
+				max_cnt = cnt;
+			else
+				max_cnt = 10;
+
 			printf("\nMMC erase: dev # %d, block # %d, count %d ... ",
 				dev, blk, cnt);
 
-			n = mmc->block_dev.block_write(dev, blk, cnt, addr);
+			for (i = 0; i < cnt; i++) {
+				n = mmc->block_dev.block_write(dev, blk, max_cnt, addr);
+				blk += n;
+			}
 
 			printf("%d blocks erased: %s\n",
-				n, (n == cnt) ? "OK" : "ERROR");
+				i, (i == cnt) ? "OK" : "ERROR");
 
 		} else
 			rc = cmd_usage(cmdtp);
