@@ -21,14 +21,10 @@
  * MA 02111-1307 USA
  */
 
-#include <asm/arch/cpu.h>
+#include <common.h>
+#include <asm/io.h>
 
-#define S5PC210_SWRESET			0x10020400
-
-.globl reset_cpu
-reset_cpu:
-	ldr	r1, =S5PC210_SWRESET
-	mov	r2, #1
-	str	r2, [r1]
-_loop_forever:
-	b	_loop_forever
+void reset_cpu(ulong addr)
+{
+	writel(0x1, samsung_get_base_swreset());
+}

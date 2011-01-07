@@ -23,9 +23,8 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)lib$(SOC).o
 
 SOBJS	= cache.o
-SOBJS	+= reset.o
 
-COBJS	+= clock.o
+COBJS	+= clock.o soc.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS) $(SOBJS))
