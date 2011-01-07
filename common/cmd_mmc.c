@@ -281,7 +281,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			void *addr = (void *)CONFIG_SYS_SDRAM_BASE + 0x02200000;
 
 			/* clear random address */
-			memset((void *)addr, 0, (mmc->write_bl_len << max_cnt));
+			memset((void *)addr, 0, (mmc->write_bl_len * max_cnt));
 
 			if (!mmc)
 				return 1;
