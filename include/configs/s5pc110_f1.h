@@ -35,8 +35,6 @@
 #define CONFIG_S5P		1	/* which is in a S5P Family */
 #define CONFIG_S5PC100		1	/* which is in a S5PC100 */
 #define CONFIG_S5PC110		1	/* which is in a S5PC110 */
-#define CONFIG_UNIVERSAL	1	/* working with Universal */
-#define CONFIG_MACH_AQUILA	1	/* working with Aquila */
 #define CONFIG_MACH_GONI	1	/* working with Goni */
 #define CONFIG_SBOOT		1	/* use the s-boot */
 
@@ -50,8 +48,6 @@
 #define CONFIG_SYS_CLK_FREQ_C100	12000000
 #define CONFIG_SYS_CLK_FREQ_C110	24000000
 
-#define CONFIG_MEMORY_UPPER_CODE
-
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
@@ -64,11 +60,7 @@
 /*
  * Architecture magic and machine type
  */
-#define MACH_TYPE	3000
-
 #define CONFIG_DISPLAY_CPUINFO
-
-#undef CONFIG_SKIP_RELOCATE_UBOOT
 
 /*
  * Size of malloc() pool
@@ -131,9 +123,8 @@
 #define CONFIG_CMD_MTDPARTS_LITE
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_MMC
-#define CONFIG_CMD_SLEEP
+//#define CONFIG_CMD_SLEEP
 #define CONFIG_CMD_PMIC
-#define CONFIG_CMD_DEVICE_POWER
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_RAMOOPS
 #define CONFIG_INFO_ACTION
@@ -331,7 +322,7 @@
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#define CONFIG_SYS_PROMPT	"Universal # "	/* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT	"F1 # "	/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384	/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
@@ -375,14 +366,14 @@
 /*#define CONFIG_CLK_467_117_59*/
 /*#define CONFIG_CLK_400_100_50*/
 
-/* Universal has 2 banks of DRAM, but swap the bank */
-#define CONFIG_NR_DRAM_BANKS	2
+/* Goni has 3 banks of DRAM, but swap the bank */
+#define CONFIG_NR_DRAM_BANKS	3
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* OneDRAM Bank #0 */
 #define PHYS_SDRAM_1_SIZE	(80 << 20)		/* 80 MB in Bank #0 */
-#define S5PC100_PHYS_SDRAM_2	0x38000000		/* mDDR DMC0 Bank #1 */
-#define S5PC110_PHYS_SDRAM_2	0x40000000		/* mDDR DMC1 Bank #0 */
-#define PHYS_SDRAM_2_SIZE	(128 << 20)		/* 128 MB in Bank #1 */
-
+#define PHYS_SDRAM_2		0x40000000		/* mDDR DMC1 Bank #1 */
+#define PHYS_SDRAM_2_SIZE	(256 << 20)		/* 256 MB in Bank #1 */
+#define PHYS_SDRAM_3		0x50000000		/* mDDR DMC2 Bank #2 */
+#define PHYS_SDRAM_3_SIZE	(128 << 20)		/* 128 MB in Bank #2 */
 
 #define CONFIG_SYS_MONITOR_BASE	0x00000000
 
@@ -406,7 +397,6 @@
 #define CONFIG_DOS_PARTITION	1
 
 #define CONFIG_MISC_INIT_R
-#define CONFIG_BOARD_EARLY_INIT_F
 
 /* I2C */
 #if 0
