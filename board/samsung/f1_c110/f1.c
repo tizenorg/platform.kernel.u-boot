@@ -198,7 +198,7 @@ void i2c_init_board(void)
 
 	i2c_gpio_init(i2c_gpio, I2C_NUM, I2C_PMIC);
 
-	/* Reset on max17040 early */
+	/* Reset on fuelgauge early */
 	check_battery(1);
 }
 
@@ -369,12 +369,12 @@ static void enable_t_flash(void)
 static void check_battery(int mode)
 {
 	unsigned char val[2];
-	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+	unsigned char addr = 0x36;	/* max17042 fuel gauge */
 
-	i2c_set_bus_num(I2C_GPIO3);
+	i2c_set_bus_num(I2C_GPIO7);
 
 	if (i2c_probe(addr)) {
-		puts("Can't found max17040 fuel gauge\n");
+		puts("Can't found max17042(max8997) fuel gauge\n");
 		return;
 	}
 
@@ -926,7 +926,7 @@ int misc_init_r(void)
 	display_device_info();
 #endif
 
-	/* check max17040 */
+	/* check max17042 of max8997 */
 	check_battery(0);
 
 #ifdef CONFIG_INFO_ACTION
