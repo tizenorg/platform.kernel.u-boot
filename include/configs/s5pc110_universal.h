@@ -135,7 +135,6 @@
 #define CONFIG_CMD_PMIC
 #define CONFIG_CMD_DEVICE_POWER
 #define CONFIG_CMD_FAT
-#define CONFIG_CMD_RAMOOPS
 #define CONFIG_INFO_ACTION
 
 /* disabled commands */
@@ -165,8 +164,6 @@
 #define CONFIG_LZO_COMPRESSION
 #define CONFIG_UBIFS_MK
 #define CONFIG_UBINIZE
-
-#define CONFIG_FAT_WRITE
 
 /* To use the TFTPBOOT over USB, Please enable the CONFIG_CMD_NET */
 #undef CONFIG_CMD_NET
@@ -435,7 +432,7 @@
 #define CONFIG_RAMDISK_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
 /* LCD */
-#if 0		/* For LCD test */
+#if 1		/* For LCD test */
 #define CONFIG_LCD		1
 #define CONFIG_FB_RESERVED_MEM	0x42504000
 #define CONFIG_S5PC1XXFB	1
