@@ -1300,6 +1300,13 @@ int board_mmc_init(bd_t *bis)
 		break;
 	}
 
+#ifdef CONFIG_MMC_BOOT_EVT0
+	/*
+	 * In MMC boot test board don't have inverter
+	 */
+	gpio_direction_output(&gpio1->e3, 6, 1);
+#endif
+
 	/*
 	 * eMMC GPIO:
 	 * SDR 8-bit@48MHz at MMC0
