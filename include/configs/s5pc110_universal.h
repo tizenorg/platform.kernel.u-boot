@@ -434,7 +434,7 @@
 /* LCD */
 #if 1		/* For LCD test */
 #define CONFIG_LCD		1
-#define CONFIG_FB_RESERVED_MEM	0x42504000
+#define CONFIG_FB_ADDR		0x42504000
 #define CONFIG_S5PC1XXFB	1
 #define CONFIG_DSIM		1
 #define CONFIG_S6E63M0		1

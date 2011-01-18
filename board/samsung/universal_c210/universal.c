@@ -44,7 +44,6 @@ static struct s5pc210_gpio_part2 *gpio2;
 
 static unsigned int battery_soc;
 static unsigned int board_rev;
-extern vidinfo_t panel_info;
 
 u32 get_board_rev(void)
 {
@@ -181,17 +180,6 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
-#ifdef CONFIG_LCD
-	/*
-	 * set reserved memory region for framebuffer.
-	 *
-	 * this region wouldn't be rewrited by kernel so
-	 * could avoid nosie screen filled by garbages
-	 * after hibernation resume has been completed.
-	 */
-	gd->fb_base = CONFIG_FB_RESERVED_MEM;
-#endif
-
 	check_hw_revision();
 
 	return 0;
@@ -212,11 +200,6 @@ int dram_init(void)
 
 	/* Reset on fsa9480 */
 	check_micro_usb(1);
-
-#ifdef CONFIG_LCD
-	/* Initialize the panel info */
-	memset(&panel_info, 0x0, sizeof(panel_info));
-#endif
 
 	return 0;
 }

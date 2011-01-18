@@ -60,7 +60,6 @@ static unsigned int arch_number;
 static unsigned int board_rev;
 static unsigned int battery_soc;
 static struct s5pc110_gpio *gpio;
-extern vidinfo_t panel_info;
 
 enum {
 	I2C_2,
@@ -2613,17 +2612,6 @@ int board_init(void)
 	/* Set Initial global variables */
 	gpio = (struct s5pc110_gpio *)samsung_get_base_gpio();
 
-#ifdef CONFIG_LCD
-	/*
-	 * set reserved memory region for framebuffer.
-	 *
-	 * this region wouldn't be rewrited by kernel so
-	 * could avoid nosie screen filled by garbages
-	 * after hibernation resume has been completed.
-	 */
-	gd->fb_base = CONFIG_FB_RESERVED_MEM;
-#endif
-
 	/* Check H/W Revision */
 	check_hw_revision();
 
@@ -2638,11 +2626,6 @@ int board_init(void)
 int dram_init(void)
 {
 	gd->ram_size = PHYS_SDRAM_1_SIZE;
-
-#ifdef CONFIG_LCD
-	/* Initialize the panel info */
-	memset(&panel_info, 0x0, sizeof(panel_info));
-#endif
 
 	return 0;
 }
