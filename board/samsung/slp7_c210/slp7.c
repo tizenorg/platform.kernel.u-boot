@@ -992,8 +992,14 @@ int board_mmc_init(bd_t *bis)
 {
 	int i, err;
 
-	/* MASSMEMORY_EN: XGNSS_SDA: GPL1[1] */
+	/* MASSMEMORY_EN: XGNSS_SDA: GPL1[1] - inverted */
+#if 0
 	gpio_direction_output(&gpio2->l1, 1, 0);
+	gpio_set_pull(&gpio2->l1, 1, GPIO_PULL_NONE);
+#endif
+	/* LDO_EN_1 : xMMC1CMD : GPK1[1] */
+	gpio_direction_output(&gpio2->k1, 1, 1);
+	gpio_set_pull(&gpio2->k1, 1, GPIO_PULL_NONE);
 
 	/*
 	 * eMMC GPIO:
