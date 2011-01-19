@@ -97,7 +97,7 @@ static struct i2c_gpio_bus_data i2c_7 = {
 	.scl_pin	= 3,
 };
 
-/* i2c9		SDA: GPY4[0] SCL: GPY4[1] */
+/* i2c9 (Fuel Gauge)	SDA: SPY4[0] SCL: SPY4[1] */
 static struct i2c_gpio_bus_data i2c_9 = {
 	.sda_pin	= 0,
 	.scl_pin	= 1,
@@ -106,8 +106,7 @@ static struct i2c_gpio_bus_data i2c_9 = {
 static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
 
 static void check_battery(int mode);
-static void init_pmic_lp3974(void);
-static void init_pmic_max8952(void);
+static void init_pmic_max8997(void);
 
 void i2c_init_board(void)
 {
@@ -157,12 +156,11 @@ int dram_init(void)
 
 	/* Early init for i2c devices - Where these funcions should go?? */
 
-	/* Reset on max17040 */
+	/* Reset on fuel gauge */
 	check_battery(1);
 
 	/* pmic init */
-	init_pmic_lp3974();
-	init_pmic_max8952();
+	init_pmic_max8997();
 
 	return 0;
 }
@@ -215,7 +213,7 @@ static void check_auto_burn(void)
 static void check_battery(int mode)
 {
 	unsigned char val[2];
-	unsigned char addr = 0x36;	/* max17040 fuel gauge */
+	unsigned char addr = 0x36;	/* max17042 fuel gauge */
 
 	i2c_set_bus_num(I2C_9);
 
@@ -226,13 +224,20 @@ static void check_battery(int mode)
 
 	/* mode 0: check mode / 1: enable mode */
 	if (mode) {
-		val[0] = 0x40;
+		val[0] = 0x00;
 		val[1] = 0x00;
-		i2c_write(addr, 0xfe, 1, val, 2);
+		i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
+		val[0] = 0x03;
+		val[1] = 0x00;
+		i2c_write(addr, 0x2b, 1, val, 2); /* MiscCFG */
+		val[0] = 0x07;
+		val[1] = 0x00;
+		i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
 	} else {
-		i2c_read(addr, 0x04, 1, val, 1);
-		printf("battery:\t%d%%\n", val[0]);
-		battery_soc = val[0];
+		i2c_read(addr, 0x0d, 1, val, 2);
+		battery_soc = val[0] + val[1] * 256;
+		battery_soc /= 256;
+		printf("battery:\t%d%%\n", battery_soc);
 	}
 }
 
@@ -264,201 +269,153 @@ static void check_battery(int mode)
 #define LP3974_LDO16		(1 << 5)
 #define LP3974_LDO17		(1 << 4)
 
-static int lp3974_probe(void)
+static int max8997_probe(void)
 {
 	unsigned char addr = 0xCC >> 1;
 
 	i2c_set_bus_num(I2C_5);
 
 	if (i2c_probe(addr)) {
-		puts("Can't found lp3974\n");
+		puts("Can't found max8997\n");
 		return 1;
 	}
 
 	return 0;
 }
 
-static int max8952_probe(void)
+static unsigned char inline max8997_reg_ldo(int uV)
 {
-	unsigned char addr = 0xC0 >> 1;
-
-	i2c_set_bus_num(I2C_5);
-
-	if (i2c_probe(addr)) {
-		puts("Cannot find MAX8952\n");
-		return 1;
+	unsigned char ret;
+	if (uV <= 800000)
+		return 0;
+	if (uV >= 3950000)
+		return 0x3f;
+	ret = (uV - 800000) / 50000;
+	if (ret > 0x3f) {
+		printf("MAX8997 LDO SETTING ERROR (%duV) -> %u\n", uV, ret);
+		ret = 0x3f;
 	}
 
-	return 0;
+	return ret;
 }
 
-static void init_pmic_lp3974(void)
+static void init_pmic_max8997(void)
 {
+	/* TURN ON EVERYTHING!!! */
+
 	unsigned char addr;
 	unsigned char val[2];
 
-	addr = 0xCC >> 1; /* LP3974 */
-	if (lp3974_probe())
+	addr = 0xCC >> 1; /* MAX8997 */
+	if (max8997_probe())
 		return;
 
-	/* LDO2 1.2V LDO3 1.1V */
-	val[0] = 0x86; /* (((1200 - 800) / 50) << 4) | (((1100 - 800) / 50)) */
-	i2c_write(addr, 0x1D, 1, val, 1);
+	/* BUCK1 VARM: 1.2V */
+	val[0] = (1200000 - 650000) / 25000;
+	i2c_write(addr, 0x19, 1, val, 1);
+	val[0] = 0x09; /* DVS OFF */
+	i2c_write(addr, 0x18, 1, val, 1);
 
-	/* LDO4 3.3V */
-	val[0] = 0x11; /* (3300 - 1600) / 100; */
-	i2c_write(addr, 0x1E, 1, val, 1);
-
-	/* LDO5 2.8V */
-	val[0] = 0x0c; /* (2800 - 1600) / 100; */
-	i2c_write(addr, 0x1F, 1, val, 1);
-
-	/* LDO6 not used: minimum */
-	val[0] = 0;
-	i2c_write(addr, 0x20, 1, val, 1);
-
-	/* LDO7 1.8V */
-	val[0] = 0x02; /* (1800 - 1600) / 100; */
+	/* BUCK2 VINT: 1.1V */
+	val[0] = (1100000 - 650000) / 25000;
+	i2c_write(addr, 0x22, 1, val, 1);
+	val[0] = 0x09; /* DVS OFF */
 	i2c_write(addr, 0x21, 1, val, 1);
 
-	/* LDO8 3.3V LDO9 2.8V*/
-	val[0] = 0x30; /* (((3300 - 3000) / 100) << 4) | (((2800 - 2800) / 100) << 0); */
-	i2c_write(addr, 0x22, 1, val, 1);
+	/* BUCK3 G3D: 1.1V */
+	val[0] = (1100000 - 750000) / 50000;
+	i2c_write(addr, 0x2b, 1, val, 1);
 
-	/* LDO10 1.1V LDO11 3.3V */
-	val[0] = 0x71; /* (((1100 - 950) / 50) << 5) | (((3300 - 1600) / 100) << 0); */
-	i2c_write(addr, 0x23, 1, val, 1);
+	/* BUCK4 CAMISP: 1.2V */
+	val[0] = (1200000 - 650000) / 25000;
+	i2c_write(addr, 0x2d, 1, val, 1);
 
-	/* LDO12 2.8V */
-	val[0] = 0x14; /* (2800 - 1200) / 100 + 4; */
-	i2c_write(addr, 0x24, 1, val, 1);
+	/* BUCK5 VMEM: 1.2V */
+	val[0] = (1200000 - 650000) / 25000;
+	i2c_write(addr, 0x2f, 1, val, 1);
+	val[0] = 0x09; /* DVS OFF */
+	i2c_write(addr, 0x2e, 1, val, 1);
 
-	/* LDO13 1.2V */
-	val[0] = 0x4; /* (1200 - 1200) / 100 + 4; */
-	i2c_write(addr, 0x25, 1, val, 1);
+	/* BUCK6 CAM AF: 2.8V */
+	/* No Voltage Setting Register */
 
-	/* LDO14 1.8V */
-	val[0] = 0x6; /* (1800 - 1200) / 100; */
-	i2c_write(addr, 0x26, 1, val, 1);
+	/* BUCK7 VCC_SUB: 2.0V */
+	val[0] = (2000000 - 750000) / 50000;
+	i2c_write(addr, 0x3a, 1, val, 1);
 
-	/* LDO15 1.2V */
-	val[0] = 0; /* (1200 - 1200) / 100; */
-	i2c_write(addr, 0x27, 1, val, 1);
+	/* LDO1 VADC: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	i2c_write(addr, 0x3b, 1, val, 1);
 
-	/* LDO16 2.8V */
-	val[0] = 0xc; /* (2800 - 1600) / 100; */
-	i2c_write(addr, 0x28, 1, val, 1);
+	/* LDO2 VALIVE: 1.1V */
+	val[0] = max8997_reg_ldo(1100000) | 0xC0;
+	i2c_write(addr, 0x3c, 1, val, 1);
 
-	/* LDO17 3.0V */
-	val[0] = 0xe; /* (3000 - 1600) / 100; */
-	i2c_write(addr, 0x29, 1, val, 1);
+	/* LDO3 VUSB/MIPI: 1.1V */
+	val[0] = max8997_reg_ldo(1100000) | 0xC0;
+	i2c_write(addr, 0x3d, 1, val, 1);
 
-	/*
-	 * Because the data sheet of LP3974 does NOT mention default
-	 * register values of ONOFF1~4 (ENABLE1~4), we ignore the given
-	 * default values and set as we want
-	 */
+	/* LDO4 VMIPI: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	i2c_write(addr, 0x3e, 1, val, 1);
 
-	/* Note: To remove USB detect warning, Turn off LDO 8 first */
+	/* LDO5 VHSIC: 1.2V */
+	val[0] = max8997_reg_ldo(1200000) | 0xC0;
+	i2c_write(addr, 0x3f, 1, val, 1);
 
-	/*
-	 * ONOFF2
-	 * LDO6 OFF, LDO7 ON, LDO8 OFF, LDO9 ON,
-	 * LDO10 OFF, LDO11 OFF, LDO12 OFF, LDO13 OFF
-	 */
-	val[0] = 0x50;
-	i2c_write(addr, LP3974_REG_ONOFF2, 1, val, 1);
+	/* LDO6 VCC_1.8V_PDA: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	i2c_write(addr, 0x40, 1, val, 1);
 
-	/*
-	 * ONOFF1
-	 * Buck1 ON, Buck2 OFF, Buck3 ON, Buck4 ON
-	 * LDO2 ON, LDO3 OFF, LDO4 ON, LDO5 ON
-	 */
-	val[0] = 0xBB;
-	i2c_write(addr, LP3974_REG_ONOFF1, 1, val, 1);
+	/* LDO7 CAM_ISP: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	i2c_write(addr, 0x41, 1, val, 1);
 
-	/*
-	 * ONOFF3
-	 * LDO14 OFF, LDO15 OFF, LGO16 OFF, LDO17 ON,
-	 * EPWRHOLD OFF, EBATTMON OFF, ELBCNFG2 OFF, ELBCNFG1 OFF
-	 */
-	val[0] = 0x10;
-	i2c_write(addr, LP3974_REG_ONOFF3, 1, val, 1);
+	/* LDO8 VDAC/VUSB: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	i2c_write(addr, 0x42, 1, val, 1);
 
-	/*
-	 * ONOFF4
-	 * EN32kAP ON, EN32kCP ON, ENVICHG ON, ENRAMP ON,
-	 * RAMP 12mV/us (fastest)
-	 */
-	val[0] = 0xFB;
-	i2c_write(addr, LP3974_REG_ONOFF4, 1, val, 1);
+	/* LDO9 VCC_2.8V_PDA: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	i2c_write(addr, 0x43, 1, val, 1);
 
-	/*
-	 * CHGCNTL1
-	 * ICHG: 500mA (0x3) / 600mA (0x5)
-	 * RESTART LEVEL: 100mA (0x1)
-	 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
-	 * Let's start with slower charging mode and let micro usb driver
-	 * determine whether we can do it fast or not. Thus, using the slower
-	 * setting...
-	 */
-	val[0] = 0x8B;
-	i2c_write(addr, 0xC, 1, val, 1);
+	/* LDO10 VPLL: 1.1V */
+	val[0] = max8997_reg_ldo(1100000) | 0xC0;
+	i2c_write(addr, 0x44, 1, val, 1);
 
-	/*
-	 * CHGCNTL2
-	 * CHARGER DISABLE: Enable (0x0)
-	 * TEMP CONTROL: 105C (0x0)
-	 * BATT SEL: 4.2V (0x0)
-	 * FULL TIMEOUT: 5hr (0x0)
-	 * ESAFEOUT2: ON (0x1)
-	 * ESAFEOUT1: OFF (0x0)
-	 */
-	val[0] = 0x40;
-	i2c_write(addr, 0xD, 1, val, 1);
+	/* LDO11 LVDS: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	i2c_write(addr, 0x45, 1, val, 1);
 
-	val[0] = 0x0E; /* 1.1V @ DVSARM1(VINT) */
-	i2c_write(addr, 0x15, 1, val, 1);
-	val[0] = 0x0E; /* 1.1V @ DVSARM2(VINT) */
-	i2c_write(addr, 0x16, 1, val, 1);
-	val[0] = 0x0E; /* 1.1V @ DVSARM3(VINT) */
-	i2c_write(addr, 0x17, 1, val, 1);
-	val[0] = 0x0A; /* 1.0V @ DVSARM4(VINT) */
-	i2c_write(addr, 0x18, 1, val, 1);
-	val[0] = 0x12; /* 1.2V @ DVSINT1(VG3D) */
-	i2c_write(addr, 0x19, 1, val, 1);
-	val[0] = 0x0E; /* 1.1V @ DVSINT2(VG3D) */
-	i2c_write(addr, 0x1A, 1, val, 1);
+	/* LDO12 VTCAM: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	i2c_write(addr, 0x46, 1, val, 1);
 
-	val[0] = 0x2; /* 1.8V for BUCK3 VCC 1.8V PDA */
-	i2c_write(addr, 0x1B, 1, val, 1);
-	val[0] = 0x4; /* 1.2V for BUCK4 VMEM 1.2V C210 */
-	i2c_write(addr, 0x1C, 1, val, 1);
+	/* LDO13 VTF: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	i2c_write(addr, 0x47, 1, val, 1);
 
-	/* Use DVSARM1 for VINT */
-	gpio_direction_output(&gpio2->x0, 5, 0);
-	gpio_direction_output(&gpio2->x0, 6, 0);
-	/* Use DVSINT2 for VG3D */
-	gpio_direction_output(&gpio1->e2, 0, 1);
+	/* LDO14 MOTOR: 3.0V */
+	val[0] = max8997_reg_ldo(3000000) | 0xC0;
+	i2c_write(addr, 0x48, 1, val, 1);
 
-	/*
-	 * Default level of UVLO.
-	 * UVLOf = 2.7V (0x3 << 4), UVLOr = 3.1V (0xB)
-	 * set UVLOf to 2.55V (0 << 4).
-	 */
-	val[0] = 0x2C;
-	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
-	val[0] = 0x58;
-	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
-	val[0] = 0xB1;
-	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+	/* LDO15 VTOUCH: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	i2c_write(addr, 0x49, 1, val, 1);
 
-	i2c_read_r(addr, LP3974_REG_UVLO, 1, val, 1);
-	val[0] = (val[0] & 0xf) | (0 << 4);
-	i2c_write(addr, LP3974_REG_UVLO, 1, val, 1);
+	/* LDO16 CAM_SENSOR: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	i2c_write(addr, 0x4a, 1, val, 1);
 
-	val[0] = 0x00;
-	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
+
+	/* LDO18 VTOUCH 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	i2c_write(addr, 0x4c, 1, val, 1);
+
+	/* LDO21 VDDQ: 1.2V */
+	val[0] = max8997_reg_ldo(1200000) | 0xC0;
+	i2c_write(addr, 0x4d, 1, val, 1);
+
 }
 
 static int poweron_key_check(void)
@@ -466,7 +423,7 @@ static int poweron_key_check(void)
 	unsigned char addr, val[2];
 
 	addr = 0xCC >> 1;
-	if (lp3974_probe())
+	if (max8997_probe())
 		return 0;
 
 	i2c_read_r(addr, LP3974_REG_IRQ3, 1, val, 1);
@@ -484,7 +441,7 @@ static int power_key_check(void)
 	int tmp;
 
 	addr = 0xCC >> 1;
-	if (lp3974_probe())
+	if (max8997_probe())
 		return -1;
 
 	/* power_key check */
@@ -512,7 +469,7 @@ static void check_keypad(void)
 }
 
 /*
- * charger_en(): set lp3974 pmic's charger mode
+ * charger_en(): set max8997 pmic's charger mode
  * enable 0: disable charger
  * 600: 600mA
  * 500: 500mA
@@ -522,7 +479,7 @@ static void charger_en(int enable)
 	unsigned char addr = 0xCC >> 1; /* LP3974 */
 	unsigned char val[2];
 
-	if (lp3974_probe())
+	if (max8997_probe())
 		return;
 
 	switch (enable) {
@@ -746,45 +703,6 @@ static void into_charge_mode(int charger_speed)
 			break;
 		}
 	} while (wakeup_stat == 0x04);
-}
-
-static void init_pmic_max8952(void)
-{
-	unsigned char addr;
-	unsigned char val[2];
-
-	addr = 0xC0 >> 1; /* MAX8952 */
-	if (max8952_probe())
-		return;
-
-	/* MODE0: 1.10V: Default */
-	val[0] = 33;
-	i2c_write(addr, 0x00, 1, val, 1);
-	/* MODE1: 1.20V */
-	val[0] = 43;
-	i2c_write(addr, 0x01, 1, val, 1);
-	/* MODE2: 1.05V */
-	val[0] = 28;
-	i2c_write(addr, 0x02, 1, val, 1);
-	/* MODE3: 0.95V */
-	val[0] = 18;
-	i2c_write(addr, 0x03, 1, val, 1);
-
-	/*
-	 * Note: use the default setting and configure pins high
-	 * to generate the 1.1V
-	 */
-	/* VARM_OUTPUT_SEL_A / VID_0 / XEINT_3 (GPX0[3]) = default 0 */
-	gpio_direction_output(&gpio2->x0, 3, 0);
-	/* VARM_OUTPUT_SEL_B / VID_1 / XEINT_4 (GPX0[4]) = default 0 */
-	gpio_direction_output(&gpio2->x0, 4, 0);
-
-	/* CONTROL: Disable PULL_DOWN */
-	val[0] = 0;
-	i2c_write(addr, 0x04, 1, val, 1);
-
-	/* SYNC: Do Nothing */
-	/* RAMP: As Fast As Possible: Default: Do Nothing */
 }
 
 #ifdef CONFIG_LCD
