@@ -35,7 +35,7 @@
 #include <asm/arch/clk.h>
 #include <ramoops.h>
 #include <info_action.h>
-#include <max8998.h>
+#include <max89xx.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -1230,7 +1230,7 @@ int misc_init_r(void)
 #endif
 
 #ifdef CONFIG_CMD_PMIC
-	max8998_init(I2C_5);
+	max89xx_init(I2C_5);
 	run_command("pmic ldo 4 off", 0);	/* adc off */
 #endif
 
