@@ -867,13 +867,20 @@ static unsigned int get_hw_revision(void)
 	/* HW_REV[0:3]: GPE1[0:3] */
 	for (i = 0; i < 4; i++) {
 		gpio_direction_input(&gpio1->e1, i);
-		hwrev |= (gpio_get_value(&gpio1->e1, i) << i);
+		gpio_set_pull(&gpio1->e1, i, GPIO_PULL_NONE);
 	}
+
+	for (i = 0; i < 4; i++)
+		hwrev |= (gpio_get_value(&gpio1->e1, i) << i);
 
 	return hwrev;
 }
 
 static const char * const pcb_rev[] = {
+	"reserved",
+	"reserved",
+	"reserved",
+	"reserved",
 	"SLP_MAIN_7INCH",
 };
 
