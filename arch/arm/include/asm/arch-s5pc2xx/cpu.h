@@ -51,7 +51,17 @@
 #include <asm/io.h>
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
+extern unsigned int s5p_cpu_rev;
 
+static inline int s5p_get_cpu_rev(void)
+{
+	return s5p_cpu_rev;
+}
+
+static inline void s5p_set_cpu_rev(unsigned int rev)
+{
+	s5p_cpu_rev = rev;
+}
 static inline void s5p_set_cpu_id(void)
 {
 	s5p_cpu_id = readl(S5PC210_PRO_ID);
@@ -61,8 +71,11 @@ static inline void s5p_set_cpu_id(void)
 	 * 0xC200: S5PC210 EVT0
 	 * 0xC210: S5PC210 EVT1
 	 */
-	if (s5p_cpu_id == 0xC200)
+	if (s5p_cpu_id == 0xC200) {
 		s5p_cpu_id |= 0x10;
+		s5p_set_cpu_rev(0);
+	} else if (s5p_cpu_id = 0xC210)
+		s5p_set_cpu_rev(1);
 }
 
 #define IS_SAMSUNG_TYPE(type, id)			\
@@ -99,17 +112,6 @@ SAMSUNG_BASE(usb_phy, USBPHY_BASE)
 SAMSUNG_BASE(usb_otg, USBOTG_BASE)
 SAMSUNG_BASE(watchdog, WATCHDOG_BASE)
 
-extern unsigned int s5p_cpu_rev;
-
-static inline int s5p_get_cpu_rev(void)
-{
-	return s5p_cpu_rev;
-}
-
-static inline void s5p_set_cpu_rev(unsigned int rev)
-{
-	s5p_cpu_rev = rev;
-}
 #endif
 
 #endif	/* _S5PC2XX_CPU_H */
