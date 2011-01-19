@@ -80,12 +80,6 @@ static struct i2c_gpio_bus_data i2c_3 = {
 	.scl_pin	= 3,
 };
 
-/* i2c4		SDA: GPB[2] SCL: GPB[3] */
-static struct i2c_gpio_bus_data i2c_4 = {
-	.sda_pin	= 2,
-	.scl_pin	= 3,
-};
-
 /* i2c5 (PMIC)	SDA: GPB[6] SCL: GPB[7] */
 static struct i2c_gpio_bus_data i2c_5 = {
 	.sda_pin	= 6,
@@ -104,28 +98,10 @@ static struct i2c_gpio_bus_data i2c_7 = {
 	.scl_pin	= 3,
 };
 
-/* i2c9		SDA: SPY4[0] SCL: SPY4[1] */
+/* i2c9		SDA: GPY4[0] SCL: GPY4[1] */
 static struct i2c_gpio_bus_data i2c_9 = {
 	.sda_pin	= 0,
 	.scl_pin	= 1,
-};
-
-/* i2c10	SDA: SPE1[0] SCL: SPE1[1] */
-static struct i2c_gpio_bus_data i2c_10 = {
-	.sda_pin	= 0,
-	.scl_pin	= 1,
-};
-
-/* i2c12	SDA: SPE4[0] SCL: SPE4[1] */
-static struct i2c_gpio_bus_data i2c_12 = {
-	.sda_pin	= 0,
-	.scl_pin	= 1,
-};
-
-/* i2c13	SDA: SPE4[2] SCL: SPE4[3] */
-static struct i2c_gpio_bus_data i2c_13 = {
-	.sda_pin	= 2,
-	.scl_pin	= 3,
 };
 
 static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
@@ -143,28 +119,23 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_1].bus = &i2c_1;
 	i2c_gpio[I2C_2].bus = NULL;
 	i2c_gpio[I2C_3].bus = &i2c_3;
-	i2c_gpio[I2C_4].bus = &i2c_4;
+	i2c_gpio[I2C_4].bus = NULL;
 	i2c_gpio[I2C_5].bus = &i2c_5;
 	i2c_gpio[I2C_6].bus = &i2c_6;
 	i2c_gpio[I2C_7].bus = &i2c_7;
 	i2c_gpio[I2C_8].bus = NULL;
 	i2c_gpio[I2C_9].bus = &i2c_9;
-	i2c_gpio[I2C_10].bus = &i2c_10;
+	i2c_gpio[I2C_10].bus = NULL;
 	i2c_gpio[I2C_11].bus = NULL;
-	i2c_gpio[I2C_12].bus = &i2c_12;
-	i2c_gpio[I2C_13].bus = &i2c_13;
+	i2c_gpio[I2C_12].bus = NULL;
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
 	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->d1;
 	i2c_gpio[I2C_3].bus->gpio_base = (unsigned int)&gpio1->a1;
-	i2c_gpio[I2C_4].bus->gpio_base = (unsigned int)&gpio1->b;
 	i2c_gpio[I2C_5].bus->gpio_base = (unsigned int)&gpio1->b;
 	i2c_gpio[I2C_6].bus->gpio_base = (unsigned int)&gpio1->c1;
 	i2c_gpio[I2C_7].bus->gpio_base = (unsigned int)&gpio1->d0;
 	i2c_gpio[I2C_9].bus->gpio_base = (unsigned int)&gpio2->y4;
-	i2c_gpio[I2C_10].bus->gpio_base = (unsigned int)&gpio1->e1;
-	i2c_gpio[I2C_12].bus->gpio_base = (unsigned int)&gpio1->e4;
-	i2c_gpio[I2C_13].bus->gpio_base = (unsigned int)&gpio1->e4;
 
 	i2c_gpio_init(i2c_gpio, I2C_NUM, I2C_5);
 }
