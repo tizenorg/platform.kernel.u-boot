@@ -36,7 +36,7 @@ COBJS-$(CONFIG_FSL_PMIC) += fsl_pmic.o
 COBJS-$(CONFIG_PDSP188x) += pdsp188x.o
 COBJS-$(CONFIG_CMD_RAMOOPS) += ramoops.o
 COBJS-$(CONFIG_CMD_MBR) += mbr.o
-COBJS-$(CONFIG_CMD_PMIC) += max8998.o
+COBJS-$(CONFIG_PMIC_MAX8998) += max8998.o
 COBJS-$(CONFIG_INFO_ACTION) += info_action.o
 
 COBJS	:= $(COBJS-y)
