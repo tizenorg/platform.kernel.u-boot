@@ -260,11 +260,15 @@
 #define CONFIG_STACKSIZE	(256 << 10)	/* regular stack 256KB */
 
 /* Universal has 2 banks of DRAM, but swap the bank */
-#define CONFIG_NR_DRAM_BANKS	2
+#define CONFIG_NR_DRAM_BANKS	4
 #define PHYS_SDRAM_1		CONFIG_SYS_SDRAM_BASE	/* LDDDR2 DMC 0 */
 #define PHYS_SDRAM_1_SIZE	(256 << 20)		/* 256 MB in CS 0 */
 #define PHYS_SDRAM_2		0x50000000		/* LPDDR2 DMC 1 */
 #define PHYS_SDRAM_2_SIZE	(256 << 20)		/* 256 MB in CS 0 */
+#define PHYS_SDRAM_3		0x60000000		/* LPDDR2 DMC 1 */
+#define PHYS_SDRAM_3_SIZE	(256 << 20)		/* 256 MB in CS 0 */
+#define PHYS_SDRAM_4		0x70000000		/* LPDDR2 DMC 1 */
+#define PHYS_SDRAM_4_SIZE	(256 << 20)		/* 256 MB in CS 0 */
 
 #define CONFIG_SYS_MEM_TOP_HIDE	(1 << 20)	/* 1MB for ram console */
 
