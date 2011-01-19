@@ -25,7 +25,7 @@ check_users()
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "prom" ]; then
-		CROSS_COMPILER=/opt/toolchains/arm-2009q3/bin/arm-none-linux-gnueabi-
+		CROSS_COMPILER=/opt/toolchains/arm-2010.09/bin/arm-none-linux-gnueabi-
 		JOBS="-j 5"
 	fi
 	if [ "$USER" = "jaehoon" ]; then
