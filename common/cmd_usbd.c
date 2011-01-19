@@ -139,8 +139,12 @@ static int get_part_id(char *name)
 #else
 static int get_part_info(void)
 {
+#ifdef CONFIG_CMD_MBR
+	return 0;
+#else
 	printf("Error: Can't get patition information\n");
 	return -EINVAL;
+#endif
 }
 
 static int get_part_id(char *name)
