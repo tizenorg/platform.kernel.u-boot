@@ -870,8 +870,11 @@ static unsigned int get_hw_revision(void)
 		gpio_set_pull(&gpio1->e1, i, GPIO_PULL_NONE);
 	}
 
-	for (i = 0; i < 4; i++)
-		hwrev |= (gpio_get_value(&gpio1->e1, i) << i);
+	/* Workaround: don't support hwrev 0 */
+	while (!hwrev) {
+		for (i = 0; i < 4; i++)
+			hwrev |= (gpio_get_value(&gpio1->e1, i) << i);
+	}
 
 	return hwrev;
 }
