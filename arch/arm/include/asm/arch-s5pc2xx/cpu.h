@@ -74,7 +74,7 @@ static inline void s5p_set_cpu_id(void)
 	if (s5p_cpu_id == 0xC200) {
 		s5p_cpu_id |= 0x10;
 		s5p_set_cpu_rev(0);
-	} else if (s5p_cpu_id = 0xC210)
+	} else if (s5p_cpu_id == 0xC210)
 		s5p_set_cpu_rev(1);
 }
 
