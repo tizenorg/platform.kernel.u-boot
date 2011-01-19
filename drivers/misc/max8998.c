@@ -11,7 +11,7 @@
 
 unsigned int pmic_bus;
 
-void max8998_init(int bus_num)
+void pmic_bus_init(int bus_num)
 {
 	pmic_bus = bus_num;
 }
