@@ -241,34 +241,6 @@ static void check_battery(int mode)
 	}
 }
 
-#define LP3974_REG_IRQ1		0x00
-#define LP3974_REG_IRQ2		0x01
-#define LP3974_REG_IRQ3		0x02
-#define LP3974_REG_ONOFF1	0x11
-#define LP3974_REG_ONOFF2	0x12
-#define LP3974_REG_ONOFF3	0x13
-#define LP3974_REG_ONOFF4	0x14
-#define LP3974_REG_LDO7		0x21
-#define LP3974_REG_LDO17	0x29
-#define LP3974_REG_UVLO		0xB9
-#define LP3974_REG_MODCHG	0xEF
-/* ONOFF1 */
-#define LP3974_LDO3		(1 << 2)
-/* ONOFF2 */
-#define LP3974_LDO6		(1 << 7)
-#define LP3974_LDO7		(1 << 6)
-#define LP3974_LDO8		(1 << 5)
-#define LP3974_LDO9		(1 << 4)
-#define LP3974_LDO10		(1 << 3)
-#define LP3974_LDO11		(1 << 2)
-#define LP3974_LDO12		(1 << 1)
-#define LP3974_LDO13		(1 << 0)
-/* ONOFF3 */
-#define LP3974_LDO14		(1 << 7)
-#define LP3974_LDO15		(1 << 6)
-#define LP3974_LDO16		(1 << 5)
-#define LP3974_LDO17		(1 << 4)
-
 static int max8997_probe(void)
 {
 	unsigned char addr = 0xCC >> 1;
@@ -426,8 +398,8 @@ static int poweron_key_check(void)
 	if (max8997_probe())
 		return 0;
 
-	i2c_read_r(addr, LP3974_REG_IRQ3, 1, val, 1);
-	return val[0] & 0x1;
+	i2c_read_r(addr, 0x03, 1, val, 1); /* MAX8997 Interrupt 1 */
+	return val[0] & 0x8; /* PWRON 1sec */
 }
 
 int check_exit_key(void)
@@ -445,9 +417,9 @@ static int power_key_check(void)
 		return -1;
 
 	/* power_key check */
-	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 4);
+	i2c_read_r(addr, 0x03, 1, val, 4); /* MAX8997 Interrupt */
 
-	tmp = ((val[0] & (1 << 7)) >> 7);
+	tmp = val[0] & 0x1;
 
 	return tmp;
 }
@@ -476,7 +448,7 @@ static void check_keypad(void)
  */
 static void charger_en(int enable)
 {
-	unsigned char addr = 0xCC >> 1; /* LP3974 */
+	unsigned char addr = 0xCC >> 1;
 	unsigned char val[2];
 
 	if (max8997_probe())
@@ -485,9 +457,9 @@ static void charger_en(int enable)
 	switch (enable) {
 	case 0:
 		puts("Disable the charger.\n");
-		i2c_read(addr, 0x0D, 1, val, 1);
-		val[0] |= 0x1;
-		i2c_write(addr, 0xD, 1, val, 1);
+		i2c_read(addr, 0x50, 1, val, 1);
+		val[0] &= ~0x1;
+		i2c_write(addr, 0x50, 1, val, 1);
 		break;
 	case 500:
 		puts("Enable the charger @ 500mA\n");
@@ -500,19 +472,19 @@ static void charger_en(int enable)
 		 * let micro usb driver determine whether we can do it
 		 * fast or not. Thus, using the slower setting...
 		 */
-		val[0] = 0x8B;
-		i2c_write(addr, 0x0C, 1, val, 1);
-		i2c_read(addr, 0x0D, 1, val, 1);
-		val[0] &= ~(0x1);
-		i2c_write(addr, 0x0D, 1, val, 1);
+		val[0] = 0x16;
+		i2c_write(addr, 0x53, 1, val, 1);
+		i2c_read(addr, 0x50, 1, val, 1);
+		val[0] |= 0x1;
+		i2c_write(addr, 0x50, 1, val, 1);
 		break;
 	case 600:
 		puts("Enable the charger @ 600mA\n");
-		val[0] = 0x6D;
-		i2c_write(addr, 0x0C, 1, val, 1);
-		i2c_read(addr, 0x0D, 1, val, 1);
-		val[0] &= ~(0x1);
-		i2c_write(addr, 0x0D, 1, val, 1);
+		val[0] = 0x18;
+		i2c_write(addr, 0x53, 1, val, 1);
+		i2c_read(addr, 0x50, 1, val, 1);
+		val[0] |= 0x1;
+		i2c_write(addr, 0x50, 1, val, 1);
 		break;
 	default:
 		puts("Incorrect charger setting.\n");
