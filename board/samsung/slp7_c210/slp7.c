@@ -58,8 +58,7 @@ static int get_hwrev(void)
 enum {
 	I2C_0, I2C_1, I2C_2, I2C_3,
 	I2C_4, I2C_5, I2C_6, I2C_7,
-	I2C_8, I2C_9, I2C_10, I2C_11,
-	I2C_12, I2C_13, I2C_NUM,
+	I2C_8, I2C_9, I2C_NUM,
 };
 
 /* i2c0 (CAM)	SDA: GPD1[0] SCL: GPD1[1] */
@@ -125,9 +124,6 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_7].bus = &i2c_7;
 	i2c_gpio[I2C_8].bus = NULL;
 	i2c_gpio[I2C_9].bus = &i2c_9;
-	i2c_gpio[I2C_10].bus = NULL;
-	i2c_gpio[I2C_11].bus = NULL;
-	i2c_gpio[I2C_12].bus = NULL;
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
 	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->d1;
