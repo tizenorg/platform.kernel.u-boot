@@ -1050,9 +1050,9 @@ int board_mmc_init(bd_t *bis)
 
 	/*
 	 * Check the T-flash  detect pin
-	 * GPX3[4] T-flash detect pin
+	 * GPX3[3] T-flash detect pin
 	 */
-	if (!gpio_get_value(&gpio2->x3, 4)) {
+	if (!gpio_get_value(&gpio2->x3, 3)) {
 		/*
 		 * SD card GPIO:
 		 * GPK2[0]	SD_2_CLK(2)
