@@ -1004,9 +1004,14 @@ static unsigned short get_adc_value(int channel)
 
 static unsigned int get_hw_revision(void)
 {
-	int hwrev = 0, mode0, mode1;
+	int hwrev = 0;
+	int i;
 
-	debug("mode0: %d, mode1: %d, hwrev 0x%x\n", mode0, mode1, hwrev);
+	/* HW_REV[0:3]: GPE1[0:3] */
+	for (i = 0; i < 4; i++) {
+		gpio_direction_input(&gpio1->e1, i);
+		hwrev |= (gpio_get_value(&gpio1->e1, i) << i);
+	}
 
 	return hwrev;
 }
@@ -1094,7 +1099,6 @@ int misc_init_r(void)
 
 #ifdef CONFIG_CMD_PMIC
 	max8998_init(I2C_5);
-	run_command("pmic ldo 4 off", 0);	/* adc off */
 #endif
 
 	return 0;
