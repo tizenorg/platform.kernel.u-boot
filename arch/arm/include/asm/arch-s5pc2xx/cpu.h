@@ -52,10 +52,13 @@
 /* CPU detection macros */
 extern unsigned int s5p_cpu_id;
 
-static inline void s5p_set_cpu_id(void)
+static void s5p_set_cpu_id(void)
 {
 	s5p_cpu_id = readl(S5PC210_PRO_ID);
-	s5p_cpu_id = (0xC000 | ((s5p_cpu_id & 0x00FFF000) >> 12)) + 0x10;
+	s5p_cpu_id = (0xC000 | ((s5p_cpu_id & 0x00FFF000) >> 12));
+
+	if (s5p_cpu_id == 0xC200)
+		s5p_cpu_id |= 0x10;
 }
 
 #define IS_SAMSUNG_TYPE(type, id)			\
