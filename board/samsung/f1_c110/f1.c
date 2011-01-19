@@ -45,7 +45,7 @@
 #include <spi.h>
 #include <bmp_layout.h>
 #include <ramoops.h>
-#include <max89xx.h>
+#include <max8998.h>
 
 #include "animation_frames.h"
 #include "gpio_setting.h"
@@ -918,7 +918,7 @@ int misc_init_r(void)
 	check_keypad();
 
 	/* check max8998 */
-	max89xx_init(I2C_PMIC);
+	max8998_init(I2C_PMIC);
 	init_pmic();
 
 #ifdef CONFIG_S5PC1XXFB
