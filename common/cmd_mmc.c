@@ -272,6 +272,16 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			mmc->boot_config = (ack << 6) | (enable << 3) | access;
 
 			mmc_init(mmc);
+
+			/*
+			 * Note : S5PC210 EVT0 only can boot from 4-bit
+			 * buswidth. Set 4-bit boot buswidth
+			 */
+			if (!access) {
+				mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL,
+					EXT_CSD_BOOT_BUS_WIDTH, MMC_BOOT_4BIT);
+
+			}
 		} else if (strcmp(argv[1], "erase") == 0) {
 			int dev = simple_strtoul(argv[2], NULL, 10);
 			u32 blk = simple_strtoul(argv[3], NULL, 16);
