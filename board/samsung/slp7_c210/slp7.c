@@ -937,7 +937,11 @@ int board_mmc_init(bd_t *bis)
 {
 	int i, err;
 
-	/* MASSMEMORY_EN: XGNSS_SDA: GPL1[1] - inverted */
+	/*
+	 * MASSMEMORY_EN: XGNSS_SDA: GPL1[1] - Output Low
+	 * MASSMEMORY_EN is connected to invertor.
+	 * If want to enable eMMC, must set to the low.
+	 */
 	gpio_direction_output(&gpio2->l1, 1, 0);
 	gpio_set_pull(&gpio2->l1, 1, GPIO_PULL_NONE);
 
