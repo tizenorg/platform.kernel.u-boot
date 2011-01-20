@@ -395,6 +395,9 @@ static void init_pmic_max8997(void)
 	val[0] = max8997_reg_ldo(1200000) | 0xC0;
 	i2c_write(addr, 0x4d, 1, val, 1);
 
+	/* SAFEOUT for both 1 and 2: 4.9V, Active discharge, Enable */
+	val[0] = (0x1 << 0) | (0x1 << 2) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+	i2c_write(addr, 0x5a, 1, val, 1);
 }
 
 static int poweron_key_check(void)
