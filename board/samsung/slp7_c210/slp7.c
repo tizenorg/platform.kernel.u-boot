@@ -37,6 +37,7 @@
 #include <asm/arch/clk.h>
 #include <ramoops.h>
 #include <info_action.h>
+#include <pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -931,6 +932,9 @@ int misc_init_r(void)
 	info_action_check();
 #endif
 
+#ifdef CONFIG_CMD_PMIC
+	pmic_bus_init(I2C_5);
+#endif
 	return 0;
 }
 #endif
