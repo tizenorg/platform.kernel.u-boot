@@ -12,7 +12,7 @@ print "Reset System"
 &POP_TYPE_A='A'
 &POP_TYPE_B='B'
 
-&POP_TYPE=&POP_TYPE_A
+&POP_TYPE=&POP_TYPE_B
 
 &DMC_DLL_ON=1
 ;&DMC_DLL_ON=0
@@ -29,8 +29,8 @@ print "Reset System"
 
 &USE_PLL=1
 
-;&ARMCLK=800	; ARMCLK=800MHz
-&ARMCLK=1000	; ARMCLK=1000MHz
+&ARMCLK=800	; ARMCLK=800MHz
+;&ARMCLK=1000	; ARMCLK=1000MHz
 ;&ARMCLK=400	; ARMCLK=400MHz
 ;&ARMCLK=100	; ARMCLK=100MHz
 
@@ -551,11 +551,9 @@ print "DRAM Initialization done..."
 
 print "Loading ..."
 
-&UBOOT_CODE="y:\u-boot-merge\u-boot"	
-&UBOOT_IMAGE="y:\u-boot-merge\u-boot.bin"
-&ONENAND_IPL="y:\u-boot-merge\s-boot-onenand.bin"
-;&ONENAND_IPL_IMAGE="y:\u-boot-merge\onenand_ipl\onenand-ipl.bin"
-;&ONENAND_CODE="y:\u-boot-merge\onenand_ipl\onenand-ipl"
+&UBOOT_CODE="y:\u-boot-s5pc1xx\u-boot"	
+&UBOOT_IMAGE="y:\u-boot-s5pc1xx\u-boot.bin"
+&SBOOT_IMAGE="y:\u-boot-s5pc1xx\s-boot-mmc.bin"
 
 ;&IPL_LOAD_ADDRESS=0x02020000
 &UBOOT_EXECUTED_ADDRESS=0x44800000
@@ -563,11 +561,10 @@ print "Loading ..."
 Data.LOAD.Binary	&UBOOT_IMAGE &UBOOT_EXECUTED_ADDRESS
 Data.Load.Elf		&UBOOT_CODE /ABSLIFETIMES /gnu /nocode /STRIPPART 6
 
-Data.load.binary	&ONENAND_IPL 0x42008000
-;Data.Load.Elf		&ONENAND_CODE /ABSLIFETIMES /gnu /nocode /STRIPPART 7
+Data.load.binary	&SBOOT_IMAGE 0x42008000
 
 ; Break & Run
 Register.Set pc &UBOOT_EXECUTED_ADDRESS
 go
 
-data.list
+;data.list
