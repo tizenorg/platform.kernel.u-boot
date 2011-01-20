@@ -252,8 +252,10 @@ static void lcd_panel_on(vidinfo_t *vid)
 	if (vid->backlight_on)
 		vid->backlight_on(1);
 
+#ifdef CONFIG_DSIM
 	if (vid->interface_mode == FIMD_CPU_INTERFACE)
 		s5p_dsim_start();
+#endif
 
 	if (vid->cfg_ldo)
 		vid->cfg_ldo();
