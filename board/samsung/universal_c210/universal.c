@@ -604,38 +604,9 @@ static void init_pmic_lp3974(void)
 	i2c_write(addr, LP3974_REG_MODCHG, 1, val, 1);
 }
 
-static int poweron_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-	if (lp3974_probe())
-		return 0;
-
-	i2c_read_r(addr, LP3974_REG_IRQ3, 1, val, 1);
-	return val[0] & 0x1;
-}
-
 int check_exit_key(void)
 {
-	return poweron_key_check();
-}
-
-static int power_key_check(void)
-{
-	unsigned char addr, val[4];
-	int tmp;
-
-	addr = 0xCC >> 1;
-	if (lp3974_probe())
-		return -1;
-
-	/* power_key check */
-	i2c_read_r(addr, LP3974_REG_IRQ1, 1, val, 4);
-
-	tmp = ((val[0] & (1 << 7)) >> 7);
-
-	return tmp;
+	return pmic_get_irq(PWRON1S);
 }
 
 static void check_keypad(void)
@@ -645,7 +616,7 @@ static void check_keypad(void)
 
 	val = ~(gpio_get_value(&gpio2->x2, 1));
 
-	power_key = power_key_check();
+	power_key = pmic_get_irq(PWRONR);
 
 	if (power_key && (val & 0x1))
 		auto_download = 1;
@@ -1189,6 +1160,9 @@ int misc_init_r(void)
 #endif
 
 	show_hw_revision();
+
+	pmic_bus_init(I2C_5);
+
 	check_keypad();
 
 	check_auto_burn();
@@ -1204,7 +1178,6 @@ int misc_init_r(void)
 #endif
 
 #ifdef CONFIG_CMD_PMIC
-	pmic_bus_init(I2C_5);
 	run_command("pmic ldo 4 off", 0);	/* adc off */
 #endif
 
@@ -1216,7 +1189,7 @@ int misc_init_r(void)
 int usb_board_init(void)
 {
 	/* interrupt clear */
-	poweron_key_check();
+	pmic_get_irq(PWRON1S);
 
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);

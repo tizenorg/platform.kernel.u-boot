@@ -1005,51 +1005,9 @@ static void max8998_clear_interrupt(void)
 	i2c_read(addr, 0x03, 1, val, 1);
 }
 
-static int poweron_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-	if (max8998_probe())
-		return 0;
-
-	i2c_read(addr, 0x02, 1, val, 1);
-	return val[0] & 0x1;
-}
-
 int check_exit_key(void)
 {
-	return poweron_key_check();
-}
-
-static int max8998_power_key(void)
-{
-	unsigned char addr, val[2];
-	addr = 0xCC >> 1;
-
-	if (max8998_probe())
-		return 0;
-
-	/* Accessing IRQ1 register */
-	i2c_read(addr, 0x00, 1, val, 1);
-	if (val[0] & (1 << 6))
-		return 1;
-
-	return 0;
-}
-
-static int power_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-
-	if (max8998_probe())
-		return 0;
-
-	/* power_key check */
-	i2c_read(addr, 0x00, 1, val, 1);
-	return val[0] & (1 << 7);
+	return pmic_get_irq(PWRON1S);
 }
 
 #define KBR3		(1 << 3)
@@ -1100,7 +1058,7 @@ static void check_keypad(void)
 	writel(0, reg + S5PC1XX_KEYIFCOL_OFFSET);
 
 	/* power_key check */
-	power_key = power_key_check();
+	power_key = pmic_get_irq(PWRONR);
 
 	/* key_scan */
 	for (i = 0; i < col_num; i++) {
@@ -1388,7 +1346,7 @@ static void into_charge_mode(void)
 			free(bmp);
 
 			for (k = 0; k < 10; k++) {
-				if (max8998_power_key()) {
+				if (pmic_get_irq(PWRONF)) {
 					lcd_display_clear();
 					goto restore_screen;
 				} else if (!max8998_has_ext_power_source()) {
@@ -1411,7 +1369,7 @@ static void into_charge_mode(void)
 		unsigned int org, org_ip3;
 
 		empty_device_info_buffer();
-		if (max8998_power_key())
+		if (pmic_get_irq(PWRONF))
 			break;
 		else if (!max8998_has_ext_power_source())
 			break;
@@ -2523,12 +2481,12 @@ int misc_init_r(void)
 	/* Setup Media board GPIOs */
 	setup_media_gpios();
 
-	/* To usbdown automatically */
-	check_keypad();
-
 	/* check max8998 */
 	pmic_bus_init(I2C_PMIC);
 	init_pmic();
+
+	/* To usbdown automatically */
+	check_keypad();
 
 #ifdef CONFIG_S5PC1XXFB
 	display_device_info();
@@ -2884,7 +2842,7 @@ struct ums_board_info *board_ums_init(void)
 int usb_board_init(void)
 {
 	/* interrupt clear */
-	poweron_key_check();
+	pmic_get_irq(PWRON1S);
 
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);
