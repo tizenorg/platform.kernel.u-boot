@@ -892,6 +892,11 @@ int misc_init_r(void)
 #endif
 
 	show_hw_revision();
+
+#ifdef CONFIG_CMD_PMIC
+	pmic_bus_init(I2C_5);
+#endif
+
 	check_keypad();
 
 	check_auto_burn();
@@ -903,9 +908,6 @@ int misc_init_r(void)
 	info_action_check();
 #endif
 
-#ifdef CONFIG_CMD_PMIC
-	pmic_bus_init(I2C_5);
-#endif
 	return 0;
 }
 #endif
