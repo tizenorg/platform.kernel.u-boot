@@ -411,7 +411,8 @@ static void check_keypad(void)
 	unsigned int val = 0;
 	unsigned int power_key, auto_download = 0;
 
-	val = ~(gpio_get_value(&gpio2->x2, 1));
+	/* volume down */
+	val = !(gpio_get_value(&gpio2->x2, 1));
 
 	power_key = pmic_get_irq(PWRONR);
 
@@ -699,7 +700,6 @@ struct nt39411_platform_data nt39411_pd;
 static void lcd_cfg_gpio(void)
 {
 	unsigned int i;
-	struct swi_platform_data swi_pd;
 
 	for (i = 0; i < 8; i++) {
 		/* set GPF0,1,2[0:7] for RGB Interface and Data lines (32bit) */
@@ -735,9 +735,9 @@ static void lcd_cfg_gpio(void)
 	gpio_set_pull(&gpio1->f0, i, GPIO_PULL_NONE);
 
 	/* LED_BACKLIGHT_PWM */
-	swi_pd.swi_bank = &gpio1->d0;
-	swi_pd.controller_data = 1;
-	gpio_cfg_pin(&gpio1->d0, swi_pd.controller_data, GPIO_FUNC(2));
+	nt39411_pd.swi.swi_bank = &gpio1->d0;
+	nt39411_pd.swi.controller_data = 0;
+	gpio_cfg_pin(&gpio1->d0, nt39411_pd.swi.controller_data, GPIO_FUNC(2));
 
 	/* LVDS_nSHDN */
 	gpio_direction_output(&gpio1->e1, 5, 1);
@@ -745,9 +745,8 @@ static void lcd_cfg_gpio(void)
 	/* LCD_LDO_EN */
 	gpio_direction_output(&gpio1->e2, 3, 1);
 
-	swi_pd.low_period = 30;
-	swi_pd.high_period = 30;
-	swi_set_platform_data(&swi_pd);
+	nt39411_pd.swi.low_period = 30;
+	nt39411_pd.swi.high_period = 30;
 	return;
 }
 
@@ -759,14 +758,15 @@ int s5p_no_lcd_support(void)
 void init_panel_info(vidinfo_t *vid)
 {
 	vid->vl_freq	= 60;
-	vid->vl_col	= 600;
-	vid->vl_row	= 1024;
-	vid->vl_width	= 600;
-	vid->vl_height	= 1024;
+	vid->vl_col	= 1024;
+	vid->vl_row	= 600;
+	vid->vl_width	= 1024;
+	vid->vl_height	= 600;
 	vid->vl_clkp	= CONFIG_SYS_LOW;
 	vid->vl_hsp	= CONFIG_SYS_HIGH;
 	vid->vl_vsp	= CONFIG_SYS_HIGH;
 	vid->vl_dp	= CONFIG_SYS_LOW;
+	vid->vl_bpix	= 32;
 	vid->enable_ldo = nt39411_send_intensity;
 
 	/* NT39411 LCD Panel */
@@ -791,8 +791,8 @@ void init_panel_info(vidinfo_t *vid)
 	vid->reset_delay = 0;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
 	nt39411_pd.brightness = NT39411_DEFAULT_INTENSITY;
-	nt39411_pd.a_onoff = A1_A2_ON;
-	nt39411_pd.b_onoff = B1_B2_ALL_ON;
+	nt39411_pd.a_onoff = A1_ON;
+	nt39411_pd.b_onoff = B1_ON;
 	nt39411_set_platform_data(&nt39411_pd);
 	setenv("lcdinfo", "lcd=nt39411");
 }

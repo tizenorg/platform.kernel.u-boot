@@ -33,41 +33,41 @@ static void nt39411_apply(int level)
 
 	/* A1-A3 current select */
 	for (i = 0; i < A1_A3_CURRENT; i++)
-		swi_transfer_command(SWI_CHANGE);
+		swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 	udelay(500);
 
 	for (i = 0; i < gamma_table_10[level]; i++)
-		swi_transfer_command(SWI_CHANGE);
+		swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 	udelay(500);
 
 	/* B1-B2 current select */
 	for (i = 0; i < B1_B2_CURRENT; i++)
-		swi_transfer_command(SWI_CHANGE);
+		swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 	udelay(500);
 
 	for (i = 0; i < gamma_table_10[level]; i++)
-		swi_transfer_command(SWI_CHANGE);
+		swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 	udelay(500);
 
 	if (first) {
 		/* A1-A3 on/off select */
 		for (i = 0; i < A1_A3_ONOFF; i++)
-			swi_transfer_command(SWI_CHANGE);
+			swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 		udelay(500);
 
 		/* A1-A3 all on */
 		for (i = 0; i < nt39411->a_onoff; i++)
-			swi_transfer_command(SWI_CHANGE);
+			swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 		udelay(500);
 
 		/* B1-B2 on/off select */
 		for (i = 0; i < B1_B2_ONOFF; i++)
-			swi_transfer_command(SWI_CHANGE);
+			swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 		udelay(500);
 
 		/* B1-B2 all on */
 		for (i = 0; i < nt39411->b_onoff; i++)
-			swi_transfer_command(SWI_CHANGE);
+			swi_transfer_command(&nt39411->swi, SWI_CHANGE);
 
 		first = 0;
 	}

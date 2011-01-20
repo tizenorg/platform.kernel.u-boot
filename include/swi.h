@@ -54,7 +54,6 @@ struct swi_platform_data {
 };
 
 
-int swi_transfer_command(unsigned int command);
-void swi_set_platform_data(struct swi_platform_data *pd);
+int swi_transfer_command(struct swi_platform_data *swi, unsigned int command);
 
 #endif /*_SWI_H_*/

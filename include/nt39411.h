@@ -14,6 +14,7 @@
 #define _NT39411_H_
 
 struct nt39411_platform_data {
+	struct swi_platform_data swi;
 	int a_onoff;
 	int b_onoff;
 	unsigned int brightness;
@@ -40,9 +41,9 @@ struct nt39411_platform_data {
 #define A1_A3_ALL_OFF			1
 
 #define B1_B2_ALL_ON			4
-#define B1_ON_B2_OFF			3
-#define B1_OFF_B2_ON			2
-#define B1_OFF_B2_OFF			1
+#define B1_ON				3
+#define B2_ON				2
+#define B1_B2_ALL_OFF			1
 
 void nt39411_set_platform_data(struct nt39411_platform_data *pd);
 void nt39411_send_intensity(void);

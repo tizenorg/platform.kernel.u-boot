@@ -27,7 +27,7 @@
 
 struct swi_platform_data *swi;
 
-int swi_transfer_command(unsigned int command)
+int swi_transfer_command(struct swi_platform_data *swi, unsigned int command)
 {
 	switch (command) {
 	case SWI_LOW:
@@ -49,20 +49,4 @@ int swi_transfer_command(unsigned int command)
 	}
 
 	return 1;
-}
-
-/*
- * register SWI devices for a given board.
- *
- * @info : array of chip descriptors.
- * @n : how many descriptors are provided.
- */
-void swi_set_platform_data(struct swi_platform_data *pd)
-{
-	if (pd == NULL) {
-		printf("pd is NULL.\n");
-		return;
-	}
-
-	swi = pd;
 }
