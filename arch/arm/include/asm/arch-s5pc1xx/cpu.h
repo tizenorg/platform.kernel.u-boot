@@ -43,6 +43,7 @@
 #define S5PC100_MODEM_BASE	0xED500000
 #define S5PC100_MMC_BASE	0xED800000
 #define S5PC100_FIMD_BASE	0xEE000000
+#define S5PC100_ADC_BASE	0xF3000000
 
 /* S5PC110 */
 #define S5PC110_PRO_ID		0xE0000000
@@ -97,6 +98,7 @@ static inline unsigned int samsung_get_base_##device(void)	\
 		return 0;					\
 }
 
+SAMSUNG_BASE(adc, ADC_BASE)
 SAMSUNG_BASE(clock, CLOCK_BASE)
 SAMSUNG_BASE(fimd, FIMD_BASE)
 SAMSUNG_BASE(gpio, GPIO_BASE)

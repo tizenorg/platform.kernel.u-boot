@@ -777,7 +777,6 @@ static int adc_to_temperature_centigrade(unsigned short adc)
 	return approximation;
 }
 
-static unsigned short get_adc_value(int channel);
 static int adc_get_average_ambient_temperature(void)
 {
 	unsigned short min = USHRT_MAX;
@@ -1087,31 +1086,6 @@ void init_panel_info(vidinfo_t *vid)
 	setenv("lcdinfo", "lcd=ld9040");
 }
 #endif
-
-static unsigned short get_adc_value(int channel)
-{
-	struct s5p_adc *adc = (struct s5p_adc *)samsung_get_base_adc();
-	unsigned short ret = 0;
-	unsigned int reg;
-	unsigned int loop = 0;
-
-	writel(channel & 0xF, &adc->adcmux);
-	writel((1 << 14) | (49 << 6), &adc->adccon);
-	writel(1000 & 0xffff, &adc->adcdly);
-	writel(readl(&adc->adccon) | (1 << 16), &adc->adccon); /* 12 bit */
-	udelay(10);
-	writel(readl(&adc->adccon) | (1 << 0), &adc->adccon); /* Enable */
-	udelay(10);
-
-	do {
-		udelay(1);
-		reg = readl(&adc->adccon);
-	} while (!(reg & (1 << 15)) && (loop++ < 1000));
-
-	ret = readl(&adc->adcdat0) & 0xFFF;
-
-	return ret;
-}
 
 static unsigned int get_hw_revision(void)
 {

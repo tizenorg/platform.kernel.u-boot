@@ -25,6 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)libs5p-common.o
 
+COBJS-y		+= adc.o
 COBJS-y		+= cpu_info.o
 COBJS-y		+= timer.o
 COBJS-$(CONFIG_CMD_USBDOWN)	+= usb_downloader.o

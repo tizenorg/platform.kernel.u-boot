@@ -35,6 +35,8 @@ struct s5p_adc {
 	unsigned int adcmux;
 	unsigned int adcclrintpndnup;
 };
+
+unsigned short get_adc_value(int channel);
 #endif
 
 #endif /* __ASM_ARM_ARCH_ADC_H_ */

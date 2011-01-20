@@ -1244,55 +1244,6 @@ static int adc_to_temperature_centigrade(unsigned short adc)
 	return approximation;
 }
 
-static unsigned short get_adc_value(int channel)
-{
-	struct s5p_adc *adc = (struct s5p_adc *)S5PC110_ADC_BASE;
-	unsigned short ret = 0;
-	unsigned int reg;
-	int ldonum = 8;
-	char buf[64];
-	unsigned int loop = 0;
-
-	if (mach_is_goni())
-		ldonum = 4;
-	else if (mach_is_geminus())
-		ldonum = 4;
-	else if (mach_is_wmg160())
-		ldonum = 4;
-	else if (mach_is_cypress())
-		ldonum = 8;
-	else if (mach_is_tickertape())
-		ldonum = 8;
-	else if (mach_is_aquila())
-		ldonum = 8;
-	/*
-	else if (mach_is_p1p2())
-		ldonum = 4;
-	*/
-
-	sprintf(buf, "pmic ldo %d on", ldonum);
-	run_command(buf, 0);
-
-	writel(channel & 0xF, &adc->adcmux);
-	writel((1 << 14) | (49 << 6), &adc->adccon);
-	writel(1000 & 0xffff, &adc->adcdly);
-	writel(readl(&adc->adccon) | (1 << 16), &adc->adccon); /* 12 bit */
-	udelay(10);
-	writel(readl(&adc->adccon) | (1 << 0), &adc->adccon); /* Enable */
-	udelay(10);
-
-	do {
-		udelay(1);
-		reg = readl(&adc->adccon);
-	} while (!(reg & (1 << 15)) && (loop++ < 1000));
-
-	ret = readl(&adc->adcdat0) & 0xFFF;
-	sprintf(buf, "pmic ldo %d off", ldonum);
-	run_command(buf, 0);
-
-	return ret;
-}
-
 static int adc_get_average_ambient_temperature(void)
 {
 	if (mach_is_goni()) {
@@ -1301,6 +1252,8 @@ static int adc_get_average_ambient_temperature(void)
 		unsigned int sum = 0;
 		unsigned int measured = 0;
 		int i;
+
+		run_command("pmic ldo 4 on", 0);
 
 		for (i = 0; i < 7; i++) {
 			unsigned short measurement = get_adc_value(6);
@@ -1311,6 +1264,9 @@ static int adc_get_average_ambient_temperature(void)
 			if (max < measurement)
 				max = measurement;
 		}
+
+		run_command("pmic ldo 4 off", 0);
+
 		if (measured >= 3) {
 			measured -= 2;
 			sum -= min;
