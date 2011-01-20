@@ -32,11 +32,8 @@ static int pmic_probe(void)
 }
 
 #ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
-#define i2c_read_func(addr, reg, alen, val, len)	\
+#define i2c_read(addr, reg, alen, val, len)	\
 			i2c_read_r(addr, reg, alen, val, len)
-#else
-#define i2c_read_func(addr, reg, alen, val, len)	\
-			i2c_read(addr, reg, alen, val, len)
 #endif
 
 unsigned int pmic_get_irq(int irq)
@@ -67,7 +64,7 @@ unsigned int pmic_get_irq(int irq)
 		return 0;
 	}
 
-	i2c_read_func(addr, 0x0, 1, val, 4);
+	i2c_read(addr, 0x0, 1, val, 4);
 
 	ret = val[reg] & (1 << shift);
 
@@ -85,7 +82,7 @@ static int pmic_status(void)
 		return -1;
 
 	reg = 0x11;
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
 		printf("BUCK%d %s\n", 7 - i + 1,
 			val[0] & (1 << i) ? "on" : "off");
@@ -93,18 +90,18 @@ static int pmic_status(void)
 		printf("LDO%d %s\n", 5 - i,
 			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x12;
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 0; i--)
 		printf("LDO%d %s\n", 7 - i + 6,
 			val[0] & (1 << i) ? "on" : "off");
 	reg = 0x13;
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 4; i--)
 		printf("LDO%d %s\n", 7 - i + 14,
 			val[0] & (1 << i) ? "on" : "off");
 
 	reg = 0xd;
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	for (i = 7; i >= 6; i--)
 		printf("SAFEOUT%d %s\n", 7 - i + 1,
 			val[0] & (1 << i) ? "on" : "off");
@@ -148,13 +145,13 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	if (pmic_probe())
 		return -1;
 
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	if (on)
 		val[0] |= (1 << shift);
 	else
 		val[0] &= ~(1 << shift);
 	i2c_write(addr, reg, 1, val, 1);
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 
 	return 0;
 }
