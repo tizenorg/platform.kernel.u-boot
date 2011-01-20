@@ -209,8 +209,7 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	switch (argc) {
 	case 2:
 		if (strncmp(argv[1], "status", 6) == 0)
-			printf("Don't support\n");
-			/* return pmic_status(); */
+			return pmic_status();
 		break;
 	case 4:
 		if (strncmp(argv[1], "ldo", 3) == 0)
