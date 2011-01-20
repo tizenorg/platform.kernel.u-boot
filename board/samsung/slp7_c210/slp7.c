@@ -1029,8 +1029,8 @@ int board_mmc_init(bd_t *bis)
 	}
 
 	/* T-flash detect */
-	gpio_cfg_pin(&gpio2->x3, 4, 0xf);
-	gpio_set_pull(&gpio2->x3, 4, GPIO_PULL_UP);
+	gpio_cfg_pin(&gpio2->x3, 3, 0xf);
+	gpio_set_pull(&gpio2->x3, 3, GPIO_PULL_UP);
 
 	/*
 	 * MMC device init
