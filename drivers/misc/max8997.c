@@ -8,6 +8,7 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <pmic.h>
 
 unsigned int pmic_bus;
 
@@ -37,6 +38,41 @@ static int pmic_probe(void)
 #define i2c_read_func(addr, reg, alen, val, len)	\
 			i2c_read(addr, reg, alen, val, len)
 #endif
+
+unsigned int pmic_get_irq(int irq)
+{
+	unsigned char addr, val[4];
+	unsigned int ret;
+	unsigned int reg;
+	unsigned int shift;
+
+	addr = 0xCC >> 1;
+	if (pmic_probe())
+		return 0;
+
+	switch (irq) {
+	case PWRONR:
+		reg = 0;
+		shift = 0;
+		break;
+	case PWRONF:
+		reg = 0;
+		shift = 1;
+		break;
+	case PWRON1S:
+		reg = 0;
+		shift = 3;
+		break;
+	default:
+		return 0;
+	}
+
+	i2c_read_func(addr, 0x3, 1, val, 4);
+
+	ret = val[reg] & (1 << shift);
+
+	return !!ret;
+}
 
 static unsigned char reg_buck[7] = {0x18, 0x21, 0x2a, 0x2c, 0x3e, 0x37, 0x39};
 static int pmic_status(void)

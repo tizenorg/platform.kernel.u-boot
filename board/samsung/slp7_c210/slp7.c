@@ -401,38 +401,9 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x5a, 1, val, 1);
 }
 
-static int poweron_key_check(void)
-{
-	unsigned char addr, val[2];
-
-	addr = 0xCC >> 1;
-	if (max8997_probe())
-		return 0;
-
-	i2c_read_r(addr, 0x03, 1, val, 1); /* MAX8997 Interrupt 1 */
-	return val[0] & 0x8; /* PWRON 1sec */
-}
-
 int check_exit_key(void)
 {
-	return poweron_key_check();
-}
-
-static int power_key_check(void)
-{
-	unsigned char addr, val[4];
-	int tmp;
-
-	addr = 0xCC >> 1;
-	if (max8997_probe())
-		return -1;
-
-	/* power_key check */
-	i2c_read_r(addr, 0x03, 1, val, 4); /* MAX8997 Interrupt */
-
-	tmp = val[0] & 0x1;
-
-	return tmp;
+	return pmic_get_irq(PWRON1S);
 }
 
 static void check_keypad(void)
@@ -442,7 +413,7 @@ static void check_keypad(void)
 
 	val = ~(gpio_get_value(&gpio2->x2, 1));
 
-	power_key = power_key_check();
+	power_key = pmic_get_irq(PWRONR);
 
 	if (power_key && (val & 0x1))
 		auto_download = 1;
@@ -943,7 +914,7 @@ int misc_init_r(void)
 int usb_board_init(void)
 {
 	/* interrupt clear */
-	poweron_key_check();
+	pmic_get_irq(PWRON1S);
 
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);

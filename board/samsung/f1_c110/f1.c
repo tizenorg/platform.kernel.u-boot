@@ -404,76 +404,9 @@ static int max8998_probe(void)
 }
 
 #define CHARGER_ANIMATION_FRAME		6
-static void max8998_clear_interrupt(void)
-{
-	unsigned char addr, val[2];
-	addr = 0xCC >> 1;
-
-	/* TODO */
-	return;
-
-	if (max8998_probe())
-		return;
-
-	i2c_read(addr, 0x00, 1, val, 1);
-	i2c_read(addr, 0x01, 1, val, 1);
-	i2c_read(addr, 0x02, 1, val, 1);
-	i2c_read(addr, 0x03, 1, val, 1);
-}
-
-static int poweron_key_check(void)
-{
-	unsigned char addr, val[2];
-	addr = 0xCC >> 1;
-
-	/* TODO */
-	return 0;
-
-	if (max8998_probe())
-		return 0;
-
-	i2c_read(addr, 0x02, 1, val, 1);
-	return val[0] & 0x1;
-}
-
 int check_exit_key(void)
 {
-	return poweron_key_check();
-}
-
-static int max8998_power_key(void)
-{
-	unsigned char addr, val[2];
-	addr = 0xCC >> 1;
-
-	/* TODO */
-	return 0;
-
-	if (max8998_probe())
-		return 0;
-
-	/* Accessing IRQ1 register */
-	i2c_read(addr, 0x00, 1, val, 1);
-	if (val[0] & (1 << 6))
-		return 1;
-
-	return 0;
-}
-
-static int power_key_check(void)
-{
-	unsigned char addr, val[2];
-	addr = 0xCC >> 1;
-
-	/* TODO */
-	return 0;
-
-	if (max8998_probe())
-		return 0;
-
-	/* power_key check */
-	i2c_read(addr, 0x00, 1, val, 1);
-	return val[0] & (1 << 7);
+	return pmic_get_irq(PWRON1S);
 }
 
 #define KBR3		(1 << 3)
@@ -972,7 +905,7 @@ void dram_init_banksize(void)
 int usb_board_init(void)
 {
 	/* interrupt clear */
-	poweron_key_check();
+	pmic_get_irq(PWRON1S);
 
 #ifdef CONFIG_CMD_PMIC
 	run_command("pmic ldo 8 on", 0);
