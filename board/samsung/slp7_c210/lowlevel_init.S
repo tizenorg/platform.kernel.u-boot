@@ -294,12 +294,12 @@ system_clock_init:
 	str	r1, [r0, r2]
 
 	/* Turn off all */
-	ldr	r1, =0xFFFFFFE0
+	ldr	r1, =0xFFFFFFFE
 	ldr	r2, =0x0C928			@ CLK_GATE_IP_MFC
 	str	r1, [r0, r2]
 
 	/* Turn off all */
-	ldr	r1, =0xFFFFFFFC
+	ldr	r1, =0xFFFFFFFE
 	ldr	r2, =0x0C92C			@ CLK_GATE_IP_G3D
 	str	r1, [r0, r2]
 
@@ -320,15 +320,15 @@ system_clock_init:
 
 	/*
 	 * SMMUPCIE[18], NFCON[16]			: 1111 1010
-	 * PCIE[14],  SATA[10], SDMMC43[9:8]		: 1011 1000
+	 * ONENAND[15], PCIE[14], SATA[10], SDMMC43[9:8]: 0011 1000
 	 * SDMMC1[6], TSI[4], SATAPHY[3], PCIEPHY[2]	: 1010 0011
 	 */
-	ldr	r1, =0xFFFAB8A3
+	ldr	r1, =0xFFFA38A3
 	ldr	r2, =0x0C940			@ CLK_GATE_IP_FSYS
 	str	r1, [r0, r2]
 
 	/* Turn off all */
-	ldr	r1, =0xFFFFFFFC
+	ldr	r1, =0xFFFFFFFE
 	ldr	r2, =0x0C94C			@ CLK_GATE_IP_GPS
 	str	r1, [r0, r2]
 
@@ -347,8 +347,8 @@ system_clock_init:
 	ldr	r2, =0x0C960			@ CLK_GATE_IP_PERIR
 	str	r1, [r0, r2]
 
-	/* LCD1[5], G3D[3], MFC[2], TV[1]		: 1101 0001 */
-	ldr	r1, =0xFFFFFFD1
+	/* GPS[7], LCD1[5], G3D[3], MFC[2], TV[1]	: 0101 0001 */
+	ldr	r1, =0xFFFFFF51
 	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
 	str	r1, [r0, r2]
 #endif
