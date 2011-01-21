@@ -189,6 +189,12 @@ static void check_auto_burn(void)
 	unsigned int count = 0;
 	char buf[64];
 
+	/* Initial Setting */
+	if (readl(magic_base) == 0x534E5344) {	/* ASICC: SNSD */
+		puts("Auto buring intiail Setting (boot image)\n");
+		count += sprintf(buf + count, "run setupboot; ");
+		goto done;
+	}
 	/* OneNAND */
 	if (readl(magic_base) == 0x426f6f74) {		/* ASICC: Boot */
 		puts("Auto buring bootloader\n");
@@ -209,6 +215,7 @@ static void check_auto_burn(void)
 		count += sprintf(buf + count, "run updatebackup; ");
 	}
 
+done:
 	if (count) {
 		count += sprintf(buf + count, "reset");
 		setenv("bootcmd", buf);
