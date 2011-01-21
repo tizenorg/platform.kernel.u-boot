@@ -195,11 +195,6 @@ static void check_auto_burn(void)
 		count += sprintf(buf + count, "run setupboot; ");
 		goto done;
 	}
-	/* OneNAND */
-	if (readl(magic_base) == 0x426f6f74) {		/* ASICC: Boot */
-		puts("Auto buring bootloader\n");
-		count += sprintf(buf + count, "run updateb; ");
-	}
 	/* MMC */
 	if (readl(magic_base) == 0x654D4D43) {		/* ASICC: eMMC */
 		puts("Auto buring bootloader (eMMC)\n");
