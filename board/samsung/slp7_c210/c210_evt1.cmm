@@ -563,6 +563,9 @@ Data.Load.Elf		&UBOOT_CODE /ABSLIFETIMES /gnu /nocode /STRIPPART 6
 
 Data.load.binary	&SBOOT_IMAGE 0x42008000
 
+;Autoburing initial boot setting
+;d.s SD:0x42000000 %LE %LONG 0x534E5344 
+
 ; Break & Run
 Register.Set pc &UBOOT_EXECUTED_ADDRESS
 go
