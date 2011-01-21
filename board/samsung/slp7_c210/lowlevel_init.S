@@ -279,6 +279,7 @@ system_clock_init:
 	ldr	r2, =0x0C120			@ VPLL_CON0
 	str	r1, [r0, r2]
 
+#if 0
 	/*
 	 * SMMUJPEG[11], JPEG[6], CSIS1[5]		: 0111 1001
 	 * Turn off all
@@ -350,6 +351,7 @@ system_clock_init:
 	ldr	r1, =0xFFFFFFD1
 	ldr	r2, =0x0C970			@ CLK_GATE_BLOCK
 	str	r1, [r0, r2]
+#endif
 	mov	pc, lr
 	nop
 	nop
