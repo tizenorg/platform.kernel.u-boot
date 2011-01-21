@@ -999,6 +999,8 @@ static int write_v2_image(struct usbd_ops *usbd, int img_type,
 				CONFIG_BOOTLOADER_SECTOR,
 				len / usbd->mmc_blk + 1,
 				(void *)down_ram_addr);
+
+		run_command("run updatebootb", 0);
 #endif
 		break;
 
