@@ -937,6 +937,10 @@ int board_mmc_init(bd_t *bis)
 	gpio_direction_output(&gpio2->l1, 1, 0);
 	gpio_set_pull(&gpio2->l1, 1, GPIO_PULL_NONE);
 
+	/* eMMC_EN: SD_0_CDn: GPK0[2] Output High */
+	gpio_direction_output(&gpio2->k0, 2, 1);
+	gpio_set_pull(&gpio2->k0, 2, GPIO_PULL_NONE);
+
 	/*
 	 * eMMC GPIO:
 	 * SDR 8-bit@48MHz at MMC0
