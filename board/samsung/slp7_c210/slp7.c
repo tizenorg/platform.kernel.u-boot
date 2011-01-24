@@ -772,9 +772,9 @@ void init_panel_info(vidinfo_t *vid)
 	vid->enable_ldo = nt39411_send_intensity;
 
 	/* NT39411 LCD Panel */
-	vid->vl_hspw	= 50;
-	vid->vl_hbpd	= 142;
-	vid->vl_hfpd	= 210;
+	vid->vl_hspw	= 40;
+	vid->vl_hbpd	= 79;
+	vid->vl_hfpd	= 200;
 
 	vid->vl_vspw	= 10;
 	vid->vl_vbpd	= 11;
