@@ -60,7 +60,7 @@
 /*
  * Architecture magic and machine type
  */
-#define MACH_TYPE	(2989 + 1)
+#define MACH_TYPE	(2989 + 2)
 
 #define CONFIG_DISPLAY_CPUINFO
 
