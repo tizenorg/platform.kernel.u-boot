@@ -362,23 +362,23 @@ static void init_pmic_max8997(void)
 	val[0] = max8997_reg_ldo(1100000) | 0xC0;
 	i2c_write(addr, 0x44, 1, val, 1);
 
-	/* LDO11 LVDS: 3.3V */
-	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	/* LDO11 TOUCH: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0xC0;
 	i2c_write(addr, 0x45, 1, val, 1);
 
 	/* LDO12 VTCAM: 1.8V */
 	val[0] = max8997_reg_ldo(1800000) | 0xC0;
 	i2c_write(addr, 0x46, 1, val, 1);
 
-	/* LDO13 VTF: 2.8V */
-	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	/* LDO13 VCC_3.0_LCD: 3.0V */
+	val[0] = max8997_reg_ldo(3000000) | 0xC0;
 	i2c_write(addr, 0x47, 1, val, 1);
 
 	/* LDO14 MOTOR: 3.0V */
 	val[0] = max8997_reg_ldo(3000000);
 	i2c_write(addr, 0x48, 1, val, 1);
 
-	/* LDO15 VTOUCH: 2.8V */
+	/* LDO15 LED_A: 2.8V */
 	val[0] = max8997_reg_ldo(2800000) | 0xC0;
 	i2c_write(addr, 0x49, 1, val, 1);
 
@@ -386,9 +386,12 @@ static void init_pmic_max8997(void)
 	val[0] = max8997_reg_ldo(1800000) | 0xC0;
 	i2c_write(addr, 0x4a, 1, val, 1);
 
-
-	/* LDO18 VTOUCH 2.8V */
+	/* LDO17 VTF: 2.8V */
 	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	i2c_write(addr, 0x4b, 1, val, 1);
+
+	/* LDO18 TOUCH_LED 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0xC0;
 	i2c_write(addr, 0x4c, 1, val, 1);
 
 	/* LDO21 VDDQ: 1.2V */
