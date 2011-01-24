@@ -833,7 +833,7 @@ static unsigned int get_hw_revision(void)
 }
 
 static const char * const pcb_rev[] = {
-	"UNIVERSAL_REV0.0",
+	"Q1_UNIV_REV0.0",
 	"reserved",
 	"reserved",
 	"reserved",
