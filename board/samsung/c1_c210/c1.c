@@ -694,7 +694,9 @@ void fimd_clk_set(void)
 	writel(cfg, &clk->div_lcd0);
 }
 
-struct nt39411_platform_data nt39411_pd;
+extern void ld9040_set_platform_data(struct spi_platform_data *pd);
+
+struct spi_platform_data spi_pd;
 
 static void lcd_cfg_gpio(void)
 {
@@ -729,25 +731,36 @@ static void lcd_cfg_gpio(void)
 		gpio_set_rate(&gpio1->f3, i, GPIO_DRV_SLOW);
 	}
 
-	gpio_cfg_pin(&gpio1->f2, i, GPIO_FUNC(2));
-	/* pull-up/down disable */
-	gpio_set_pull(&gpio1->f0, i, GPIO_PULL_NONE);
+	/* gpio pad configuration for LCD reset. */
+	gpio_direction_output(&gpio2->y4, 5, 1);
 
-	/* LED_BACKLIGHT_PWM */
-	nt39411_pd.swi.swi_bank = &gpio1->d0;
-	nt39411_pd.swi.controller_data = 0;
-	gpio_cfg_pin(&gpio1->d0, nt39411_pd.swi.controller_data, GPIO_FUNC(2));
+	/*
+	 * gpio pad configuration for
+	 * DISPLAY_CS, DISPLAY_CLK, DISPLAY_SO, DISPLAY_SI.
+	 */
+	gpio_cfg_pin(&gpio2->y4, 3, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y3, 1, GPIO_OUTPUT);
+	gpio_cfg_pin(&gpio2->y3, 3, GPIO_OUTPUT);
 
-	/* LVDS_nSHDN */
-	gpio_direction_output(&gpio1->e1, 5, 1);
+	spi_pd.cs_bank = &gpio2->y4;
+	spi_pd.cs_num = 3;
+	spi_pd.clk_bank = &gpio2->y3;
+	spi_pd.clk_num = 1;
+	spi_pd.si_bank = &gpio2->y3;
+	spi_pd.si_num = 3;
 
-	/* LCD_LDO_EN */
-	gpio_direction_output(&gpio1->e2, 3, 1);
+	spi_pd.mode = SPI_MODE_3;
 
-	nt39411_pd.swi.low_period = 30;
-	nt39411_pd.swi.high_period = 30;
+	spi_pd.cs_active = ACTIVE_LOW;
+	spi_pd.word_len = 8;
+
+	ld9040_set_platform_data(&spi_pd);
+
 	return;
 }
+
+extern void ld9040_cfg_ldo(void);
+extern void ld9040_enable_ldo(unsigned int onoff);
 
 int s5p_no_lcd_support(void)
 {
@@ -757,43 +770,48 @@ int s5p_no_lcd_support(void)
 void init_panel_info(vidinfo_t *vid)
 {
 	vid->vl_freq	= 60;
-	vid->vl_col	= 1024;
-	vid->vl_row	= 600;
-	vid->vl_width	= 1024;
-	vid->vl_height	= 600;
-	vid->vl_clkp	= CONFIG_SYS_LOW;
+	vid->vl_col	= 480;
+	vid->vl_row	= 800;
+	vid->vl_width	= 480;
+	vid->vl_height	= 800;
+	vid->vl_clkp	= CONFIG_SYS_HIGH;
 	vid->vl_hsp	= CONFIG_SYS_HIGH;
 	vid->vl_vsp	= CONFIG_SYS_HIGH;
-	vid->vl_dp	= CONFIG_SYS_LOW;
+	vid->vl_dp	= CONFIG_SYS_HIGH;
+
 	vid->vl_bpix	= 32;
-	vid->enable_ldo = nt39411_send_intensity;
+	/* disable dual lcd mode. */
+	vid->dual_lcd_enabled = 0;
 
-	/* NT39411 LCD Panel */
-	vid->vl_hspw	= 50;
-	vid->vl_hbpd	= 142;
-	vid->vl_hfpd	= 210;
+	/* LD9040 LCD Panel */
+	vid->vl_hspw	= 2;
+	vid->vl_hbpd	= 16;
+	vid->vl_hfpd	= 16;
 
-	vid->vl_vspw	= 10;
-	vid->vl_vbpd	= 11;
-	vid->vl_vfpd	= 10;
+	vid->vl_vspw	= 2;
+	vid->vl_vbpd	= 6;
+	vid->vl_vfpd	= 4;
 
 	vid->cfg_gpio = lcd_cfg_gpio;
 	vid->backlight_on = NULL;
-	/* vid->lcd_power_on = lcd_power_on; */	/* Don't need the poweron squence */
-	/* vid->reset_lcd = reset_lcd; */	/* Don't need the reset squence */
+	vid->lcd_power_on = NULL;	/* Don't need the poweron squence */
+	vid->reset_lcd = NULL;		/* Don't need the reset squence */
 
-	vid->cfg_ldo = NULL;
-	vid->enable_ldo = nt39411_send_intensity;
+	vid->cfg_ldo = ld9040_cfg_ldo;
+	vid->enable_ldo = ld9040_enable_ldo;
 
 	vid->init_delay = 0;
 	vid->power_on_delay = 0;
 	vid->reset_delay = 0;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
-	nt39411_pd.brightness = NT39411_DEFAULT_INTENSITY;
-	nt39411_pd.a_onoff = A1_ON;
-	nt39411_pd.b_onoff = B1_ON;
-	nt39411_set_platform_data(&nt39411_pd);
-	setenv("lcdinfo", "lcd=nt39411");
+
+	/* board should be detected at here. */
+
+	/* for LD8040. */
+	vid->pclk_name = MPLL;
+	vid->sclk_div = 1;
+
+	setenv("lcdinfo", "lcd=ld9040");
 }
 #endif
 
