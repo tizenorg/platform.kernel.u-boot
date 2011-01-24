@@ -769,7 +769,6 @@ void init_panel_info(vidinfo_t *vid)
 	vid->vl_vsp	= CONFIG_SYS_HIGH;
 	vid->vl_dp	= CONFIG_SYS_LOW;
 	vid->vl_bpix	= 32;
-	vid->enable_ldo = nt39411_send_intensity;
 
 	/* NT39411 LCD Panel */
 	vid->vl_hspw	= 40;

@@ -45,7 +45,7 @@ struct nt39411_platform_data {
 #define B2_ON				2
 #define B1_B2_ALL_OFF			1
 
-void nt39411_set_platform_data(struct nt39411_platform_data *pd);
-void nt39411_send_intensity(void);
+extern void nt39411_set_platform_data(struct nt39411_platform_data *pd);
+extern void nt39411_send_intensity(unsigned int enable);
 
 #endif /* _NT39411_H_ */

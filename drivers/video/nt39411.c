@@ -91,12 +91,12 @@ static void nt39411_backlight_ctl(int intensity)
 }
 
 
-void nt39411_send_intensity(void)
+void nt39411_send_intensity(unsigned int enable)
 {
-	unsigned long flags;
 	int intensity = nt39411->brightness;
 
-	nt39411_backlight_ctl(intensity);
+	if (enable)
+		nt39411_backlight_ctl(intensity);
 }
 
 void nt39411_set_platform_data(struct nt39411_platform_data *pd)
