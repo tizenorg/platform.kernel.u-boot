@@ -178,9 +178,6 @@ void dram_init_banksize(void)
 	gd->bd->bi_dram[2].size = PHYS_SDRAM_3_SIZE;
 	gd->bd->bi_dram[3].start = PHYS_SDRAM_4;
 	gd->bd->bi_dram[3].size = PHYS_SDRAM_4_SIZE;
-
-	gd->ram_size = gd->bd->bi_dram[0].size + gd->bd->bi_dram[1].size +
-			gd->bd->bi_dram[2].size + gd->bd->bi_dram[3].size;
 }
 
 static void check_auto_burn(void)
