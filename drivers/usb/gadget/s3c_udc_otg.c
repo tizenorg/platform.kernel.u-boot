@@ -30,7 +30,6 @@
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 
-
 /* common */
 typedef int	spinlock_t;
 typedef int	wait_queue_head_t;
@@ -230,21 +229,43 @@ void otg_phy_init(void)
 	the_controller->pdata->phy_control(1);
 
 	/*USB PHY0 Enable */
-//	printf("USB PHY0 Enable\n");
-//	writel(readl(S5P_USB_PHY_CONTROL)|(0x1<<0), S5P_USB_PHY_CONTROL);
-	writel(readl(S5PC110_USB_PHY_CON)|(0x1<<0), S5PC110_USB_PHY_CON);
+	printf("USB PHY0 Enable\n");
 
-	writel((readl(S3C_USBOTG_PHYPWR)&~(0x3<<3)&~(0x1<<0))|(0x1<<5),
-			S3C_USBOTG_PHYPWR);
-	writel((readl(S3C_USBOTG_PHYCLK)&~(0x5<<2))|(0x3<<0),
-			S3C_USBOTG_PHYCLK);
-	writel((readl(S3C_USBOTG_RSTCON)&~(0x3<<1))|(0x1<<0),
-			S3C_USBOTG_RSTCON);
+	/* Enable PHY */
+	writel(readl(S5P_USB_PHY_CONTROL)|(0x1<<0), S5P_USB_PHY_CONTROL);
 
-	writel(0x1, S3C_USBOTG_RSTCON);
-	udelay(20);
-	writel(0x0, S3C_USBOTG_RSTCON);
-	udelay(20);
+#ifdef CONFIG_S5PC110
+	writel((readl(S3C_USBOTG_PHYPWR)
+		    &~(0x3<<3)&~(0x1<<0)), S3C_USBOTG_PHYPWR);
+#else
+#ifdef CONFIG_S5PC210
+	writel((readl(S3C_USBOTG_PHYPWR)
+		    &~(0x7<<3)&~(0x1<<0)), S3C_USBOTG_PHYPWR);
+#else
+#error
+#endif
+#endif
+	writel((readl(S3C_USBOTG_PHYCLK)
+		    &~(0x5<<2))|(0x3<<0), S3C_USBOTG_PHYCLK); /* PLL 24Mhz */
+	writel((readl(S3C_USBOTG_RSTCON)
+		    &~(0x3<<1))|(0x1<<0), S3C_USBOTG_RSTCON);
+	udelay(10);
+	writel(readl(S3C_USBOTG_RSTCON)
+		   &~(0x7<<0), S3C_USBOTG_RSTCON);
+	udelay(10);	
+
+	
+	/* writel((readl(S3C_USBOTG_PHYPWR)&~(0x3<<3)&~(0x1<<0))|(0x1<<5), */
+	/* 		S3C_USBOTG_PHYPWR); */
+	/* writel((readl(S3C_USBOTG_PHYCLK)&~(0x5<<2))|(0x3<<0), */
+	/* 		S3C_USBOTG_PHYCLK); */
+	/* writel((readl(S3C_USBOTG_RSTCON)&~(0x3<<1))|(0x1<<0), */
+	/* 		S3C_USBOTG_RSTCON); */
+
+	/* writel(0x1, S3C_USBOTG_RSTCON); */
+	/* udelay(20); */
+	/* writel(0x0, S3C_USBOTG_RSTCON); */
+	/* udelay(20); */
 }
 
 void otg_phy_off(void)
@@ -256,8 +277,7 @@ void otg_phy_off(void)
 	udelay(20);
 
 	writel(readl(S3C_USBOTG_PHYPWR)|(0x3<<3)|(0x1), S3C_USBOTG_PHYPWR);
-	writel(readl(S5PC110_USB_PHY_CON)&~(1<<0), S5PC110_USB_PHY_CON);
-//	writel(readl(S5P_USB_PHY_CONTROL)&~(1<<0), S5P_USB_PHY_CONTROL);
+	writel(readl(S5P_USB_PHY_CONTROL)&~(1<<0), S5P_USB_PHY_CONTROL);
 
 //	writel((readl(S3C_USBOTG_PHYPWR)&~(0x3<<3)&~(0x1<<0)),S3C_USBOTG_PHYPWR);
 	writel((readl(S3C_USBOTG_PHYCLK)&~(0x5<<2)),S3C_USBOTG_PHYCLK);
@@ -1163,13 +1183,13 @@ int s3c_udc_probe(struct s3c_plat_otg_data *pdata)
 
 	return retval;
 }
-
+#if 0
 static int s3c_udc_remove(struct platform_device *pdev)
 {
 	the_controller = 0;
 	return 0;
 }
-
+#endif
 int usb_gadget_handle_interrupts()
 {
 	u32 intr_status = readl(S3C_UDC_OTG_GINTSTS);

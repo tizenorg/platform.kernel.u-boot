@@ -114,13 +114,13 @@
  * a warning in this file when building MSF.
  */
 
-/*
-#define DBG(d, fmt, args...)     dev_dbg(&(d)->gadget->dev , fmt , ## args)
-#define VDBG(d, fmt, args...)    dev_vdbg(&(d)->gadget->dev , fmt , ## args)
-#define ERROR(d, fmt, args...)   dev_err(&(d)->gadget->dev , fmt , ## args)
-#define WARNING(d, fmt, args...) dev_warn(&(d)->gadget->dev , fmt , ## args)
-#define INFO(d, fmt, args...)    dev_info(&(d)->gadget->dev , fmt , ## args)
-*/
+
+/* #define DBG(d, fmt, args...)     printf(fmt , ## args) */
+/* #define VDBG(d, fmt, args...)    printf(fmt , ## args) */
+/* #define ERROR(d, fmt, args...)   printf(fmt , ## args) */
+/* #define WARNING(d, fmt, args...) printf(fmt , ## args) */
+/* #define INFO(d, fmt, args...)    printf(fmt , ## args) */
+
 
 #define DBG(d, fmt, args...)     do { } while (0)
 #define VDBG(d, fmt, args...)    do { } while (0)
@@ -318,12 +318,12 @@ struct fsg_lun {
 };
 
 #define fsg_lun_is_open(curlun)	((curlun)->filp != NULL)
-
+#if 0
 static struct fsg_lun *fsg_lun_from_dev(struct device *dev)
 {
 	return container_of(dev, struct fsg_lun, dev);
 }
-
+#endif
 
 /* Big enough to hold our biggest descriptor */
 #define EP0_BUFSIZE	256
@@ -669,7 +669,7 @@ static void store_cdrom_address(u8 *dest, int msf, u32 addr)
 
 /*-------------------------------------------------------------------------*/
 
-
+#if 0 /* Remove warining ================ OBS */
 static ssize_t fsg_show_ro(struct device *dev, struct device_attribute *attr,
 			   char *buf)
 {
@@ -759,3 +759,4 @@ static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 	up_write(filesem);
 	return (rc < 0 ? rc : count);
 }
+#endif

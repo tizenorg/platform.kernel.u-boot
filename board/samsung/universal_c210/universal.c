@@ -37,6 +37,10 @@
 #include <info_action.h>
 #include <pmic.h>
 
+#include <asm/arch/hs_otg.h>
+#include <asm/arch/regs-otg.h>
+#include "usb_mass_storage.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct s5pc210_gpio_part1 *gpio1;
@@ -1182,6 +1186,75 @@ int misc_init_r(void)
 	return 0;
 }
 #endif
+
+
+static int s5pc2xx_phy_control(int on)
+{
+	static int status;
+	if (on && !status) {
+#ifdef CONFIG_CMD_PMIC
+		run_command("pmic ldo 8 on", 0);
+		run_command("pmic ldo 3 on", 0);
+		run_command("pmic safeout 1 on", 0);
+#endif
+		/* USB Path to AP */
+		micro_usb_switch(0);
+		status = 1;
+	} else if (!on && status) {
+#ifdef CONFIG_CMD_PMIC
+		run_command("pmic ldo 3 off", 0);
+		run_command("pmic ldo 8 off", 0);
+		run_command("pmic safeout 1 off", 0);
+#endif
+		status = 0;
+	}
+	udelay(10000);
+
+	return 0;
+}
+
+struct s3c_plat_otg_data s5pc210_otg_data = {
+	.phy_control = s5pc2xx_phy_control,
+	.regs_phy = S5PC210_PHY_BASE,
+	.regs_otg = S5PC210_OTG_BASE,
+};
+
+
+#ifdef CONFIG_CMD_USB_MASS_STORAGE
+static int dummy_read_sector(unsigned int n, void *buf)
+{
+	memset(buf, n % 16, SECTOR_SIZE);
+	return 0;
+}
+
+static int dummy_write_sector(unsigned int n, void *buf)
+{
+	printf("%c", *((char*)buf + 0));
+	printf("%c", *((char*)buf + 1));
+	printf("%c", *((char*)buf + 2));
+	printf("\n");
+	return 0;
+}
+
+static int dummy_get_capacity(void)
+{
+	return 8192 * 1024;
+}
+
+static struct ums_board_info ums_board = {
+	.read_sector = dummy_read_sector,
+	.write_sector = dummy_write_sector,
+	.get_capacity = dummy_get_capacity,
+	.name = "u-Boot disk",
+};
+
+struct ums_board_info *board_ums_init(void)
+{
+	s3c_udc_probe(&s5pc210_otg_data);
+	return &ums_board;
+}
+#endif
+
 
 #ifdef CONFIG_CMD_USBDOWN
 int usb_board_init(void)

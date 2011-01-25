@@ -5,7 +5,7 @@
 static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	int i = 0;
-	struct board_ums_info* ums_info;
+	struct ums_board_info* ums_info;
 
 	ums_info = board_ums_init();
 	fsg_init(ums_info);

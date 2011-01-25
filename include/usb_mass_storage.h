@@ -11,8 +11,8 @@ struct ums_board_info {
 };
 
 extern int fsg_init(struct ums_board_info*);
-extern struct ums_board_info *board_ums_init();
-extern int usb_gadget_handle_interrupts();
+extern struct ums_board_info* board_ums_init(void);
+extern int usb_gadget_handle_interrupts(void);
 extern int fsg_main_thread(void*);
 
 #endif

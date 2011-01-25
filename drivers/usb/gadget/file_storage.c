@@ -236,8 +236,6 @@
 #include <malloc.h>
 #include <common.h>
 
-#define unlikely(x) x
-
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -279,13 +277,12 @@ static const char fsg_string_interface[] = "Mass Storage";
  */
 
 
-#define spin_lock_irqsave(lock,flags) do {} while (0)
-#define spin_unlock_irqrestore(lock,flags) do {} while (0)
+#define spin_lock_irqsave(lock,flags) do {flags = 1;} while (0)
+#define spin_unlock_irqrestore(lock,flags) do {flags = 0;} while (0)
 #define spin_lock_irq(lock) do {} while (0)
 #define spin_unlock_irq(lock) do {} while (0)
 #define spin_lock(lock) do {} while (0)
 #define spin_unlock(lock) do {} while (0)
-#define local_irq_save(flags) do {} while (0)
 #define spin_lock_init(x) do {} while (0)
 #define init_rwsem(x)
 #define init_completion(x)
@@ -319,7 +316,6 @@ typedef int spinlock_t;
 #define kzalloc(size,flags)	calloc(size, 1)
 #define ENOTSUPP	524	/* Operation is not supported */
 #define kthread_create(...)	__builtin_return_address(0)
-#define SECTOR_SIZE	512
 #define signal_pending(x) 0
 #define schedule(x)	do {} while (0)
 #define msleep_interruptible(x)	0
@@ -341,33 +337,27 @@ typedef int spinlock_t;
 #define wait_for_completion(...) do {} while (0)
 #define dev_get_drvdata(...) NULL
 
-struct kref {int;};
-struct completion {int;};
+struct kref {int x;};
+struct completion {int x;};
 
 inline void set_bit(int nr, volatile void * addr)
 {
 	int	mask;
 	volatile unsigned int *a = addr;
-	unsigned long flags;
-
+	
 	a += nr >> 5;
 	mask = 1 << (nr & 0x1f);
-	local_irq_save(flags);
 	*a |= mask;
-	local_irq_restore(flags);
 }
 
 inline void clear_bit(int nr, volatile void * addr)
 {
 	int	mask;
 	volatile unsigned int *a = addr;
-	unsigned long flags;
-
+	
 	a += nr >> 5;
 	mask = 1 << (nr & 0x1f);
-	local_irq_save(flags);
 	*a &= ~mask;
-	local_irq_restore(flags);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1054,7 +1044,7 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 
 	/* Wait until a signal arrives or we are woken up */
 	for (;;) {
-		try_to_freeze();
+		/* try_to_freeze(); */
 		set_current_state(TASK_INTERRUPTIBLE);
 		if (signal_pending(current)) {
 			rc = -EINTR;
@@ -2818,7 +2808,6 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 
 static void handle_exception(struct fsg_dev *fsg)
 {
-	siginfo_t		info;
 	int			sig;
 	int			i;
 	int			num_active;
@@ -3053,7 +3042,7 @@ int fsg_main_thread(void * _fsg)
 
 /*-------------------------------------------------------------------------*/
 
-
+#if 0 /* Remove warining ================ OBS */
 /* The write permissions and store_xxx pointers are set in fsg_bind() */
 static DEVICE_ATTR(ro, 0444, fsg_show_ro, NULL);
 static DEVICE_ATTR(nofua, 0644, fsg_show_nofua, NULL);
@@ -3078,7 +3067,7 @@ static void lun_release(struct device *dev)
 
 	kref_put(&fsg->ref, fsg_release);
 }
-
+#endif
 static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 {
 	struct fsg_dev		*fsg = get_gadget_data(gadget);
@@ -3096,7 +3085,7 @@ static void /* __init_or_exit */ fsg_unbind(struct usb_gadget *gadget)
 			//device_remove_file(&curlun->dev, &dev_attr_ro);
 			//device_remove_file(&curlun->dev, &dev_attr_file);
 			fsg_lun_close(curlun);
-			device_unregister(&curlun->dev);
+			/* device_unregister(&curlun->dev); */
 			curlun->registered = 0;
 		}
 	}
@@ -3283,7 +3272,7 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 					&dev_attr_nofua)) != 0 ||
 				(rc = device_create_file(&curlun->dev,
 					&dev_attr_file)) != 0) {
-			device_unregister(&curlun->dev);
+			/* device_unregister(&curlun->dev); */
 			goto out;
 		}
 		curlun->registered = 1;
@@ -3405,8 +3394,6 @@ static int __ref fsg_bind(struct usb_gadget *gadget)
 	DBG(fsg, "removable=%d, stall=%d, cdrom=%d, buflen=%u\n",
 			mod_data.removable, mod_data.can_stall,
 			mod_data.cdrom, mod_data.buflen);
-	DBG(fsg, "I/O thread pid: %d\n", task_pid_nr(fsg->thread_task));
-
 	set_bit(REGISTERED, &fsg->atomic_bitflags);
 
 	/* Tell the thread to start working */
@@ -3505,7 +3492,7 @@ int __init fsg_init(struct ums_board_info* _ums)
 }
 module_init(fsg_init);
 
-
+#if 0
 static void __exit fsg_cleanup(void)
 {
 	struct fsg_dev	*fsg = the_fsg;
@@ -3519,4 +3506,5 @@ static void __exit fsg_cleanup(void)
 
 	kref_put(&fsg->ref, fsg_release);
 }
+#endif
 module_exit(fsg_cleanup);
