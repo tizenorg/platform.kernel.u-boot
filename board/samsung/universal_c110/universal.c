@@ -2804,35 +2804,52 @@ int board_eth_init(bd_t *bis)
 #endif
 
 #ifdef CONFIG_CMD_USB_MASS_STORAGE
-static int dummy_read_sector(unsigned int n, void *buf)
+
+static int ums_read_sector(struct ums_device *ums_dev, unsigned int n, void *buf)
 {
-	memset(buf, n % 16, SECTOR_SIZE);
+	if (ums_dev->mmc->block_dev.block_read(ums_dev->dev_num, n, 1, buf) != 1)
+		return -1;
+
 	return 0;
 }
 
-static int dummy_write_sector(unsigned int n, void *buf)
+static int ums_write_sector(struct ums_device *ums_dev, unsigned int n, void *buf)
 {
-	printf("%c", *((char*)buf + 0));
-	printf("%c", *((char*)buf + 1));
-	printf("%c", *((char*)buf + 2));
-	printf("\n");
+	if (ums_dev->mmc->block_dev.block_write(ums_dev->dev_num, n, 1, buf) != 1)
+		return -1;
+
 	return 0;
 }
 
-static int dummy_get_capacity(void)
+static int ums_get_capacity(struct ums_device *ums_dev)
 {
-	return 4096 * 1024;
+	return (u32) (ums_dev->mmc->capacity);
 }
 
 static struct ums_board_info ums_board = {
-	.read_sector = dummy_read_sector,
-	.write_sector = dummy_write_sector,
-	.get_capacity = dummy_get_capacity,
-	.name = "u-Boot disk",
+	.read_sector = ums_read_sector,
+	.write_sector = ums_write_sector,
+	.get_capacity = ums_get_capacity,
+	.name = "SLP UMS disk",
+	.ums_dev = {
+		.mmc = NULL,
+		.dev_num = 0,
+	},
 };
 
-struct ums_board_info *board_ums_init(void)
+struct ums_board_info *board_ums_init(unsigned int dev_num)
 {
+	struct mmc *mmc;
+	
+	mmc = find_mmc_device(dev_num);
+	if (!mmc)
+		return NULL;
+
+	ums_board.ums_dev.mmc = mmc;
+	ums_board.ums_dev.dev_num = dev_num;
+	/* Init MMC */
+	mmc_init(mmc);
+
 	s3c_udc_probe(&s5pc110_otg_data);
 	return &ums_board;
 }

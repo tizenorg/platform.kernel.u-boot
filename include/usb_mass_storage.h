@@ -3,15 +3,23 @@
 
 #define SECTOR_SIZE		0x200
 
+#include <mmc.h>
+
+struct ums_device {
+	struct mmc *mmc;
+	int dev_num;
+};
+
 struct ums_board_info {
-	int (*read_sector)(unsigned int n, void *buf);
-	int (*write_sector)(unsigned int n, void *buf);
-	int (*get_capacity)(void);
+	int (*read_sector)(struct ums_device *ums_dev, unsigned int n, void *buf);
+	int (*write_sector)(struct ums_device *ums_dev, unsigned int n, void *buf);
+	int (*get_capacity)(struct ums_device *ums_dev);
 	const char* name;
+	struct ums_device ums_dev;
 };
 
 extern int fsg_init(struct ums_board_info*);
-extern struct ums_board_info* board_ums_init(void);
+extern struct ums_board_info* board_ums_init(unsigned int);
 extern int usb_gadget_handle_interrupts(void);
 extern int fsg_main_thread(void*);
 

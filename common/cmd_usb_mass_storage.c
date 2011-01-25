@@ -4,10 +4,23 @@
 
 static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
-	int i = 0;
+	int dev_num = 0;
 	struct ums_board_info* ums_info;
 
-	ums_info = board_ums_init();
+	if (argc < 2) {
+		printf("usage: ums <part> [2 SD, 0 eMMC]\n");
+		return 0;
+	}
+	
+	dev_num = (int)simple_strtoul(argv[1], NULL, 16);
+
+	ums_info = board_ums_init(dev_num);
+
+	if (!ums_info) {
+		printf("MMC: %d -> NOT available\n", dev_num);
+		goto fail;
+	}
+
 	fsg_init(ums_info);
 	while (1)
 	{
@@ -18,10 +31,6 @@ static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[
 			goto fail;
 		}
 
-		if (0 == ++i % 1000) {
-			printf(".");
-			i = 0;
-		}
 		irq_res = usb_gadget_handle_interrupts();
 		fsg_main_thread(NULL);
 	}
@@ -30,7 +39,7 @@ fail:
 }
 
 U_BOOT_CMD(ums, CONFIG_SYS_MAXARGS, 1, do_usb_mass_storage,
-	"Initialize USB mass storage and download the image",
-	"ums"
+	"Use the UMS [User Mass Storage]",
+        "ums"
 );
 

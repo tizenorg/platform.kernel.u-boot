@@ -1036,6 +1036,29 @@ static void start_transfer(struct fsg_dev *fsg, struct usb_ep *ep,
 	}
 }
 
+static void busy_indicator(void) {
+	static int state = 0;
+	switch (state) {
+	case 0:
+		puts("\r|");break;
+	case 1:
+		puts("\r/");break;
+	case 2:
+		puts("\r-");break;
+	case 3:
+		puts("\r\\");break;
+	case 4:
+		puts("\r|");break;
+	case 5:
+		puts("\r/");break;
+	case 6:
+		puts("\r-");break;
+	case 7:
+		puts("\r\\");break;
+	}
+	if (state++ == 8)
+		state = 0;
+}
 
 static int sleep_thread(struct fsg_dev *fsg, int line)
 {
@@ -1053,8 +1076,8 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 		if (fsg->thread_wakeup_needed)
 			break;
 		schedule();
-		if (++i == 10000) {
-			printf("+");
+		if (++i == 50000) {
+			busy_indicator();
 			i = 0;
 		}
 		usb_gadget_handle_interrupts();
@@ -1148,7 +1171,8 @@ static int do_read(struct fsg_dev *fsg)
 		amount_tmp = amount;
 		nread = 0;
 		while (amount_tmp > 0) {
-			ums_info->read_sector((file_offset_tmp + nread) / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			ums_info->read_sector(&(ums_info->ums_dev),(file_offset_tmp + nread) / SECTOR_SIZE,
+			                      (char __user *)bh->buf + nread);
 			amount_tmp -= SECTOR_SIZE;
 			nread += SECTOR_SIZE;
 		}
@@ -1332,7 +1356,8 @@ static int do_write(struct fsg_dev *fsg)
 			amount_tmp = amount;
 			nwritten = 0;
 			while (amount_tmp > 0) {
-				ums_info->write_sector((file_offset_tmp + nwritten) / SECTOR_SIZE, (char __user *)bh->buf + nwritten);
+				ums_info->write_sector(&(ums_info->ums_dev), (file_offset_tmp + nwritten) / SECTOR_SIZE,
+				                       (char __user *)bh->buf + nwritten);
 				amount_tmp -= SECTOR_SIZE;
 				nwritten += SECTOR_SIZE;
 			}
@@ -1469,7 +1494,8 @@ static int do_verify(struct fsg_dev *fsg)
 		amount_tmp = amount;
 		nread = 0;
 		while (amount_tmp > 0) {
-			ums_info->read_sector((file_offset_tmp + nread) / SECTOR_SIZE, (char __user *)bh->buf + nread);
+			ums_info->read_sector(&(ums_info->ums_dev), (file_offset_tmp + nread) / SECTOR_SIZE,
+			                      (char __user *)bh->buf + nread);
 			amount_tmp -= SECTOR_SIZE;
 			nread += SECTOR_SIZE;
 		}
