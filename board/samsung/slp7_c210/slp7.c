@@ -45,7 +45,23 @@ static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
 static unsigned int battery_soc;
-static unsigned int board_rev;
+static unsigned int board_rev = 1;
+static unsigned int board_type = 1;
+
+enum {
+	BOARD_SLP7,
+	BOARD_SLP10,
+};
+
+static int board_is_slp7(void)
+{
+	return board_type == BOARD_SLP7;
+}
+
+static int board_is_slp10(void)
+{
+	return board_type == BOARD_SLP10;
+}
 
 u32 get_board_rev(void)
 {
@@ -60,7 +76,7 @@ static int get_hwrev(void)
 enum {
 	I2C_0, I2C_1, I2C_2, I2C_3,
 	I2C_4, I2C_5, I2C_6, I2C_7,
-	I2C_8, I2C_9, I2C_NUM,
+	I2C_8, I2C_9, I2C_10, I2C_NUM,
 };
 
 /* i2c0 (CAM)	SDA: GPD1[0] SCL: GPD1[1] */
@@ -105,6 +121,12 @@ static struct i2c_gpio_bus_data i2c_9 = {
 	.scl_pin	= 1,
 };
 
+/* i2c10 (NFC)	SDA: GPY0[1] SCL: GPY0[0] - for SLP10 */
+static struct i2c_gpio_bus_data i2c_10 = {
+	.sda_pin	= 1,
+	.scl_pin	= 0,
+};
+
 static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
 
 static void check_battery(int mode);
@@ -125,6 +147,7 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_7].bus = &i2c_7;
 	i2c_gpio[I2C_8].bus = NULL;
 	i2c_gpio[I2C_9].bus = &i2c_9;
+	i2c_gpio[I2C_10].bus = &i2c_10;
 
 	i2c_gpio[I2C_0].bus->gpio_base = (unsigned int)&gpio1->d1;
 	i2c_gpio[I2C_1].bus->gpio_base = (unsigned int)&gpio1->d1;
@@ -133,11 +156,13 @@ void i2c_init_board(void)
 	i2c_gpio[I2C_6].bus->gpio_base = (unsigned int)&gpio1->c1;
 	i2c_gpio[I2C_7].bus->gpio_base = (unsigned int)&gpio1->d0;
 	i2c_gpio[I2C_9].bus->gpio_base = (unsigned int)&gpio2->y4;
+	i2c_gpio[I2C_10].bus->gpio_base = (unsigned int)&gpio2->y0;
 
 	i2c_gpio_init(i2c_gpio, I2C_NUM, I2C_5);
 }
 
 static void check_hw_revision(void);
+static void check_board_type(void);
 
 int board_init(void)
 {
@@ -147,8 +172,6 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
-	check_hw_revision();
-
 	return 0;
 }
 
@@ -157,6 +180,8 @@ int dram_init(void)
 	gd->ram_size = PHYS_SDRAM_1_SIZE + PHYS_SDRAM_2_SIZE +
 			PHYS_SDRAM_3_SIZE + PHYS_SDRAM_4_SIZE;
 
+	check_hw_revision();
+
 	/* Early init for i2c devices - Where these funcions should go?? */
 
 	/* Reset on fuel gauge */
@@ -164,6 +189,8 @@ int dram_init(void)
 
 	/* pmic init */
 	init_pmic_max8997();
+
+	check_board_type();
 
 	return 0;
 }
@@ -816,7 +843,7 @@ static unsigned int get_hw_revision(void)
 	return hwrev;
 }
 
-static const char * const pcb_rev[] = {
+static const char * const slp7_pcb_rev[] = {
 	"reserved",
 	"reserved",
 	"reserved",
@@ -824,25 +851,51 @@ static const char * const pcb_rev[] = {
 	"SLP_MAIN_7INCH",
 };
 
+static const char * const slp10_pcb_rev[] = {
+	"reserved",
+	"reserved",
+	"reserved",
+	"reserved",
+	"SLP_MAIN_10INCH",
+};
+
+static void check_board_type(void)
+{
+	i2c_set_bus_num(I2C_10);
+
+	/* SLP7 doesn't have NFC */
+	if (i2c_probe(0x2B))
+		board_type = BOARD_SLP7;
+	else
+		board_type = BOARD_SLP10;
+}
+
 static void check_hw_revision(void)
 {
-	int hwrev;
+	/* NFC_EN: GPL2[6]: output high - early enable for board type chcking */
+	gpio_direction_output(&gpio2->l2, 6, 1);
 
-	hwrev = get_hw_revision();
-
-	board_rev |= hwrev;
+	board_rev = get_hw_revision();
 }
 
 static void show_hw_revision(void)
 {
 	printf("HW Revision:\t0x%x\n", board_rev);
-	printf("PCB Revision:\t%s\n", pcb_rev[board_rev & 0xf]);
+
+	if (board_is_slp7())
+		printf("PCB Revision:\t%s\n", slp7_pcb_rev[board_rev & 0xf]);
+	else if (board_is_slp10())
+		printf("PCB Revision:\t%s\n", slp10_pcb_rev[board_rev & 0xf]);
 }
 
 void get_rev_info(char *rev_info)
 {
-	sprintf(rev_info, "HW Revision: 0x%x (%s)\n",
-			board_rev, pcb_rev[board_rev & 0xf]);
+	if (board_is_slp7())
+		sprintf(rev_info, "HW Revision: 0x%x (%s)\n",
+			board_rev, slp7_pcb_rev[board_rev & 0xf]);
+	else if (board_is_slp10())
+		sprintf(rev_info, "HW Revision: 0x%x (%s)\n",
+			board_rev, slp10_pcb_rev[board_rev & 0xf]);
 }
 
 static void check_reset_status(void)
@@ -989,6 +1042,9 @@ int board_mmc_init(bd_t *bis)
 	 * mmc2	 : SD card (4-bit buswidth)
 	 */
 	err = s5p_mmc_init(0, 8);
+
+	if (board_is_slp10())
+		return err;
 
 	/*
 	 * Check the T-flash  detect pin
