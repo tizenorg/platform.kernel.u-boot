@@ -449,57 +449,6 @@ static void check_keypad(void)
 		setenv("bootcmd", "usbdown");
 }
 
-/*
- * charger_en(): set max8997 pmic's charger mode
- * enable 0: disable charger
- * 600: 600mA
- * 500: 500mA
- */
-static void charger_en(int enable)
-{
-	unsigned char addr = 0xCC >> 1;
-	unsigned char val[2];
-
-	if (max8997_probe())
-		return;
-
-	switch (enable) {
-	case 0:
-		puts("Disable the charger.\n");
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] &= ~0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	case 500:
-		puts("Enable the charger @ 500mA\n");
-		/*
-		 * CHGCNTL1
-		 * ICHG: 500mA (0x3) / 600mA (0x5)
-		 * RESTART LEVEL: 100mA (0x1)
-		 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
-		 * Let's start with slower charging mode and
-		 * let micro usb driver determine whether we can do it
-		 * fast or not. Thus, using the slower setting...
-		 */
-		val[0] = 0x16;
-		i2c_write(addr, 0x53, 1, val, 1);
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] |= 0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	case 600:
-		puts("Enable the charger @ 600mA\n");
-		val[0] = 0x18;
-		i2c_write(addr, 0x53, 1, val, 1);
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] |= 0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	default:
-		puts("Incorrect charger setting.\n");
-	}
-}
-
 struct thermister_stat {
 	short centigrade;
 	unsigned short adc;
@@ -654,30 +603,30 @@ static void into_charge_mode(int charger_speed)
 		/* 2.C. Check the temperature */
 		switch (temperature_check()) {
 		case _TEMP_OK:
-			charger_en(charger_speed);
+			pmic_charger_en(charger_speed);
 			previous_state = _TEMP_OK;
 			break;
 		case _TEMP_TOO_LOW:
-			charger_en(0);
+			pmic_charger_en(0);
 			previous_state = _TEMP_TOO_LOW;
 			break;
 		case _TEMP_TOO_HIGH:
-			charger_en(0);
+			pmic_charger_en(0);
 			previous_state = _TEMP_TOO_HIGH;
 			break;
 		case _TEMP_OK_LOW:
 			if (previous_state == _TEMP_TOO_LOW) {
-				charger_en(0);
+				pmic_charger_en(0);
 			} else {
-				charger_en(charger_speed);
+				pmic_charger_en(charger_speed);
 				previous_state = _TEMP_OK;
 			}
 			break;
 		case _TEMP_OK_HIGH:
 			if (previous_state == _TEMP_TOO_HIGH) {
-				charger_en(0);
+				pmic_charger_en(0);
 			} else {
-				charger_en(charger_speed);
+				pmic_charger_en(charger_speed);
 				previous_state = _TEMP_OK;
 			}
 			break;

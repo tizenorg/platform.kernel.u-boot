@@ -11,4 +11,5 @@ enum {
 };
 
 unsigned int pmic_get_irq(int irq);
+void pmic_charger_en(int enable);
 void pmic_bus_init(int bus_num);
