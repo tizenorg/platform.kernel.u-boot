@@ -247,7 +247,7 @@ done:
 }
 
 static void into_minimum_power(void);
-static void into_charge_mode(int charger_speed);
+static int into_charge_mode(int charger_speed);
 static void check_battery(int mode)
 {
 	unsigned char val[2];
@@ -321,8 +321,8 @@ static void check_battery(int mode)
 			 */
 			if (battery_uV < 4000000) {
 				into_minimum_power();
-				into_charge_mode(500);
-				run_command("reset", 0);
+				if (into_charge_mode(500))
+					run_command("reset", 0);
 			}
 		}
 	} else {
@@ -417,7 +417,7 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x3a, 1, val, 1);
 
 	/* LDO1 VADC: 3.3V */
-	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	val[0] = max8997_reg_ldo(3300000) | 0x00; /* OFF */
 	i2c_write(addr, 0x3b, 1, val, 1);
 
 	/* LDO2 VALIVE: 1.1V */
@@ -425,11 +425,11 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x3c, 1, val, 1);
 
 	/* LDO3 VUSB/MIPI: 1.1V */
-	val[0] = max8997_reg_ldo(1100000) | 0xC0;
+	val[0] = max8997_reg_ldo(1100000) | 0x00; /* OFF */
 	i2c_write(addr, 0x3d, 1, val, 1);
 
 	/* LDO4 VMIPI: 1.8V */
-	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x3e, 1, val, 1);
 
 	/* LDO5 VHSIC: 1.2V */
@@ -441,11 +441,11 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x40, 1, val, 1);
 
 	/* LDO7 CAM_ISP: 1.8V */
-	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x41, 1, val, 1);
 
 	/* LDO8 VDAC/VUSB: 3.3V */
-	val[0] = max8997_reg_ldo(3300000) | 0xC0;
+	val[0] = max8997_reg_ldo(3300000) | 0x00; /* OFF */
 	i2c_write(addr, 0x42, 1, val, 1);
 
 	/* LDO9 VCC_2.8V_PDA: 2.8V */
@@ -461,7 +461,7 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x45, 1, val, 1);
 
 	/* LDO12 VTCAM: 1.8V */
-	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x46, 1, val, 1);
 
 	/* LDO13 VTF: 2.8V */
@@ -469,20 +469,20 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x47, 1, val, 1);
 
 	/* LDO14 MOTOR: 3.0V */
-	val[0] = max8997_reg_ldo(3000000) | 0xC0;
+	val[0] = max8997_reg_ldo(3000000) | 0x00; /* OFF */
 	i2c_write(addr, 0x48, 1, val, 1);
 
 	/* LDO15 VTOUCH: 2.8V */
-	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	val[0] = max8997_reg_ldo(2800000) | 0xC0; /* ON (to be OFFed later) */
 	i2c_write(addr, 0x49, 1, val, 1);
 
 	/* LDO16 CAM_SENSOR: 1.8V */
-	val[0] = max8997_reg_ldo(1800000) | 0xC0;
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x4a, 1, val, 1);
 
 
 	/* LDO18 VTOUCH 2.8V */
-	val[0] = max8997_reg_ldo(2800000) | 0xC0;
+	val[0] = max8997_reg_ldo(2800000) | 0xC0; /* ON (to be OFFed later) */
 	i2c_write(addr, 0x4c, 1, val, 1);
 
 	/* LDO21 VDDQ: 1.2V */
@@ -727,8 +727,9 @@ static void into_minimum_power(void)
 /*
  * into_charge_mode()
  * Run a charge loop with animation and temperature check. If SoC goes over 25%, boot.
+ * Returns 1 if charged.
 **/
-static void into_charge_mode(int charger_speed)
+static int into_charge_mode(int charger_speed)
 {
 	int delay;
 	enum temperature_level previous_state = _TEMP_OK;
@@ -736,7 +737,14 @@ static void into_charge_mode(int charger_speed)
 	int enabled = 1;
 
 	pmic_charger_en(charger_speed);
+#ifdef CONFIG_CMD_PMIC
+	run_command("pmic ldo 1 on", 0);
+#endif
 
+	gpio_cfg_pin(&gpio1->e3, 0, GPIO_FUNC(1));
+	gpio_direction_output(&gpio1->e3, 0, 1);
+
+	pmic_get_irq(PWRON1S); /* Clear IRQ First */
 	printf("Charging...\n");
 
 	/* 2. Loop with temperature check and sleep */
@@ -800,8 +808,11 @@ static void into_charge_mode(int charger_speed)
 			break;
 		}
 		check_battery(0);
+		if (pmic_get_irq(PWRON1S))
+			return 0;
 	} while (battery_soc < 25 && battery_uV < 4000000);
 
+	return 1;
 }
 
 #ifdef CONFIG_LCD
