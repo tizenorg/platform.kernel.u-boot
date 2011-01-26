@@ -45,6 +45,7 @@ static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
 static unsigned int battery_soc;
+static unsigned int battery_uV; /* in micro volts */
 static unsigned int board_rev = 1;
 static unsigned int board_type = 1;
 
@@ -272,6 +273,11 @@ static void check_battery(int mode)
 		battery_soc = val[0] + val[1] * 256;
 		battery_soc /= 256;
 		printf("battery:\t%d%%\n", battery_soc);
+
+		i2c_read(addr, 0x09, 1, val, 2);
+		battery_uV = val[0] + val[1] * 256;
+		battery_uV *= 83;
+		printf("       :\t%d.%6.6d V\n", battery_uV / 1000000, battery_uV % 1000000);
 	}
 }
 
