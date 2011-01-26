@@ -169,20 +169,21 @@ static int pmic_ldo_voltage(int buck, int ldo, int safeout, ulong uV)
 		reg = reg_buck[buck - 1] + 1;
 		mask = 0x3f;
 
-		if (buck == 1 || buck == 2 || buck == 4 || buck == 5)
+		if (buck == 1 || buck == 2 || buck == 4 || buck == 5) {
 			if (uV < 650000)
 				set = 0;
 			else if (uV > 2225000)
 				set = 0x3f;
 			else
 				set = (uV - 650000) / 25000;
-		else if (buck == 3 || buck == 7)
+		} else if (buck == 3 || buck == 7) {
 			if (uV < 750000)
 				set = 0;
 			else if (uV > 3900000)
 				set = 0x3f;
 			else
 				set = (uV - 750000) / 50000;
+		}
 
 		set &= 0x3f;
 
