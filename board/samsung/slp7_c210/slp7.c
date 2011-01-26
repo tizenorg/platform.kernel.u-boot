@@ -585,13 +585,33 @@ static enum temperature_level temperature_check(void)
  */
 static void into_minimum_power(void)
 {
+	u32 reg;
+
 	/* Turn the core1 off */
 	writel(0x0, 0x10022080);
 
-	/* TODO Slow down the CPU */
+	/* Slow down the CPU: 100MHz */
+	/* 1. Set APLL_CON0 @ 100MHZ */
+	writel(0xa0c80604, 0x10044100);
+	/* 2. Change system clock dividers */
+	writel(0x00000100, 0x10044500); /* CLK_DIV_CPU0 */
+	do {
+		reg = readl(0x10044600); /* CLK_DIV_STAT_CPU0 */
+	} while (reg & 0x1111111);
+	/* skip CLK_DIV_CPU1: no change */
+	writel(0x13113117, 0x10040500); /* CLK_DIV_DMC0 */
+	do {
+		reg = readl(0x10040600);
+	} while (reg & 0x11111111);
+	/* skip CLK_DIV_TOP: no change */
+	/* skip CLK_DIV_LEFT/RIGHT BUS: no change */
+
+#ifdef CONFIG_CMD_PMIC
+	/* 3. Lower voltage: vddarm(buck1) 0.9V / vddint(buck2) 1.0V */
+	run_command("pmic buck 1 900000", 0);
+	run_command("pmic buck 2 1000000", 0);
 
 	/* Turn off unnecessary LDO/BUCKs */
-#ifdef CONFIG_CMD_PMIC
 	run_command("pmic buck 3 off", 0);
 	run_command("pmic buck 4 off", 0);
 	run_command("pmic buck 5 off", 0);
@@ -624,7 +644,15 @@ static void into_minimum_power(void)
 	writel(0x0, 0x10023CC0);
 	writel(0x0, 0x10023CE0);
 
-	/* TODO: Turn off unnecessary clocks */
+	/* Turn off unnecessary clocks */
+	writel(0x0, 0x1003c920); /* CAM */
+	writel(0x0, 0x1003c924); /* TV */
+	writel(0x0, 0x1003c928); /* MFC */
+	writel(0x0, 0x1003c92c); /* G3D */
+	writel(0x0, 0x1003c930); /* IMAGE */
+	writel(0x0, 0x1003c934); /* LCD0 */
+	writel(0x0, 0x1003c938); /* LCD1 */
+	writel(0x0, 0x1003c94c); /* LCD1 */
 }
 
 /*
