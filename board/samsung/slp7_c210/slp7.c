@@ -46,6 +46,7 @@ static struct s5pc210_gpio_part2 *gpio2;
 
 static unsigned int battery_soc;
 static unsigned int battery_uV; /* in micro volts */
+static unsigned int battery_cap; /* in mAh */
 static unsigned int board_rev = 1;
 static unsigned int board_type = 1;
 
@@ -245,6 +246,8 @@ done:
 	memset((void *)magic_base, 0, 2);
 }
 
+static void into_minimum_power(void);
+static void into_charge_mode(int charger_speed);
 static void check_battery(int mode)
 {
 	unsigned char val[2];
@@ -259,6 +262,9 @@ static void check_battery(int mode)
 
 	/* mode 0: check mode / 1: enable mode */
 	if (mode) {
+		int v;
+		printf("MAX17042 Enable.\n");
+
 		val[0] = 0x00;
 		val[1] = 0x00;
 		i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
@@ -268,8 +274,59 @@ static void check_battery(int mode)
 		val[0] = 0x07;
 		val[1] = 0x00;
 		i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
+
+#if 0
+		/* TODO: Need to refine these */
+		val[0] = 0x40; /* LOW part of 4000mAh (->8000) */
+		val[1] = 0x1F; /* HIGH part of 4000mAh (->8000) */
+		i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
+		i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
+#endif
+
+		i2c_read(addr, 0x06, 1, val, 2);
+		battery_soc = val[0] + val[1] * 256;
+		battery_soc /= 256;
+
+#if 0
+		i2c_read(addr, 0x05, 1, val, 2);
+		v = (val[0] + val[1] * 256) / 2;
+		printf("REPCAP = %d\n", v);
+		i2c_read(addr, 0x10, 1, val, 2);
+		v = (val[0] + val[1] * 256) / 2;
+		printf("FULLCAP = %d\n", v);
+		i2c_read(addr, 0x18, 1, val, 2);
+		v = (val[0] + val[1] * 256) / 2;
+		printf("DESIGNCAP = %d\n", v);
+#endif
+
+		/* If battery is too low, stop booting and let it charge for a while */
+		if (battery_soc < 10) {
+			printf("battery:\t%d%%\n", battery_soc);
+
+			pmic_bus_init(I2C_5);
+
+			i2c_read(addr, 0x09, 1, val, 2);
+			battery_uV = val[0] + val[1] * 256;
+			battery_uV *= 83;
+
+			i2c_read(addr, 0x05, 1, val, 2);
+			battery_cap = (val[0] + val[1] * 256) / 2;
+
+			printf("       :\t%d.%6.6d V (expected to be %dmAh)\n",
+					battery_uV / 1000000, battery_uV % 1000000, battery_cap);
+
+			/*
+			 * Low SoC with Low Battery Voltage only
+			 * because the developer kit tends to have 0% SoC with High Voltage
+			 */
+			if (battery_uV < 4200000) {
+				into_minimum_power();
+				into_charge_mode(500);
+				run_command("reset", 0);
+			}
+		}
 	} else {
-		i2c_read(addr, 0x0d, 1, val, 2);
+		i2c_read(addr, 0x06, 1, val, 2);
 		battery_soc = val[0] + val[1] * 256;
 		battery_soc /= 256;
 		printf("battery:\t%d%%\n", battery_soc);
@@ -277,7 +334,11 @@ static void check_battery(int mode)
 		i2c_read(addr, 0x09, 1, val, 2);
 		battery_uV = val[0] + val[1] * 256;
 		battery_uV *= 83;
-		printf("       :\t%d.%6.6d V\n", battery_uV / 1000000, battery_uV % 1000000);
+
+		i2c_read(addr, 0x05, 1, val, 2);
+		battery_cap = (val[0] + val[1] * 256) / 2;
+		printf("       :\t%d.%6.6d V (expected to be %dmAh)\n",
+				battery_uV / 1000000, battery_uV % 1000000, battery_cap);
 	}
 }
 
@@ -551,6 +612,12 @@ static int adc_get_average_ambient_temperature(void)
 		sum -= max;
 	}
 	sum /= measured;
+
+	if (sum == 0) {
+		printf("ADC NOT WORKING!. Assuming it's ok.\n");
+		return 25;
+	}
+
 	printf("Average Ambient Temperature = %d(ADC=%d)\n",
 			adc_to_temperature_centigrade(sum), sum);
 	return adc_to_temperature_centigrade(sum);
@@ -586,6 +653,8 @@ static enum temperature_level temperature_check(void)
 static void into_minimum_power(void)
 {
 	u32 reg;
+
+	printf("Turning off core 1 and slowing down to reduce power consumption.\n");
 
 	/* Turn the core1 off */
 	writel(0x0, 0x10022080);
@@ -657,23 +726,18 @@ static void into_minimum_power(void)
 
 /*
  * into_charge_mode()
- * Run a charge loop with animation and temperature check with sleep
+ * Run a charge loop with animation and temperature check. If SoC goes over 25%, boot.
 **/
 static void into_charge_mode(int charger_speed)
 {
-	int i, j, delay;
+	int delay;
 	enum temperature_level previous_state = _TEMP_OK;
 	unsigned int wakeup_stat = 0;
+	int enabled = 1;
 
-	/* 1. Show Animation */
-	for (i = 0; i < 5; i++) {
-		for (j = 0; j < 5; j++) {
-			printf(".");
-			for (delay = 0; delay < 1000; delay++)
-				udelay(1000);
-		}
-		printf("\n");
-	}
+	pmic_charger_en(charger_speed);
+
+	printf("Charging...\n");
 
 	/* 2. Loop with temperature check and sleep */
 	do {
@@ -681,40 +745,63 @@ static void into_charge_mode(int charger_speed)
 
 		/* TODO: 2.B. Go to sleep */
 		for (delay = 0; delay < 4000; delay++)
-			udelay(1000);
+			udelay(500);
 
 		/* 2.C. Check the temperature */
 		switch (temperature_check()) {
 		case _TEMP_OK:
-			pmic_charger_en(charger_speed);
+			if (!enabled) {
+				pmic_charger_en(charger_speed);
+				enabled = 1;
+			}
 			previous_state = _TEMP_OK;
 			break;
 		case _TEMP_TOO_LOW:
-			pmic_charger_en(0);
+			if (enabled) {
+				pmic_charger_en(0);
+				enabled = 0;
+			}
 			previous_state = _TEMP_TOO_LOW;
 			break;
 		case _TEMP_TOO_HIGH:
-			pmic_charger_en(0);
+			if (enabled) {
+				pmic_charger_en(0);
+				enabled = 0;
+			}
 			previous_state = _TEMP_TOO_HIGH;
 			break;
 		case _TEMP_OK_LOW:
 			if (previous_state == _TEMP_TOO_LOW) {
-				pmic_charger_en(0);
+				if (enabled) {
+					pmic_charger_en(0);
+					enabled = 0;
+				}
 			} else {
-				pmic_charger_en(charger_speed);
+				if (!enabled) {
+					pmic_charger_en(charger_speed);
+					enabled = 1;
+				}
 				previous_state = _TEMP_OK;
 			}
 			break;
 		case _TEMP_OK_HIGH:
 			if (previous_state == _TEMP_TOO_HIGH) {
-				pmic_charger_en(0);
+				if (enabled) {
+					pmic_charger_en(0);
+					enabled = 0;
+				}
 			} else {
-				pmic_charger_en(charger_speed);
+				if (!enabled) {
+					pmic_charger_en(charger_speed);
+					enabled = 1;
+				}
 				previous_state = _TEMP_OK;
 			}
 			break;
 		}
-	} while (wakeup_stat == 0x04);
+		check_battery(0);
+	} while (battery_soc < 25 && battery_uV < 4000000);
+
 }
 
 #ifdef CONFIG_LCD
