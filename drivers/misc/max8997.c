@@ -45,45 +45,29 @@ void pmic_charger_en(int enable)
 {
 	unsigned char addr = 0xCC >> 1;
 	unsigned char val[2];
+	unsigned char fc;
 
 	if (pmic_probe())
 		return;
 
-	switch (enable) {
-	case 0:
+	if (!enable) {
 		puts("Disable the charger.\n");
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] &= ~0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	case 500:
-		puts("Enable the charger @ 500mA\n");
-		/*
-		 * CHGCNTL1
-		 * ICHG: 500mA (0x3) / 600mA (0x5)
-		 * RESTART LEVEL: 100mA (0x1)
-		 * EOC LEVEL: 30% (0x4) / 25% (0x3) : both 150mA of ICHG
-		 * Let's start with slower charging mode and
-		 * let micro usb driver determine whether we can do it
-		 * fast or not. Thus, using the slower setting...
-		 */
-		val[0] = 0x16;
-		i2c_write(addr, 0x53, 1, val, 1);
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] |= 0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	case 600:
-		puts("Enable the charger @ 600mA\n");
-		val[0] = 0x18;
-		i2c_write(addr, 0x53, 1, val, 1);
-		i2c_read(addr, 0x50, 1, val, 1);
-		val[0] |= 0x1;
-		i2c_write(addr, 0x50, 1, val, 1);
-		break;
-	default:
-		puts("Incorrect charger setting.\n");
+		i2c_read(addr, 0x51, 1, val, 1);
+		val[0] &= ~(1 << 6);
+		i2c_write(addr, 0x51, 1, val, 1);
+		return;
 	}
+
+	fc = (enable - 200) / 50;
+	fc = fc & 0xf; /* up to 950 mA */
+
+	printf("Enable the charger @ %d mA\n", fc * 50 + 200);
+	val[0] = fc;
+	i2c_write(addr, 0x53, 1, val, 1);
+
+	i2c_read(addr, 0x51, 1, val, 1);
+	val[0] |= 1 << 6;
+	i2c_write(addr, 0x51, 1, val, 1);
 }
 
 unsigned int pmic_get_irq(int irq)
