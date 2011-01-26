@@ -32,11 +32,8 @@ static int pmic_probe(void)
 }
 
 #ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
-#define i2c_read_func(addr, reg, alen, val, len)	\
+#define i2c_read(addr, reg, alen, val, len)	\
 			i2c_read_r(addr, reg, alen, val, len)
-#else
-#define i2c_read_func(addr, reg, alen, val, len)	\
-			i2c_read(addr, reg, alen, val, len)
 #endif
 
 unsigned int pmic_get_irq(int irq)
@@ -67,7 +64,7 @@ unsigned int pmic_get_irq(int irq)
 		return 0;
 	}
 
-	i2c_read_func(addr, 0x3, 1, val, 4);
+	i2c_read(addr, 0x3, 1, val, 4);
 
 	ret = val[reg] & (1 << shift);
 
@@ -86,20 +83,20 @@ static int pmic_status(void)
 		return -1;
 
 	for (i = 0; i < 7; i++) {
-		i2c_read_func(addr, reg_buck[i], 1, val, 1);
+		i2c_read(addr, reg_buck[i], 1, val, 1);
 		printf("BUCK%d %s\n", i + 1,
 				(val[0] & 0x01) ? "on" : "off");
 	}
 
 	for (i = 1; i <= 18; i++) {
-		i2c_read_func(addr, 0x3a + i, 1, val, 1);
+		i2c_read(addr, 0x3a + i, 1, val, 1);
 		printf("LDO%d %s\n", i,
 				(val[0] & 0xC0) ? "on" : "off");
 	}
-	i2c_read_func(addr, 0x4d, 1, val, 1);
+	i2c_read(addr, 0x4d, 1, val, 1);
 	printf("LDO21 %s\n", (val[0] & 0xC0) ? "on" : "off");
 
-	i2c_read_func(addr, 0x5a, 1, val, 1);
+	i2c_read(addr, 0x5a, 1, val, 1);
 	printf("SAFEOUT1 %s\n", (val[0] & (1 << 6)) ? "on" : "off");
 	printf("SAFEOUT2 %s\n", (val[0] & (1 << 7)) ? "on" : "off");
 
@@ -181,11 +178,11 @@ static int pmic_ldo_voltage(int buck, int ldo, int safeout, ulong uV)
 	if (pmic_probe())
 		return -1;
 
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	val[0] &= ~mask;
 	val[0] |= set;
 	i2c_write(addr, reg, 1, val, 1);
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 
 	return 0;
 }
@@ -224,14 +221,14 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	if (pmic_probe())
 		return -1;
 
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 	if (on)
 		val[0] |= set;
 	else
 		val[0] &= ~set;
 
 	i2c_write(addr, reg, 1, val, 1);
-	i2c_read_func(addr, reg, 1, val, 1);
+	i2c_read(addr, reg, 1, val, 1);
 
 	return 0;
 }
