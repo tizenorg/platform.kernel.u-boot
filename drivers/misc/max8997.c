@@ -247,7 +247,7 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 		set = 0x01;
 	} else if (safeout) {
 		if (safeout < 1 || safeout > 2)
-			return 01;
+			return -1;
 		reg = 0x5a;
 		set = 1 << (5 + safeout);
 	} else
