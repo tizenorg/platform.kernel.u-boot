@@ -166,7 +166,7 @@ static int pmic_ldo_voltage(int buck, int ldo, int safeout, ulong uV)
 	} else if (buck) {
 		if (buck < 1 || buck > 7)
 			return -1;
-		reg = reg_buck[buck] + 1;
+		reg = reg_buck[buck - 1] + 1;
 		mask = 0x3f;
 
 		if (buck == 1 || buck == 2 || buck == 4 || buck == 5)
@@ -240,7 +240,7 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 	} else if (buck) {
 		if (buck < 1 || buck > 7)
 			return -1;
-		reg = reg_buck[buck];
+		reg = reg_buck[buck - 1];
 		set = 0x01;
 	} else if (safeout) {
 		if (safeout < 1 || safeout > 2)
