@@ -249,7 +249,6 @@ static void check_battery(int mode)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17042 fuel gauge */
-	static int initialized;
 
 	i2c_set_bus_num(I2C_9);
 
@@ -258,7 +257,8 @@ static void check_battery(int mode)
 		return;
 	}
 
-	if (initialized == 0) {
+	/* mode 0: check mode / 1: enable mode */
+	if (mode) {
 		val[0] = 0x00;
 		val[1] = 0x00;
 		i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
@@ -268,12 +268,7 @@ static void check_battery(int mode)
 		val[0] = 0x07;
 		val[1] = 0x00;
 		i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
-
-		initialized = 1;
-	}
-
-	/* mode 0: check mode / 1: enable mode */
-	if (mode == 0) {
+	} else {
 		i2c_read(addr, 0x0d, 1, val, 2);
 		battery_soc = val[0] + val[1] * 256;
 		battery_soc /= 256;
