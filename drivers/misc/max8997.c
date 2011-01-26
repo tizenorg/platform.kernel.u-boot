@@ -217,6 +217,8 @@ static int pmic_ldo_voltage(int buck, int ldo, int safeout, ulong uV)
 	val[0] |= set;
 	i2c_write(addr, reg, 1, val, 1);
 	i2c_read(addr, reg, 1, val, 1);
+	printf("MAX8997 REG %2.2xh has %2.2xh\n",
+			reg, val[0]);
 
 	return 0;
 }
@@ -269,9 +271,8 @@ static int pmic_ldo_control(int buck, int ldo, int safeout, int on)
 
 static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	int buck = 0, ldo = 0, safeout = 0, on = -1;
+	int buck = 0, ldo = 0, safeout = 0;
 	int ret = 0;
-	ulong volt;
 
 	switch (argc) {
 	case 2:
@@ -289,36 +290,22 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			break;
 
 		if (strncmp(argv[3], "on", 2) == 0)
-			on = 1;
+			ret = pmic_ldo_control(buck, ldo, safeout, 1);
 		else if (strncmp(argv[3], "off", 3) == 0)
-			on = 0;
-		else
-			break;
-
-		ret = pmic_ldo_control(buck, ldo, safeout, on);
+			ret = pmic_ldo_control(buck, ldo, safeout, 0);
+		else {
+			ulong volt = simple_strtoul(argv[3], NULL, 10);
+			printf("volt = %duV\n", volt);
+			if (volt <= 0)
+				ret = -1;
+			else
+				ret = pmic_ldo_voltage(buck, ldo, safeout, volt);
+		}
 
 		if (!ret)
 			printf("%s %s %s\n", argv[1], argv[2], argv[3]);
-		return ret;
-	case 5:
-		if (strncmp(argv[1], "ldo", 3) == 0)
-			ldo = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "buck", 4) == 0)
-			buck = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "safeout", 7) == 0)
-			safeout = simple_strtoul(argv[2], NULL, 10);
-		else
-			break;
-
-		if (strncmp(argv[3], "set", 3) != 0)
-			break;
-
-		volt = simple_strtoul(argv[4], NULL, 10);
-
-		ret = pmic_ldo_voltage(buck, ldo, safeout, volt);
-
-		if (!ret)
-			printf("%s %s %s %s\n", argv[1], argv[2], argv[3], argv[4]);
+		if (ret < 0)
+			printf("Error.\n");
 		return ret;
 	default:
 		break;
@@ -332,8 +319,8 @@ U_BOOT_CMD(
 	pmic,		4,	1, do_pmic,
 	"PMIC LDO & BUCK control",
 	"status - Display PMIC LDO & BUCK status\n"
-	"pmic ldo num on/off - Turn on/off the LDO\n"
-	"pmic buck num on/off - Turn on/off the BUCK\n"
-	"pmic safeout num on/off - Turn on/off the SAFEOUT\n"
-	"pmic ldo|buck|safeout num set voltage - Set voltage\n"
+	"pmic ldo num on/off/volt - Turn on/off the LDO\n"
+	"pmic buck num on/off/volt - Turn on/off the BUCK\n"
+	"pmic safeout num on/off/volt - Turn on/off the SAFEOUT\n"
+	"	volt is voltage in uV\n"
 );
