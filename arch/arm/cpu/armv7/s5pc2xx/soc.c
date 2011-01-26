@@ -28,3 +28,13 @@ void reset_cpu(ulong addr)
 {
 	writel(0x1, samsung_get_base_swreset());
 }
+
+#ifdef CONFIG_TEST_BOOTTIME
+unsigned int get_boottime(void)
+{
+	if (s5p_cpu_rev == 0)
+		return (0xffffffff - readl(0x1005000c)) / 20 / 1000;
+	else
+		return readl(0x10050100) / 20 / 1000;
+}
+#endif

@@ -84,7 +84,7 @@ static void announce_and_cleanup(void)
 {
 #ifdef CONFIG_TEST_BOOTTIME
 	/* Checking for boot time: It will be deleted */
-	printf("boot time: %d ms\n\n", (0xffffffff - readl(0x1005000c)) / 20 / 1000);
+	printf("boot time: %d ms\n\n", get_boottime());
 #endif
 
 	printf("\nStarting kernel ...\n\n");
