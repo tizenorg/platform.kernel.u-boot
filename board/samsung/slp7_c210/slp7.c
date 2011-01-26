@@ -319,7 +319,7 @@ static void check_battery(int mode)
 			 * Low SoC with Low Battery Voltage only
 			 * because the developer kit tends to have 0% SoC with High Voltage
 			 */
-			if (battery_uV < 4200000) {
+			if (battery_uV < 4000000) {
 				into_minimum_power();
 				into_charge_mode(500);
 				run_command("reset", 0);
