@@ -579,6 +579,55 @@ static enum temperature_level temperature_check(void)
 }
 
 /*
+ * into_minimum_power()
+ * Turn off most power sources except those required for charging and
+ * resetting the cpu.
+ */
+static void into_minimum_power(void)
+{
+	/* Turn the core1 off */
+	writel(0x0, 0x10022080);
+
+	/* TODO Slow down the CPU */
+
+	/* Turn off unnecessary LDO/BUCKs */
+#ifdef CONFIG_CMD_PMIC
+	run_command("pmic buck 3 off", 0);
+	run_command("pmic buck 4 off", 0);
+	run_command("pmic buck 5 off", 0);
+	run_command("pmic buck 6 off", 0);
+	run_command("pmic ldo 1 off", 0);
+	run_command("pmic ldo 3 off", 0);
+	run_command("pmic ldo 4 off", 0);
+	run_command("pmic ldo 5 off", 0);
+	run_command("pmic ldo 7 off", 0);
+	run_command("pmic ldo 8 off", 0);
+	run_command("pmic ldo 11 off", 0);
+	run_command("pmic ldo 12 off", 0);
+	run_command("pmic ldo 13 off", 0);
+	run_command("pmic ldo 14 off", 0);
+	run_command("pmic ldo 15 off", 0);
+	run_command("pmic ldo 16 off", 0);
+	run_command("pmic ldo 17 off", 0);
+	run_command("pmic ldo 18 off", 0);
+	run_command("pmic safeout 1 off", 0);
+	run_command("pmic safeout 2 off", 0);
+#endif
+	/* Turn off unnecessary power domains */
+	writel(0x0, 0x10023420); /* XXTI */
+	writel(0x0, 0x10023C00); /* CAM */
+	writel(0x0, 0x10023C20);
+	writel(0x0, 0x10023C40);
+	writel(0x0, 0x10023C60);
+	writel(0x0, 0x10023C80);
+	writel(0x0, 0x10023CA0);
+	writel(0x0, 0x10023CC0);
+	writel(0x0, 0x10023CE0);
+
+	/* TODO: Turn off unnecessary clocks */
+}
+
+/*
  * into_charge_mode()
  * Run a charge loop with animation and temperature check with sleep
 **/
