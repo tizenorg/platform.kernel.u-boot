@@ -131,7 +131,7 @@ static struct i2c_gpio_bus_data i2c_10 = {
 
 static struct i2c_gpio_bus i2c_gpio[I2C_NUM];
 
-static void check_battery(int mode);
+static void init_battery_max17042(void);
 static void init_pmic_max8997(void);
 
 void i2c_init_board(void)
@@ -187,7 +187,7 @@ int dram_init(void)
 	/* Early init for i2c devices - Where these funcions should go?? */
 
 	/* Reset on fuel gauge */
-	check_battery(1);
+	init_battery_max17042();
 
 	/* pmic init */
 	init_pmic_max8997();
@@ -246,7 +246,7 @@ done:
 	memset((void *)magic_base, 0, 2);
 }
 
-static void check_battery(int mode)
+static void init_battery_max17042(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17042 fuel gauge */
@@ -258,40 +258,50 @@ static void check_battery(int mode)
 		return;
 	}
 
-	/* mode 0: check mode / 1: enable mode */
-	if (mode) {
-		val[0] = 0x00;
-		val[1] = 0x00;
-		i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
-		val[0] = 0x03;
-		val[1] = 0x00;
-		i2c_write(addr, 0x2b, 1, val, 2); /* MiscCFG */
-		val[0] = 0x07;
-		val[1] = 0x00;
-		i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
+	val[0] = 0x00;
+	val[1] = 0x00;
+	i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
+	val[0] = 0x03;
+	val[1] = 0x00;
+	i2c_write(addr, 0x2b, 1, val, 2); /* MiscCFG */
+	val[0] = 0x07;
+	val[1] = 0x00;
+	i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
 
 #if 0
-		/* TODO: Need to refine these */
-		val[0] = 0x40; /* LOW part of 4000mAh (->8000) */
-		val[1] = 0x1F; /* HIGH part of 4000mAh (->8000) */
-		i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
-		i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
+	/* TODO: Need to refine these */
+	val[0] = 0x40; /* LOW part of 4000mAh (->8000) */
+	val[1] = 0x1F; /* HIGH part of 4000mAh (->8000) */
+	i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
+	i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
 #endif
-	} else {
-		i2c_read(addr, 0x06, 1, val, 2);
-		battery_soc = val[0] + val[1] * 256;
-		battery_soc /= 256;
-		printf("battery:\t%d%%\n", battery_soc);
+}
 
-		i2c_read(addr, 0x09, 1, val, 2);
-		battery_uV = val[0] + val[1] * 256;
-		battery_uV *= 83;
+static void check_battery(void)
+{
+	unsigned char val[2];
+	unsigned char addr = 0x36;	/* max17042 fuel gauge */
 
-		i2c_read(addr, 0x05, 1, val, 2);
-		battery_cap = (val[0] + val[1] * 256) / 2;
-		printf("       :\t%d.%6.6d V (expected to be %dmAh)\n",
-				battery_uV / 1000000, battery_uV % 1000000, battery_cap);
+	i2c_set_bus_num(I2C_9);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max17042 fuel gauge\n");
+		return;
 	}
+
+	i2c_read(addr, 0x06, 1, val, 2);
+	battery_soc = val[0] + val[1] * 256;
+	battery_soc /= 256;
+	printf("battery:\t%d%%\n", battery_soc);
+
+	i2c_read(addr, 0x09, 1, val, 2);
+	battery_uV = val[0] + val[1] * 256;
+	battery_uV *= 83;
+
+	i2c_read(addr, 0x05, 1, val, 2);
+	battery_cap = (val[0] + val[1] * 256) / 2;
+	printf("voltage:\t%d.%6.6d V (expected to be %dmAh)\n",
+		battery_uV / 1000000, battery_uV % 1000000, battery_cap);
 }
 
 static int max8997_probe(void)
@@ -864,8 +874,8 @@ int misc_init_r(void)
 
 	check_auto_burn();
 
-	/* check max17040 */
-	check_battery(0);
+	/* check max17042 */
+	check_battery();
 
 #ifdef CONFIG_INFO_ACTION
 	info_action_check();
