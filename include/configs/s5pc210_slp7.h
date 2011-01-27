@@ -317,6 +317,9 @@
 #define CONFIG_OTG_CLK_OSCC
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 
+/* PWM */
+#define CONFIG_PWM
+
 /* LCD */
 #if 1
 #define CONFIG_LCD		1

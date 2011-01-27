@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Samsung Electronics
+ * Copyright (C) 2011 Samsung Electronics
  *
  * Donghwa Lee <dh09.lee@samsung.com>
  *
@@ -29,8 +29,6 @@
 #include <asm/arch/pwm.h>
 #include <asm/arch/clk.h>
 
-DECLARE_GLOBAL_DATA_PTR;
-
 #define PRESCALER_0		(8 - 1)		/* prescaler of timer 0, 1 */
 #define MUX_DIV_1		0		/* 1/1 period */
 #define MUX_DIV_2		1		/* 1/2 period */
@@ -38,9 +36,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define MUX_DIV_8		3		/* 1/8 period */
 #define MUX_DIV_16		4		/* 1/16 period */
 
-#define MUX0_DIV_SHIFT		0
+#define MUX_DIV_SHIFT(x)	((x) * 4)
 
 #define TCON0_TIMER_SHIFT	0
+#define TCON_TIMER_SHIFT(x)	(8 + ((x - 1) * 4))
 
 
 int pwm_enable(int pwm_id)
@@ -100,6 +99,8 @@ int pwm_config(int pwm_id, int duty_ns, int period_ns)
 	unsigned long period;
 	unsigned long tcon;
 	unsigned long tcnt;
+	unsigned long timer_rate_hz;
+
 	long tcmp;
 
 	/* We currently avoid using 64bit arithmetic by using the
@@ -123,7 +124,7 @@ int pwm_config(int pwm_id, int duty_ns, int period_ns)
 	/* Check to see if we are changing the clock rate of the PWM */
 
 	tin_rate = pwm_calc_tin(pwm_id, period);
-	gd->timer_rate_hz = tin_rate;
+	timer_rate_hz = tin_rate;
 
 	tin_ns = NS_IN_HZ / tin_rate;
 	tcnt = period_ns / tin_ns;
@@ -165,11 +166,11 @@ int pwm_config(int pwm_id, int duty_ns, int period_ns)
 	return 0;
 }
 
-int pwm_init(void)
+int pwm_init(int pwm_id)
 {
 	u32 val;
 	const struct s5p_timer *pwm = (struct s5p_timer *)samsung_get_base_timer();
-	//pwm = (struct s5p_timer *)samsung_get_base_timer();
+	unsigned long timer_rate_hz;
 
 	/*
 	 * @ PWM Timer 0
@@ -184,28 +185,29 @@ int pwm_init(void)
 	val |= (PRESCALER_0 & 0xff) << 8;
 	writel(val, &pwm->tcfg0);
 	val = readl(&pwm->tcfg1);
-	val &= ~(0xf << MUX0_DIV_SHIFT);
-	val |= (MUX_DIV_1 & 0xF) << MUX0_DIV_SHIFT;
+	val &= ~(0xf << MUX_DIV_SHIFT(pwm_id));
+	val |= (MUX_DIV_1 & 0xF) << MUX_DIV_SHIFT(pwm_id);
 	writel(val, &pwm->tcfg1);
 
 	/* timer_rate_hz = 44444444(HZ) (per 1 sec)*/
-	gd->timer_rate_hz = get_pwm_clk() / ((PRESCALER_0 + 1) *
+	timer_rate_hz = get_pwm_clk() / ((PRESCALER_0 + 1) *
 			(MUX_DIV_1 + 1));
 
 	/* timer_rate_hz / 100 = 444444.44(HZ) (per 10 msec) */
-	gd->timer_rate_hz = gd->timer_rate_hz / 100;
+	timer_rate_hz = timer_rate_hz / 100;
 
 	/* set count value */
-	writel(gd->timer_rate_hz, &pwm->tcntb0);
-	gd->lastinc = gd->timer_rate_hz;
+	writel(timer_rate_hz, &pwm->tcntb0);
 
-	val = (readl(&pwm->tcon) & ~(0x07 << TCON0_TIMER_SHIFT)) |
-		TCON0_INVERTER;
+	if (pwm_id == 0)
+		val = (readl(&pwm->tcon) & ~(0x07 << TCON0_TIMER_SHIFT)) |
+			TCON0_INVERTER;
+	else
+		val = (readl(&pwm->tcon) &
+			~(0x07 << TCON_TIMER_SHIFT(pwm_id))) | TCON0_INVERTER;
 
 	/* start PWM timer 0 */
 	writel(val | TCON0_START, &pwm->tcon);
-
-	gd->timer_reset_value = 0;
 
 	return 0;
 }

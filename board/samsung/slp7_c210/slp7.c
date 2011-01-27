@@ -173,7 +173,6 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
-	pwm_init();
 	return 0;
 }
 
@@ -741,6 +740,7 @@ void init_panel_info(vidinfo_t *vid)
 	backlight.max_brightness = 100;
 	backlight.brightness = 50;
 
+	pwm_init(backlight.pwm_id);
 	pwm_backlight_init(&backlight);
 	setenv("lcdinfo", "lcd=nt39411");
 }
