@@ -246,8 +246,6 @@ done:
 	memset((void *)magic_base, 0, 2);
 }
 
-static void into_minimum_power(void);
-static int into_charge_mode(int charger_speed);
 static void check_battery(int mode)
 {
 	unsigned char val[2];
@@ -262,9 +260,6 @@ static void check_battery(int mode)
 
 	/* mode 0: check mode / 1: enable mode */
 	if (mode) {
-		int v;
-		printf("MAX17042 Enable.\n");
-
 		val[0] = 0x00;
 		val[1] = 0x00;
 		i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
@@ -282,49 +277,6 @@ static void check_battery(int mode)
 		i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
 		i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
 #endif
-
-		i2c_read(addr, 0x06, 1, val, 2);
-		battery_soc = val[0] + val[1] * 256;
-		battery_soc /= 256;
-
-#if 0
-		i2c_read(addr, 0x05, 1, val, 2);
-		v = (val[0] + val[1] * 256) / 2;
-		printf("REPCAP = %d\n", v);
-		i2c_read(addr, 0x10, 1, val, 2);
-		v = (val[0] + val[1] * 256) / 2;
-		printf("FULLCAP = %d\n", v);
-		i2c_read(addr, 0x18, 1, val, 2);
-		v = (val[0] + val[1] * 256) / 2;
-		printf("DESIGNCAP = %d\n", v);
-#endif
-
-		/* If battery is too low, stop booting and let it charge for a while */
-		if (battery_soc < 10) {
-			printf("battery:\t%d%%\n", battery_soc);
-
-			pmic_bus_init(I2C_5);
-
-			i2c_read(addr, 0x09, 1, val, 2);
-			battery_uV = val[0] + val[1] * 256;
-			battery_uV *= 83;
-
-			i2c_read(addr, 0x05, 1, val, 2);
-			battery_cap = (val[0] + val[1] * 256) / 2;
-
-			printf("       :\t%d.%6.6d V (expected to be %dmAh)\n",
-					battery_uV / 1000000, battery_uV % 1000000, battery_cap);
-
-			/*
-			 * Low SoC with Low Battery Voltage only
-			 * because the developer kit tends to have 0% SoC with High Voltage
-			 */
-			if (battery_uV < 4000000) {
-				into_minimum_power();
-				if (into_charge_mode(500))
-					run_command("reset", 0);
-			}
-		}
 	} else {
 		i2c_read(addr, 0x06, 1, val, 2);
 		battery_soc = val[0] + val[1] * 256;
@@ -643,176 +595,6 @@ static enum temperature_level temperature_check(void)
 	if (temp > 58)
 		return _TEMP_OK_HIGH;
 	return _TEMP_OK;
-}
-
-/*
- * into_minimum_power()
- * Turn off most power sources except those required for charging and
- * resetting the cpu.
- */
-static void into_minimum_power(void)
-{
-	u32 reg;
-
-	printf("Turning off core 1 and slowing down to reduce power consumption.\n");
-
-	/* Turn the core1 off */
-	writel(0x0, 0x10022080);
-
-	/* Slow down the CPU: 100MHz */
-	/* 1. Set APLL_CON0 @ 100MHZ */
-	writel(0xa0c80604, 0x10044100);
-	/* 2. Change system clock dividers */
-	writel(0x00000100, 0x10044500); /* CLK_DIV_CPU0 */
-	do {
-		reg = readl(0x10044600); /* CLK_DIV_STAT_CPU0 */
-	} while (reg & 0x1111111);
-	/* skip CLK_DIV_CPU1: no change */
-	writel(0x13113117, 0x10040500); /* CLK_DIV_DMC0 */
-	do {
-		reg = readl(0x10040600);
-	} while (reg & 0x11111111);
-	/* skip CLK_DIV_TOP: no change */
-	/* skip CLK_DIV_LEFT/RIGHT BUS: no change */
-
-#ifdef CONFIG_CMD_PMIC
-	/* 3. Lower voltage: vddarm(buck1) 0.9V / vddint(buck2) 1.0V */
-	run_command("pmic buck 1 900000", 0);
-	run_command("pmic buck 2 1000000", 0);
-
-	/* Turn off unnecessary LDO/BUCKs */
-	run_command("pmic buck 3 off", 0);
-	run_command("pmic buck 4 off", 0);
-	run_command("pmic buck 5 off", 0);
-	run_command("pmic buck 6 off", 0);
-	run_command("pmic ldo 1 off", 0);
-	run_command("pmic ldo 3 off", 0);
-	run_command("pmic ldo 4 off", 0);
-	run_command("pmic ldo 5 off", 0);
-	run_command("pmic ldo 7 off", 0);
-	run_command("pmic ldo 8 off", 0);
-	run_command("pmic ldo 11 off", 0);
-	run_command("pmic ldo 12 off", 0);
-	run_command("pmic ldo 13 off", 0);
-	run_command("pmic ldo 14 off", 0);
-	run_command("pmic ldo 15 off", 0);
-	run_command("pmic ldo 16 off", 0);
-	run_command("pmic ldo 17 off", 0);
-	run_command("pmic ldo 18 off", 0);
-	run_command("pmic safeout 1 off", 0);
-	run_command("pmic safeout 2 off", 0);
-#endif
-	/* Turn off unnecessary power domains */
-	writel(0x0, 0x10023420); /* XXTI */
-	writel(0x0, 0x10023C00); /* CAM */
-	writel(0x0, 0x10023C20);
-	writel(0x0, 0x10023C40);
-	writel(0x0, 0x10023C60);
-	writel(0x0, 0x10023C80);
-	writel(0x0, 0x10023CA0);
-	writel(0x0, 0x10023CC0);
-	writel(0x0, 0x10023CE0);
-
-	/* Turn off unnecessary clocks */
-	writel(0x0, 0x1003c920); /* CAM */
-	writel(0x0, 0x1003c924); /* TV */
-	writel(0x0, 0x1003c928); /* MFC */
-	writel(0x0, 0x1003c92c); /* G3D */
-	writel(0x0, 0x1003c930); /* IMAGE */
-	writel(0x0, 0x1003c934); /* LCD0 */
-	writel(0x0, 0x1003c938); /* LCD1 */
-	writel(0x0, 0x1003c94c); /* LCD1 */
-}
-
-/*
- * into_charge_mode()
- * Run a charge loop with animation and temperature check. If SoC goes over 25%, boot.
- * Returns 1 if charged.
-**/
-static int into_charge_mode(int charger_speed)
-{
-	int delay;
-	enum temperature_level previous_state = _TEMP_OK;
-	unsigned int wakeup_stat = 0;
-	int enabled = 1;
-
-	pmic_charger_en(charger_speed);
-#ifdef CONFIG_CMD_PMIC
-	run_command("pmic ldo 1 on", 0);
-#endif
-
-	gpio_cfg_pin(&gpio1->e3, 0, GPIO_FUNC(1));
-	gpio_direction_output(&gpio1->e3, 0, 1);
-
-	pmic_get_irq(PWRON1S); /* Clear IRQ First */
-	printf("Charging...\n");
-
-	/* 2. Loop with temperature check and sleep */
-	do {
-		/* TODO: 2.A. Setup wakeup source and rtc tick */
-
-		/* TODO: 2.B. Go to sleep */
-		for (delay = 0; delay < 4000; delay++)
-			udelay(500);
-
-		/* 2.C. Check the temperature */
-		switch (temperature_check()) {
-		case _TEMP_OK:
-			if (!enabled) {
-				pmic_charger_en(charger_speed);
-				enabled = 1;
-			}
-			previous_state = _TEMP_OK;
-			break;
-		case _TEMP_TOO_LOW:
-			if (enabled) {
-				pmic_charger_en(0);
-				enabled = 0;
-			}
-			previous_state = _TEMP_TOO_LOW;
-			break;
-		case _TEMP_TOO_HIGH:
-			if (enabled) {
-				pmic_charger_en(0);
-				enabled = 0;
-			}
-			previous_state = _TEMP_TOO_HIGH;
-			break;
-		case _TEMP_OK_LOW:
-			if (previous_state == _TEMP_TOO_LOW) {
-				if (enabled) {
-					pmic_charger_en(0);
-					enabled = 0;
-				}
-			} else {
-				if (!enabled) {
-					pmic_charger_en(charger_speed);
-					enabled = 1;
-				}
-				previous_state = _TEMP_OK;
-			}
-			break;
-		case _TEMP_OK_HIGH:
-			if (previous_state == _TEMP_TOO_HIGH) {
-				if (enabled) {
-					pmic_charger_en(0);
-					enabled = 0;
-				}
-			} else {
-				if (!enabled) {
-					pmic_charger_en(charger_speed);
-					enabled = 1;
-				}
-				previous_state = _TEMP_OK;
-			}
-			break;
-		}
-		check_battery(0);
-		if (pmic_get_irq(PWRON1S))
-			return 0;
-	} while (battery_soc < 25 && battery_uV < 4000000);
-
-	return 1;
 }
 
 #ifdef CONFIG_LCD
