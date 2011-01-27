@@ -150,7 +150,8 @@ static unsigned long s5pc210_get_pwm_clk(void)
 	} else if (s5p_cpu_rev == 1) {
 		sclk = get_pll_clk(MPLL);
 		ratio = 8;
-	}
+	} else
+		return 0;
 
 	pclk = sclk / (ratio + 1);
 
