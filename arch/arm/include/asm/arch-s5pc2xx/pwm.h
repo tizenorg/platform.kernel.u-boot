@@ -29,6 +29,20 @@
 /* start bit of PWM Timer 4 */
 #define TCON4_START		(1 << 20)
 
+/* Interval mode(Auto Reload) of PWM Timer 0 */
+#define TCON0_AUTO_RELOAD	(1 << 3)
+/* Inverter On/Off */
+#define TCON0_INVERTER		(1 << 2)
+/* Update TCNTB0 */
+#define TCON0_UPDATE		(1 << 1)
+/* start bit of PWM Timer 0 */
+#define TCON0_START		(1 << 0)
+
+#define TCON_AUTO_RELOAD(x)	(1 << (((x + 1) * 4) + 3))
+#define TCON_INVERT(x)		(1 << (((x + 1) * 4) + 2))
+#define TCON_UPDATE(x)		(1 << (((x + 1) * 4) + 1))
+#define TCON_START(x)		(1 << (((x + 1) * 4)))
+
 #ifndef __ASSEMBLY__
 struct s5p_timer {
 	unsigned int	tcfg0;

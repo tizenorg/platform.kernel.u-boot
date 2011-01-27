@@ -28,6 +28,7 @@ LIB	= $(obj)libs5p-common.o
 COBJS-y		+= adc.o
 COBJS-y		+= cpu_info.o
 COBJS-y		+= timer.o
+COBJS-y		+= pwm.o
 COBJS-$(CONFIG_CMD_USBDOWN)	+= usb_downloader.o
 COBJS-$(CONFIG_S5P_USB_DMA)	+= usb-hs-otg-dma.o
 COBJS-$(CONFIG_S5P_USB_CPU)	+= usb-hs-otg.o
