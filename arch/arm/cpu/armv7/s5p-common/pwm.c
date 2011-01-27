@@ -207,14 +207,20 @@ int pwm_init(int pwm_id, int div, int invert)
 	offset = pwm_id * 0xc;
 	writel(timer_rate_hz, &pwm->tcntb0 + offset);
 
-	if (pwm_id == 0)
-		val = (readl(&pwm->tcon) & ~(0x07 << TCON0_TIMER_SHIFT)) |
-			TCON_INVERT(pwm_id);
-	else
-		val = (readl(&pwm->tcon) &
-			~(0x07 << TCON_TIMER_SHIFT(pwm_id))) | TCON_INVERTE(pwm_id);
+	if (pwm_id == 0) {
+		val = readl(&pwm->tcon) & ~(0xf << TCON0_TIMER_SHIFT);
+		if (invert)
+			val |= TCON0_INVERTER;
+	} else {
+		val = readl(&pwm->tcon) & ~(0xf << TCON_TIMER_SHIFT(pwm_id));
+		if (invert)
+			val |= TCON_INVERT(pwm_id);
+	}
 
 	/* start PWM timer */
+
+	/* start PWM timer 0 */
+        writel(val, &pwm->tcon);
 	pwm_enable(pwm_id);
 
 	return 0;
