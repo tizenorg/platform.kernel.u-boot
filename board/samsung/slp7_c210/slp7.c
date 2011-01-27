@@ -247,6 +247,8 @@ done:
 
 static void into_minimum_power(void)
 {
+	struct s5pc210_clock *clk =
+		(struct s5pc210_clock *)samsung_get_base_clock();
 	unsigned int reg;
 
 	/* Turn the core1 off */
@@ -254,16 +256,16 @@ static void into_minimum_power(void)
 
 	/* Slow down the CPU: 100MHz */
 	/* 1. Set APLL_CON0 @ 100MHZ */
-	writel(0xa0c80604, 0x10044100);
+	writel(0xa0c80604, &clk->apll_con0);
 	/* 2. Change system clock dividers */
-	writel(0x00000100, 0x10044500); /* CLK_DIV_CPU0 */
+	writel(0x00000100, &clk->div_cpu0); /* CLK_DIV_CPU0 */
 	do {
-		reg = readl(0x10044600); /* CLK_DIV_STAT_CPU0 */
+		reg = readl(&clk->div_stat_cpu0); /* CLK_DIV_STAT_CPU0 */
 	} while (reg & 0x1111111);
 	/* skip CLK_DIV_CPU1: no change */
-	writel(0x13113117, 0x10040500); /* CLK_DIV_DMC0 */
+	writel(0x13113117, &clk->div_dmc0); /* CLK_DIV_DMC0 */
 	do {
-		reg = readl(0x10040600);
+		reg = readl(&clk->div_stat_dmc0);
 	} while (reg & 0x11111111);
 	/* skip CLK_DIV_TOP: no change */
 	/* skip CLK_DIV_LEFT/RIGHT BUS: no change */
@@ -280,14 +282,14 @@ static void into_minimum_power(void)
 	writel(0x0, 0x10023CE0);
 
 	/* Turn off unnecessary clocks */
-	writel(0x0, 0x1003c920); /* CAM */
-	writel(0x0, 0x1003c924); /* TV */
-	writel(0x0, 0x1003c928); /* MFC */
-	writel(0x0, 0x1003c92c); /* G3D */
-	writel(0x0, 0x1003c930); /* IMAGE */
-	writel(0x0, 0x1003c934); /* LCD0 */
-	writel(0x0, 0x1003c938); /* LCD1 */
-	writel(0x0, 0x1003c94c); /* LCD1 */
+	writel(0x0, &clk->gate_ip_cam);		/* CAM */
+	writel(0x0, &clk->gate_ip_tv);		/* TV */
+	writel(0x0, &clk->gate_ip_mfc);		/* MFC */
+	writel(0x0, &clk->gate_ip_g3d);		/* G3D */
+	writel(0x0, &clk->gate_ip_image);	/* IMAGE */
+	writel(0x0, &clk->gate_ip_lcd0);	/* LCD0 */
+	writel(0x0, &clk->gate_ip_lcd1);	/* LCD1 */
+	writel(0x0, &clk->gate_ip_gps);		/* GPS */
 }
 
 static void init_battery_max17042(void)
