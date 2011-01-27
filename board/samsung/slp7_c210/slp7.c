@@ -25,9 +25,8 @@
 #include <common.h>
 #include <i2c.h>
 #include <lcd.h>
-#include <spi.h>
-#include <swi.h>
-#include <nt39411.h>
+#include <pwm.h>
+#include <pwm_backlight.h>
 #include <asm/io.h>
 #include <asm/arch/adc.h>
 #include <asm/arch/clock.h>
@@ -174,6 +173,7 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 
+	pwm_init();
 	return 0;
 }
 
@@ -643,7 +643,7 @@ void fimd_clk_set(void)
 	writel(cfg, &clk->div_lcd0);
 }
 
-struct nt39411_platform_data nt39411_pd;
+struct pwm_backlight_data backlight;
 
 static void lcd_cfg_gpio(void)
 {
@@ -683,9 +683,8 @@ static void lcd_cfg_gpio(void)
 	gpio_set_pull(&gpio1->f0, i, GPIO_PULL_NONE);
 
 	/* LED_BACKLIGHT_PWM */
-	nt39411_pd.swi.swi_bank = &gpio1->d0;
-	nt39411_pd.swi.controller_data = 0;
-	gpio_cfg_pin(&gpio1->d0, nt39411_pd.swi.controller_data, GPIO_FUNC(2));
+	gpio_cfg_pin(&gpio1->d0, 0, GPIO_FUNC(2));
+	gpio_set_pull(&gpio1->d0, 0, GPIO_PULL_NONE);
 
 	/* LVDS_nSHDN */
 	gpio_direction_output(&gpio1->e1, 5, 1);
@@ -693,8 +692,6 @@ static void lcd_cfg_gpio(void)
 	/* LCD_LDO_EN */
 	gpio_direction_output(&gpio1->e2, 3, 1);
 
-	nt39411_pd.swi.low_period = 30;
-	nt39411_pd.swi.high_period = 30;
 	return;
 }
 
@@ -731,16 +728,20 @@ void init_panel_info(vidinfo_t *vid)
 	/* vid->reset_lcd = reset_lcd; */	/* Don't need the reset squence */
 
 	vid->cfg_ldo = NULL;
-	vid->enable_ldo = nt39411_send_intensity;
+	vid->enable_ldo = NULL;
 
 	vid->init_delay = 0;
 	vid->power_on_delay = 0;
 	vid->reset_delay = 0;
 	vid->interface_mode = FIMD_RGB_INTERFACE;
-	nt39411_pd.brightness = NT39411_DEFAULT_INTENSITY;
-	nt39411_pd.a_onoff = A1_ON;
-	nt39411_pd.b_onoff = B1_ON;
-	nt39411_set_platform_data(&nt39411_pd);
+
+	/* LED_BACKLIGHT_PWM */
+	backlight.pwm_id = 0;
+	backlight.period = 30000;
+	backlight.max_brightness = 100;
+	backlight.brightness = 50;
+
+	pwm_backlight_init(&backlight);
 	setenv("lcdinfo", "lcd=nt39411");
 }
 #endif
