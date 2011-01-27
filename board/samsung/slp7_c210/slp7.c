@@ -245,10 +245,56 @@ done:
 	memset((void *)magic_base, 0, 2);
 }
 
+static void into_minimum_power(void)
+{
+	unsigned int reg;
+
+	/* Turn the core1 off */
+	writel(0x0, 0x10022080);
+
+	/* Slow down the CPU: 100MHz */
+	/* 1. Set APLL_CON0 @ 100MHZ */
+	writel(0xa0c80604, 0x10044100);
+	/* 2. Change system clock dividers */
+	writel(0x00000100, 0x10044500); /* CLK_DIV_CPU0 */
+	do {
+		reg = readl(0x10044600); /* CLK_DIV_STAT_CPU0 */
+	} while (reg & 0x1111111);
+	/* skip CLK_DIV_CPU1: no change */
+	writel(0x13113117, 0x10040500); /* CLK_DIV_DMC0 */
+	do {
+		reg = readl(0x10040600);
+	} while (reg & 0x11111111);
+	/* skip CLK_DIV_TOP: no change */
+	/* skip CLK_DIV_LEFT/RIGHT BUS: no change */
+
+	/* Turn off unnecessary power domains */
+	writel(0x0, 0x10023420); /* XXTI */
+	writel(0x0, 0x10023C00); /* CAM */
+	writel(0x0, 0x10023C20);
+	writel(0x0, 0x10023C40);
+	writel(0x0, 0x10023C60);
+	writel(0x0, 0x10023C80);
+	writel(0x0, 0x10023CA0);
+	writel(0x0, 0x10023CC0);
+	writel(0x0, 0x10023CE0);
+
+	/* Turn off unnecessary clocks */
+	writel(0x0, 0x1003c920); /* CAM */
+	writel(0x0, 0x1003c924); /* TV */
+	writel(0x0, 0x1003c928); /* MFC */
+	writel(0x0, 0x1003c92c); /* G3D */
+	writel(0x0, 0x1003c930); /* IMAGE */
+	writel(0x0, 0x1003c934); /* LCD0 */
+	writel(0x0, 0x1003c938); /* LCD1 */
+	writel(0x0, 0x1003c94c); /* LCD1 */
+}
+
 static void init_battery_max17042(void)
 {
 	unsigned char val[2];
 	unsigned char addr = 0x36;	/* max17042 fuel gauge */
+	unsigned int cur_voltage = 0;
 
 	i2c_set_bus_num(I2C_9);
 
@@ -274,6 +320,24 @@ static void init_battery_max17042(void)
 	i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
 	i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
 #endif
+
+	while (!cur_voltage) {
+		i2c_read(addr, 0x09, 1, val, 2);
+		cur_voltage = val[0] + val[1] * 256;
+		cur_voltage *= 83;
+	}
+
+	/* low power */
+	if (cur_voltage < 3700000) {
+		printf("Low power: %d.%6.d\n",
+			cur_voltage / 1000000, cur_voltage % 1000000);
+		into_minimum_power();
+		pmic_charger_en(500);
+
+		/* break */
+		while (1)
+			udelay(1000);
+	}
 }
 
 static void check_battery(void)

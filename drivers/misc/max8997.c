@@ -10,7 +10,7 @@
 #include <i2c.h>
 #include <pmic.h>
 
-unsigned int pmic_bus;
+unsigned int pmic_bus = 5;
 
 void pmic_bus_init(int bus_num)
 {
