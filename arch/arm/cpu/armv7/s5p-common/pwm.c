@@ -30,6 +30,7 @@
 #include <asm/arch/clk.h>
 
 #define PRESCALER_0		(8 - 1)		/* prescaler of timer 0, 1 */
+#define PRESCALER_1		(16 - 1)	/* prescaler of timer 2, 3, 4 */
 #define MUX_DIV_1		0		/* 1/1 period */
 #define MUX_DIV_2		1		/* 1/2 period */
 #define MUX_DIV_4		2		/* 1/4 period */
@@ -166,11 +167,12 @@ int pwm_config(int pwm_id, int duty_ns, int period_ns)
 	return 0;
 }
 
-int pwm_init(int pwm_id)
+int pwm_init(int pwm_id, int div, int invert)
 {
 	u32 val;
 	const struct s5p_timer *pwm = (struct s5p_timer *)samsung_get_base_timer();
 	unsigned long timer_rate_hz;
+	unsigned int offset;
 
 	/*
 	 * @ PWM Timer 0
@@ -181,33 +183,39 @@ int pwm_init(int pwm_id)
 	/* set prescaler : 16 */
 	/* set divider : 2 */
 	val = readl(&pwm->tcfg0);
-	val &= ~(0xff << 8);
-	val |= (PRESCALER_0 & 0xff) << 8;
+	if (pwm_id < 2) {
+		val &= ~0xff;
+		val |= (PRESCALER_0 & 0xff);
+	} else {
+		val &= ~(0xff << 8);
+		val |= (PRESCALER_1 & 0xff) << 8;
+	}
 	writel(val, &pwm->tcfg0);
 	val = readl(&pwm->tcfg1);
 	val &= ~(0xf << MUX_DIV_SHIFT(pwm_id));
-	val |= (MUX_DIV_1 & 0xF) << MUX_DIV_SHIFT(pwm_id);
+	val |= (div & 0xf) << MUX_DIV_SHIFT(pwm_id);
 	writel(val, &pwm->tcfg1);
 
 	/* timer_rate_hz = 44444444(HZ) (per 1 sec)*/
 	timer_rate_hz = get_pwm_clk() / ((PRESCALER_0 + 1) *
-			(MUX_DIV_1 + 1));
+			(div + 1));
 
 	/* timer_rate_hz / 100 = 444444.44(HZ) (per 10 msec) */
 	timer_rate_hz = timer_rate_hz / 100;
 
 	/* set count value */
-	writel(timer_rate_hz, &pwm->tcntb0);
+	offset = pwm_id * 0xc;
+	writel(timer_rate_hz, &pwm->tcntb0 + offset);
 
 	if (pwm_id == 0)
 		val = (readl(&pwm->tcon) & ~(0x07 << TCON0_TIMER_SHIFT)) |
-			TCON0_INVERTER;
+			TCON_INVERT(pwm_id);
 	else
 		val = (readl(&pwm->tcon) &
-			~(0x07 << TCON_TIMER_SHIFT(pwm_id))) | TCON0_INVERTER;
+			~(0x07 << TCON_TIMER_SHIFT(pwm_id))) | TCON_INVERTE(pwm_id);
 
-	/* start PWM timer 0 */
-	writel(val | TCON0_START, &pwm->tcon);
+	/* start PWM timer */
+	pwm_enable(pwm_id);
 
 	return 0;
 }

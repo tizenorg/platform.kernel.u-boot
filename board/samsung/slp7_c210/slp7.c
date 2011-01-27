@@ -806,7 +806,7 @@ void init_panel_info(vidinfo_t *vid)
 	backlight.max_brightness = 100;
 	backlight.brightness = 50;
 
-	pwm_init(backlight.pwm_id);
+	pwm_init(backlight.pwm_id, 0, 1);
 	pwm_backlight_init(&backlight);
 	setenv("lcdinfo", "lcd=nt39411");
 }
