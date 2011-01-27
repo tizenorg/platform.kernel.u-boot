@@ -318,7 +318,7 @@
 #define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 
 /* PWM */
-#define CONFIG_PWM
+#define CONFIG_PWM		1
 
 /* LCD */
 #if 1
