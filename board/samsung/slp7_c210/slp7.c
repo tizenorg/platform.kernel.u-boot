@@ -245,11 +245,43 @@ done:
 	memset((void *)magic_base, 0, 2);
 }
 
+static int max8997_probe(void)
+{
+	unsigned char addr = 0xCC >> 1;
+
+	i2c_set_bus_num(I2C_5);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max8997\n");
+		return 1;
+	}
+
+	return 0;
+}
+
+static unsigned char inline max8997_reg_ldo(int uV)
+{
+	unsigned char ret;
+	if (uV <= 800000)
+		return 0;
+	if (uV >= 3950000)
+		return 0x3f;
+	ret = (uV - 800000) / 50000;
+	if (ret > 0x3f) {
+		printf("MAX8997 LDO SETTING ERROR (%duV) -> %u\n", uV, ret);
+		ret = 0x3f;
+	}
+
+	return ret;
+}
+
 static void into_minimum_power(void)
 {
 	struct s5pc210_clock *clk =
 		(struct s5pc210_clock *)samsung_get_base_clock();
 	unsigned int reg;
+	unsigned char addr = 0xCC >> 1;
+	unsigned char val[2];
 
 	/* Turn the core1 off */
 	writel(0x0, 0x10022080);
@@ -269,6 +301,50 @@ static void into_minimum_power(void)
 	} while (reg & 0x11111111);
 	/* skip CLK_DIV_TOP: no change */
 	/* skip CLK_DIV_LEFT/RIGHT BUS: no change */
+
+	if (max8997_probe())
+		return;
+
+	/* LDO1 VADC: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0x00; /* OFF */
+	i2c_write(addr, 0x3b, 1, val, 1);
+	/* LDO3 VUSB/MIPI: 1.1V */
+	val[0] = max8997_reg_ldo(1100000) | 0x00; /* OFF */
+	i2c_write(addr, 0x3d, 1, val, 1);
+	/* LDO4 VMIPI: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x3e, 1, val, 1);
+	/* LDO5 VHSIC: 1.2V */
+	val[0] = max8997_reg_ldo(1200000) | 0x00; /* OFF */
+	i2c_write(addr, 0x3f, 1, val, 1);
+	/* LDO7 CAM_ISP: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x41, 1, val, 1);
+	/* LDO8 VDAC/VUSB: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0x00; /* OFF */
+	i2c_write(addr, 0x42, 1, val, 1);
+	/* LDO11 LVDS: 3.3V */
+	val[0] = max8997_reg_ldo(3300000) | 0x00; /* OFF */
+	i2c_write(addr, 0x45, 1, val, 1);
+	/* LDO12 VTCAM: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x46, 1, val, 1);
+	/* LDO13 VTF: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x47, 1, val, 1);
+	/* LDO14 MOTOR: 3.0V */
+	val[0] = max8997_reg_ldo(3000000) | 0x00; /* OFF */
+	i2c_write(addr, 0x48, 1, val, 1);
+	/* LDO15 VTOUCH: 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x49, 1, val, 1);
+	/* LDO16 CAM_SENSOR: 1.8V */
+	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x4a, 1, val, 1);
+	/* LDO18 VTOUCH 2.8V */
+	val[0] = max8997_reg_ldo(2800000) | 0x00; /* OFF */
+	i2c_write(addr, 0x4c, 1, val, 1);
+
 
 	/* Turn off unnecessary power domains */
 	writel(0x0, 0x10023420); /* XXTI */
@@ -331,14 +407,23 @@ static void init_battery_max17042(void)
 
 	/* low power */
 	if (cur_voltage < 3700000) {
-		printf("Low power: %d.%6.d\n",
-			cur_voltage / 1000000, cur_voltage % 1000000);
 		into_minimum_power();
 		pmic_charger_en(500);
 
+		printf("Low power: %d.%6.d\n",
+			cur_voltage / 1000000, cur_voltage % 1000000);
 		/* break */
-		while (1)
-			udelay(1000);
+		while (1) {
+			udelay(10000000);
+			puts(".");
+
+			i2c_read(addr, 0x09, 1, val, 2);
+			cur_voltage = val[0] + val[1] * 256;
+			cur_voltage *= 83;
+
+			if (cur_voltage > 3700000)
+				reset_cpu(0);
+		}
 	}
 }
 
@@ -367,36 +452,6 @@ static void check_battery(void)
 	battery_cap = (val[0] + val[1] * 256) / 2;
 	printf("voltage:\t%d.%6.6d V (expected to be %dmAh)\n",
 		battery_uV / 1000000, battery_uV % 1000000, battery_cap);
-}
-
-static int max8997_probe(void)
-{
-	unsigned char addr = 0xCC >> 1;
-
-	i2c_set_bus_num(I2C_5);
-
-	if (i2c_probe(addr)) {
-		puts("Can't found max8997\n");
-		return 1;
-	}
-
-	return 0;
-}
-
-static unsigned char inline max8997_reg_ldo(int uV)
-{
-	unsigned char ret;
-	if (uV <= 800000)
-		return 0;
-	if (uV >= 3950000)
-		return 0x3f;
-	ret = (uV - 800000) / 50000;
-	if (ret > 0x3f) {
-		printf("MAX8997 LDO SETTING ERROR (%duV) -> %u\n", uV, ret);
-		ret = 0x3f;
-	}
-
-	return ret;
 }
 
 static void init_pmic_max8997(void)
