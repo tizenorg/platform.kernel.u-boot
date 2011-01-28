@@ -308,4 +308,8 @@ int atmel_mci_init(void *regs);
 int mmc_legacy_init(int verbose);
 #endif
 
+#ifdef CONFIG_MMC_ASYNC_WRITE
+void mmc_async_on(struct mmc *mmc, int on);
+#endif
+
 #endif /* _MMC_H_ */

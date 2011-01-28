@@ -274,6 +274,10 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		if (cmd->cmdidx == MMC_CMD_WRITE_MULTIPLE_BLOCK) {
 			/* Don't wait, return immediately */
 			host->async_write = 1;
+
+			if (!host->async_on)
+				mmc_wait_async_write(mmc);
+
 			return 0;
 		}
 #endif
@@ -566,6 +570,7 @@ static int s5p_mmc_initialize(int dev_index, int bus_width)
 	mmc_host[dev_index].reg = s5p_get_base_mmc(dev_index);
 #ifdef CONFIG_MMC_ASYNC_WRITE
 	mmc_host[dev_index].async_write = 0;
+	mmc_host[dev_index].async_on = 0;
 #endif
 
 	mmc_register(mmc);
@@ -578,3 +583,11 @@ int s5p_mmc_init(int dev_index, int bus_width)
 {
 	return s5p_mmc_initialize(dev_index, bus_width);
 }
+
+#ifdef CONFIG_MMC_ASYNC_WRITE
+void mmc_async_on(struct mmc *mmc, int on)
+{
+	struct mmc_host *host = (struct mmc_host *)mmc->priv;
+	host->async_on = on;
+}
+#endif

@@ -1400,6 +1400,9 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 	mmc = find_mmc_device(usbd->mmc_dev);
 	mmc_init(mmc);
+#ifdef CONFIG_MMC_ASYNC_WRITE
+	mmc_async_on(mmc, 1);
+#endif
 
 	/* receive setting */
 	usbd->recv_setup(usbd->rx_data, usbd->rx_len);

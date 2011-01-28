@@ -76,6 +76,7 @@ struct mmc_host {
 	int dev_index;
 #ifdef CONFIG_MMC_ASYNC_WRITE
 	int async_write;
+	int async_on;
 #endif
 };
 
