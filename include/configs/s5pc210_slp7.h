@@ -215,6 +215,8 @@
 		" mmc boot 0 1 1 0\0" \
 	"updatebootb=mmc read 0 0x42100000 0x80 0x200; run updatebackup\0" \
 	"updateuboot=mmc write 0 0x44800000 0x80 0x200\0" \
+	"updaterestore=mmc boot 0 1 1 2; mmc read 0 0x44800000 0 0x200;" \
+		"mmc boot 0 1 1 0; run updateuboot\0" \
 	"setupboot=run updatemmc; run updateuboot; run updatebootb\0" \
 	"lpj=lpj=3981312\0" \
 	"nfsboot=set bootargs root=/dev/nfs rw " \
