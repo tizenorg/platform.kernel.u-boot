@@ -204,10 +204,9 @@ static void down_cancel(int mode)
 {
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
-		exit_font();
-
 		/* clear fb */
 		fb_clear(120);
+		exit_font();
 	}
 #endif
 	switch (mode) {
