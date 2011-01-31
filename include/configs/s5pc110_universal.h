@@ -241,6 +241,12 @@
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
+#define MBRPARTS_DEFAULT	"20M(permanent)"\
+				",20M(boot)"\
+				",1G(system)"\
+				",100M(swap)"\
+				",-(UMS)\0"
+
 #define CONFIG_BOOTCOMMAND "run ubifsboot"
 
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
@@ -314,6 +320,7 @@
 	"rootfstype=cramfs\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"mtdparts=" MTDPARTS_DEFAULT \
+	"mbrparts=" MBRPARTS_DEFAULT \
 	"meminfo=mem=80M mem=128M@0x40000000\0" \
 	"nfsroot=/nfsroot/arm\0" \
 	"mmcblk=/dev/mmcblk1p1\0" \
