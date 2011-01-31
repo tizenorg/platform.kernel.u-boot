@@ -281,14 +281,16 @@ static int do_pmic(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return pmic_status();
 		break;
 	case 4:
-		if (strncmp(argv[1], "ldo", 3) == 0)
+		if (argv[1][0] == 'l')
 			ldo = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "buck", 4) == 0)
+		else if (argv[1][0] == 'b')
 			buck = simple_strtoul(argv[2], NULL, 10);
-		else if (strncmp(argv[1], "safeout", 7) == 0)
+		else if (argv[1][0] == 's')
 			safeout = simple_strtoul(argv[2], NULL, 10);
-		else
+		else {
+			printf("Option = \"%s\" ? \n", argv[1]);
 			break;
+		}
 
 		if (strncmp(argv[3], "on", 2) == 0)
 			ret = pmic_ldo_control(buck, ldo, safeout, 1);
