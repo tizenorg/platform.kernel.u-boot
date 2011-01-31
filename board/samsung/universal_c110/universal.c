@@ -2807,7 +2807,8 @@ int board_eth_init(bd_t *bis)
 
 static int ums_read_sector(struct ums_device *ums_dev, unsigned int n, void *buf)
 {
-	if (ums_dev->mmc->block_dev.block_read(ums_dev->dev_num, n, 1, buf) != 1)
+	if (ums_dev->mmc->block_dev.block_read(ums_dev->dev_num,
+	                                       n + ums_dev->offset, 1, buf) != 1)
 		return -1;
 
 	return 0;
@@ -2815,15 +2816,19 @@ static int ums_read_sector(struct ums_device *ums_dev, unsigned int n, void *buf
 
 static int ums_write_sector(struct ums_device *ums_dev, unsigned int n, void *buf)
 {
-	if (ums_dev->mmc->block_dev.block_write(ums_dev->dev_num, n, 1, buf) != 1)
+	if (ums_dev->mmc->block_dev.block_write(ums_dev->dev_num,
+	                                        n + ums_dev->offset, 1, buf) != 1)
 		return -1;
 
 	return 0;
 }
 
-static int ums_get_capacity(struct ums_device *ums_dev)
+static void ums_get_capacity(struct ums_device *ums_dev, long long int *capacity)
 {
-	return (u32) (ums_dev->mmc->capacity);
+	long long int tmp_capacity;
+	
+	tmp_capacity = (long long int) ((ums_dev->offset + ums_dev->part_size) * SECTOR_SIZE);
+	*capacity = ums_dev->mmc->capacity - tmp_capacity;
 }
 
 static struct ums_board_info ums_board = {
@@ -2834,10 +2839,13 @@ static struct ums_board_info ums_board = {
 	.ums_dev = {
 		.mmc = NULL,
 		.dev_num = 0,
+		.offset = 0,
+		.part_size = 0.
 	},
 };
 
-struct ums_board_info *board_ums_init(unsigned int dev_num)
+struct ums_board_info *board_ums_init(unsigned int dev_num, unsigned int offset, 
+                                      unsigned int part_size)
 {
 	struct mmc *mmc;
 	
@@ -2847,12 +2855,16 @@ struct ums_board_info *board_ums_init(unsigned int dev_num)
 
 	ums_board.ums_dev.mmc = mmc;
 	ums_board.ums_dev.dev_num = dev_num;
+	ums_board.ums_dev.offset = offset;
+	ums_board.ums_dev.part_size = part_size;
+	
 	/* Init MMC */
 	mmc_init(mmc);
 
 	s3c_udc_probe(&s5pc110_otg_data);
 	return &ums_board;
 }
+
 #endif
 
 #ifdef CONFIG_CMD_USBDOWN
