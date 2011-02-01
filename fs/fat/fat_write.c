@@ -1238,10 +1238,12 @@ static int do_fat_write (const char *filename, void *buffer,
 		if (flush_fat_buffer(mydata) < 0)
 			return -1;
 
+#if 0
 		if (fragmented_count > 0) {
 			defragment_file(mydata, retdent);
 			retdent->size = cpu_to_le32(size);
 		}
+#endif
 
 		/* Write directory table to device */
 		if (set_cluster(mydata, dir_curclust,
@@ -1291,6 +1293,7 @@ static int do_fat_write (const char *filename, void *buffer,
 			return -1;
 		}
 
+#if 0
 		if (fragmented_count > 0) {
 			defragment_file(mydata, empty_dentptr);
 			empty_dentptr->size = cpu_to_le32(size);
@@ -1304,6 +1307,7 @@ static int do_fat_write (const char *filename, void *buffer,
 			}
 
 		}
+#endif
 	}
 
 	return 0;
