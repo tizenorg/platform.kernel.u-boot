@@ -5,6 +5,10 @@
 #include <common.h>
 #include <info_action.h>
 #include <mmc.h>
+#ifdef CONFIG_S5PC1XXFB
+#include <fbutils.h>
+extern int s5p_no_lcd_support(void);
+#endif
 
 void info_action_check(void)
 {
@@ -42,7 +46,15 @@ void info_action_check(void)
 		printf("lcd console mode\n");
 		break;
 	case INFO_ACTION_UMS:
-		printf("ums mode\n");
+		printf("ums mode....\n");
+#ifdef CONFIG_S5PC1XXFB
+		if (!s5p_no_lcd_support()) {
+			init_font();
+			set_font_color(FONT_WHITE);
+			fb_printf("User Mass Storage (UMS) Mode...\n");
+		}
+#endif
+		run_command("ums 0:6", 0);
 		break;
 	default:
 		break;
