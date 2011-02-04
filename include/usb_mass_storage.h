@@ -25,4 +25,8 @@ extern struct ums_board_info* board_ums_init(unsigned int, unsigned int, unsigne
 extern int usb_gadget_handle_interrupts(void);
 extern int fsg_main_thread(void*);
 
+/* USB Attach/Detach */
+extern int micro_usb_attached(void);
+extern int micro_usb_detach(void);
+
 #endif

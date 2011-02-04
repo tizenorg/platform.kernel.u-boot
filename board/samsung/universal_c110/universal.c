@@ -1614,6 +1614,60 @@ static void micro_usb_switch(int path)
 	i2c_write(addr, 0x2, 1, val, 1);
 }
 
+#define FSA_REG_CONTROL 0x02
+#define FSA_REG_INT1 0x03
+#define FSA_REG_DEV_TYPE1 0x0A
+
+#define FSA_INTB (1 << 0)
+#define FSA_INT1_DETACH (1 << 1)
+/* Both functions use SW polling technique to obtain the state of FSA9480 device */
+/* AFAIK - HW interrupts aren't used on u-boot (at least for this purpose) */
+
+int micro_usb_attached(void)
+{
+	unsigned char addr;
+	unsigned char val;
+
+	if (fsa9480_probe())
+		return -1;
+
+	addr = 0x25;	/* fsa9480 */
+
+	/* Setup control register */
+	i2c_read(addr, FSA_REG_CONTROL, 1, &val, 1);
+
+	val |= FSA_INTB; /* Mask INTB interrupt */
+	i2c_write(addr, FSA_REG_CONTROL, 1, &val, 1);
+
+	i2c_read(addr, FSA_REG_DEV_TYPE1, 1, &val, 1);
+
+	if (val & FSA_DEV1_USB)
+		return 1;
+
+	return 0;
+}
+
+int micro_usb_detach(void)
+{
+	unsigned char addr;
+	unsigned char val[2];
+
+	if (fsa9480_probe())
+		return -1;
+
+	addr = 0x25;	/* fsa9480 */
+
+	/* Read interrupt status register */
+	i2c_read(addr, FSA_REG_INT1, 1, val, 2);
+
+	if (val[0] & FSA_INT1_DETACH) {
+		puts("USB cable detached !!!\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 #define MAX8998_REG_ONOFF1	0x11
 #define MAX8998_REG_ONOFF2	0x12
 #define MAX8998_REG_ONOFF3	0x13

@@ -5,6 +5,7 @@
  *
  */
 
+#include <errno.h>
 #include <common.h>
 #include <command.h>
 #include <usb_mass_storage.h>
@@ -182,7 +183,10 @@ static int do_usb_mass_storage(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[
 		}
 
 		irq_res = usb_gadget_handle_interrupts();
-		fsg_main_thread(NULL);
+
+		/* Check if USB cable has been detached */
+		if (fsg_main_thread(NULL) == EIO)
+			goto fail;
 	}
 fail:
 	return -1;

@@ -46,14 +46,19 @@ void info_action_check(void)
 		printf("lcd console mode\n");
 		break;
 	case INFO_ACTION_UMS:
-		printf("ums mode....\n");
+		puts("ums mode....\n");
 #ifdef CONFIG_S5PC1XXFB
 		if (!s5p_no_lcd_support()) {
 			init_font();
 			set_font_color(FONT_WHITE);
-			fb_printf("User Mass Storage (UMS) Mode...\n");
+			fb_printf("USB Mass Storage (UMS) Mode...\n");
 		}
 #endif
+		if (!micro_usb_attached()) {
+			puts("USB cable not attached !!!");
+			break;
+		}
+			
 		run_command("ums 0:6", 0);
 		break;
 	default:

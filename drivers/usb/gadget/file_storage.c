@@ -1062,8 +1062,8 @@ static void busy_indicator(void) {
 
 static int sleep_thread(struct fsg_dev *fsg, int line)
 {
-	int	rc = 0;
-	int i = 0;
+	int rc = 0;
+	int i = 0, k = 0;
 
 	/* Wait until a signal arrives or we are woken up */
 	for (;;) {
@@ -1079,6 +1079,17 @@ static int sleep_thread(struct fsg_dev *fsg, int line)
 		if (++i == 50000) {
 			busy_indicator();
 			i = 0;
+			k++;
+		}
+
+		if (k == 10) {
+			/* EIO is returned to indicate only USB detach */
+			/* OBS: in code also -EIO is used. It is different */
+			/* Do NOT confuse them */
+			if (micro_usb_detach())
+				return EIO;
+
+			k = 0;
 		}
 		usb_gadget_handle_interrupts();
 	}
@@ -2526,6 +2537,7 @@ static int do_scsi_command(struct fsg_dev *fsg)
 	/* Set up the single reply buffer for finish_reply() */
 	if (reply == -EINVAL)
 		reply = 0;		// Error reply length
+
 	if (reply >= 0 && fsg->data_dir == DATA_DIR_TO_HOST) {
 		reply = min((u32) reply, fsg->data_size_from_cmnd);
 		bh->inreq->length = reply;
@@ -2994,6 +3006,7 @@ static void handle_exception(struct fsg_dev *fsg)
 
 int fsg_main_thread(void * _fsg)
 {
+	int ret;
 	struct fsg_dev		*fsg = the_fsg;
 
 	/* Allow the thread to be killed by a signal, but set the signal mask
@@ -3023,7 +3036,12 @@ int fsg_main_thread(void * _fsg)
 			continue;
 		}
 
-		if (get_next_command(fsg)) {
+		ret = get_next_command(fsg);
+		if (ret) {
+			/* Check ig USB cable has been detached */
+			if (ret == EIO)
+				return ret;
+
 			continue;
 		}
 
