@@ -577,7 +577,7 @@ config_desc = {
 	.bConfigurationValue =	CONFIG_VALUE,
 	.iConfiguration =	FSG_STRING_CONFIG,
 	.bmAttributes =		USB_CONFIG_ATT_ONE | USB_CONFIG_ATT_SELFPOWER,
-	.bMaxPower =		100, //CONFIG_USB_GADGET_VBUS_DRAW / 2,
+	.bMaxPower =		50, //CONFIG_USB_GADGET_VBUS_DRAW / 2,
 };
 
 
