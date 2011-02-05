@@ -10,6 +10,13 @@
 extern int s5p_no_lcd_support(void);
 #endif
 
+static int __micro_usb_attached(void)
+{
+	return 0;
+}
+
+int micro_usb_attached(void) __attribute__((weak, alias("__micro_usb_attached")));
+
 void info_action_check(void)
 {
 	struct info_action *ia = (struct info_action *) CONFIG_INFO_ADDRESS;
