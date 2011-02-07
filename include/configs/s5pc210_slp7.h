@@ -328,6 +328,7 @@
 #define CONFIG_FB_ADDR		0x52504000
 #define CONFIG_S5PC1XXFB	1
 #define CONFIG_PWM_BACKLIGHT	1
+#define CONFIG_IMAGE_ROTATOR	1
 /* Insert bmp animation compressed */
 #define CONFIG_VIDEO_BMP_GZIP
 #define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE	(250*250*4)

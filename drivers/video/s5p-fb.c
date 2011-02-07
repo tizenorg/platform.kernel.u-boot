@@ -200,6 +200,36 @@ void _draw_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned shor
 	}
 }
 
+#ifdef CONFIG_IMAGE_ROTATOR
+void rotate_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned short *bmp)
+{
+	int i, j, error_range = 40;
+	short k = 0;
+	unsigned int pixel;
+	unsigned long *fb = (unsigned  long*)lcdbase;
+
+	unsigned int count = 0;
+
+	printf("x: %d, y: %d, w: %d. h: %d\n", x, y, w, h);
+	for (j = (y + h); j > y; j--) {
+		for (i = x; i < (x + w); i++) {
+			pixel = (*(bmp + k++));
+
+			/* 40 lines under samsung logo image are error range. */
+			if (j > h + y - error_range)
+				*(fb + (i * panel_width) + j) =
+					conv_rgb565_to_rgb888(pixel, 1);
+			else {
+				*(fb + (i * panel_width) + j) =
+					conv_rgb565_to_rgb888(pixel, 0);
+				count++;
+			}
+		}
+	}
+	printf("count:%d\n", count);
+}
+#endif
+
 static void draw_samsung_logo(void* lcdbase)
 {
 	int x, y;
@@ -225,7 +255,13 @@ static void draw_samsung_logo(void* lcdbase)
 	if (out_len == CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)
 		printf("Image could be truncated"
 				" (increase CONFIG_SYS_VIDEO_LOGO_MAX_SIZE)!\n");
+#ifdef CONFIG_IMAGE_ROTATOR
+	x = ((panel_height- width) >> 1);
+	y = ((panel_width - height) >> 1);
+	rotate_samsung_logo(lcdbase, x, y, width, height, (unsigned short *) dst);
+#else
 	_draw_samsung_logo(lcdbase, x, y, width, height, (unsigned short *) dst);
+#endif
 	free(dst);
 }
 
