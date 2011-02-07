@@ -208,9 +208,6 @@ void rotate_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned sho
 	unsigned int pixel;
 	unsigned long *fb = (unsigned  long*)lcdbase;
 
-	unsigned int count = 0;
-
-	printf("x: %d, y: %d, w: %d. h: %d\n", x, y, w, h);
 	for (j = (y + h); j > y; j--) {
 		for (i = x; i < (x + w); i++) {
 			pixel = (*(bmp + k++));
@@ -219,14 +216,11 @@ void rotate_samsung_logo(void *lcdbase, int x, int y, int w, int h, unsigned sho
 			if (j > h + y - error_range)
 				*(fb + (i * panel_width) + j) =
 					conv_rgb565_to_rgb888(pixel, 1);
-			else {
+			else
 				*(fb + (i * panel_width) + j) =
 					conv_rgb565_to_rgb888(pixel, 0);
-				count++;
-			}
 		}
 	}
-	printf("count:%d\n", count);
 }
 #endif
 
