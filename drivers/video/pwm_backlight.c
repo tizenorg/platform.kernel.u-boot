@@ -29,7 +29,9 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/pwm.h>
 
-static int pwm_backlight_update_status(struct pwm_backlight_data *pwm)
+static struct pwm_backlight_data *pwm;
+
+static int pwm_backlight_update_status(void)
 {
 	int brightness = pwm->brightness;
 	int max = pwm->max_brightness;
@@ -45,19 +47,48 @@ static int pwm_backlight_update_status(struct pwm_backlight_data *pwm)
 	return 0;
 }
 
-static int pwm_backlight_get_brightness(void)
-{
-	/* TODO: get brightness level form the params */
-	return 0;
-}
-
 int pwm_backlight_init(struct pwm_backlight_data *pd)
 {
-	int brightness;
+	pwm = pd;
 
-	brightness = pwm_backlight_get_brightness();
-
-	pwm_backlight_update_status(pd);
+	pwm_backlight_update_status();
 
 	return 0;
 }
+
+static int do_pwm_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if (argc == 1) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
+
+	if (argc > 3) {
+		cmd_usage(cmdtp);
+		return 1;
+	}
+
+	if (strcmp(argv[1], "brightness") == 0) {
+		unsigned int brightness = simple_strtoul(argv[2], NULL, 10);
+
+		printf("backlight brightness: %d\n", brightness);
+		pwm->brightness = brightness
+		    ;
+		if (brightness > 100)
+			pwm->brightness = 100;
+		else if (brightness < 0)
+			pwm->brightness = 0;
+
+		pwm_backlight_update_status();
+	} else if (strcmp(argv[1], "status") == 0)
+		printf("current backlight brightness: %d\n", pwm->brightness);
+
+	return 1;
+}
+
+U_BOOT_CMD(
+	backlight,		3,	1, do_pwm_backlight,
+	"brightness control",
+	"status - print current backlight brightness\n"
+	"brightness value(1~100), 0: Turn off the backlight\n"
+);
