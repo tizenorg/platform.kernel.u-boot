@@ -43,6 +43,8 @@ DECLARE_GLOBAL_DATA_PTR;
 static struct s5pc210_gpio_part1 *gpio1;
 static struct s5pc210_gpio_part2 *gpio2;
 
+struct pwm_backlight_data backlight;
+
 static unsigned int battery_soc;
 static unsigned int battery_uV; /* in micro volts */
 static unsigned int battery_cap; /* in mAh */
@@ -368,6 +370,20 @@ static void into_minimum_power(void)
 	writel(0x0, &clk->gate_ip_gps);		/* GPS */
 }
 
+static void charge_lcd_off(void)
+{
+	backlight.period = 30000;
+	backlight.max_brightness = 100;
+	backlight.brightness = 0;
+
+	pwm_backlight_init(&backlight);
+
+	/* LVDS_nSHDN */
+	gpio_direction_output(&gpio1->e1, 5, 0);
+	/* LCD_LDO_EN */
+	gpio_direction_output(&gpio1->e2, 3, 0);
+}
+
 static void init_battery_max17042(void)
 {
 	unsigned char val[2];
@@ -419,6 +435,7 @@ static void init_battery_max17042(void)
 	/* low power */
 	if (cur_voltage < 3700000) {
 		into_minimum_power();
+		charge_lcd_off();
 		pmic_charger_en(500);
 
 		printf("Low power: %d.%6.d\n",
@@ -773,8 +790,6 @@ void fimd_clk_set(void)
 	cfg |= 0x1;
 	writel(cfg, &clk->div_lcd0);
 }
-
-struct pwm_backlight_data backlight;
 
 static void lcd_cfg_gpio(void)
 {
@@ -1148,6 +1163,7 @@ static int do_charge(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	into_minimum_power();
+	charge_lcd_off();
 	pmic_charger_en(500);
 
 	while (1) {
