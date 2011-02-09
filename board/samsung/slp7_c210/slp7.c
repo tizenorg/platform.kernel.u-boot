@@ -1134,3 +1134,45 @@ int board_mmc_init(bd_t *bis)
 
 }
 #endif
+
+static int do_charge(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	unsigned char addr = 0x36;	/* max17042 fuel gauge */
+	unsigned int loop = 0;
+
+	i2c_set_bus_num(I2C_9);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max17042 fuel gauge\n");
+		return 0;
+	}
+
+	into_minimum_power();
+	pmic_charger_en(500);
+
+	while (1) {
+		if (pmic_get_irq(PWRONR))
+			reset_cpu(0);
+
+		udelay(10000);
+
+		if (loop % 100 == 0)
+			puts(".");
+
+		if (loop == 5000) {
+			puts("\n");
+			check_battery();
+			loop = 0;
+		}
+
+		loop++;
+	}
+
+	return 0;
+}
+
+U_BOOT_CMD(
+	charge,		CONFIG_SYS_MAXARGS,	1, do_charge,
+	"Charge the battery",
+	" - charge the battery"
+);
