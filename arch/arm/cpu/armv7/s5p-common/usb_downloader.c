@@ -56,8 +56,8 @@ extern int check_exit_key(void);
 
 #ifdef CONFIG_GENERIC_MMC
 #include <mmc.h>
-static int mmc_type;
 extern int s5p_no_mmc_support(void);
+static char mmc_info[64];
 
 static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 {
@@ -73,7 +73,6 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	mmc_init(mmc);
 
 	if (!mmc->read_bl_len) {
-		mmc_type = -1;
 		usbd->mmc_max = 0;
 		usbd->mmc_total = 0;
 		return;
@@ -87,10 +86,19 @@ static void usbd_set_mmc_dev(struct usbd_ops *usbd)
 	sprintf(mmc_name, "%c%c%c", mmc->cid[0] & 0xff,
 			(mmc->cid[1] >> 24), (mmc->cid[1] >> 16) & 0xff);
 
-	if (!strncmp(mmc_name, "SEM", 3))
-		mmc_type = 1;
-	else
-		mmc_type = 0;
+	if (!strncmp(mmc_name, "SEM", 3)) {
+		sprintf(mmc_info, "MMC: iNAND %d.%d%s\n",
+			(mmc->version >> 4) & 0xf,
+			(mmc->version & 0xf) == EXT_CSD_REV_1_5 ?
+			(mmc->check_rev? 3 : 41) : (mmc->version & 0xf),
+			mmc->check_rev? "+":"");
+	} else {
+		sprintf(mmc_info, "MMC: MoviNAND %d.%d%s\n",
+			(mmc->version >> 4) & 0xf,
+			(mmc->version & 0xf) == EXT_CSD_REV_1_5 ?
+			(mmc->check_rev? 3 : 41) : (mmc->version & 0xf),
+			mmc->check_rev? "+":"");
+	}
 }
 #endif
 
@@ -133,11 +141,7 @@ static int usb_init(void)
 		fb_printf(rev_info);
 
 #ifdef CONFIG_GENERIC_MMC
-		if (mmc_type == 1)
-			fb_printf("MMC: iNAND\n");
-		else if (mmc_type == 0)
-			fb_printf("MMC: MoviNAND\n");
-
+		fb_printf(mmc_info);
 		fb_printf("\n");
 #endif
 		fb_printf("USB Download Mode\n");
