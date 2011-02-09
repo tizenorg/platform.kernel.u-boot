@@ -822,6 +822,8 @@ int s5p_no_lcd_support(void)
 
 void init_panel_info(vidinfo_t *vid)
 {
+	char buf[3];
+
 	vid->vl_freq	= 60;
 	vid->vl_col	= 1024;
 	vid->vl_row	= 600;
@@ -860,10 +862,12 @@ void init_panel_info(vidinfo_t *vid)
 	backlight.period = 30000;
 	backlight.max_brightness = 100;
 	backlight.brightness = 50;
+	sprintf(buf, "%d", backlight.brightness);
 
 	pwm_init(backlight.pwm_id, 0, 1);
 	pwm_backlight_init(&backlight);
 	setenv("lcdinfo", "lcd=nt39411");
+	setenv("brightness", buf);
 }
 #endif
 
