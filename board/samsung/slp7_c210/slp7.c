@@ -381,6 +381,7 @@ static void init_battery_max17042(void)
 		return;
 	}
 
+#if 0
 	val[0] = 0x00;
 	val[1] = 0x00;
 	i2c_write(addr, 0x2e, 1, val, 2); /* CGAIN */
@@ -391,13 +392,23 @@ static void init_battery_max17042(void)
 	val[1] = 0x00;
 	i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
 
-#if 0
 	/* TODO: Need to refine these */
 	val[0] = 0x40; /* LOW part of 4000mAh (->8000) */
 	val[1] = 0x1F; /* HIGH part of 4000mAh (->8000) */
 	i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
 	i2c_write(addr, 0x10, 1, val, 2); /* FullCap  */
 #endif
+
+	val[0] = 0x02;	/* SACFG = 10: using SOC */
+	val[1] = 0x08;	/* Quick start */
+	i2c_write(addr, 0x2b, 1, val, 2); /* MiscCFG */
+	val[0] = 0x07;
+	val[1] = 0x00;
+	i2c_write(addr, 0x28, 1, val, 2); /* LearnCFG */
+
+	val[0] = 0x6C;
+	val[1] = 0x20;
+	i2c_write(addr, 0x18, 1, val, 2); /* DesignCap */
 
 	while (!cur_voltage) {
 		i2c_read(addr, 0x09, 1, val, 2);
