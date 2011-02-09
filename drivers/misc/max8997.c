@@ -105,7 +105,7 @@ unsigned int pmic_get_irq(int irq)
 	return !!ret;
 }
 
-static unsigned char reg_buck[7] = {0x18, 0x21, 0x2a, 0x2c, 0x3e, 0x37, 0x39};
+static unsigned char reg_buck[7] = {0x18, 0x21, 0x2a, 0x2c, 0x2e, 0x37, 0x39};
 static int pmic_status(void)
 {
 	unsigned char addr, val[2];
