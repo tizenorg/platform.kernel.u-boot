@@ -25,6 +25,8 @@
 #ifdef CONFIG_S5PC1XXFB
 #include <fbutils.h>
 #endif
+#include <version.h>
+#include <timestamp.h>
 
 #define TX_DATA_LEN	4
 #define RX_DATA_LEN	64
@@ -137,6 +139,10 @@ static int usb_init(char *app_ver)
 		init_font();
 		set_font_color(FONT_WHITE);
 
+		fb_printf(U_BOOT_VERSION);
+		fb_printf(" (");
+		fb_printf(U_BOOT_DATE);
+		fb_printf(")\n");
 		get_rev_info(rev_info);
 		fb_printf(rev_info);
 
@@ -200,7 +206,7 @@ static void down_start(void)
 #ifdef CONFIG_S5PC1XXFB
 	if (!s5p_no_lcd_support()) {
 		fb_printf("Download Start\n");
-		draw_progress(95, 0, FONT_WHITE);
+		draw_progress(115, 0, FONT_WHITE);
 	}
 #endif
 }
@@ -269,7 +275,7 @@ static void recv_setup(char *addr, int len)
 #ifdef CONFIG_S5PC1XXFB
 static void set_progress(int progress)
 {
-	draw_progress(95, progress, FONT_WHITE);
+	draw_progress(115, progress, FONT_WHITE);
 }
 #endif
 
