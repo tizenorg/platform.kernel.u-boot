@@ -122,7 +122,7 @@ enum {
  * mmc_total	: mmc total blocks
  */
 struct usbd_ops {
-	int (*usb_init)(void);
+	int (*usb_init)(char *);
 	void (*usb_stop)(void);
 	void (*send_data)(char *, int);
 	int (*recv_data)(void);

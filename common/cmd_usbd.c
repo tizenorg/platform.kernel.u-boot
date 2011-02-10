@@ -1398,7 +1398,7 @@ int do_usbd_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif
 
 	/* init the usb controller */
-	if (!usbd->usb_init()) {
+	if (!usbd->usb_init(APP_VERSION)) {
 		usbd->down_cancel(END_BOOT);
 		return 0;
 	}

@@ -123,7 +123,7 @@ static void s5p_usb_clear_dnfile_info(void)
 }
 
 /* start the usb controller */
-static int usb_init(void)
+static int usb_init(char *app_ver)
 {
 	if (usb_board_init()) {
 		puts("Failed to usb_board_init\n");
@@ -144,8 +144,9 @@ static int usb_init(void)
 		fb_printf(mmc_info);
 		fb_printf("\n");
 #endif
-		fb_printf("USB Download Mode\n");
-		fb_printf("Press the POWERKEY to CANCEL the downloading\n");
+		fb_printf("USB Downloader v");
+		fb_printf(app_ver);
+		fb_printf("\nPress the POWERKEY to CANCEL the downloading\n");
 	}
 #endif
 
