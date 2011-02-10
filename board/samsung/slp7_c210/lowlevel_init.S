@@ -223,7 +223,7 @@ system_clock_init:
 	ldr	r2, =0x0C548			@ CLK_DIV_FSYS2
 	str	r1, [r0, r2]
 	/* MMC4 */
-	ldr	r1, =0x0007			/* 800(MPLL) / (7 + 1) */
+	ldr	r1, =0x0003			/* 800(MPLL) / (3 + 1) */
 	ldr	r2, =0x0C54C			@ CLK_DIV_FSYS3
 	str	r1, [r0, r2]
 	/* UART[0:5] */
