@@ -543,7 +543,7 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x3e, 1, val, 1);
 
 	/* LDO5 VHSIC: 1.2V */
-	val[0] = max8997_reg_ldo(1200000) | 0xC0;
+	val[0] = max8997_reg_ldo(1200000) | 0x00; /* OFF */
 	i2c_write(addr, 0x3f, 1, val, 1);
 
 	/* LDO6 VCC_1.8V_PDA: 1.8V */
@@ -583,13 +583,12 @@ static void init_pmic_max8997(void)
 	i2c_write(addr, 0x48, 1, val, 1);
 
 	/* LDO15 VTOUCH: 2.8V */
-	val[0] = max8997_reg_ldo(2800000) | 0xC0; /* ON (to be OFFed later) */
+	val[0] = max8997_reg_ldo(2800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x49, 1, val, 1);
 
 	/* LDO16 CAM_SENSOR: 1.8V */
 	val[0] = max8997_reg_ldo(1800000) | 0x00; /* OFF */
 	i2c_write(addr, 0x4a, 1, val, 1);
-
 
 	/* LDO18 VTOUCH 2.8V */
 	val[0] = max8997_reg_ldo(2800000) | 0xC0; /* ON (to be OFFed later) */
