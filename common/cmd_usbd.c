@@ -12,7 +12,7 @@
 #include <malloc.h>
 
 /* version of USB Downloader Application */
-#define APP_VERSION	"2.0.2"
+#define APP_VERSION	"2.0.4"
 
 #define OPS_READ	0
 #define OPS_WRITE	1
@@ -1090,6 +1090,10 @@ static int process_data(struct usbd_ops *usbd)
 		recvlen = usbd->recv_data();
 		send_ack(usbd, STATUS_DONE);
 
+#ifdef CONFIG_SBOOT_UPDATE
+		run_command("run updatemmc", 0);
+		run_command("reset", 0);
+#endif
 		return 0;
 
 	/* Report partition info */
