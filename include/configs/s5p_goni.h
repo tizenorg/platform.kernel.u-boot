@@ -73,6 +73,9 @@
 /* It should define before config_cmd_default.h */
 #define CONFIG_SYS_NO_FLASH		1
 
+/* Cache D configuration */
+#define CONFIG_SYS_DCACHE_OFF
+
 /* Command definition */
 #include <config_cmd_default.h>
 
