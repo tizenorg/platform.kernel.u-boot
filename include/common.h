@@ -789,6 +789,11 @@ int cpu_release(int nr, int argc, char * const argv[]);
 #define ALIGN(x,a)		__ALIGN_MASK((x),(typeof(x))(a)-1)
 #define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
 
+#define ALLOC_CACHE_ALIGN_BUFFER(type, name, size) \
+	char __##name[size + CONFIG_SYS_CACHELINE_SIZE - 1]; \
+	type *name = (type*)  ALIGN(((typeof(CONFIG_SYS_CACHELINE_SIZE))\
+				     (__##name)), (CONFIG_SYS_CACHELINE_SIZE));
+
 /* Pull in stuff for the build system */
 #ifdef DO_DEPS_ONLY
 # include <environment.h>
