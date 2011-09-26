@@ -48,6 +48,7 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <mmc.h>
+#include <pmic.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -576,6 +577,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	s = getenv("bootfile");
 	if (s != NULL)
 		copy_filename(BootFile, s, sizeof(BootFile));
+#endif
+
+#if defined(CONFIG_PMIC)
+	pmic_init();
 #endif
 
 #ifdef BOARD_LATE_INIT
