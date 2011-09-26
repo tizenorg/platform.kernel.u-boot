@@ -34,6 +34,7 @@
 #include <fsl_esdhc.h>
 #include <fsl_pmic.h>
 #include <mc13892.h>
+#include <pmic.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -181,72 +182,94 @@ static void setup_iomux_spi(void)
 static void power_init(void)
 {
 	unsigned int val;
+	struct pmic *p = get_pmic();
 	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)MXC_CCM_BASE;
 
 	/* Write needed to Power Gate 2 register */
-	val = pmic_reg_read(REG_POWER_MISC);
+	if (pmic_reg_read(p, REG_POWER_MISC, &val))
+		puts("PMIC write error!\n");
 	val &= ~PWGT2SPIEN;
-	pmic_reg_write(REG_POWER_MISC, val);
+	if (pmic_reg_write(p, REG_POWER_MISC, &val))
+		puts("PMIC write error!\n");
 
 	/* Externally powered */
-	val = pmic_reg_read(REG_CHARGE);
+	if (pmic_reg_read(p, REG_CHARGE, &val))
+		puts("PMIC write error!\n");
 	val |= ICHRG0 | ICHRG1 | ICHRG2 | ICHRG3 | CHGAUTOB;
-	pmic_reg_write(REG_CHARGE, val);
+	if (pmic_reg_write(p, REG_CHARGE, &val))
+		puts("PMIC write error!\n");
 
 	/* power up the system first */
-	pmic_reg_write(REG_POWER_MISC, PWUP);
+	val = PWUP;
+	if (pmic_reg_write(p, REG_POWER_MISC, &val))
+		puts("PMIC write error!\n");
 
 	/* Set core voltage to 1.1V */
-	val = pmic_reg_read(REG_SW_0);
+	if (pmic_reg_read(p, REG_SW_0, &val))
+		puts("PMIC write error!\n");
 	val = (val & ~SWx_VOLT_MASK) | SWx_1_100V;
-	pmic_reg_write(REG_SW_0, val);
+	if (pmic_reg_write(p, REG_SW_0, &val))
+		puts("PMIC write error!\n");
 
 	/* Setup VCC (SW2) to 1.25 */
-	val = pmic_reg_read(REG_SW_1);
+	if (pmic_reg_read(p, REG_SW_1, &val))
+		puts("PMIC write error!\n");
 	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
-	pmic_reg_write(REG_SW_1, val);
+	if (pmic_reg_write(p, REG_SW_1, &val))
+		puts("PMIC write error!\n");
 
 	/* Setup 1V2_DIG1 (SW3) to 1.25 */
-	val = pmic_reg_read(REG_SW_2);
+	if (pmic_reg_read(p, REG_SW_2, &val))
+		puts("PMIC write error!\n");
 	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
-	pmic_reg_write(REG_SW_2, val);
-	udelay(50);
+	if (pmic_reg_write(p, REG_SW_2, &val))
+		puts("PMIC write error!\n");
 
 	/* Raise the core frequency to 800MHz */
 	writel(0x0, &mxc_ccm->cacrr);
 
 	/* Set switchers in Auto in NORMAL mode & STANDBY mode */
 	/* Setup the switcher mode for SW1 & SW2*/
-	val = pmic_reg_read(REG_SW_4);
+	if (pmic_reg_read(p, REG_SW_4, &val))
+		puts("PMIC write error!\n");
 	val = (val & ~((SWMODE_MASK << SWMODE1_SHIFT) |
 		(SWMODE_MASK << SWMODE2_SHIFT)));
 	val |= (SWMODE_AUTO_AUTO << SWMODE1_SHIFT) |
 		(SWMODE_AUTO_AUTO << SWMODE2_SHIFT);
-	pmic_reg_write(REG_SW_4, val);
+	if (pmic_reg_write(p, REG_SW_4, &val))
+		puts("PMIC write error!\n");
 
 	/* Setup the switcher mode for SW3 & SW4 */
-	val = pmic_reg_read(REG_SW_5);
+	if (pmic_reg_read(p, REG_SW_5, &val))
+		puts("PMIC write error!\n");
 	val = (val & ~((SWMODE_MASK << SWMODE3_SHIFT) |
 		(SWMODE_MASK << SWMODE4_SHIFT)));
 	val |= (SWMODE_AUTO_AUTO << SWMODE3_SHIFT) |
 		(SWMODE_AUTO_AUTO << SWMODE4_SHIFT);
-	pmic_reg_write(REG_SW_5, val);
+	if (pmic_reg_write(p, REG_SW_5, &val))
+		puts("PMIC write error!\n");
 
 	/* Set VDIG to 1.65V, VGEN3 to 1.8V, VCAM to 2.6V */
-	val = pmic_reg_read(REG_SETTING_0);
+	if (pmic_reg_read(p, REG_SETTING_0, &val))
+		puts("PMIC write error!\n");
 	val &= ~(VCAM_MASK | VGEN3_MASK | VDIG_MASK);
 	val |= VDIG_1_65 | VGEN3_1_8 | VCAM_2_6;
-	pmic_reg_write(REG_SETTING_0, val);
+	if (pmic_reg_write(p, REG_SETTING_0, &val))
+		puts("PMIC write error!\n");
 
 	/* Set VVIDEO to 2.775V, VAUDIO to 3V, VSD to 3.15V */
-	val = pmic_reg_read(REG_SETTING_1);
+	if (pmic_reg_read(p, REG_SETTING_1, &val))
+		puts("PMIC write error!\n");
 	val &= ~(VVIDEO_MASK | VSD_MASK | VAUDIO_MASK);
 	val |= VSD_3_15 | VAUDIO_3_0 | VVIDEO_2_775;
-	pmic_reg_write(REG_SETTING_1, val);
+	if (pmic_reg_write(p, REG_SETTING_1, &val))
+		puts("PMIC write error!\n");
 
 	/* Configure VGEN3 and VCAM regulators to use external PNP */
 	val = VGEN3CONFIG | VCAMCONFIG;
-	pmic_reg_write(REG_MODE_1, val);
+	if (pmic_reg_write(p, REG_MODE_1, &val))
+		puts("PMIC write error!\n");
+
 	udelay(200);
 
 	gpio_direction_output(46, 0);
@@ -257,7 +280,8 @@ static void power_init(void)
 	/* Enable VGEN3, VCAM, VAUDIO, VVIDEO, VSD regulators */
 	val = VGEN3EN | VGEN3CONFIG | VCAMEN | VCAMCONFIG |
 		VVIDEOEN | VAUDIOEN  | VSDEN;
-	pmic_reg_write(REG_MODE_1, val);
+	if (pmic_reg_write(p, REG_MODE_1, &val))
+		puts("PMIC write error!\n");
 
 	udelay(500);
 
