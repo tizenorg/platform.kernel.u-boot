@@ -244,6 +244,14 @@ struct s3c_plat_otg_data s5pc210_otg_data = {
 };
 #endif
 
+#ifdef CONFIG_USBDOWNLOAD_GADGET
+void usbd_thor_udc_probe(void)
+{
+	puts("USB_udc_probe\n");
+	s3c_udc_probe(&s5pc210_otg_data);
+}
+#endif
+
 static void pmic_reset(void)
 {
 	struct exynos4_gpio_part2 *gpio =
