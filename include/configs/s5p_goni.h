@@ -87,6 +87,14 @@
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_MMC
 
+/* FAT */
+#define CONFIG_CMD_FAT
+#define CONFIG_FAT_WRITE
+
+/* USB Composite download gadget - g_dnl */
+#define CONFIG_USBDOWNLOAD_GADGET
+#define CONFIG_USBDOWNLOAD_FUNCTION
+
 #define CONFIG_BOOTDELAY		1
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
@@ -107,7 +115,7 @@
 
 #define NORMAL_MTDPARTS_DEFAULT MTDPARTS_DEFAULT
 
-#define CONFIG_BOOTCOMMAND	"run ubifsboot"
+#define CONFIG_BOOTCOMMAND	"run mmcboot"
 
 #define CONFIG_DEFAULT_CONSOLE	"console=ttySAC2,115200n8\0"
 
@@ -125,6 +133,12 @@
 #define CONFIG_UBI_MTD	" ubi.mtd=${ubiblock} ubi.mtd=3 ubi.mtd=6"
 
 #define CONFIG_UBIFS_OPTION	"rootflags=bulk_read,no_chk_data_crc"
+
+#define CONFIG_DNL_INFO \
+	"dnl_info=" \
+	"u-boot mmc 80 200;" \
+	"uImage fat 0 2;" \
+	"platform.img raw 0 3\0" \
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
@@ -155,10 +169,9 @@
 	"ramboot=" \
 		"set bootargs " CONFIG_RAMDISK_BOOT \
 		" initrd=0x33000000,8M ramdisk=8192\0" \
-	"mmcboot=" \
-		"set bootargs root=${mmcblk} rootfstype=${rootfstype}" \
-		CONFIG_UBI_MTD " ${opts} ${lcdinfo} " \
-		CONFIG_COMMON_BOOT "; run bootk\0" \
+	"mmcboot=set bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} " \
+		"rootwait ${console} ${meminfo} ${opts} ${lcdinfo}; " \
+		"run loaduimage; bootm 0x30007FC0\0" \
 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
 	"verify=n\0" \
@@ -170,7 +183,12 @@
 	"bootblock=9\0" \
 	"ubiblock=8\0" \
 	"ubi=enabled\0" \
-	"opts=always_resume=1"
+	"loaduimage=fatload mmc ${mmcdev}:${mmcbootpart} 0x30007FC0 uImage\0" \
+	"mmcdev=0\0" \
+	"mmcbootpart=2\0" \
+	"mmcrootpart=3\0" \
+	"opts=always_resume=1\0" \
+	CONFIG_DNL_INFO
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
@@ -240,5 +258,8 @@
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_S3C_UDC_OTG
 #define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_GADGET_VBUS_DRAW	2
+
+#define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 
 #endif	/* __CONFIG_H */
