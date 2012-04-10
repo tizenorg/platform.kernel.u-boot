@@ -411,6 +411,7 @@ struct usb_gadget_ops {
 
 struct device {
 	void		*driver_data;	/* data private to the driver */
+	void            *device_data;   /* data private to the device */
 };
 
 /**
