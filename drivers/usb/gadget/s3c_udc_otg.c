@@ -133,6 +133,18 @@ static void nuke(struct s3c_ep *ep, int status);
 static int s3c_udc_set_halt(struct usb_ep *_ep, int value);
 static void s3c_udc_set_nak(struct s3c_ep *ep);
 
+void set_udc_gadget_private_data(void *p)
+{
+	DEBUG_SETUP("%s: the_controller: 0x%p, p: 0x%p\n", __func__,
+	       the_controller, p);
+	the_controller->gadget.dev.device_data = p;
+}
+
+void *get_udc_gadget_private_data(struct usb_gadget *gadget)
+{
+	return gadget->dev.device_data;
+}
+
 static struct usb_ep_ops s3c_ep_ops = {
 	.enable = s3c_ep_enable,
 	.disable = s3c_ep_disable,
