@@ -481,6 +481,11 @@ static inline void *get_gadget_data(struct usb_gadget *gadget)
 	return gadget->dev.driver_data;
 }
 
+static inline struct usb_gadget *dev_to_usb_gadget(struct device *dev)
+{
+	return container_of(dev, struct usb_gadget, dev);
+}
+
 /* iterates the non-control endpoints; 'tmp' is a struct usb_ep pointer */
 #define gadget_for_each_ep(tmp, gadget) \
 	list_for_each_entry(tmp, &(gadget)->ep_list, ep_list)
