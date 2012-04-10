@@ -146,3 +146,11 @@ struct s3c_plat_otg_data s5pc110_otg_data = {
 	.usb_phy_ctrl = S5PC110_USB_PHY_CONTROL,
 };
 #endif
+
+#ifdef CONFIG_USBDOWNLOAD_GADGET
+void usbd_thor_udc_probe(void)
+{
+	puts("USB_udc_probe\n");
+	s3c_udc_probe(&s5pc110_otg_data);
+}
+#endif
