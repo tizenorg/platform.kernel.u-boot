@@ -95,6 +95,14 @@
 #undef CONFIG_CMD_MTDPARTS
 #define CONFIG_CMD_MMC
 
+/* FAT */
+#define CONFIG_CMD_FAT
+#define CONFIG_FAT_WRITE
+
+/* USB Composite download gadget - g_dnl */
+#define CONFIG_USBDOWNLOAD_GADGET
+#define CONFIG_USBDOWNLOAD_FUNCTION
+
 #define CONFIG_BOOTDELAY		1
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_BOOTARGS			"Please use defined boot"
@@ -103,6 +111,12 @@
 #define CONFIG_DEFAULT_CONSOLE		"console=ttySAC2,115200n8\0"
 #define CONFIG_BOOTBLOCK		"10"
 #define CONFIG_ENV_COMMON_BOOT		"${console} ${meminfo}"
+
+#define CONFIG_DNL_INFO \
+	"dnl_info=" \
+	"u-boot mmc 80 200;" \
+	"uImage fat 0 2;" \
+	"platform.img raw 0 3\0" \
 
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_SYS_CONSOLE_INFO_QUIET
@@ -213,5 +227,8 @@
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_GADGET_S3C_UDC_OTG
 #define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_GADGET_VBUS_DRAW	2
+
+#define CONFIG_SYS_DOWN_ADDR	CONFIG_SYS_SDRAM_BASE
 
 #endif	/* __CONFIG_H */
