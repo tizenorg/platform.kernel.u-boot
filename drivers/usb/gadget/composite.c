@@ -18,13 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* #define VERBOSE_DEBUG */
+#define VERBOSE_DEBUG
 
-#include <linux/kallsyms.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/device.h>
+/* #include <linux/kallsyms.h> */
+/* #include <linux/kernel.h> */
+/* #include <linux/slab.h> */
+/* #include <linux/device.h> */
 
+#include <linux/bitops.h>
 #include <linux/usb/composite.h>
 
 
@@ -36,7 +37,7 @@
  */
 
 /* big enough to hold our biggest descriptor */
-#define USB_BUFSIZ	1024
+#define USB_BUFSIZ	4096
 
 static struct usb_composite_driver *composite;
 
@@ -404,13 +405,23 @@ static int set_config(struct usb_composite_dev *cdev,
 		result = 0;
 
 	INFO(cdev, "%s speed config #%d: %s\n",
-		({ char *speed;
-		switch (gadget->speed) {
-		case USB_SPEED_LOW:	speed = "low"; break;
-		case USB_SPEED_FULL:	speed = "full"; break;
-		case USB_SPEED_HIGH:	speed = "high"; break;
-		default:		speed = "?"; break;
-		} ; speed; }), number, c ? c->label : "unconfigured");
+	     ({ char *speed;
+		     switch (gadget->speed) {
+		     case USB_SPEED_LOW:
+			     speed = "low";
+			     break;
+		     case USB_SPEED_FULL:
+			     speed = "full";
+			     break;
+		     case USB_SPEED_HIGH:
+			     speed = "high";
+			     break;
+		     default:
+			     speed = "?";
+			     break;
+		     };
+		     speed;
+	     }), number, c ? c->label : "unconfigured");
 
 	if (!c)
 		goto done;
@@ -779,6 +790,7 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	u16				w_length = le16_to_cpu(ctrl->wLength);
 	struct usb_function		*f = NULL;
 	u8				endp;
+	bool				standard;
 
 	/* partial re-init of the response message; the function or the
 	 * gadget might need to intercept e.g. a control-OUT completion
@@ -788,6 +800,10 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	req->complete = composite_setup_complete;
 	req->length = USB_BUFSIZ;
 	gadget->ep0->driver_data = cdev;
+	standard = (ctrl->bRequestType & USB_TYPE_MASK)
+						== USB_TYPE_STANDARD;
+	if (!standard)
+		goto unknown;
 
 	switch (ctrl->bRequest) {
 
@@ -825,6 +841,8 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 			if (value >= 0)
 				value = min(w_length, (u16) value);
 			break;
+		default:
+			goto unknown;
 		}
 		break;
 
@@ -963,7 +981,7 @@ static void composite_disconnect(struct usb_gadget *gadget)
 
 /*-------------------------------------------------------------------------*/
 
-static ssize_t composite_show_suspended(struct device *dev,
+/* static ssize_t composite_show_suspended(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
 {
@@ -973,7 +991,7 @@ static ssize_t composite_show_suspended(struct device *dev,
 	return sprintf(buf, "%d\n", cdev->suspended);
 }
 
-static DEVICE_ATTR(suspended, 0444, composite_show_suspended, NULL);
+static DEVICE_ATTR(suspended, 0444, composite_show_suspended, NULL); */
 
 static void
 composite_unbind(struct usb_gadget *gadget)
@@ -985,7 +1003,7 @@ composite_unbind(struct usb_gadget *gadget)
 	 * so there's no i/o concurrency that could affect the
 	 * state protected by cdev->lock.
 	 */
-	WARN_ON(cdev->config);
+	BUG_ON(cdev->config);
 
 	while (!list_empty(&cdev->configs)) {
 		struct usb_configuration	*c;
@@ -1186,9 +1204,9 @@ static struct usb_gadget_driver composite_driver = {
 	.suspend	= composite_suspend,
 	.resume		= composite_resume,
 
-	.driver	= {
+	/* .driver	= {
 		.owner		= THIS_MODULE,
-	},
+	}, */
 };
 
 /**
@@ -1213,8 +1231,8 @@ int usb_composite_register(struct usb_composite_driver *driver)
 
 	if (!driver->name)
 		driver->name = "composite";
-	composite_driver.function =  (char *) driver->name;
-	composite_driver.driver.name = driver->name;
+	/* composite_driver.function =  (char *) driver->name; */
+	/* composite_driver.driver.name = driver->name; */
 	composite = driver;
 
 	return usb_gadget_register_driver(&composite_driver);

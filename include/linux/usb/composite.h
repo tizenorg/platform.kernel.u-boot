@@ -22,6 +22,58 @@
 #define	__LINUX_USB_COMPOSITE_H
 
 /*
+ * Linux kernel compatibility layer
+ */
+#define true					1
+#define false					0
+#define GFP_ATOMIC				((gfp_t) 0)
+#define GFP_KERNEL				((gfp_t) 0)
+#define BITS_PER_BYTE				8
+#define BITS_TO_LONGS(nr) \
+	DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
+#define DECLARE_BITMAP(name, bits) \
+	unsigned long name[BITS_TO_LONGS(bits)]
+#define min_t(type, x, y) \
+	({ type __x = (x); type __y = (y); __x < __y ? __x : __y; })
+#define dev_dbg(...)				do {} while (0)
+#define dev_vdbg(...)				do {} while (0)
+#define dev_err(...)				do {} while (0)
+#define dev_warn(...)				do {} while (0)
+#define dev_info(...)				do {} while (0)
+#define pr_warning(...)				do {} while (0)
+#define spin_lock_init(lock)			do {} while (0)
+#define spin_lock(lock)				do {} while (0)
+#define spin_unlock(lock)			do {} while (0)
+#define spin_lock_irqsave(lock, flags)		do {flags = 1; } while (0)
+#define spin_unlock_irqrestore(lock, flags)	do {flags = 0; } while (0)
+#define kmalloc(x, y)				malloc(x)
+#define kfree(x)				free(x)
+#define kzalloc(size, flags)			calloc((size), 1)
+#define module_param(...)
+#define MODULE_PARM_DESC(...)
+#define WARN_ON(x)				x
+#define device_remove_file(...)
+#define device_create_file(...)			0
+#define set_bit					__set_bit
+typedef int spinlock_t;
+typedef int bool;
+#define small_const_nbits(nbits) \
+	(__builtin_constant_p(nbits) && (nbits) <= BITS_PER_LONG)
+
+static inline void bitmap_zero(unsigned long *dst, int nbits)
+{
+	if (small_const_nbits(nbits))
+		*dst = 0UL;
+	else {
+		int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);
+		memset(dst, 0, len);
+	}
+}
+/*
+ * end compatibility layer
+ */
+
+/*
  * This framework is an optional layer on top of the USB Gadget interface,
  * making it easier to build (a) Composite devices, supporting multiple
  * functions within any single configuration, and (b) Multi-configuration
