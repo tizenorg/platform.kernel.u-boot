@@ -2574,7 +2574,7 @@ static int onenand_chip_probe(struct mtd_info *mtd)
 int onenand_probe(struct mtd_info *mtd)
 {
 	struct onenand_chip *this = mtd->priv;
-	int maf_id, dev_id, ver_id;
+	int dev_id, ver_id;
 	int density;
 	int ret;
 
@@ -2583,7 +2583,6 @@ int onenand_probe(struct mtd_info *mtd)
 		return ret;
 
 	/* Read manufacturer and device IDs from Register */
-	maf_id = this->read_word(this->base + ONENAND_REG_MANUFACTURER_ID);
 	dev_id = this->read_word(this->base + ONENAND_REG_DEVICE_ID);
 	ver_id = this->read_word(this->base + ONENAND_REG_VERSION_ID);
 	this->technology = this->read_word(this->base + ONENAND_REG_TECHNOLOGY);
