@@ -462,9 +462,9 @@ static void usbd_cancel(int mode)
 	}
 }
 
-__attribute__ ((__aligned__ (__alignof__ (long long))))
+__attribute__((aligned(CONFIG_SYS_CACHELINE_SIZE)))
 static char usbd_tx_buf[TX_DATA_LEN];
-__attribute__ ((__aligned__ (__alignof__ (long long))))
+__attribute__((aligned(CONFIG_SYS_CACHELINE_SIZE)))
 static char usbd_rx_buf[RX_DATA_LEN];
 
 char *usbd_tx_data_buf = usbd_tx_buf;
