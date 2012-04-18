@@ -475,7 +475,7 @@ static const char *tx_key = "ROHT";
 
 static int usbd_init(struct g_dnl *dnl)
 {
-	int ret;
+	int ret = 0;
 	struct usbd_dev *dev = usbd_func->dev;
 
 	/* Wait for a device enumeration and configuration settings */
@@ -486,6 +486,11 @@ static int usbd_init(struct g_dnl *dnl)
 	usbd_set_dma(usbd_rx_data_buf, strlen(recv_key));
 	/* detect the download request from Host PC */
 	ret = usbd_rx_data();
+
+	if (ret < 0) {
+		printf("%s: RX data ERROR!\n", __func__);
+		return -1;
+	}
 
 	if (strncmp(usbd_rx_data_buf, recv_key, strlen(recv_key)) == 0) {
 		printf("Download request from the Host PC\n");
