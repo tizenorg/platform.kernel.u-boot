@@ -49,7 +49,7 @@
 int f_usbd_add(struct usb_configuration *c);
 
 /* Interface to THOR protocol */
-#define TX_DATA_LEN 64
+#define TX_DATA_LEN 128
 #define RX_DATA_LEN 1024
 
 extern char *usbd_tx_data_buf;
