@@ -111,7 +111,7 @@ static unsigned long download(unsigned int total, unsigned int packet_size,
 			      struct g_dnl *dnl)
 {
 	int count = 0;
-	unsigned int rcv_cnt;
+	unsigned int rcv_cnt = 0;
 	static int sect_start = 92160; /* Hardcoded -> will be fixed -> */
 	unsigned int dma_buffer_address = CONFIG_SYS_DOWN_ADDR;
 
