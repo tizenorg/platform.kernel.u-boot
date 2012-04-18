@@ -47,6 +47,7 @@ char *find_dnl_entry(char* s, char *name)
 
 int img_store(struct g_dnl *dnl, int medium)
 {
+	struct mmc *mmc;
 	char cmd_buf[128];
 
 	memset(cmd_buf, '\0', sizeof(cmd_buf));
@@ -64,8 +65,16 @@ int img_store(struct g_dnl *dnl, int medium)
 			dnl->file_size);
 		break;
 	case RAW:
+		mmc = find_mmc_device(0);
+		if (!mmc) {
+			puts("no mmc device at slot 0\n");
+			return -1;
+		}
+		mmc_init(mmc);
+
 		sprintf(cmd_buf, "mmc write 0x%x %x %x",
-			(unsigned int) dnl->rx_buf, dnl->p, dnl->packet_size);
+			(unsigned int) dnl->rx_buf, dnl->p,
+			dnl->packet_size / mmc->write_bl_len);
 		break;
 	}
 
