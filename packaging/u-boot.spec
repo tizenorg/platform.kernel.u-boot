@@ -7,6 +7,7 @@ License: GPL
 ExclusiveArch: %{arm}
 URL: http://sourceforge.net/projects/u-boot
 Source0: %{name}-%{version}.tar.bz2
+Source1001: packaging/u-boot.manifest 
 
 %description
 bootloader for Embedded boards based on ARM processor
@@ -44,6 +45,7 @@ and modify U-Boot's environment.
 %setup -q
 
 %build
+cp %{SOURCE1001} .
 make distclean
 make omap1510inn_config
 
@@ -67,6 +69,7 @@ install -p -m 0755 tools/env/fw_printenv %{buildroot}%{_bindir}
 
 
 %files -n u-boot-tools
+%manifest u-boot.manifest
 %defattr(-,root,root,-)
 %{_bindir}/mkimage
 %{_bindir}/fw_printenv
