@@ -74,8 +74,7 @@
 /* MMC */
 #define CONFIG_GENERIC_MMC
 #define CONFIG_MMC
-#define CONFIG_S5P_SDHCI
-#define CONFIG_SDHCI
+#define CONFIG_S5P_MMC
 
 /* PWM */
 #define CONFIG_PWM
