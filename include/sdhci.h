@@ -216,7 +216,6 @@
  */
 #define SDHCI_QUIRK_32BIT_DMA_ADDR	(1 << 0)
 #define SDHCI_QUIRK_REG32_RW		(1 << 1)
-#define SDHCI_QUIRK_BROKEN_R1B		(1 << 2)
 
 /* to make gcc happy */
 struct sdhci_host;
