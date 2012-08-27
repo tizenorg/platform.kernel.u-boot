@@ -22,7 +22,7 @@
 #include <common.h>
 #include <command.h>
 #include <asm/io.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 
 #define LCD_CMD_ADDR	0x50100002
 #define LCD_DATA_ADDR	0x50100003
@@ -129,7 +129,7 @@ int lcd_init(void)
 	return 0;
 }
 
-static int do_lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	out_8((u8 *) LCD_CMD_ADDR, 0x01);
 	udelay(2000);
@@ -137,38 +137,34 @@ static int do_lcd_clear (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
-static int do_lcd_puts (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_lcd_puts (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc < 2) {
-		printf("%s", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
 	lcd_puts(argv[1]);
 
 	return 0;
 }
 
-static int do_lcd_putc (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_lcd_putc (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc < 2) {
-		printf("%s", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
 	lcd_putc((char)argv[1][0]);
 
 	return 0;
 }
 
-static int do_lcd_cur (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_lcd_cur (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong count;
 	ulong dir;
 	char cur_addr;
 
-	if (argc < 3) {
-		printf("%s", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 3)
+		return cmd_usage(cmdtp);
 
 	count = simple_strtoul(argv[1], NULL, 16);
 	if (count > 31) {
@@ -232,26 +228,26 @@ static int do_lcd_cur (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	lcd_cls, 1, 1, do_lcd_clear,
-	"lcd_cls - lcd clear display\n",
-	NULL
-	);
+	"lcd clear display",
+	""
+);
 
 U_BOOT_CMD(
 	lcd_puts, 2, 1, do_lcd_puts,
-	"lcd_puts - display string on lcd\n",
-	"<string> - <string> to be displayed\n"
-	);
+	"display string on lcd",
+	"<string> - <string> to be displayed"
+);
 
 U_BOOT_CMD(
 	lcd_putc, 2, 1, do_lcd_putc,
-	"lcd_putc - display char on lcd\n",
-	"<char> - <char> to be displayed\n"
-	);
+	"display char on lcd",
+	"<char> - <char> to be displayed"
+);
 
 U_BOOT_CMD(
 	lcd_cur, 3, 1, do_lcd_cur,
-	"lcd_cur - shift cursor on lcd\n",
+	"shift cursor on lcd",
 	"<count> <dir> - shift cursor on lcd <count> times, direction is <dir> \n"
 	" <count> - 0..31\n"
-	" <dir>   - 0=backward 1=forward\n"
-	);
+	" <dir>   - 0=backward 1=forward"
+);

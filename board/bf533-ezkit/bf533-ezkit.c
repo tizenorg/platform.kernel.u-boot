@@ -1,7 +1,7 @@
 /*
- * U-boot - ezkit533.c
+ * U-boot - main board file
  *
- * Copyright (c) 2005-2007 Analog Devices Inc.
+ * Copyright (c) 2005-2008 Analog Devices Inc.
  *
  * (C) Copyright 2000-2004
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
@@ -26,9 +26,9 @@
  */
 
 #include <common.h>
-#if defined(CONFIG_MISC_INIT_R)
+#include <netdev.h>
 #include "psd4256.h"
-#endif
+#include "flash-defines.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -39,36 +39,22 @@ int checkboard(void)
 	return 0;
 }
 
-phys_size_t initdram(int board_type)
-{
-#ifdef DEBUG
-	int brate;
-	char *tmp = getenv("baudrate");
-	brate = simple_strtoul(tmp, NULL, 16);
-	printf("Serial Port initialized with Baud rate = %x\n", brate);
-	printf("SDRAM attributes:\n");
-	printf("tRCD %d SCLK Cycles,tRP %d SCLK Cycles,tRAS %d SCLK Cycles"
-	       "tWR %d SCLK Cycles,CAS Latency %d SCLK cycles \n",
-	       3, 3, 6, 2, 3);
-	printf("SDRAM Begin: 0x%x\n", CFG_SDRAM_BASE);
-	printf("Bank size = %d MB\n", CFG_MAX_RAM_SIZE >> 20);
-#endif
-	gd->bd->bi_memstart = CFG_SDRAM_BASE;
-	gd->bd->bi_memsize = CFG_MAX_RAM_SIZE;
-	return CFG_MAX_RAM_SIZE;
-}
-
-#if defined(CONFIG_MISC_INIT_R)
 /* miscellaneous platform dependent initialisations */
 int misc_init_r(void)
 {
 	/* Set direction bits for Video en/decoder reset as output      */
-	*(volatile unsigned char *)(CFG_FLASH1_BASE + PSD_PORTA_DIR) =
+	*(volatile unsigned char *)(CONFIG_SYS_FLASH1_BASE + PSD_PORTA_DIR) =
 	    PSDA_VDEC_RST | PSDA_VENC_RST;
 	/* Deactivate Video en/decoder reset lines                      */
-	*(volatile unsigned char *)(CFG_FLASH1_BASE + PSD_PORTA_DOUT) =
+	*(volatile unsigned char *)(CONFIG_SYS_FLASH1_BASE + PSD_PORTA_DOUT) =
 	    PSDA_VDEC_RST | PSDA_VENC_RST;
 
 	return 0;
+}
+
+#ifdef CONFIG_SMC91111
+int board_eth_init(bd_t *bis)
+{
+	return smc91111_initialize(0, CONFIG_SMC91111_BASE);
 }
 #endif

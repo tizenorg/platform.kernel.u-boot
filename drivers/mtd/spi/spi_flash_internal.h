@@ -4,10 +4,13 @@
  * Copyright (C) 2008 Atmel Corporation
  */
 
-/* Common parameters */
-#define SPI_FLASH_PROG_TIMEOUT		((10 * CFG_HZ) / 1000)
-#define SPI_FLASH_PAGE_ERASE_TIMEOUT	((50 * CFG_HZ) / 1000)
-#define SPI_FLASH_SECTOR_ERASE_TIMEOUT	(10 * CFG_HZ)
+/* Common parameters -- kind of high, but they should only occur when there
+ * is a problem (and well your system already is broken), so err on the side
+ * of caution in case we're dealing with slower SPI buses and/or processors.
+ */
+#define SPI_FLASH_PROG_TIMEOUT		(2 * CONFIG_SYS_HZ)
+#define SPI_FLASH_PAGE_ERASE_TIMEOUT	(5 * CONFIG_SYS_HZ)
+#define SPI_FLASH_SECTOR_ERASE_TIMEOUT	(10 * CONFIG_SYS_HZ)
 
 /* Common commands */
 #define CMD_READ_ID			0x9f
@@ -43,3 +46,9 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 /* Manufacturer-specific probe functions */
 struct spi_flash *spi_flash_probe_spansion(struct spi_slave *spi, u8 *idcode);
 struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_eon(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_macronix(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_sst(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_stmicro(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode);
+struct spi_flash *spi_fram_probe_ramtron(struct spi_slave *spi, u8 *idcode);

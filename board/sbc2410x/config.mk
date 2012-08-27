@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2002
-# Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+# Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
 # David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
 #
 # SAMSUNG SMDK2410 board with S3C2410X (ARM920T) cpu
@@ -20,4 +20,4 @@
 #
 # download area is 3300'0000
 
-TEXT_BASE = 0x33F80000
+CONFIG_SYS_TEXT_BASE = 0x33F80000

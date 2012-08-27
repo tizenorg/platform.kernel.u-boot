@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008,2010 Freescale Semiconductor, Inc.
  *		Dave Liu <daveliu@freescale.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,28 +21,30 @@
 #include <common.h>
 #include <command.h>
 #include <asm/io.h>
+#include <asm/processor.h>
+#include <asm/fsl_serdes.h>
 #include <malloc.h>
 #include <libata.h>
 #include <fis.h>
 #include "fsl_sata.h"
 
-extern block_dev_desc_t sata_dev_desc[CFG_SATA_MAX_DEVICE];
+extern block_dev_desc_t sata_dev_desc[CONFIG_SYS_SATA_MAX_DEVICE];
 
-#ifndef CFG_SATA1_FLAGS
-	#define CFG_SATA1_FLAGS	FLAGS_DMA
+#ifndef CONFIG_SYS_SATA1_FLAGS
+	#define CONFIG_SYS_SATA1_FLAGS	FLAGS_DMA
 #endif
-#ifndef CFG_SATA2_FLAGS
-	#define CFG_SATA2_FLAGS	FLAGS_DMA
+#ifndef CONFIG_SYS_SATA2_FLAGS
+	#define CONFIG_SYS_SATA2_FLAGS	FLAGS_DMA
 #endif
 
 static struct fsl_sata_info fsl_sata_info[] = {
 #ifdef CONFIG_SATA1
-	{CFG_SATA1, CFG_SATA1_FLAGS},
+	{CONFIG_SYS_SATA1, CONFIG_SYS_SATA1_FLAGS},
 #else
 	{0, 0},
 #endif
 #ifdef CONFIG_SATA2
-	{CFG_SATA2, CFG_SATA2_FLAGS},
+	{CONFIG_SYS_SATA2, CONFIG_SYS_SATA2_FLAGS},
 #else
 	{0, 0},
 #endif
@@ -81,7 +83,7 @@ void dprint_buffer(unsigned char *buf, int len)
 	printf("\n\r");
 }
 
-static void fsl_sata_dump_sfis(struct sfis *s)
+static void fsl_sata_dump_sfis(struct sata_fis_d2h *s)
 {
 	printf("Status FIS dump:\n\r");
 	printf("fis_type:		%02x\n\r", s->fis_type);
@@ -123,10 +125,21 @@ int init_sata(int dev)
 	int i;
 	fsl_sata_t *sata;
 
-	if (dev < 0 || dev > (CFG_SATA_MAX_DEVICE - 1)) {
+	if (dev < 0 || dev > (CONFIG_SYS_SATA_MAX_DEVICE - 1)) {
 		printf("the sata index %d is out of ranges\n\r", dev);
 		return -1;
 	}
+
+#ifdef CONFIG_MPC85xx
+	if ((dev == 0) && (!is_serdes_configured(SATA1))) {
+		printf("SATA%d [dev = %d] is not enabled\n", dev+1, dev);
+		return -1;
+	}
+	if ((dev == 1) && (!is_serdes_configured(SATA2))) {
+		printf("SATA%d [dev = %d] is not enabled\n", dev+1, dev);
+		return -1;
+	}
+#endif
 
 	/* Allocate SATA device driver struct */
 	sata = (fsl_sata_t *)malloc(sizeof(fsl_sata_t));
@@ -190,6 +203,27 @@ int init_sata(int dev)
 
 	/* Wait the controller offline */
 	ata_wait_register(&reg->hstatus, HSTATUS_ONOFF, 0, 1000);
+
+#if defined(CONFIG_FSL_SATA_V2) && defined(CONFIG_FSL_SATA_ERRATUM_A001)
+	/*
+	 * For P1022/1013 Rev1.0 silicon, after power on SATA host
+	 * controller is configured in legacy mode instead of the
+	 * expected enterprise mode. software needs to clear bit[28]
+	 * of HControl register to change to enterprise mode from
+	 * legacy mode.
+	 */
+	{
+		u32 svr = get_svr();
+		if (IS_SVR_REV(svr, 1, 0) &&
+		    ((SVR_SOC_VER(svr) == SVR_P1022) ||
+		     (SVR_SOC_VER(svr) == SVR_P1022_E) ||
+		     (SVR_SOC_VER(svr) == SVR_P1013) ||
+		     (SVR_SOC_VER(svr) == SVR_P1013_E))) {
+			out_le32(&reg->hstatus, 0x20000000);
+			out_le32(&reg->hcontrol, 0x00000100);
+		}
+	}
+#endif
 
 	/* Set the command header base address to CHBA register to tell DMA */
 	out_le32(&reg->chba, (u32)cmd_hdr & ~0x3);
@@ -347,7 +381,7 @@ static void fsl_sata_dump_regs(fsl_sata_reg_t *reg)
 	printf("SYSPR:          %08x\n\r", in_be32(&reg->syspr));
 }
 
-static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct cfis *cfis,
+static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct sata_fis_h2d *cfis,
 				int is_ncq, int tag, u8 *buffer, u32 len)
 {
 	cmd_hdr_entry_t *cmd_hdr;
@@ -483,7 +517,7 @@ static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct cfis *cfis,
 
 	if (val32) {
 		u32 der;
-		fsl_sata_dump_sfis((struct sfis *)cmd_desc->sfis);
+		fsl_sata_dump_sfis((struct sata_fis_d2h *)cmd_desc->sfis);
 		printf("CE at device\n\r");
 		fsl_sata_dump_regs(reg);
 		der = in_le32(&reg->der);
@@ -498,13 +532,13 @@ static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct cfis *cfis,
 	return len;
 }
 
-static int fsl_ata_exec_reset_cmd(struct fsl_sata *sata, struct cfis *cfis,
+static int fsl_ata_exec_reset_cmd(struct fsl_sata *sata, struct sata_fis_h2d *cfis,
 				 int tag, u8 *buffer, u32 len)
 {
 	return 0;
 }
 
-static int fsl_sata_exec_cmd(struct fsl_sata *sata, struct cfis *cfis,
+static int fsl_sata_exec_cmd(struct fsl_sata *sata, struct sata_fis_h2d *cfis,
 		 enum cmd_type command_type, int tag, u8 *buffer, u32 len)
 {
 	int rc;
@@ -539,11 +573,9 @@ static int fsl_sata_exec_cmd(struct fsl_sata *sata, struct cfis *cfis,
 static void fsl_sata_identify(int dev, u16 *id)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 
-	cfis = (struct cfis *)&h2d;
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -566,12 +598,10 @@ static void fsl_sata_xfer_mode(int dev, u16 *id)
 static void fsl_sata_set_features(int dev)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 	u8 udma_cap;
 
-	cfis = (struct cfis *)&h2d;
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -597,14 +627,12 @@ static void fsl_sata_set_features(int dev)
 static u32 fsl_sata_rw_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 	u32 block;
 
 	block = start;
-	cfis = (struct cfis *)&h2d;
 
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -624,12 +652,9 @@ static u32 fsl_sata_rw_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_wr
 void fsl_sata_flush_cache(int dev)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 
-	cfis = (struct cfis *)&h2d;
-
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -641,14 +666,12 @@ void fsl_sata_flush_cache(int dev)
 static u32 fsl_sata_rw_cmd_ext(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 	u64 block;
 
 	block = (u64)start;
-	cfis = (struct cfis *)&h2d;
 
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -673,8 +696,7 @@ static u32 fsl_sata_rw_cmd_ext(int dev, u32 start, u32 blkcnt, u8 *buffer, int i
 u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 	int ncq_channel;
 	u64 block;
 
@@ -684,9 +706,8 @@ u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write
 	}
 
 	block = (u64)start;
-	cfis = (struct cfis *)&h2d;
 
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */
@@ -718,12 +739,9 @@ u32 fsl_sata_rw_ncq_cmd(int dev, u32 start, u32 blkcnt, u8 *buffer, int is_write
 void fsl_sata_flush_cache_ext(int dev)
 {
 	fsl_sata_t *sata = (fsl_sata_t *)sata_dev_desc[dev].priv;
-	struct sata_fis_h2d h2d;
-	struct cfis *cfis;
+	struct sata_fis_h2d h2d, *cfis = &h2d;
 
-	cfis = (struct cfis *)&h2d;
-
-	memset((void *)cfis, 0, sizeof(struct cfis));
+	memset(cfis, 0, sizeof(struct sata_fis_h2d));
 
 	cfis->fis_type = SATA_FIS_TYPE_REGISTER_H2D;
 	cfis->pm_port_c = 0x80; /* is command */

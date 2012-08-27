@@ -24,7 +24,7 @@
 /*
 OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips", "elf32-bigmips")
 */
-OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips", "elf32-tradbigmips")
+OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips", "elf32-tradlittlemips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
 SECTIONS
@@ -34,21 +34,16 @@ SECTIONS
 	. = ALIGN(4);
 	.text       :
 	{
-	  cpu/mips/start.o		(.text)
+	  arch/mips/cpu/start.o		(.text)
 	  board/purple/lowlevel_init.o	(.text)
-	  cpu/mips/cache.o		(.text)
-	  common/main.o			(.text)
-	  common/dlmalloc.o		(.text)
-	  common/cmd_boot.o		(.text)
-	  lib_generic/zlib.o		(.text)
 	  . = DEFINED(env_offset) ? env_offset : .;
-	  common/environment.o	(.ppcenv)
+	  common/env_embedded.o	(.ppcenv)
 
 	  *(.text)
 	}
 
 	. = ALIGN(4);
-	.rodata  : { *(.rodata) }
+	.rodata  : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
 
 	. = ALIGN(4);
 	.data  : { *(.data) }
@@ -75,6 +70,6 @@ SECTIONS
 
 	. = ALIGN(4);
 	.sbss (NOLOAD)  : { *(.sbss) }
-	.bss (NOLOAD)  : { *(.bss) }
+	.bss (NOLOAD)  : { *(.bss) . = ALIGN(4); }
 	uboot_end = .;
 }

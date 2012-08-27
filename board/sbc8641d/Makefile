@@ -23,16 +23,18 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= $(BOARD).o law.o
+COBJS-y	+= $(BOARD).o
+COBJS-y	+= law.o
+COBJS-$(CONFIG_FSL_DDR2) += ddr.o
 
-SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
-OBJS	:= $(addprefix $(obj),$(COBJS))
+SRCS	:= $(SOBJS:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS-y))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(OBJS) $(SOBJS)

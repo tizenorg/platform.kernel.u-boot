@@ -36,15 +36,12 @@
 #include <command.h>
 #include <rtc.h>
 
-
-#if defined(CONFIG_RTC_DS1556) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
 static uchar rtc_read( unsigned int addr );
 static void  rtc_write( unsigned int addr, uchar val);
-static uchar bin2bcd   (unsigned int n);
-static unsigned bcd2bin(uchar c);
 
-#define RTC_BASE		( CFG_NVRAM_SIZE + CFG_NVRAM_BASE_ADDR )
+#define RTC_BASE		( CONFIG_SYS_NVRAM_SIZE + CONFIG_SYS_NVRAM_BASE_ADDR )
 
 #define RTC_YEAR		( RTC_BASE + 0xf )
 #define RTC_MONTH		( RTC_BASE + 0xe )
@@ -121,7 +118,7 @@ int rtc_get( struct rtc_time *tmp )
 	return 0;
 }
 
-void rtc_set( struct rtc_time *tmp )
+int rtc_set( struct rtc_time *tmp )
 {
 	uchar reg_a;
 #ifdef RTC_DEBUG
@@ -147,6 +144,8 @@ void rtc_set( struct rtc_time *tmp )
 
 	/* unlock clock registers after read */
 	rtc_write( RTC_CONTROLA, ( reg_a  & ~RTC_CA_WRITE ));
+
+	return 0;
 }
 
 void rtc_reset (void)
@@ -192,16 +191,6 @@ static void rtc_write( unsigned int addr, uchar val )
 	printf( "rtc_write: %x:%x\n", addr, val );
 #endif
 	*(volatile unsigned char*)(addr) = val;
-}
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
 }
 
 #endif

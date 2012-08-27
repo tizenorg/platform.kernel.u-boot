@@ -28,6 +28,7 @@
 
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <asm/inca-ip.h>
 #include <asm/addrspace.h>
 
@@ -199,7 +200,7 @@ int inca_switch_initialize(bd_t * bis)
 	printf("Leaving inca_switch_initialize()\n");
 #endif
 
-	return 1;
+	return 0;
 }
 
 
@@ -755,7 +756,7 @@ static int inca_amdix(void)
 					(0x1 << 31) |	/* RA		*/
 					(0x0 << 30) |	/* Read		*/
 					(0x6 << 21) |	/* LAN		*/
-					(6   << 16));	/* PHY_ANER	*/
+					(6   << 16));	/* MII_EXPANSION	*/
 				do {
 					SW_READ_REG(INCA_IP_Switch_MDIO_ACC, phyReg6);
 				} while (phyReg6 & (1 << 31));
@@ -768,7 +769,7 @@ static int inca_amdix(void)
 						(0x1 << 31) |	/* RA		*/
 						(0x0 << 30) |	/* Read		*/
 						(0x6 << 21) |	/* LAN		*/
-						(4   << 16));	/* PHY_ANAR	*/
+						(4   << 16));	/* MII_ADVERTISE	*/
 					do {
 						SW_READ_REG(INCA_IP_Switch_MDIO_ACC, phyReg4);
 					} while (phyReg4 & (1 << 31));
@@ -781,7 +782,7 @@ static int inca_amdix(void)
 							(0x1 << 31) |	/* RA		*/
 							(0x0 << 30) |	/* Read		*/
 							(0x6 << 21) |	/* LAN		*/
-							(5   << 16));	/* PHY_ANLPAR	*/
+							(5   << 16));	/* MII_LPA	*/
 						do {
 							SW_READ_REG(INCA_IP_Switch_MDIO_ACC, phyReg5);
 						} while (phyReg5 & (1 << 31));

@@ -39,11 +39,19 @@ int checkboard(void)
 
 phys_size_t initdram(int board_type)
 {
+	u32 dramsize;
+#ifdef CONFIG_CF_SBF
+	/*
+	 * Serial Boot: The dram is already initialized in start.S
+	 * only require to return DRAM size
+	 */
+	dramsize = CONFIG_SYS_SDRAM_SIZE * 0x100000 >> 1;
+#else
 	volatile sdramc_t *sdram = (volatile sdramc_t *)(MMAP_SDRAM);
 	volatile gpio_t *gpio = (volatile gpio_t *)(MMAP_GPIO);
-	u32 dramsize, i;
+	u32 i;
 
-	dramsize = CFG_SDRAM_SIZE * 0x100000 >> 1;
+	dramsize = CONFIG_SYS_SDRAM_SIZE * 0x100000 >> 1;
 
 	for (i = 0x13; i < 0x20; i++) {
 		if (dramsize == (1 << i))
@@ -51,36 +59,36 @@ phys_size_t initdram(int board_type)
 	}
 	i--;
 
-	gpio->mscr_sdram = 0xAA;
+	gpio->mscr_sdram = CONFIG_SYS_SDRAM_DRV_STRENGTH;
 
-	sdram->sdcs0 = (CFG_SDRAM_BASE | i);
-	sdram->sdcs1 = (CFG_SDRAM_BASE1 | i);
+	sdram->sdcs0 = (CONFIG_SYS_SDRAM_BASE | i);
+	sdram->sdcs1 = (CONFIG_SYS_SDRAM_BASE1 | i);
 
-	sdram->sdcfg1 = CFG_SDRAM_CFG1;
-	sdram->sdcfg2 = CFG_SDRAM_CFG2;
+	sdram->sdcfg1 = CONFIG_SYS_SDRAM_CFG1;
+	sdram->sdcfg2 = CONFIG_SYS_SDRAM_CFG2;
 
 	/* Issue PALL */
-	sdram->sdcr = CFG_SDRAM_CTRL | 2;
+	sdram->sdcr = CONFIG_SYS_SDRAM_CTRL | 2;
 
 	/* Issue LEMR */
-	sdram->sdmr = CFG_SDRAM_EMOD | 0x408;
-	sdram->sdmr = CFG_SDRAM_MODE | 0x300;
+	sdram->sdmr = CONFIG_SYS_SDRAM_EMOD | 0x408;
+	sdram->sdmr = CONFIG_SYS_SDRAM_MODE | 0x300;
 
 	udelay(500);
 
 	/* Issue PALL */
-	sdram->sdcr = CFG_SDRAM_CTRL | 2;
+	sdram->sdcr = CONFIG_SYS_SDRAM_CTRL | 2;
 
 	/* Perform two refresh cycles */
-	sdram->sdcr = CFG_SDRAM_CTRL | 4;
-	sdram->sdcr = CFG_SDRAM_CTRL | 4;
+	sdram->sdcr = CONFIG_SYS_SDRAM_CTRL | 4;
+	sdram->sdcr = CONFIG_SYS_SDRAM_CTRL | 4;
 
-	sdram->sdmr = CFG_SDRAM_MODE | 0x200;
+	sdram->sdmr = CONFIG_SYS_SDRAM_MODE | 0x200;
 
-	sdram->sdcr = (CFG_SDRAM_CTRL & ~0x80000000) | 0x10000c00;
+	sdram->sdcr = (CONFIG_SYS_SDRAM_CTRL & ~0x80000000) | 0x10000c00;
 
 	udelay(100);
-
+#endif
 	return (dramsize << 1);
 };
 
@@ -99,7 +107,7 @@ int ide_preinit(void)
 {
 	volatile gpio_t *gpio = (gpio_t *) MMAP_GPIO;
 
-	gpio->par_fec |= (gpio->par_fec & GPIO_PAR_FEC_FEC1_MASK) | 0x10;
+	gpio->par_fec |= (gpio->par_fec & GPIO_PAR_FEC_FEC1_UNMASK) | 0x10;
 	gpio->par_feci2c |=
 	    (gpio->par_feci2c & 0xF0FF) | (GPIO_PAR_FECI2C_MDC1_ATA_DIOR |
 					   GPIO_PAR_FECI2C_MDIO1_ATA_DIOW);
@@ -162,3 +170,52 @@ void pci_init_board(void)
 	pci_mcf5445x_init(&hose);
 }
 #endif				/* CONFIG_PCI */
+
+#if defined(CONFIG_FLASH_CFI_LEGACY)
+#include <flash.h>
+ulong board_flash_get_legacy (ulong base, int banknum, flash_info_t * info)
+{
+	int sect[] = CONFIG_SYS_ATMEL_SECT;
+	int sectsz[] = CONFIG_SYS_ATMEL_SECTSZ;
+	int i, j, k;
+
+	if (base != CONFIG_SYS_ATMEL_BASE)
+		return 0;
+
+	info->flash_id          = 0x01000000;
+	info->portwidth         = 1;
+	info->chipwidth         = 1;
+	info->buffer_size       = 1;
+	info->erase_blk_tout    = 16384;
+	info->write_tout        = 2;
+	info->buffer_write_tout = 5;
+	info->vendor            = 0xFFF0; /* CFI_CMDSET_AMD_LEGACY */
+	info->cmd_reset         = 0x00F0;
+	info->interface         = FLASH_CFI_X8;
+	info->legacy_unlock     = 0;
+	info->manufacturer_id   = (u16) ATM_MANUFACT;
+	info->device_id         = ATM_ID_LV040;
+	info->device_id2        = 0;
+
+	info->ext_addr          = 0;
+	info->cfi_version       = 0x3133;
+	info->cfi_offset        = 0x0000;
+	info->addr_unlock1      = 0x00000555;
+	info->addr_unlock2      = 0x000002AA;
+	info->name              = "CFI conformant";
+
+	info->size              = 0;
+	info->sector_count      = CONFIG_SYS_ATMEL_TOTALSECT;
+	info->start[0] = base;
+	for (k = 0, i = 0; i < CONFIG_SYS_ATMEL_REGION; i++) {
+		info->size += sect[i] * sectsz[i];
+
+		for (j = 0; j < sect[i]; j++, k++) {
+			info->start[k + 1] = info->start[k] + sectsz[i];
+			info->protect[k] = 0;
+		}
+	}
+
+	return 1;
+}
+#endif				/* CONFIG_SYS_FLASH_CFI */

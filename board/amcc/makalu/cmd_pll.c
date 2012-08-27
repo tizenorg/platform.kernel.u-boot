@@ -48,7 +48,7 @@
 	do {								\
 		int __i;						\
 		for (__i = 0; __i < 2; __i++)				\
-			eeprom_write (CFG_I2C_EEPROM_ADDR,		\
+			eeprom_write (CONFIG_SYS_I2C_EEPROM_ADDR,		\
 				      EEPROM_CONF_OFFSET + __i*BUF_STEP, \
 				      pll_select[freq],			\
 				      BUF_STEP + __i*BUF_STEP);		\
@@ -151,7 +151,7 @@ pll_debug(int off)
 	uchar buffer[EEPROM_SDSTP_PARAM];
 
 	memset(buffer, 0, sizeof(buffer));
-	eeprom_read(CFG_I2C_EEPROM_ADDR, off,
+	eeprom_read(CONFIG_SYS_I2C_EEPROM_ADDR, off,
 		    buffer, EEPROM_SDSTP_PARAM);
 
 	printf("Debug: SDSTP[0-3] at offset \"0x%02x\" lists as follows: \n", off);
@@ -168,9 +168,9 @@ test_write(void)
 	/*
 	 * Write twice, 8 bytes per write
 	 */
-	eeprom_write (CFG_I2C_EEPROM_ADDR, EEPROM_TEST_OFFSET,
+	eeprom_write (CONFIG_SYS_I2C_EEPROM_ADDR, EEPROM_TEST_OFFSET,
 		      testbuf, 8);
-	eeprom_write (CFG_I2C_EEPROM_ADDR, EEPROM_TEST_OFFSET+8,
+	eeprom_write (CONFIG_SYS_I2C_EEPROM_ADDR, EEPROM_TEST_OFFSET+8,
 		      testbuf, 16);
 	printf("done\n");
 
@@ -178,18 +178,18 @@ test_write(void)
 }
 
 int
-do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char c = '\0';
 	pll_freq_t pll_freq;
-	if (argc < 2) {
-		printf("Usage: \n%s\n", cmdtp->usage);
-		goto ret;
-	}
 
-	for (pll_freq = PLL_ebc20; pll_freq < PLL_TOTAL; pll_freq++)
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
+	for (pll_freq = PLL_ebc20; pll_freq < PLL_TOTAL; pll_freq++) {
 		if (!strcmp(pll_name[pll_freq], argv[1]))
 			break;
+	}
 
 	switch (pll_freq) {
 	case PLL_ebc20:
@@ -222,9 +222,8 @@ do_pll_alter (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		goto ret;
 
 	default:
-		printf("Invalid options"
-		       "\n\nUsage: \n%s\n", cmdtp->usage);
-		goto ret;
+		printf("Invalid options\n\n");
+		return cmd_usage(cmdtp);
 	}
 
 	printf("PLL set to %s, "
@@ -236,8 +235,8 @@ ret:
 }
 
 U_BOOT_CMD(
-	pllalter, CFG_MAXARGS, 1,        do_pll_alter,
-	"pllalter- change pll frequence \n",
+	pllalter, CONFIG_SYS_MAXARGS, 1,        do_pll_alter,
+	"change pll frequence",
 	"pllalter <selection>      - change pll frequence \n\n\
 	** New freq take effect after reset. ** \n\
 	----------------------------------------------\n\
@@ -291,7 +290,7 @@ U_BOOT_CMD(
 	RCONF: Read current eeprom configuration.      \n\
 	-----------------------------------------------\n\
 	WTEST: Test EEPROM write with predefined values\n\
-	-----------------------------------------------\n"
-	);
+	-----------------------------------------------"
+);
 
 #endif	/* CONFIG_CMD_EEPROM */

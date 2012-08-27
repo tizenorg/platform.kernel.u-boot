@@ -46,12 +46,12 @@
 #define SDRAM_BASE_ADDRESS	0x80008000
 
 _TEXT_BASE:
-	.word	TEXT_BASE	/* sdram load addr from config.mk */
+	.word	CONFIG_SYS_TEXT_BASE	/* sdram load addr from config.mk */
 
 .globl lowlevel_init
 lowlevel_init:
 
-#ifdef CFG_NOR_BOOT
+#ifdef CONFIG_SYS_NOR_BOOT
 	/* Check running in SDRAM */
 	mov	r0, pc, lsr #28
 	cmp	r0, #8

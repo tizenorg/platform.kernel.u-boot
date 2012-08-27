@@ -32,33 +32,23 @@
 #include <rtc.h>
 #include <i2c.h>
 
-#if defined(CONFIG_RTC_MAX6900) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
-#ifndef	CFG_I2C_RTC_ADDR
-#define	CFG_I2C_RTC_ADDR	0x50
+#ifndef	CONFIG_SYS_I2C_RTC_ADDR
+#define	CONFIG_SYS_I2C_RTC_ADDR	0x50
 #endif
 
 /* ------------------------------------------------------------------------- */
 
 static uchar rtc_read (uchar reg)
 {
-	return (i2c_reg_read (CFG_I2C_RTC_ADDR, reg));
+	return (i2c_reg_read (CONFIG_SYS_I2C_RTC_ADDR, reg));
 }
 
 static void rtc_write (uchar reg, uchar val)
 {
-	i2c_reg_write (CFG_I2C_RTC_ADDR, reg, val);
+	i2c_reg_write (CONFIG_SYS_I2C_RTC_ADDR, reg, val);
 	udelay(2500);
-}
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
 }
 
 /* ------------------------------------------------------------------------- */
@@ -107,7 +97,7 @@ int rtc_get (struct rtc_time *tmp)
 	return 0;
 }
 
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 
 	debug ( "Set DATE: %4d-%02d-%02d (wday=%d)  TIME: %2d:%02d:%02d\n",
@@ -124,6 +114,8 @@ void rtc_set (struct rtc_time *tmp)
 	rtc_write (0x84, bin2bcd(tmp->tm_hour));
 	rtc_write (0x82, bin2bcd(tmp->tm_min ));
 	rtc_write (0x80, bin2bcd(tmp->tm_sec ));
+
+	return 0;
 }
 
 void rtc_reset (void)

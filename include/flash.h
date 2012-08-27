@@ -24,7 +24,7 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
-#ifndef CFG_NO_FLASH
+#ifndef CONFIG_SYS_NO_FLASH
 /*-----------------------------------------------------------------------
  * FLASH Info: contains chip specific data, per FLASH bank
  */
@@ -33,9 +33,9 @@ typedef struct {
 	ulong	size;			/* total bank size in bytes		*/
 	ushort	sector_count;		/* number of erase units		*/
 	ulong	flash_id;		/* combined device & manufacturer code	*/
-	ulong	start[CFG_MAX_FLASH_SECT];   /* physical sector start addresses */
-	uchar	protect[CFG_MAX_FLASH_SECT]; /* sector protection status	*/
-#ifdef CFG_FLASH_CFI
+	ulong	start[CONFIG_SYS_MAX_FLASH_SECT];   /* virtual sector start address */
+	uchar	protect[CONFIG_SYS_MAX_FLASH_SECT]; /* sector protection status	*/
+#ifdef CONFIG_SYS_FLASH_CFI
 	uchar	portwidth;		/* the width of the port		*/
 	uchar	chipwidth;		/* the width of the chip		*/
 	ushort	buffer_size;		/* # of bytes in write buffer		*/
@@ -46,7 +46,7 @@ typedef struct {
 	ushort	cmd_reset;		/* vendor specific reset command	*/
 	ushort	interface;		/* used for x8/x16 adjustments		*/
 	ushort	legacy_unlock;		/* support Intel legacy (un)locking	*/
-	uchar	manufacturer_id;	/* manufacturer id			*/
+	ushort	manufacturer_id;	/* manufacturer id			*/
 	ushort	device_id;		/* device id				*/
 	ushort	device_id2;		/* extended device id			*/
 	ushort	ext_addr;		/* extended query table address		*/
@@ -57,6 +57,10 @@ typedef struct {
 	const char *name;		/* human-readable name	                */
 #endif
 } flash_info_t;
+
+extern flash_info_t flash_info[]; /* info for FLASH chips	*/
+
+typedef unsigned long flash_sect_t;
 
 /*
  * Values for the width of the port
@@ -84,6 +88,7 @@ typedef struct {
 
 /* convert between bit value and numeric value */
 #define CFI_FLASH_SHIFT_WIDTH	3
+
 /* Prototypes */
 
 extern unsigned long flash_init (void);
@@ -91,6 +96,9 @@ extern void flash_print_info (flash_info_t *);
 extern int flash_erase	(flash_info_t *, int, int);
 extern int flash_sect_erase (ulong addr_first, ulong addr_last);
 extern int flash_sect_protect (int flag, ulong addr_first, ulong addr_last);
+extern int flash_sect_roundb (ulong *addr);
+extern unsigned long flash_sector_size(flash_info_t *info, flash_sect_t sect);
+extern void flash_set_verbose(uint);
 
 /* common/flash.c */
 extern void flash_protect (int flag, ulong from, ulong to, flash_info_t *info);
@@ -98,12 +106,17 @@ extern int flash_write (char *, ulong, ulong);
 extern flash_info_t *addr2info (ulong);
 extern int write_buff (flash_info_t *info, uchar *src, ulong addr, ulong cnt);
 
+/* drivers/mtd/cfi_mtd.c */
+#ifdef CONFIG_FLASH_CFI_MTD
+extern int cfi_mtd_init(void);
+#endif
+
 /* board/?/flash.c */
-#if defined(CFG_FLASH_PROTECTION)
+#if defined(CONFIG_SYS_FLASH_PROTECTION)
 extern int flash_real_protect(flash_info_t *info, long sector, int prot);
 extern void flash_read_user_serial(flash_info_t * info, void * buffer, int offset, int len);
 extern void flash_read_factory_serial(flash_info_t * info, void * buffer, int offset, int len);
-#endif	/* CFG_FLASH_PROTECTION */
+#endif	/* CONFIG_SYS_FLASH_PROTECTION */
 
 #ifdef CONFIG_FLASH_CFI_LEGACY
 extern ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info);
@@ -111,6 +124,9 @@ extern int jedec_flash_match(flash_info_t *info, ulong base);
 #define CFI_CMDSET_AMD_LEGACY		0xFFF0
 #endif
 
+#if defined(CONFIG_SYS_FLASH_CFI)
+extern flash_info_t *flash_get_info(ulong base);
+#endif
 
 /*-----------------------------------------------------------------------
  * return codes from flash_write():
@@ -140,6 +156,7 @@ extern int jedec_flash_match(flash_info_t *info, ulong base);
  * Device IDs
  */
 
+/* Manufacturers inside bank 0 have ids like 0x00xx00xx */
 #define AMD_MANUFACT	0x00010001	/* AMD	   manuf. ID in D23..D16, D7..D0 */
 #define FUJ_MANUFACT	0x00040004	/* FUJITSU manuf. ID in D23..D16, D7..D0 */
 #define ATM_MANUFACT	0x001F001F	/* ATMEL */
@@ -152,6 +169,13 @@ extern int jedec_flash_match(flash_info_t *info, ulong base);
 #define TOSH_MANUFACT	0x00980098	/* TOSHIBA manuf. ID in D23..D16, D7..D0 */
 #define MT2_MANUFACT	0x002C002C	/* alternate MICRON manufacturer ID*/
 #define EXCEL_MANUFACT	0x004A004A	/* Excel Semiconductor			*/
+#define AMIC_MANUFACT	0x00370037	/* AMIC    manuf. ID in D23..D16, D7..D0 */
+#define WINB_MANUFACT	0x00DA00DA	/* Winbond manuf. ID in D23..D16, D7..D0 */
+
+/* Manufacturers inside bank 1 have ids like 0x01xx01xx */
+#define EON_MANUFACT	0x011C011C	/* EON     manuf. ID in D23..D16, D7..D0 */
+
+/* Manufacturers inside bank 2 have ids like 0x02xx02xx */
 
 					/* Micron Technologies (INTEL compat.)	*/
 #define MT_ID_28F400_T	0x44704470	/* 28F400B3 ID ( 4 M, top boot sector)	*/
@@ -485,6 +509,6 @@ extern int jedec_flash_match(flash_info_t *info, ulong base);
 #define FLASH_ERASE_TIMEOUT	120000	/* timeout for erasing in ms		*/
 #define FLASH_WRITE_TIMEOUT	500	/* timeout for writes  in ms		*/
 
-#endif /* !CFG_NO_FLASH */
+#endif /* !CONFIG_SYS_NO_FLASH */
 
 #endif /* _FLASH_H_ */

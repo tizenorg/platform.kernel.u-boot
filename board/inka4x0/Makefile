@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2003-2006
+# (C) Copyright 2003-2009
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
 # See file CREDITS for list of people who contributed to this
@@ -23,16 +23,16 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= $(BOARD).o
+COBJS	:= $(BOARD).o inkadiag.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

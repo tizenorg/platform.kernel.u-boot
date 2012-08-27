@@ -1,12 +1,10 @@
 #include <common.h>
 #include <asm/io.h>
 
-#ifdef CONFIG_POST
-
 #include <post.h>
 #include <watchdog.h>
 
-#if CONFIG_POST & CFG_POST_MEMORY
+#if CONFIG_POST & CONFIG_SYS_POST_MEMORY
 #define CLKIN 25000000
 #define PATTERN1 0x5A5A5A5A
 #define PATTERN2 0xAAAAAAAA
@@ -21,24 +19,24 @@ int post_init_sdram(int sclk);
 void post_init_uart(int sclk);
 
 const int pll[CCLK_NUM][SCLK_NUM][2] = {
-	{{20, 4}, {20, 5}, {20, 10}},	/* CCLK = 500M */
-	{{16, 4}, {16, 5}, {16, 8}},	/* CCLK = 400M */
-	{{8, 2}, {8, 4}, {8, 5}},	/* CCLK = 200M */
-	{{4, 1}, {4, 2}, {4, 4}}	/* CCLK = 100M */
+	{ {20, 4}, {20, 5}, {20, 10} },	/* CCLK = 500M */
+	{ {16, 4}, {16, 5}, {16, 8} },	/* CCLK = 400M */
+	{ {8, 2}, {8, 4}, {8, 5} },	/* CCLK = 200M */
+	{ {4, 1}, {4, 2}, {4, 4} }	/* CCLK = 100M */
 };
 const char *const log[CCLK_NUM][SCLK_NUM] = {
-	{"CCLK-500Mhz SCLK-125Mhz:    Writing...\0",
-	 "CCLK-500Mhz SCLK-100Mhz:    Writing...\0",
-	 "CCLK-500Mhz SCLK- 50Mhz:    Writing...\0",},
-	{"CCLK-400Mhz SCLK-100Mhz:    Writing...\0",
-	 "CCLK-400Mhz SCLK- 80Mhz:    Writing...\0",
-	 "CCLK-400Mhz SCLK- 50Mhz:    Writing...\0",},
-	{"CCLK-200Mhz SCLK-100Mhz:    Writing...\0",
-	 "CCLK-200Mhz SCLK- 50Mhz:    Writing...\0",
-	 "CCLK-200Mhz SCLK- 40Mhz:    Writing...\0",},
-	{"CCLK-100Mhz SCLK-100Mhz:    Writing...\0",
-	 "CCLK-100Mhz SCLK- 50Mhz:    Writing...\0",
-	 "CCLK-100Mhz SCLK- 25Mhz:    Writing...\0",},
+	{"CCLK-500MHz SCLK-125MHz:    Writing...\0",
+	 "CCLK-500MHz SCLK-100MHz:    Writing...\0",
+	 "CCLK-500MHz SCLK- 50MHz:    Writing...\0",},
+	{"CCLK-400MHz SCLK-100MHz:    Writing...\0",
+	 "CCLK-400MHz SCLK- 80MHz:    Writing...\0",
+	 "CCLK-400MHz SCLK- 50MHz:    Writing...\0",},
+	{"CCLK-200MHz SCLK-100MHz:    Writing...\0",
+	 "CCLK-200MHz SCLK- 50MHz:    Writing...\0",
+	 "CCLK-200MHz SCLK- 40MHz:    Writing...\0",},
+	{"CCLK-100MHz SCLK-100MHz:    Writing...\0",
+	 "CCLK-100MHz SCLK- 50MHz:    Writing...\0",
+	 "CCLK-100MHz SCLK- 25MHz:    Writing...\0",},
 };
 
 int memory_post_test(int flags)
@@ -71,10 +69,10 @@ int memory_post_test(int flags)
 			post_init_uart(sclk);
 			post_out_buff("\n\r\0");
 			post_out_buff(log[m][n]);
-			for (addr = 0x0; addr < CFG_MAX_RAM_SIZE; addr += 4)
+			for (addr = 0x0; addr < CONFIG_SYS_MAX_RAM_SIZE; addr += 4)
 				*(unsigned long *)addr = PATTERN1;
 			post_out_buff("Reading...\0");
-			for (addr = 0x0; addr < CFG_MAX_RAM_SIZE; addr += 4) {
+			for (addr = 0x0; addr < CONFIG_SYS_MAX_RAM_SIZE; addr += 4) {
 				if ((*(unsigned long *)addr) != PATTERN1) {
 					post_out_buff("Error\n\r\0");
 					ret = 0;
@@ -99,19 +97,19 @@ void post_init_uart(int sclk)
 	for (divisor = 0; sclk > 0; divisor++)
 		sclk -= 57600 * 16;
 
-	*pPORTF_FER = 0x000F;
-	*pPORTH_FER = 0xFFFF;
+	bfin_write_PORTF_FER(0x000F);
+	bfin_write_PORTH_FER(0xFFFF);
 
-	*pUART_GCTL = 0x00;
-	*pUART_LCR = 0x83;
+	bfin_write_UART_GCTL(0x00);
+	bfin_write_UART_LCR(0x83);
 	SSYNC();
-	*pUART_DLL = (divisor & 0xFF);
+	bfin_write_UART_DLL(divisor & 0xFF);
 	SSYNC();
-	*pUART_DLH = ((divisor >> 8) & 0xFF);
+	bfin_write_UART_DLH((divisor >> 8) & 0xFF);
 	SSYNC();
-	*pUART_LCR = 0x03;
+	bfin_write_UART_LCR(0x03);
 	SSYNC();
-	*pUART_GCTL = 0x01;
+	bfin_write_UART_GCTL(0x01);
 	SSYNC();
 }
 
@@ -119,15 +117,17 @@ void post_out_buff(char *buff)
 {
 
 	int i = 0;
-	for (i = 0; i < 0x80000; i++) ;
+	for (i = 0; i < 0x80000; i++)
+		;
 	i = 0;
 	while ((buff[i] != '\0') && (i != 100)) {
-		while (!(*pUART_LSR & 0x20)) ;
-		*pUART_THR = buff[i];
+		while (!(bfin_read_pUART_LSR() & 0x20)) ;
+		bfin_write_UART_THR(buff[i]);
 		SSYNC();
 		i++;
 	}
-	for (i = 0; i < 0x80000; i++) ;
+	for (i = 0; i < 0x80000; i++)
+		;
 }
 
 /* Using sw10-PF5 as the hotkey */
@@ -138,49 +138,46 @@ int post_key_pressed(void)
 	int i, n;
 	unsigned short value;
 
-	*pPORTF_FER &= ~PF5;
-	*pPORTFIO_DIR &= ~PF5;
-	*pPORTFIO_INEN |= PF5;
+	bfin_write_PORTF_FER(bfin_read_PORTF_FER() & ~PF5);
+	bfin_write_PORTFIO_DIR(bfin_read_PORTFIO_DIR() & ~PF5);
+	bfin_write_PORTFIO_INEN(bfin_read_PORTFIO_INEN() | PF5);
 	SSYNC();
 
 	post_out_buff("########Press SW10 to enter Memory POST########: 3\0");
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = *pPORTFIO & PF5;
-		if (*pUART0_RBR == 0x0D) {
+		value = bfin_read_PORTFIO() & PF5;
+		if (bfin_read_UART0_RBR() == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
-		if (value != 0) {
+		if (value != 0)
 			goto key_pressed;
-		}
 		for (n = 0; n < KEY_DELAY; n++)
 			asm("nop");
 	}
 	post_out_buff("\b2\0");
 
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = *pPORTFIO & PF5;
-		if (*pUART0_RBR == 0x0D) {
+		value = bfin_read_PORTFIO() & PF5;
+		if (bfin_read_UART0_RBR() == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
-		if (value != 0) {
+		if (value != 0)
 			goto key_pressed;
-		}
 		for (n = 0; n < KEY_DELAY; n++)
 			asm("nop");
 	}
 	post_out_buff("\b1\0");
 
 	for (i = 0; i < KEY_LOOP; i++) {
-		value = *pPORTFIO & PF5;
-		if (*pUART0_RBR == 0x0D) {
+		value = bfin_read_PORTFIO() & PF5;
+		if (bfin_read_UART0_RBR() == 0x0D) {
 			value = 0;
 			goto key_pressed;
 		}
-		if (value != 0) {
+		if (value != 0)
 			goto key_pressed;
-		}
 		for (n = 0; n < KEY_DELAY; n++)
 			asm("nop");
 	}
@@ -196,13 +193,13 @@ int post_key_pressed(void)
 void post_init_pll(int mult, int div)
 {
 
-	*pSIC_IWR = 0x01;
-	*pPLL_CTL = (mult << 9);
-	*pPLL_DIV = div;
+	bfin_write_SIC_IWR(0x01);
+	bfin_write_PLL_CTL((mult << 9));
+	bfin_write_PLL_DIV(div);
 	asm("CLI R2;");
 	asm("IDLE;");
 	asm("STI R2;");
-	while (!(*pPLL_STAT & 0x20)) ;
+	while (!(bfin_read_PLL_STAT() & 0x20)) ;
 }
 
 int post_init_sdram(int sclk)
@@ -305,18 +302,17 @@ int post_init_sdram(int sclk)
 
 	SSYNC();
 
-	*pEBIU_SDGCTL |= 0x1000000;
+	bfin_write_EBIU_SDGCTL(bfin_write_EBIU_SDGCTL() | 0x1000000);
 	/* Set the SDRAM Refresh Rate control register based on SSCLK value */
-	*pEBIU_SDRRC = mem_SDRRC;
+	bfin_write_EBIU_SDRRC(mem_SDRRC);
 
 	/* SDRAM Memory Bank Control Register */
-	*pEBIU_SDBCTL = mem_SDBCTL;
+	bfin_write_EBIU_SDBCTL(mem_SDBCTL);
 
 	/* SDRAM Memory Global Control Register */
-	*pEBIU_SDGCTL = mem_SDGCTL;
+	bfin_write_EBIU_SDGCTL(mem_SDGCTL);
 	SSYNC();
 	return mem_SDRRC;
 }
 
-#endif				/* CONFIG_POST & CFG_POST_MEMORY */
-#endif				/* CONFIG_POST */
+#endif				/* CONFIG_POST & CONFIG_SYS_POST_MEMORY */

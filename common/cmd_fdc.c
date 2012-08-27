@@ -50,8 +50,6 @@
 /*#include <rtc.h> */
 /*#endif */
 
-#if defined(CONFIG_CMD_FDC) || defined(CONFIG_CMD_FDOS)
-
 typedef struct {
 	int		flags;		/* connected drives ect */
 	unsigned long	blnr;		/* Logical block nr */
@@ -172,42 +170,17 @@ const static FD_GEO_STRUCT floppy_type[2] = {
 static FDC_COMMAND_STRUCT cmd; /* global command struct */
 
 /* If the boot drive number is undefined, we assume it's drive 0             */
-#ifndef CFG_FDC_DRIVE_NUMBER
-#define CFG_FDC_DRIVE_NUMBER 0
+#ifndef CONFIG_SYS_FDC_DRIVE_NUMBER
+#define CONFIG_SYS_FDC_DRIVE_NUMBER 0
 #endif
 
 /* Hardware access */
-#ifndef CFG_ISA_IO_STRIDE
-#define CFG_ISA_IO_STRIDE 1
+#ifndef CONFIG_SYS_ISA_IO_STRIDE
+#define CONFIG_SYS_ISA_IO_STRIDE 1
 #endif
 
-#ifndef CFG_ISA_IO_OFFSET
-#define CFG_ISA_IO_OFFSET 0
-#endif
-
-
-#ifdef CONFIG_AMIGAONEG3SE
-unsigned char INT6_Status;
-
-void fdc_interrupt(void)
-{
-    INT6_Status = 0x80;
-}
-
-/* waits for an interrupt (polling) */
-int wait_for_fdc_int(void)
-{
-	unsigned long timeout;
-	timeout = FDC_TIME_OUT;
-	while(((volatile)INT6_Status & 0x80) == 0) {
-		timeout--;
-		udelay(10);
-		if(timeout == 0) /* timeout occured */
-			return FALSE;
-	}
-	INT6_Status = 0;
-	return TRUE;
-}
+#ifndef CONFIG_SYS_ISA_IO_OFFSET
+#define CONFIG_SYS_ISA_IO_OFFSET 0
 #endif
 
 /* Supporting Functions */
@@ -215,9 +188,9 @@ int wait_for_fdc_int(void)
 unsigned char read_fdc_reg(unsigned int addr)
 {
 	volatile unsigned char *val =
-		(volatile unsigned char *)(CFG_ISA_IO_BASE_ADDRESS +
-					   (addr * CFG_ISA_IO_STRIDE) +
-					   CFG_ISA_IO_OFFSET);
+		(volatile unsigned char *)(CONFIG_SYS_ISA_IO_BASE_ADDRESS +
+					   (addr * CONFIG_SYS_ISA_IO_STRIDE) +
+					   CONFIG_SYS_ISA_IO_OFFSET);
 
 	return val [0];
 }
@@ -226,13 +199,12 @@ unsigned char read_fdc_reg(unsigned int addr)
 void write_fdc_reg(unsigned int addr, unsigned char val)
 {
 	volatile unsigned char *tmp =
-		(volatile unsigned char *)(CFG_ISA_IO_BASE_ADDRESS +
-					   (addr * CFG_ISA_IO_STRIDE) +
-					   CFG_ISA_IO_OFFSET);
+		(volatile unsigned char *)(CONFIG_SYS_ISA_IO_BASE_ADDRESS +
+					   (addr * CONFIG_SYS_ISA_IO_STRIDE) +
+					   CONFIG_SYS_ISA_IO_OFFSET);
 	tmp[0]=val;
 }
 
-#ifndef CONFIG_AMIGAONEG3SE
 /* waits for an interrupt (polling) */
 int wait_for_fdc_int(void)
 {
@@ -246,8 +218,6 @@ int wait_for_fdc_int(void)
 	}
 	return TRUE;
 }
-
-#endif
 
 /* reads a byte from the FIFO of the FDC and checks direction and RQM bit
    of the MSR. returns -1 if timeout, or byte if ok */
@@ -440,7 +410,6 @@ int fdc_seek(FDC_COMMAND_STRUCT *pCMD,FD_GEO_STRUCT *pFG)
 	return(fdc_issue_cmd(pCMD,pFG));
 }
 
-#ifndef CONFIG_AMIGAONEG3SE
 /* terminates current command, by not servicing the FIFO
  * waits for interrupt and fills in the result bytes */
 int fdc_terminate(FDC_COMMAND_STRUCT *pCMD)
@@ -454,27 +423,6 @@ int fdc_terminate(FDC_COMMAND_STRUCT *pCMD)
 	}
 	return TRUE;
 }
-#endif
-#ifdef CONFIG_AMIGAONEG3SE
-int fdc_terminate(FDC_COMMAND_STRUCT *pCMD)
-{
-	int i;
-	for(i=0;i<100;i++)
-		udelay(500); /* wait 500usec for fifo overrun */
-	while((INT6_Status&0x80)==0x00); /* wait as long as no int has occured */
-	for(i=0;i<7;i++) {
-		pCMD->result[i]=(unsigned char)read_fdc_byte();
-	}
-	INT6_Status = 0;
-	return TRUE;
-}
-
-#endif
-
-#ifdef CONFIG_AMIGAONEG3SE
-#define disable_interrupts() 0
-#define enable_interrupts() (void)0
-#endif
 
 /* reads data from FDC, seek commands are issued automatic */
 int fdc_read_data(unsigned char *buffer, unsigned long blocks,FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
@@ -595,11 +543,6 @@ retrycal:
 	return TRUE;
 }
 
-#ifdef CONFIG_AMIGAONEG3SE
-#undef disable_interrupts()
-#undef enable_interrupts()
-#endif
-
 /* Scan all drives and check if drive is present and disk is inserted */
 int fdc_check_drive(FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 {
@@ -649,12 +592,7 @@ int fdc_setup(int drive, FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 {
 	int i;
 
-#ifdef CONFIG_AMIGAONEG3SE
-	irq_install_handler(6, (interrupt_handler_t *)fdc_interrupt, NULL);
-	i8259_unmask_irq(6);
-#endif
-
-#ifdef CFG_FDC_HW_INIT
+#ifdef CONFIG_SYS_FDC_HW_INIT
 	fdc_hw_init ();
 #endif
 	/* first, we reset the FDC via the DOR */
@@ -705,7 +643,6 @@ int fdc_setup(int drive, FDC_COMMAND_STRUCT *pCMD, FD_GEO_STRUCT *pFG)
 
 	return TRUE;
 }
-#endif
 
 #if defined(CONFIG_CMD_FDOS)
 
@@ -776,7 +713,7 @@ int fdc_fdos_read (void *buffer, int len)
 /****************************************************************************
  * main routine do_fdcboot
  */
-int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	FD_GEO_STRUCT *pFG = (FD_GEO_STRUCT *)floppy_type;
 	FDC_COMMAND_STRUCT *pCMD = &cmd;
@@ -792,20 +729,19 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	switch (argc) {
 	case 1:
-		addr = CFG_LOAD_ADDR;
-		boot_drive=CFG_FDC_DRIVE_NUMBER;
+		addr = CONFIG_SYS_LOAD_ADDR;
+		boot_drive=CONFIG_SYS_FDC_DRIVE_NUMBER;
 		break;
 	case 2:
 		addr = simple_strtoul(argv[1], NULL, 16);
-		boot_drive=CFG_FDC_DRIVE_NUMBER;
+		boot_drive=CONFIG_SYS_FDC_DRIVE_NUMBER;
 		break;
 	case 3:
 		addr = simple_strtoul(argv[1], NULL, 16);
 		boot_drive=simple_strtoul(argv[2], NULL, 10);
 		break;
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 	/* setup FDC and scan for drives  */
 	if(fdc_setup(boot_drive,pCMD,pFG)==FALSE) {
@@ -890,7 +826,6 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	/* Check if we should attempt an auto-start */
 	if (((ep = getenv("autostart")) != NULL) && (strcmp(ep,"yes") == 0)) {
 		char *local_args[2];
-		extern int do_bootm (cmd_tbl_t *, int, int, char *[]);
 
 		local_args[0] = argv[0];
 		local_args[1] = NULL;
@@ -903,18 +838,9 @@ int do_fdcboot (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return rcode;
 }
 
-
-#endif
-
-
-/***************************************************/
-
-
-#if defined(CONFIG_CMD_FDC)
-
 U_BOOT_CMD(
 	fdcboot,	3,	1,	do_fdcboot,
-	"fdcboot - boot from floppy device\n",
-	"loadAddr drive\n"
+	"boot from floppy device",
+	"loadAddr drive"
 );
 #endif

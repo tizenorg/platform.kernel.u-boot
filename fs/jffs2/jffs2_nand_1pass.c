@@ -1,7 +1,5 @@
 #include <common.h>
 
-#if !defined(CFG_NAND_LEGACY) && defined(CONFIG_CMD_JFFS2)
-
 #include <malloc.h>
 #include <linux/stat.h>
 #include <linux/time.h>
@@ -36,9 +34,8 @@ static char *compr_names[] = {
 	"COPY",
 	"DYNRUBIN",
 	"ZLIB",
-#if defined(CONFIG_JFFS2_LZO_LZARI)
+#if defined(CONFIG_JFFS2_LZO)
 	"LZO",
-	"LZARI",
 #endif
 };
 
@@ -96,7 +93,7 @@ add_node(struct b_list *list, int size)
 static struct b_node *
 insert_node(struct b_list *list, struct b_node *new)
 {
-#ifdef CFG_JFFS2_SORT_FRAGMENTS
+#ifdef CONFIG_SYS_JFFS2_SORT_FRAGMENTS
 	struct b_node *b, *prev;
 
 	if (list->listTail != NULL && list->listCompare(new, list->listTail))
@@ -173,7 +170,7 @@ insert_dirent(struct b_list *list, struct jffs2_raw_dirent *node, u32 offset)
 	return insert_node(list, (struct b_node *)new);
 }
 
-#ifdef CFG_JFFS2_SORT_FRAGMENTS
+#ifdef CONFIG_SYS_JFFS2_SORT_FRAGMENTS
 /* Sort data entries with the latest version last, so that if there
  * is overlapping data the latest version will be used.
  */
@@ -250,7 +247,7 @@ jffs_init_1pass_list(struct part_info *part)
 		pL = (struct b_lists *)part->jffs2_priv;
 
 		memset(pL, 0, sizeof(*pL));
-#ifdef CFG_JFFS2_SORT_FRAGMENTS
+#ifdef CONFIG_SYS_JFFS2_SORT_FRAGMENTS
 		pL->dir.listCompare = compare_dirents;
 		pL->frag.listCompare = compare_inodes;
 #endif
@@ -268,7 +265,7 @@ jffs2_1pass_read_inode(struct b_lists *pL, u32 ino, char *dest,
 	u32 latestVersion = 0;
 	long ret;
 
-#ifdef CFG_JFFS2_SORT_FRAGMENTS
+#ifdef CONFIG_SYS_JFFS2_SORT_FRAGMENTS
 	/* Find file size before loading any data, so fragments that
 	 * start past the end of file can be ignored. A fragment
 	 * that is partially in the file is loaded, so extra data may
@@ -290,7 +287,7 @@ jffs2_1pass_read_inode(struct b_lists *pL, u32 ino, char *dest,
 	for (jNode = (struct b_inode *)pL->frag.listHead; jNode; jNode = jNode->next) {
 		if ((ino != jNode->ino))
 			continue;
-#ifndef CFG_JFFS2_SORT_FRAGMENTS
+#ifndef CONFIG_SYS_JFFS2_SORT_FRAGMENTS
 		/* get actual file length from the newest node */
 		if (jNode->version >= latestVersion) {
 			totalSize = jNode->isize;
@@ -346,12 +343,9 @@ jffs2_1pass_read_inode(struct b_lists *pL, u32 ino, char *dest,
 			case JFFS2_COMPR_ZLIB:
 				ret = zlib_decompress(src, dst, inode->csize, inode->dsize);
 				break;
-#if defined(CONFIG_JFFS2_LZO_LZARI)
+#if defined(CONFIG_JFFS2_LZO)
 			case JFFS2_COMPR_LZO:
 				ret = lzo_decompress(src, dst, inode->csize, inode->dsize);
-				break;
-			case JFFS2_COMPR_LZARI:
-				ret = lzari_decompress(src, dst, inode->csize, inode->dsize);
 				break;
 #endif
 			default:
@@ -1034,5 +1028,3 @@ jffs2_1pass_info(struct part_info * part)
 	}
 	return 1;
 }
-
-#endif

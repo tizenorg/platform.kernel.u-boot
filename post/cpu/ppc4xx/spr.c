@@ -37,7 +37,7 @@
 
 #include <post.h>
 
-#if CONFIG_POST & CFG_POST_SPR
+#if CONFIG_POST & CONFIG_SYS_POST_SPR
 
 #include <asm/processor.h>
 
@@ -69,7 +69,7 @@ static struct {
 
 	/* Additional Special-Purpose Registers.
 	 * The values must match the initialization
-	 * values from cpu/ppc4xx/start.S
+	 * values from arch/powerpc/cpu/ppc4xx/start.S
 	 */
 	{0x30,	"PID",		0x00000000,	0x00000000},
 	{0x3a,	"CSRR0",	0x00000000,	0x00000000},
@@ -198,4 +198,4 @@ int spr_post_test (int flags)
 	return ret;
 }
 
-#endif /* CONFIG_POST & CFG_POST_SPR */
+#endif /* CONFIG_POST & CONFIG_SYS_POST_SPR */

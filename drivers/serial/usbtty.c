@@ -22,16 +22,14 @@
  */
 
 #include <common.h>
-
+#include <config.h>
 #include <circbuf.h>
-#include <devices.h>
+#include <stdio_dev.h>
 #include "usbtty.h"
 #include "usb_cdc_acm.h"
 #include "usbdescriptors.h"
-#include <config.h>		/* If defined, override Linux identifiers with
-				 * vendor specific ones */
 
-#if 0
+#ifdef DEBUG
 #define TTYDBG(fmt,args...)\
 	serial_printf("[%s] %s %d: "fmt, __FILE__,__FUNCTION__,__LINE__,##args)
 #else
@@ -72,7 +70,7 @@ static circbuf_t usbtty_output;
 /*
  * Instance variables
  */
-static device_t usbttydev;
+static struct stdio_dev usbttydev;
 static struct usb_device_instance device_instance[1];
 static struct usb_bus_instance bus_instance[1];
 static struct usb_configuration_instance config_instance[NUM_CONFIGS];
@@ -96,7 +94,7 @@ static char serial_number[16];
  * Descriptors, Strings, Local variables.
  */
 
-/* defined and used by usbdcore_ep0.c */
+/* defined and used by gadget/ep0.c */
 extern struct usb_string_descriptor **usb_strings;
 
 /* Indicies, References */
@@ -152,8 +150,7 @@ struct acm_config_desc {
 
 	/* Slave Interface */
 	struct usb_interface_descriptor data_class_interface;
-	struct usb_endpoint_descriptor
-		data_endpoints[NUM_ENDPOINTS-1] __attribute__((packed));
+	struct usb_endpoint_descriptor data_endpoints[NUM_ENDPOINTS-1];
 } __attribute__((packed));
 
 static struct acm_config_desc acm_configuration_descriptors[NUM_CONFIGS] = {
@@ -218,7 +215,7 @@ static struct acm_config_desc acm_configuration_descriptors[NUM_CONFIGS] = {
 			.bLength =
 				sizeof(struct usb_endpoint_descriptor),
 			.bDescriptorType	= USB_DT_ENDPOINT,
-			.bEndpointAddress	= 0x01 | USB_DIR_IN,
+			.bEndpointAddress	= UDC_INT_ENDPOINT | USB_DIR_IN,
 			.bmAttributes		= USB_ENDPOINT_XFER_INT,
 			.wMaxPacketSize
 				= cpu_to_le16(CONFIG_USBD_SERIAL_INT_PKTSIZE),
@@ -244,7 +241,7 @@ static struct acm_config_desc acm_configuration_descriptors[NUM_CONFIGS] = {
 				.bLength		=
 					sizeof(struct usb_endpoint_descriptor),
 				.bDescriptorType	= USB_DT_ENDPOINT,
-				.bEndpointAddress	= 0x02 | USB_DIR_OUT,
+				.bEndpointAddress	= UDC_OUT_ENDPOINT | USB_DIR_OUT,
 				.bmAttributes		=
 					USB_ENDPOINT_XFER_BULK,
 				.wMaxPacketSize		=
@@ -255,7 +252,7 @@ static struct acm_config_desc acm_configuration_descriptors[NUM_CONFIGS] = {
 				.bLength		=
 					sizeof(struct usb_endpoint_descriptor),
 				.bDescriptorType	= USB_DT_ENDPOINT,
-				.bEndpointAddress	= 0x03 | USB_DIR_IN,
+				.bEndpointAddress	= UDC_IN_ENDPOINT | USB_DIR_IN,
 				.bmAttributes		=
 					USB_ENDPOINT_XFER_BULK,
 				.wMaxPacketSize		=
@@ -282,10 +279,8 @@ static struct rs232_emu rs232_desc={
 struct gserial_config_desc {
 
 	struct usb_configuration_descriptor configuration_desc;
-	struct usb_interface_descriptor
-		interface_desc[NUM_GSERIAL_INTERFACES] __attribute__((packed));
-	struct usb_endpoint_descriptor
-		data_endpoints[NUM_ENDPOINTS] __attribute__((packed));
+	struct usb_interface_descriptor	interface_desc[NUM_GSERIAL_INTERFACES];
+	struct usb_endpoint_descriptor data_endpoints[NUM_ENDPOINTS];
 
 } __attribute__((packed));
 
@@ -326,7 +321,7 @@ gserial_configuration_descriptors[NUM_CONFIGS] ={
 				.bLength =
 					sizeof(struct usb_endpoint_descriptor),
 				.bDescriptorType =	USB_DT_ENDPOINT,
-				.bEndpointAddress =	0x01 | USB_DIR_OUT,
+				.bEndpointAddress =	UDC_OUT_ENDPOINT | USB_DIR_OUT,
 				.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 				.wMaxPacketSize =
 					cpu_to_le16(CONFIG_USBD_SERIAL_OUT_PKTSIZE),
@@ -336,7 +331,7 @@ gserial_configuration_descriptors[NUM_CONFIGS] ={
 				.bLength =
 					sizeof(struct usb_endpoint_descriptor),
 				.bDescriptorType =	USB_DT_ENDPOINT,
-				.bEndpointAddress =	0x02 | USB_DIR_IN,
+				.bEndpointAddress =	UDC_IN_ENDPOINT | USB_DIR_IN,
 				.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 				.wMaxPacketSize =
 					cpu_to_le16(CONFIG_USBD_SERIAL_IN_PKTSIZE),
@@ -346,7 +341,7 @@ gserial_configuration_descriptors[NUM_CONFIGS] ={
 				.bLength =
 					sizeof(struct usb_endpoint_descriptor),
 				.bDescriptorType =	USB_DT_ENDPOINT,
-				.bEndpointAddress =	0x03 | USB_DIR_IN,
+				.bEndpointAddress =	UDC_INT_ENDPOINT | USB_DIR_IN,
 				.bmAttributes =		USB_ENDPOINT_XFER_INT,
 				.wMaxPacketSize =
 					cpu_to_le16(CONFIG_USBD_SERIAL_INT_PKTSIZE),
@@ -435,6 +430,9 @@ int usbtty_getc (void)
  */
 void usbtty_putc (const char c)
 {
+	if (!usbtty_configured ())
+		return;
+
 	buf_push (&usbtty_output, &c, 1);
 	/* If \n, also do \r */
 	if (c == '\n')
@@ -488,8 +486,12 @@ static void __usbtty_puts (const char *str, int len)
 void usbtty_puts (const char *str)
 {
 	int n;
-	int len = strlen (str);
+	int len;
 
+	if (!usbtty_configured ())
+		return;
+
+	len = strlen (str);
 	/* add '\r' for each '\n' */
 	while (len > 0) {
 		n = next_nl_pos (str);
@@ -568,7 +570,7 @@ int drv_usbtty_init (void)
 	usbttydev.putc = usbtty_putc;	/* 'putc' function */
 	usbttydev.puts = usbtty_puts;	/* 'puts' function */
 
-	rc = device_register (&usbttydev);
+	rc = stdio_register (&usbttydev);
 
 	return (rc == 0) ? 1 : rc;
 }

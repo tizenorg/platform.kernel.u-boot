@@ -24,9 +24,6 @@
  */
 
 #include <config.h>
-
-#if defined(CONFIG_API)
-
 #include <command.h>
 #include <common.h>
 #include <malloc.h>
@@ -38,9 +35,6 @@
 
 #define DEBUG
 #undef DEBUG
-
-/* U-Boot routines needed */
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 /*****************************************************************************
  *
@@ -534,7 +528,7 @@ static int API_env_enum(va_list ap)
 
 		for (i = 0; env_get_char(i) != '\0'; i = n + 1) {
 			for (n = i; env_get_char(n) != '\0'; ++n) {
-				if (n >= CFG_ENV_SIZE) {
+				if (n >= CONFIG_ENV_SIZE) {
 					/* XXX shouldn't we set *next = NULL?? */
 					return 0;
 				}
@@ -665,5 +659,3 @@ void platform_set_mr(struct sys_info *si, unsigned long start, unsigned long siz
 			return;
 		}
 }
-
-#endif /* CONFIG_API */

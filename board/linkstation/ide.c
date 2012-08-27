@@ -37,7 +37,7 @@
 #define IT8212_PCI_IdeBusSkewCONTROL	0x4c
 #define IT8212_PCI_IdeDrivingCURRENT	0x42
 
-extern ulong ide_bus_offset[CFG_IDE_MAXBUS];
+extern ulong ide_bus_offset[CONFIG_SYS_IDE_MAXBUS];
 extern struct pci_controller hose;
 
 int ide_preinit (void)
@@ -47,18 +47,20 @@ int ide_preinit (void)
 	int l;
 
 	status = 1;
-	for (l = 0; l < CFG_IDE_MAXBUS; l++) {
+	for (l = 0; l < CONFIG_SYS_IDE_MAXBUS; l++) {
 		ide_bus_offset[l] = -ATA_STATUS;
 	}
 	devbusfn = pci_find_device(PCI_VENDOR_ID_CMD, PCI_DEVICE_ID_SII_680, 0);
 	if (devbusfn == -1)
 		devbusfn = pci_find_device(PCI_VENDOR_ID_ITE,PCI_DEVICE_ID_ITE_8212,0);
 	if (devbusfn != -1) {
+		u32 ide_bus_offset32;
+
 		status = 0;
 
 		pci_read_config_dword (devbusfn, PCI_BASE_ADDRESS_0,
-							   (u32 *) &ide_bus_offset[0]);
-		ide_bus_offset[0] &= 0xfffffffe;
+							   &ide_bus_offset32);
+		ide_bus_offset[0] = ide_bus_offset32 & 0xfffffffe;
 		ide_bus_offset[0] = pci_hose_bus_to_phys(&hose,
 							 ide_bus_offset[0] & 0xfffffffe,
 							 PCI_REGION_IO);

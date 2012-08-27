@@ -42,7 +42,7 @@ static void led_init(void)
 	gpt->gpt4.emsr |=  0x00000024;
 }
 
-int cmd_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int cmd_led(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	struct mpc5xxx_gpt_0_7 *gpt = (struct mpc5xxx_gpt_0_7 *)MPC5XXX_GPT;
 
@@ -72,7 +72,7 @@ static void sm501_backlight (unsigned int state)
 			~((1 << 26) | (1 << 27));
 }
 
-int cmd_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int cmd_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (strcmp (argv[1], "on") == 0) {
 		debug ("switch backlight on\n");
@@ -90,14 +90,14 @@ int cmd_backlight(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	led ,	2,	1,	cmd_led,
-	"led     - switch status LED on or off\n",
-	"on/off\n"
+	"switch status LED on or off",
+	"on/off"
 );
 
 U_BOOT_CMD(
 	backlight ,	2,	1,	cmd_backlight,
-	"backlight - switch backlight on or off\n",
-	"on/off\n"
+	"switch backlight on or off",
+	"on/off"
 	);
 
 #endif /* CONFIG_STK52XX */

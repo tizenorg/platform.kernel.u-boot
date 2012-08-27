@@ -27,6 +27,7 @@
 #include <common.h>
 #include <mpc5xxx.h>
 #include <pci.h>
+#include <netdev.h>
 
 #include "sdram.h"
 
@@ -46,57 +47,34 @@ phys_size_t initdram (int board_type)
 	sdram_conf.control = SDRAM_CONTROL;
 	sdram_conf.config1 = SDRAM_CONFIG1;
 	sdram_conf.config2 = SDRAM_CONFIG2;
-#if defined(CONFIG_MPC5200)
 	sdram_conf.tapdelay = 0;
-#endif
-#if defined(CONFIG_MGT5100)
-	sdram_conf.addrsel = SDRAM_ADDRSEL;
-#endif
 	return mpc5xxx_sdram_init (&sdram_conf);
 }
 
 int checkboard (void)
 {
-#if defined(CONFIG_MPC5200)
 #if CONFIG_TOTAL5200_REV==2
 	puts ("Board: Total5200 Rev.2 ");
 #else
 	puts ("Board: Total5200 ");
 #endif
-#elif defined(CONFIG_MGT5100)
-	puts ("Board: Total5100 ");
-#endif
 
 	/*
 	 * Retrieve FPGA Revision.
 	 */
-	printf ("(FPGA %08lX)\n", *(vu_long *) (CFG_FPGA_BASE + 0x400));
+	printf ("(FPGA %08lX)\n", *(vu_long *) (CONFIG_SYS_FPGA_BASE + 0x400));
 
 	/*
 	 * Take all peripherals in power-up mode.
 	 */
 #if CONFIG_TOTAL5200_REV==2
-	*(vu_char *) (CFG_CPLD_BASE + 0x46) = 0x70;
+	*(vu_char *) (CONFIG_SYS_CPLD_BASE + 0x46) = 0x70;
 #else
-	*(vu_long *) (CFG_CPLD_BASE + 0x400) = 0x70;
+	*(vu_long *) (CONFIG_SYS_CPLD_BASE + 0x400) = 0x70;
 #endif
 
 	return 0;
 }
-
-#if defined(CONFIG_MGT5100)
-int board_early_init_r(void)
-{
-	/*
-	 * Now, when we are in RAM, enable CS0
-	 * because CS_BOOT cannot be written.
-	 */
-	*(vu_long *)MPC5XXX_ADDECR &= ~(1 << 25); /* disable CS_BOOT */
-	*(vu_long *)MPC5XXX_ADDECR |= (1 << 16); /* enable CS0 */
-
-	return 0;
-}
-#endif
 
 #ifdef	CONFIG_PCI
 static struct pci_controller hose;
@@ -265,9 +243,7 @@ static const S1D_REGS init_regs [] =
 void video_get_info_str (int line_number, char *info)
 {
 	if (line_number == 1) {
-#ifdef CONFIG_MGT5100
-		strcpy (info, " Total5100");
-#elif CONFIG_TOTAL5200_REV==1
+#if CONFIG_TOTAL5200_REV==1
 		strcpy (info, " Total5200");
 #elif CONFIG_TOTAL5200_REV==2
 		strcpy (info, " Total5200 Rev.2");
@@ -283,7 +259,7 @@ void video_get_info_str (int line_number, char *info)
 /* Returns  SED13806 base address. First thing called in the driver. */
 unsigned int board_video_init (void)
 {
-	return CFG_LCD_BASE;
+	return CONFIG_SYS_LCD_BASE;
 }
 
 /* Called after initializing the SED13806 and before clearing the screen. */
@@ -308,3 +284,9 @@ int board_get_height (void)
 }
 
 #endif /* CONFIG_VIDEO_SED13806 */
+
+int board_eth_init(bd_t *bis)
+{
+	cpu_eth_init(bis); /* Built in FEC comes first */
+	return pci_eth_init(bis);
+}

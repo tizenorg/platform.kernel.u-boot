@@ -12,7 +12,7 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -23,25 +23,34 @@
 
 include $(TOPDIR)/config.mk
 
-SRCS	:= $(obj)crc32.c  fw_env.c  fw_env_main.c
+SRCS := $(obj)crc32.c  fw_env.c  fw_env_main.c
 HEADERS	:= fw_env.h
 
-CPPFLAGS := -Wall -DUSE_HOSTCC -I$(SRCTREE)/include
+# Compile for a hosted environment on the target
+CPPFLAGS  = -idirafter $(SRCTREE)/include \
+		-idirafter $(OBJTREE)/include2 \
+		-idirafter $(OBJTREE)/include \
+		-DUSE_HOSTCC
 
 ifeq ($(MTD_VERSION),old)
 CPPFLAGS += -DMTD_OLD
 endif
 
+ifeq ($(CONFIG_ENV_IS_IN_MMC),y)
+CPPFLAGS += -DCONFIG_ENV_IS_IN_MMC
+endif
+
 all:	$(obj)fw_printenv
 
 $(obj)fw_printenv:	$(SRCS) $(HEADERS)
-	$(CROSS_COMPILE)gcc $(CPPFLAGS) $(SRCS) -o $(obj)fw_printenv
+	$(CROSS_COMPILE)gcc $(CPPFLAGS) -o $@ $(SRCS)
+	$(CROSS_COMPILE)strip --strip-debug $@
 
 clean:
-	rm -f $(obj)fw_printenv $(obj)crc32.c
+	rm -f $(obj)fw_printenv $(obj)fw_printenv_static $(obj)crc32.c
 
 $(obj)crc32.c:
-	ln -s $(src)../../lib_generic/crc32.c $(obj)crc32.c
+	ln -s $(src)../../lib/crc32.c $(obj)crc32.c
 
 #########################################################################
 

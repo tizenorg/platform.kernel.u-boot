@@ -37,14 +37,11 @@
 
 #define P_ID_AMD_STD CFI_CMDSET_AMD_LEGACY
 
-/* Manufacturers */
-#define MANUFACTURER_AMD	0x0001
-#define MANUFACTURER_SST	0x00BF
-
 /* AMD */
 #define AM29DL800BB	0x22CB
 #define AM29DL800BT	0x224A
 
+#define AM29F400BB	0x22AB
 #define AM29F800BB	0x2258
 #define AM29F800BT	0x22D6
 #define AM29LV400BB	0x22BA
@@ -72,6 +69,17 @@
 #define SST39SF010A	0x00B5
 #define SST39SF020A	0x00B6
 
+/* MXIC */
+#define MX29LV040	0x004F
+
+/* WINBOND */
+#define W39L040A	0x00D6
+
+/* AMIC */
+#define A29L040		0x0092
+
+/* EON */
+#define EN29LV040A	0x004F
 
 /*
  * Unlock address sets for AMD command sets.
@@ -170,9 +178,9 @@ struct amd_flash_info {
 #define SIZE_8MiB   23
 
 static const struct amd_flash_info jedec_table[] = {
-#ifdef CFG_FLASH_LEGACY_256Kx8
+#ifdef CONFIG_SYS_FLASH_LEGACY_256Kx8
 	{
-		.mfr_id		= MANUFACTURER_SST,
+		.mfr_id		= (u16)SST_MANUFACT,
 		.dev_id		= SST39LF020,
 		.name		= "SST 39LF020",
 		.uaddr		= {
@@ -186,9 +194,9 @@ static const struct amd_flash_info jedec_table[] = {
 		}
 	},
 #endif
-#ifdef CFG_FLASH_LEGACY_512Kx8
+#ifdef CONFIG_SYS_FLASH_LEGACY_512Kx8
 	{
-		.mfr_id		= MANUFACTURER_AMD,
+		.mfr_id		= (u16)AMD_MANUFACT,
 		.dev_id		= AM29LV040B,
 		.name		= "AMD AM29LV040B",
 		.uaddr		= {
@@ -202,7 +210,7 @@ static const struct amd_flash_info jedec_table[] = {
 		}
 	},
 	{
-		.mfr_id		= MANUFACTURER_SST,
+		.mfr_id		= (u16)SST_MANUFACT,
 		.dev_id		= SST39LF040,
 		.name		= "SST 39LF040",
 		.uaddr		= {
@@ -215,10 +223,97 @@ static const struct amd_flash_info jedec_table[] = {
 			ERASEINFO(0x01000,128),
 		}
 	},
-#endif
-#ifdef CFG_FLASH_LEGACY_512Kx16
 	{
-		.mfr_id		= MANUFACTURER_AMD,
+		.mfr_id		= (u16)STM_MANUFACT,
+		.dev_id		= STM_ID_M29W040B,
+		.name		= "ST Micro M29W040B",
+		.uaddr		= {
+			[0] = MTD_UADDR_0x0555_0x02AA /* x8 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= P_ID_AMD_STD,
+		.NumEraseRegions= 1,
+		.regions	= {
+			ERASEINFO(0x10000,8),
+		}
+	},
+	{
+		.mfr_id		= (u16)MX_MANUFACT,
+		.dev_id		= MX29LV040,
+		.name		= "MXIC MX29LV040",
+		.uaddr		= {
+			[0] = MTD_UADDR_0x0555_0x02AA /* x8 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= P_ID_AMD_STD,
+		.NumEraseRegions= 1,
+		.regions	= {
+			ERASEINFO(0x10000, 8),
+		}
+	},
+	{
+		.mfr_id		= (u16)WINB_MANUFACT,
+		.dev_id		= W39L040A,
+		.name		= "WINBOND W39L040A",
+		.uaddr		= {
+			[0] = MTD_UADDR_0x5555_0x2AAA /* x8 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= P_ID_AMD_STD,
+		.NumEraseRegions= 1,
+		.regions	= {
+			ERASEINFO(0x10000, 8),
+		}
+	},
+	{
+		.mfr_id		= (u16)AMIC_MANUFACT,
+		.dev_id		= A29L040,
+		.name		= "AMIC A29L040",
+		.uaddr		= {
+			[0] = MTD_UADDR_0x0555_0x02AA /* x8 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= P_ID_AMD_STD,
+		.NumEraseRegions= 1,
+		.regions	= {
+			ERASEINFO(0x10000, 8),
+		}
+	},
+	{
+		.mfr_id		= (u16)EON_MANUFACT,
+		.dev_id		= EN29LV040A,
+		.name		= "EON EN29LV040A",
+		.uaddr		= {
+			[0] = MTD_UADDR_0x0555_0x02AA /* x8 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= P_ID_AMD_STD,
+		.NumEraseRegions= 1,
+		.regions	= {
+			ERASEINFO(0x10000, 8),
+		}
+	},
+#endif
+#ifdef CONFIG_SYS_FLASH_LEGACY_512Kx16
+	{
+		.mfr_id		= (u16)AMD_MANUFACT,
+		.dev_id		= AM29F400BB,
+		.name		= "AMD AM29F400BB",
+		.uaddr		= {
+			[1] = MTD_UADDR_0x0555_0x02AA /* x16 */
+		},
+		.DevSize	= SIZE_512KiB,
+		.CmdSet		= CFI_CMDSET_AMD_LEGACY,
+		.NumEraseRegions= 4,
+		.regions	= {
+			ERASEINFO(0x04000, 1),
+			ERASEINFO(0x02000, 2),
+			ERASEINFO(0x08000, 1),
+			ERASEINFO(0x10000, 7),
+		}
+	},
+	{
+		.mfr_id		= (u16)AMD_MANUFACT,
 		.dev_id		= AM29LV400BB,
 		.name		= "AMD AM29LV400BB",
 		.uaddr		= {
@@ -232,6 +327,23 @@ static const struct amd_flash_info jedec_table[] = {
 			ERASEINFO(0x02000,2),
 			ERASEINFO(0x08000,1),
 			ERASEINFO(0x10000,7),
+		}
+	},
+	{
+		.mfr_id		= (u16)AMD_MANUFACT,
+		.dev_id		= AM29LV800BB,
+		.name		= "AMD AM29LV800BB",
+		.uaddr		= {
+			[1] = MTD_UADDR_0x0555_0x02AA /* x16 */
+		},
+		.DevSize	= SIZE_1MiB,
+		.CmdSet		= CFI_CMDSET_AMD_LEGACY,
+		.NumEraseRegions= 4,
+		.regions	= {
+			ERASEINFO(0x04000, 1),
+			ERASEINFO(0x02000, 2),
+			ERASEINFO(0x08000, 1),
+			ERASEINFO(0x10000, 15),
 		}
 	},
 #endif
@@ -290,7 +402,7 @@ static inline void fill_info(flash_info_t *info, const struct amd_flash_info *je
 		debug ("erase_region_count = %d erase_region_size = %d\n",
 		       erase_region_count, erase_region_size);
 		for (j = 0; j < erase_region_count; j++) {
-			if (sect_cnt >= CFG_MAX_FLASH_SECT) {
+			if (sect_cnt >= CONFIG_SYS_MAX_FLASH_SECT) {
 				printf("ERROR: too many flash sectors\n");
 				break;
 			}

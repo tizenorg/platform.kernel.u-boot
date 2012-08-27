@@ -35,14 +35,14 @@
  * do_fdosboot --
  *-----------------------------------------------------------------------------
  */
-int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *name;
     char *ep;
     int size;
     int rcode = 0;
     char buf [12];
-    int drive = CFG_FDC_DRIVE_NUMBER;
+    int drive = CONFIG_SYS_FDC_DRIVE_NUMBER;
 
     /* pre-set load_addr */
     if ((ep = getenv("loadaddr")) != NULL) {
@@ -73,8 +73,7 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	name = argv [2];
 	break;
     default:
-	printf ("Usage:\n%s\n", cmdtp->usage);
-	break;
+	return cmd_usage(cmdtp);
     }
 
     /* Init physical layer                                                   */
@@ -102,7 +101,6 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     /* Check if we should attempt an auto-start */
     if (((ep = getenv("autostart")) != NULL) && (strcmp(ep,"yes") == 0)) {
 	char *local_args[2];
-	extern int do_bootm (cmd_tbl_t *, int, int, char *[]);
 	local_args[0] = argv[0];
 	local_args[1] = NULL;
 	printf ("Automatic boot of image at addr 0x%08lX ...\n", load_addr);
@@ -115,10 +113,10 @@ int do_fdosboot(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
  * do_fdosls --
  *-----------------------------------------------------------------------------
  */
-int do_fdosls(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_fdosls(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *path = "";
-    int drive = CFG_FDC_DRIVE_NUMBER;
+    int drive = CONFIG_SYS_FDC_DRIVE_NUMBER;
 
     switch (argc) {
     case 1:
@@ -142,12 +140,12 @@ int do_fdosls(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	fdosboot,	3,	0,	do_fdosboot,
-	"fdosboot- boot from a dos floppy file\n",
-	"[loadAddr] [filename]\n"
+	"boot from a dos floppy file",
+	"[loadAddr] [filename]"
 );
 
 U_BOOT_CMD(
 	fdosls,	2,	0,	do_fdosls,
-	"fdosls  - list files in a directory\n",
-	"[directory]\n"
+	"list files in a directory",
+	"[directory]"
 );

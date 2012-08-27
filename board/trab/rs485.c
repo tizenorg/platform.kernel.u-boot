@@ -2,8 +2,8 @@
  * (C) Copyright 2003
  * Martin Krause, TQ-Systems GmbH, <martin.krause@tqs.de>
  *
- * Based on cpu/arm920t/serial.c, by Gary Jennejohn
- * (C) Copyright 2002 Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+ * Based on arch/arm/cpu/arm920t/serial.c, by Gary Jennejohn
+ * (C) Copyright 2002 Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 #include <common.h>
-#include <s3c2400.h>
+#include <asm/arch/s3c24x0_cpu.h>
 #include "rs485.h"
 
 static void rs485_setbrg (void);
@@ -42,7 +42,7 @@ static void trab_rs485_disable_rx(void);
 
 static void rs485_setbrg (void)
 {
-	S3C24X0_UART * const uart = S3C24X0_GetBase_UART(UART_NR);
+	struct s3c24x0_uart * const uart = s3c24x0_get_base_uart(UART_NR);
 	int i;
 	unsigned int reg = 0;
 
@@ -51,34 +51,34 @@ static void rs485_setbrg (void)
 	reg = (33000000 / (16 * 38400)) - 1;
 
 	/* FIFO enable, Tx/Rx FIFO clear */
-	uart->UFCON = 0x07;
-	uart->UMCON = 0x0;
+	uart->ufcon = 0x07;
+	uart->umcon = 0x0;
 	/* Normal,No parity,1 stop,8 bit */
-	uart->ULCON = 0x3;
+	uart->ulcon = 0x3;
 	/*
 	 * tx=level,rx=edge,disable timeout int.,enable rx error int.,
 	 * normal,interrupt or polling
 	 */
-	uart->UCON = 0x245;
-	uart->UBRDIV = reg;
+	uart->ucon = 0x245;
+	uart->ubrdiv = reg;
 
 	for (i = 0; i < 100; i++);
 }
 
 static void rs485_cfgio (void)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
-	gpio->PFCON &= ~(0x3 << 2);
-	gpio->PFCON |=  (0x2 << 2); /* configure GPF1 as RXD1 */
+	gpio->pfcon &= ~(0x3 << 2);
+	gpio->pfcon |=  (0x2 << 2); /* configure GPF1 as RXD1 */
 
-	gpio->PFCON &= ~(0x3 << 6);
-	gpio->PFCON |=  (0x2 << 6); /* configure GPF3 as TXD1 */
+	gpio->pfcon &= ~(0x3 << 6);
+	gpio->pfcon |=  (0x2 << 6); /* configure GPF3 as TXD1 */
 
-	gpio->PFUP |= (1 << 1); /* disable pullup on GPF1 */
-	gpio->PFUP |= (1 << 3); /* disable pullup on GPF3 */
+	gpio->pfup |= (1 << 1); /* disable pullup on GPF1 */
+	gpio->pfup |= (1 << 3); /* disable pullup on GPF3 */
 
-	gpio->PACON &= ~(1 << 11); /* set GPA11 (RS485_DE) to output */
+	gpio->pacon &= ~(1 << 11); /* set GPA11 (RS485_DE) to output */
 }
 
 /*
@@ -101,12 +101,13 @@ int rs485_init (void)
  */
 int rs485_getc (void)
 {
-	S3C24X0_UART * const uart = S3C24X0_GetBase_UART(UART_NR);
+	struct s3c24x0_uart * const uart = s3c24x0_get_base_uart(UART_NR);
 
 	/* wait for character to arrive */
-	while (!(uart->UTRSTAT & 0x1));
+	while (!(uart->utrstat & 0x1))
+		;
 
-	return uart->URXH & 0xff;
+	return uart->urxh & 0xff;
 }
 
 /*
@@ -114,12 +115,13 @@ int rs485_getc (void)
  */
 void rs485_putc (const char c)
 {
-	S3C24X0_UART * const uart = S3C24X0_GetBase_UART(UART_NR);
+	struct s3c24x0_uart * const uart = s3c24x0_get_base_uart(UART_NR);
 
 	/* wait for room in the tx FIFO */
-	while (!(uart->UTRSTAT & 0x2));
+	while (!(uart->utrstat & 0x2))
+		;
 
-	uart->UTXH = c;
+	uart->utxh = c;
 
 	/* If \n, also do \r */
 	if (c == '\n')
@@ -131,9 +133,9 @@ void rs485_putc (const char c)
  */
 int rs485_tstc (void)
 {
-	S3C24X0_UART * const uart = S3C24X0_GetBase_UART(UART_NR);
+	struct s3c24x0_uart * const uart = s3c24x0_get_base_uart(UART_NR);
 
-	return uart->UTRSTAT & 0x1;
+	return uart->utrstat & 0x1;
 }
 
 void rs485_puts (const char *s)
@@ -168,13 +170,13 @@ static void set_rs485re(unsigned char rs485re_state)
 
 static void set_rs485de(unsigned char rs485de_state)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	/* This is on PORT A bit 11 */
 	if(rs485de_state)
-		gpio->PADAT |= (1 << 11);
+		gpio->padat |= (1 << 11);
 	else
-		gpio->PADAT &= ~(1 << 11);
+		gpio->padat &= ~(1 << 11);
 }
 
 

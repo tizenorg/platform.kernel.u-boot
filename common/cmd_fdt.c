@@ -42,7 +42,7 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static int fdt_valid(void);
-static int fdt_parse_prop(char **newval, int count, char *data, int *len);
+static int fdt_parse_prop(char *const*newval, int count, char *data, int *len);
 static int fdt_print(const char *pathp, char *prop, int depth);
 
 /*
@@ -50,24 +50,42 @@ static int fdt_print(const char *pathp, char *prop, int depth);
  */
 struct fdt_header *working_fdt;
 
+void set_working_fdt_addr(void *addr)
+{
+	char buf[17];
+
+	working_fdt = addr;
+
+	sprintf(buf, "%lx", (unsigned long)addr);
+	setenv("fdtaddr", buf);
+}
+
 /*
  * Flattened Device Tree command, see the help for parameter definitions.
  */
-int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
-	/********************************************************************
+	/*
 	 * Set the address of the fdt
-	 ********************************************************************/
+	 */
 	if (argv[1][0] == 'a') {
+		unsigned long addr;
 		/*
 		 * Set the address [and length] of the fdt.
 		 */
-		working_fdt = (struct fdt_header *)simple_strtoul(argv[2], NULL, 16);
+		if (argc == 2) {
+			if (!fdt_valid()) {
+				return 1;
+			}
+			printf("The address of the fdt is %p\n", working_fdt);
+			return 0;
+		}
+
+		addr = simple_strtoul(argv[2], NULL, 16);
+		set_working_fdt_addr((void *)addr);
 
 		if (!fdt_valid()) {
 			return 1;
@@ -96,18 +114,16 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			}
 		}
 
-	/********************************************************************
+	/*
 	 * Move the working_fdt
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "mo", 2) == 0) {
 		struct fdt_header *newaddr;
 		int  len;
 		int  err;
 
-		if (argc < 4) {
-			printf ("Usage:\n%s\n", cmdtp->usage);
-			return 1;
-		}
+		if (argc < 4)
+			return cmd_usage(cmdtp);
 
 		/*
 		 * Set the address and length of the fdt.
@@ -146,9 +162,9 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		}
 		working_fdt = newaddr;
 
-	/********************************************************************
+	/*
 	 * Make a new node
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "mk", 2) == 0) {
 		char *pathp;		/* path */
 		char *nodep;		/* new node to add */
@@ -158,10 +174,8 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		/*
 		 * Parameters: Node path, new node to be appended to the path.
 		 */
-		if (argc < 4) {
-			printf ("Usage:\n%s\n", cmdtp->usage);
-			return 1;
-		}
+		if (argc < 4)
+			return cmd_usage(cmdtp);
 
 		pathp = argv[2];
 		nodep = argv[3];
@@ -182,9 +196,9 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			return 1;
 		}
 
-	/********************************************************************
+	/*
 	 * Set the value of a property in the working_fdt.
-	 ********************************************************************/
+	 */
 	} else if (argv[1][0] == 's') {
 		char *pathp;		/* path */
 		char *prop;		/* property */
@@ -196,10 +210,8 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		/*
 		 * Parameters: Node path, property, optional value.
 		 */
-		if (argc < 4) {
-			printf ("Usage:\n%s\n", cmdtp->usage);
-			return 1;
-		}
+		if (argc < 4)
+			return cmd_usage(cmdtp);
 
 		pathp  = argv[2];
 		prop   = argv[3];
@@ -227,9 +239,9 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			return 1;
 		}
 
-	/********************************************************************
+	/*
 	 * Print (recursive) / List (single level)
-	 ********************************************************************/
+	 */
 	} else if ((argv[1][0] == 'p') || (argv[1][0] == 'l')) {
 		int depth = MAX_LEVEL;	/* how deep to print */
 		char *pathp;		/* path */
@@ -261,9 +273,9 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		if (ret != 0)
 			return ret;
 
-	/********************************************************************
+	/*
 	 * Remove a property/node
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "rm", 2) == 0) {
 		int  nodeoffset;	/* node offset from libfdt */
 		int  err;
@@ -301,9 +313,9 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			}
 		}
 
-	/********************************************************************
+	/*
 	 * Display header info
-	 ********************************************************************/
+	 */
 	} else if (argv[1][0] == 'h') {
 		u32 version = fdt_version(working_fdt);
 		printf("magic:\t\t\t0x%x\n", fdt_magic(working_fdt));
@@ -331,33 +343,28 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		       fdt_num_mem_rsv(working_fdt));
 		printf("\n");
 
-	/********************************************************************
+	/*
 	 * Set boot cpu id
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "boo", 3) == 0) {
 		unsigned long tmp = simple_strtoul(argv[2], NULL, 16);
 		fdt_set_boot_cpuid_phys(working_fdt, tmp);
 
-	/********************************************************************
+	/*
 	 * memory command
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "me", 2) == 0) {
 		uint64_t addr, size;
 		int err;
-#ifdef CFG_64BIT_STRTOUL
-			addr = simple_strtoull(argv[2], NULL, 16);
-			size = simple_strtoull(argv[3], NULL, 16);
-#else
-			addr = simple_strtoul(argv[2], NULL, 16);
-			size = simple_strtoul(argv[3], NULL, 16);
-#endif
+		addr = simple_strtoull(argv[2], NULL, 16);
+		size = simple_strtoull(argv[3], NULL, 16);
 		err = fdt_fixup_memory(working_fdt, addr, size);
 		if (err < 0)
 			return err;
 
-	/********************************************************************
+	/*
 	 * mem reserve commands
-	 ********************************************************************/
+	 */
 	} else if (strncmp(argv[1], "rs", 2) == 0) {
 		if (argv[2][0] == 'p') {
 			uint64_t addr, size;
@@ -382,13 +389,8 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		} else if (argv[2][0] == 'a') {
 			uint64_t addr, size;
 			int err;
-#ifdef CFG_64BIT_STRTOUL
 			addr = simple_strtoull(argv[3], NULL, 16);
 			size = simple_strtoull(argv[4], NULL, 16);
-#else
-			addr = simple_strtoul(argv[3], NULL, 16);
-			size = simple_strtoul(argv[4], NULL, 16);
-#endif
 			err = fdt_add_mem_rsv(working_fdt, addr, size);
 
 			if (err < 0) {
@@ -407,8 +409,7 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			}
 		} else {
 			/* Unrecognized command */
-			printf ("Usage:\n%s\n", cmdtp->usage);
-			return 1;
+			return cmd_usage(cmdtp);
 		}
 	}
 #ifdef CONFIG_OF_BOARD_SETUP
@@ -417,12 +418,27 @@ int do_fdt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		ft_board_setup(working_fdt, gd->bd);
 #endif
 	/* Create a chosen node */
-	else if (argv[1][0] == 'c')
-		fdt_chosen(working_fdt, 0, 0, 1);
+	else if (argv[1][0] == 'c') {
+		unsigned long initrd_start = 0, initrd_end = 0;
+
+		if ((argc != 2) && (argc != 4))
+			return cmd_usage(cmdtp);
+
+		if (argc == 4) {
+			initrd_start = simple_strtoul(argv[2], NULL, 16);
+			initrd_end = simple_strtoul(argv[3], NULL, 16);
+		}
+
+		fdt_chosen(working_fdt, 1);
+		fdt_initrd(working_fdt, initrd_start, initrd_end, 1);
+	}
+	/* resize the fdt */
+	else if (strncmp(argv[1], "re", 2) == 0) {
+		fdt_resize(working_fdt);
+	}
 	else {
 		/* Unrecognized command */
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 
 	return 0;
@@ -487,7 +503,7 @@ static int fdt_valid(void)
  * data: A bytestream to be placed in the property
  * len: The length of the resulting bytestream
  */
-static int fdt_parse_prop(char **newval, int count, char *data, int *len)
+static int fdt_parse_prop(char * const *newval, int count, char *data, int *len)
 {
 	char *cp;		/* temporary char pointer */
 	char *newp;		/* temporary newval char pointer */
@@ -536,14 +552,18 @@ static int fdt_parse_prop(char **newval, int count, char *data, int *len)
 		 * Byte stream.  Convert the values.
 		 */
 		newp++;
-		while ((*newp != ']') && (stridx < count)) {
+		while ((stridx < count) && (*newp != ']')) {
+			while (*newp == ' ')
+				newp++;
+			if (*newp == '\0') {
+				newp = newval[++stridx];
+				continue;
+			}
+			if (!isxdigit(*newp))
+				break;
 			tmp = simple_strtoul(newp, &newp, 16);
 			*data++ = tmp & 0xFF;
 			*len    = *len + 1;
-			while (*newp == ' ')
-				newp++;
-			if (*newp != '\0')
-				newp = newval[++stridx];
 		}
 		if (*newp != ']') {
 			printf("Unexpected character '%c'\n", *newp);
@@ -551,12 +571,15 @@ static int fdt_parse_prop(char **newval, int count, char *data, int *len)
 		}
 	} else {
 		/*
-		 * Assume it is a string.  Copy it into our data area for
-		 * convenience (including the terminating '\0').
+		 * Assume it is one or more strings.  Copy it into our
+		 * data area for convenience (including the
+		 * terminating '\0's).
 		 */
 		while (stridx < count) {
-			*len = strlen(newp) + 1;
+			size_t length = strlen(newp) + 1;
 			strcpy(data, newp);
+			data += length;
+			*len += length;
 			newp = newval[++stridx];
 		}
 	}
@@ -781,12 +804,13 @@ static int fdt_print(const char *pathp, char *prop, int depth)
 
 U_BOOT_CMD(
 	fdt,	255,	0,	do_fdt,
-	"fdt     - flattened device tree utility commands\n",
+	"flattened device tree utility commands",
 	    "addr   <addr> [<length>]        - Set the fdt location to <addr>\n"
 #ifdef CONFIG_OF_BOARD_SETUP
 	"fdt boardsetup                      - Do board-specific set up\n"
 #endif
 	"fdt move   <fdt> <newaddr> <length> - Copy the fdt to <addr> and make it active\n"
+	"fdt resize                          - Resize fdt to size + padding to 4k addr\n"
 	"fdt print  <path> [<prop>]          - Recursive print starting at <path>\n"
 	"fdt list   <path> [<prop>]          - Print one level starting at <path>\n"
 	"fdt set    <path> <prop> [<val>]    - Set <property> [to <val>]\n"
@@ -798,7 +822,8 @@ U_BOOT_CMD(
 	"fdt rsvmem print                    - Show current mem reserves\n"
 	"fdt rsvmem add <addr> <size>        - Add a mem reserve\n"
 	"fdt rsvmem delete <index>           - Delete a mem reserves\n"
-	"fdt chosen - Add/update the /chosen branch in the tree\n"
-	"NOTE: If the path or property you are setting/printing has a '#' character\n"
-	"     or spaces, you MUST escape it with a \\ character or quote it with \".\n"
+	"fdt chosen [<start> <end>]          - Add/update the /chosen branch in the tree\n"
+	"                                        <start>/<end> - initrd start/end addr\n"
+	"NOTE: Dereference aliases by omiting the leading '/', "
+		"e.g. fdt print ethernet0."
 );

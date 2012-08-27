@@ -18,7 +18,7 @@
 #include <linux/mtd/fsl_upm.h>
 #include <nand.h>
 
-static struct immap *im = (struct immap *)CFG_IMMR;
+static struct immap *im = (struct immap *)CONFIG_SYS_IMMR;
 
 static const u32 upm_array[] = {
 	0x0ff03c30, 0x0ff03c30, 0x0ff03c34, 0x0ff33c30, /* Words  0 to  3 */
@@ -57,7 +57,7 @@ static void upm_setup(struct fsl_upm *upm)
 		eieio();
 }
 
-static int dev_ready(void)
+static int dev_ready(int chip_nr)
 {
 	if (in_be32(&im->qepio.ioport[4].pdat) & 0x00002000) {
 		debug("nand ready\n");
@@ -70,21 +70,21 @@ static int dev_ready(void)
 
 static struct fsl_upm_nand fun = {
 	.upm = {
-		.io_addr = (void *)CFG_NAND_BASE,
+		.io_addr = (void *)CONFIG_SYS_NAND_BASE,
 	},
 	.width = 8,
 	.upm_cmd_offset = 8,
 	.upm_addr_offset = 16,
 	.dev_ready = dev_ready,
-	.wait_pattern = 1,
+	.wait_flags = FSL_UPM_WAIT_RUN_PATTERN,
 	.chip_delay = 50,
 };
 
 int board_nand_init(struct nand_chip *nand)
 {
-	fun.upm.mxmr = &im->lbus.mamr;
-	fun.upm.mdr = &im->lbus.mdr;
-	fun.upm.mar = &im->lbus.mar;
+	fun.upm.mxmr = &im->im_lbc.mamr;
+	fun.upm.mdr = &im->im_lbc.mdr;
+	fun.upm.mar = &im->im_lbc.mar;
 
 	upm_setup(&fun.upm);
 

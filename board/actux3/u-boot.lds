@@ -30,22 +30,22 @@ SECTIONS
 
 	. = ALIGN (4);
 	.text : {
-		cpu/ixp/start.o (.text)
-		lib_generic/string.o (.text)
-		lib_generic/vsprintf.o (.text)
-		lib_arm/board.o (.text)
+		arch/arm/cpu/ixp/start.o (.text)
+		lib/string.o (.text)
+		lib/vsprintf.o (.text)
+		arch/arm/lib/board.o (.text)
 		common/dlmalloc.o (.text)
-		cpu/ixp/cpu.o (.text)
+		arch/arm/cpu/ixp/cpu.o (.text)
 
 		. = env_offset;
-		common/environment.o (.ppcenv)
+		common/env_embedded.o (.ppcenv)
 
 		* (.text)
 	}
 
 	. = ALIGN (4);
 	.rodata : {
-		*(.rodata)
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 	}
 
 	. = ALIGN (4);
@@ -69,6 +69,7 @@ SECTIONS
 	__bss_start =.;
 	.bss (NOLOAD): {
 		*(.bss)
+		. = ALIGN(4);
 	}
-	_end =.;
+	__bss_end__ =.;
 }

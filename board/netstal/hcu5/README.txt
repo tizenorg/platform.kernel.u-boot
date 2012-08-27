@@ -33,7 +33,7 @@ vector and start running.
 On-Chip Memory
 --------------
 
-0xe0010000- 0xe0013fff   CFG_OCM_BASE
+0xe0010000- 0xe0013fff   CONFIG_SYS_OCM_BASE
 The 440EPx includes a 16K on-chip memory that can be placed however
 software chooses.
 
@@ -83,11 +83,11 @@ System-LEDs ??? (Analog zu HCU4 ???)
 Startup sequence
 ----------------
 
-(cpu/ppc4xx/resetvec.S)
+(arch/powerpc/cpu/ppc4xx/resetvec.S)
 depending on configs option
 call _start_440 _start_pci oder _start
 
-(cpu/ppc4xx/start.S)
+(arch/powerpc/cpu/ppc4xx/start.S)
 
 _start_440:
 	initialize register like
@@ -109,7 +109,7 @@ _start:
 	call cpu_init_f	/* run low-level CPU init code	   (from Flash) */
 
     call cpu_init_f
-    board_init_f: (lib_ppc\board.c)
+    board_init_f: (arch/powerpc/lib\board.c)
 	init_sequence defines a list of function to be called
 	    board_early_init_f: (board/netstal/hcu5/hcu5.c)
 		We are using Bootstrap-Option A
@@ -136,23 +136,23 @@ _start:
 	 *  - board info struct
 	Save local variables to board info struct
 	call relocate_code() does not return
-	relocate_code: (cpu/ppc4xx/start.S)
+	relocate_code: (arch/powerpc/cpu/ppc4xx/start.S)
 -------------------------------------------------------
 From now on our copy is in RAM and we will run from there,
 	starting with board_init_r
 -------------------------------------------------------
-    board_init_r: (lib_ppc\board.c)
+    board_init_r: (arch/powerpc/lib\board.c)
 	setup bd function pointers
 	trap_init
 	flash_init: (board/netstal/hcu5/flash.c)
 		/* setup for u-boot erase, update */
 	setup bd flash info
-	cpu_init_r: (cpu/ppc4xx/cpu_init.c)
+	cpu_init_r: (arch/powerpc/cpu/ppc4xx/cpu_init.c)
 	    peripheral chip select in using defines like
-	    CFG_EBC_PB0A, CFG_EBC_PB0C from hcu5.h
+	    CONFIG_SYS_EBC_PB0A, CONFIG_SYS_EBC_PB0C from hcu5.h
 	mem_malloc_init
 	malloc_bin_reloc
-	spi_init (r or f)??? (CFG_ENV_IS_IN_EEPROM)
+	spi_init (r or f)??? (CONFIG_ENV_IS_IN_EEPROM)
 	env_relocated
 	misc_init_r(bd): (board/netstal/hcu5.c)
 	    ethaddr mit serial number ergänzen
@@ -161,11 +161,11 @@ From now on our copy is in RAM and we will run from there,
 Most of the HW specific code for the HCU5 may be found in
 include/configs/hcu5.h
 board/netstal/hcu5/*
-cpu/ppc4xx/*
-lib_ppc/*
+arch/powerpc/cpu/ppc4xx/*
+arch/powerpc/lib/*
 include/ppc440.h
 
 Drivers for serial etc are found under drivers/
 
 Don't ask question if you did not look at the README !!
-Most CFG_* and CONFIG_* switches are mentioned/explained there.
+Most CONFIG_SYS_* and CONFIG_* switches are mentioned/explained there.

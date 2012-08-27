@@ -22,7 +22,7 @@
  */
 
 #include <common.h>
-#include <console.h>
+#include <stdio_dev.h>
 #include <watchdog.h>
 #include <post.h>
 
@@ -57,6 +57,22 @@ int post_init_f (void)
 
 	return res;
 }
+
+/*
+ * Supply a default implementation for post_hotkeys_pressed() for boards
+ * without hotkey support. We always return 0 here, so that the
+ * long-running tests won't be started.
+ *
+ * Boards with hotkey support can override this weak default function
+ * by defining one in their board specific code.
+ */
+int __post_hotkeys_pressed(void)
+{
+	return 0;	/* No hotkeys supported */
+}
+int post_hotkeys_pressed(void)
+	__attribute__((weak, alias("__post_hotkeys_pressed")));
+
 
 void post_bootmode_init (void)
 {
@@ -171,7 +187,7 @@ static void post_get_flags (int *test_flags)
 	}
 
 	for (i = 0; i < varnum; i++) {
-		if (getenv_r (var[i], list, sizeof (list)) <= 0)
+		if (getenv_f(var[i], list, sizeof (list)) <= 0)
 			continue;
 
 		for (j = 0; j < post_list_size; j++) {
@@ -215,6 +231,12 @@ static void post_get_flags (int *test_flags)
 	}
 }
 
+void __show_post_progress (unsigned int test_num, int before, int result)
+{
+}
+void show_post_progress (unsigned int, int, int)
+			__attribute__((weak, alias("__show_post_progress")));
+
 static int post_run_single (struct post_test *test,
 				int test_flags, int flags, unsigned int i)
 {
@@ -232,13 +254,18 @@ static int post_run_single (struct post_test *test,
 			if (test_flags & POST_PREREL)
 				post_log_mark_start ( test->testid );
 			else
-			post_log ("POST %s ", test->cmd);
+				post_log ("POST %s ", test->cmd);
 		}
 
+		show_post_progress(i, POST_BEFORE, POST_FAILED);
+
 		if (test_flags & POST_PREREL) {
-			if ((*test->test) (flags) == 0)
+			if ((*test->test) (flags) == 0) {
 				post_log_mark_succ ( test->testid );
+				show_post_progress(i, POST_AFTER, POST_PASSED);
+			}
 			else {
+				show_post_progress(i, POST_AFTER, POST_FAILED);
 				if (test_flags & POST_CRITICAL)
 					gd->flags |= GD_FLG_POSTFAIL;
 				if (test_flags & POST_STOP)
@@ -248,6 +275,7 @@ static int post_run_single (struct post_test *test,
 		if ((*test->test) (flags) != 0) {
 			post_log ("FAILED\n");
 			show_boot_progress (-32);
+			show_post_progress(i, POST_AFTER, POST_FAILED);
 			if (test_flags & POST_CRITICAL)
 				gd->flags |= GD_FLG_POSTFAIL;
 			if (test_flags & POST_STOP)
@@ -255,6 +283,7 @@ static int post_run_single (struct post_test *test,
 		}
 		else
 			post_log ("PASSED\n");
+			show_post_progress(i, POST_AFTER, POST_PASSED);
 		}
 
 		if ((test_flags & POST_REBOOT) && !(flags & POST_MANUAL)) {
@@ -372,7 +401,7 @@ int post_log (char *format, ...)
 {
 	va_list args;
 	uint i;
-	char printbuffer[CFG_PBSIZE];
+	char printbuffer[CONFIG_SYS_PBSIZE];
 
 	va_start (args, format);
 
@@ -393,6 +422,7 @@ int post_log (char *format, ...)
 	return 0;
 }
 
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
 void post_reloc (void)
 {
 	unsigned int i;
@@ -437,6 +467,7 @@ void post_reloc (void)
 		}
 	}
 }
+#endif
 
 
 /*
@@ -448,7 +479,7 @@ void post_reloc (void)
 unsigned long post_time_ms (unsigned long base)
 {
 #ifdef CONFIG_PPC
-	return (unsigned long)(get_ticks () / (get_tbclk () / CFG_HZ)) - base;
+	return (unsigned long)(get_ticks () / (get_tbclk () / CONFIG_SYS_HZ)) - base;
 #else
 #warning "Not implemented yet"
 	return 0; /* Not implemented yet */

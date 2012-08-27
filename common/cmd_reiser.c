@@ -47,7 +47,7 @@
 #define PRINTF(fmt,args...)
 #endif
 
-int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *filename = "/";
 	int dev=0;
@@ -56,10 +56,9 @@ int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	block_dev_desc_t *dev_desc=NULL;
 	int part_length;
 
-	if (argc < 3) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 3)
+		return cmd_usage(cmdtp);
+
 	dev = (int)simple_strtoul (argv[2], &ep, 16);
 	dev_desc = get_dev(argv[1],dev);
 
@@ -102,15 +101,15 @@ int do_reiserls (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	reiserls,	4,	1,	do_reiserls,
-	"reiserls- list files in a directory (default /)\n",
+	"list files in a directory (default /)",
 	"<interface> <dev[:part]> [directory]\n"
-	"    - list files from 'dev' on 'interface' in a 'directory'\n"
+	"    - list files from 'dev' on 'interface' in a 'directory'"
 );
 
 /******************************************************************************
  * Reiserfs boot command intepreter. Derived from diskboot
  */
-int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *filename = NULL;
 	char *ep;
@@ -128,7 +127,7 @@ int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		if (addr_str != NULL) {
 			addr = simple_strtoul (addr_str, NULL, 16);
 		} else {
-			addr = CFG_LOAD_ADDR;
+			addr = CONFIG_SYS_LOAD_ADDR;
 		}
 		filename = getenv ("bootfile");
 		count = 0;
@@ -150,8 +149,7 @@ int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		break;
 
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 
 	if (!filename) {
@@ -232,8 +230,8 @@ int do_reiserload (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	reiserload,	6,	0,	do_reiserload,
-	"reiserload- load binary file from a Reiser filesystem\n",
+	"load binary file from a Reiser filesystem",
 	"<interface> <dev[:part]> [addr] [filename] [bytes]\n"
 	"    - load binary file 'filename' from 'dev' on 'interface'\n"
-	"      to address 'addr' from dos filesystem\n"
+	"      to address 'addr' from dos filesystem"
 );

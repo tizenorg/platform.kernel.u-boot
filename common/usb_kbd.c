@@ -25,10 +25,8 @@
  *
  */
 #include <common.h>
-#include <devices.h>
+#include <stdio_dev.h>
 #include <asm/byteorder.h>
-
-#ifdef CONFIG_USB_KEYBOARD
 
 #include <usb.h>
 
@@ -38,7 +36,7 @@
  * are switched to the serial port, else the settings in the
  * environment are used
  */
-#ifdef CFG_CONSOLE_OVERWRITE_ROUTINE
+#ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 extern int overwrite_console (void);
 #else
 int overwrite_console (void)
@@ -122,7 +120,7 @@ static void usb_kbd_put_queue(char data)
 /* test if a character is in the queue */
 static int usb_kbd_testc(void)
 {
-#ifdef CFG_USB_EVENT_POLL
+#ifdef CONFIG_SYS_USB_EVENT_POLL
 	usb_event_poll();
 #endif
 	if(usb_in_pointer==usb_out_pointer)
@@ -135,7 +133,7 @@ static int usb_kbd_getc(void)
 {
 	char c;
 	while(usb_in_pointer==usb_out_pointer) {
-#ifdef CFG_USB_EVENT_POLL
+#ifdef CONFIG_SYS_USB_EVENT_POLL
 		usb_event_poll();
 #endif
 	}
@@ -154,8 +152,8 @@ static int usb_kbd_probe(struct usb_device *dev, unsigned int ifnum);
 /* search for keyboard and register it if found */
 int drv_usb_kbd_init(void)
 {
-	int error,i,index;
-	device_t usb_kbd_dev,*old_dev;
+	int error,i;
+	struct stdio_dev usb_kbd_dev,*old_dev;
 	struct usb_device *dev;
 	char *stdinname  = getenv ("stdin");
 
@@ -164,28 +162,29 @@ int drv_usb_kbd_init(void)
 	/* scan all USB Devices */
 	for(i=0;i<USB_MAX_DEVICE;i++) {
 		dev=usb_get_dev_index(i); /* get device */
+		if(dev == NULL)
+			return -1;
 		if(dev->devnum!=-1) {
 			if(usb_kbd_probe(dev,0)==1) { /* Ok, we found a keyboard */
 				/* check, if it is already registered */
 				USB_KBD_PRINTF("USB KBD found set up device.\n");
-				for (index=1; index<=ListNumItems(devlist); index++) {
-					old_dev = ListGetPtrToItem(devlist, index);
-					if(strcmp(old_dev->name,DEVNAME)==0) {
-						/* ok, already registered, just return ok */
-						USB_KBD_PRINTF("USB KBD is already registered.\n");
-						return 1;
-					}
+				old_dev = stdio_get_by_name(DEVNAME);
+				if(old_dev) {
+					/* ok, already registered, just return ok */
+					USB_KBD_PRINTF("USB KBD is already registered.\n");
+					return 1;
 				}
 				/* register the keyboard */
 				USB_KBD_PRINTF("USB KBD register.\n");
-				memset (&usb_kbd_dev, 0, sizeof(device_t));
+				memset (&usb_kbd_dev, 0, sizeof(struct stdio_dev));
 				strcpy(usb_kbd_dev.name, DEVNAME);
 				usb_kbd_dev.flags =  DEV_FLAGS_INPUT | DEV_FLAGS_SYSTEM;
 				usb_kbd_dev.putc = NULL;
 				usb_kbd_dev.puts = NULL;
 				usb_kbd_dev.getc = usb_kbd_getc;
 				usb_kbd_dev.tstc = usb_kbd_testc;
-				error = device_register (&usb_kbd_dev);
+				usb_kbd_dev.priv = (void *)dev;
+				error = stdio_register (&usb_kbd_dev);
 				if(error==0) {
 					/* check if this is the standard input device */
 					if(strcmp(stdinname,DEVNAME)==0) {
@@ -213,7 +212,11 @@ int drv_usb_kbd_init(void)
 /* deregistering the keyboard */
 int usb_kbd_deregister(void)
 {
-	return device_deregister(DEVNAME);
+#ifdef CONFIG_SYS_STDIO_DEREGISTER
+	return stdio_deregister(DEVNAME);
+#else
+	return 1;
+#endif
 }
 
 /**************************************************************************
@@ -226,7 +229,7 @@ int usb_kbd_deregister(void)
 
 static void usb_kbd_setled(struct usb_device *dev)
 {
-	struct usb_interface_descriptor *iface;
+	struct usb_interface *iface;
 	iface = &dev->config.if_desc[0];
 	leds=0;
 	if(scroll_lock!=0)
@@ -239,7 +242,7 @@ static void usb_kbd_setled(struct usb_device *dev)
 		leds|=1;
 	usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 		USB_REQ_SET_REPORT, USB_TYPE_CLASS | USB_RECIP_INTERFACE,
-		0x200, iface->bInterfaceNumber,(void *)&leds, 1, 0);
+		0x200, iface->desc.bInterfaceNumber, (void *)&leds, 1, 0);
 
 }
 
@@ -345,17 +348,21 @@ static int usb_kbd_irq(struct usb_device *dev)
 /* probes the USB device dev for keyboard type */
 static int usb_kbd_probe(struct usb_device *dev, unsigned int ifnum)
 {
-	struct usb_interface_descriptor *iface;
+	struct usb_interface *iface;
 	struct usb_endpoint_descriptor *ep;
 	int pipe,maxp;
 
 	if (dev->descriptor.bNumConfigurations != 1) return 0;
 	iface = &dev->config.if_desc[ifnum];
 
-	if (iface->bInterfaceClass != 3) return 0;
-	if (iface->bInterfaceSubClass != 1) return 0;
-	if (iface->bInterfaceProtocol != 1) return 0;
-	if (iface->bNumEndpoints != 1) return 0;
+	if (iface->desc.bInterfaceClass != 3)
+		return 0;
+	if (iface->desc.bInterfaceSubClass != 1)
+		return 0;
+	if (iface->desc.bInterfaceProtocol != 1)
+		return 0;
+	if (iface->desc.bNumEndpoints != 1)
+		return 0;
 
 	ep = &iface->ep_desc[0];
 
@@ -364,9 +371,9 @@ static int usb_kbd_probe(struct usb_device *dev, unsigned int ifnum)
 	USB_KBD_PRINTF("USB KBD found set protocol...\n");
 	/* ok, we found a USB Keyboard, install it */
 	/* usb_kbd_get_hid_desc(dev); */
-	usb_set_protocol(dev, iface->bInterfaceNumber, 0);
+	usb_set_protocol(dev, iface->desc.bInterfaceNumber, 0);
 	USB_KBD_PRINTF("USB KBD found set idle...\n");
-	usb_set_idle(dev, iface->bInterfaceNumber, REPEAT_RATE, 0);
+	usb_set_idle(dev, iface->desc.bInterfaceNumber, REPEAT_RATE, 0);
 	memset(&new[0], 0, 8);
 	memset(&old[0], 0, 8);
 	repeat_delay=0;
@@ -746,7 +753,4 @@ static int usb_kbd_get_hid_desc(struct usb_device *dev)
 
 }
 
-
 #endif
-
-#endif /* CONFIG_USB_KEYBOARD */

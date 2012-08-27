@@ -3,7 +3,6 @@
  * (C) Copyright 2004
  * DENX Software Engineering
  * Wolfgang Denk, wd@denx.de
- * All rights reserved.
  *
  * PS/2 multiplexer driver
  *
@@ -15,8 +14,6 @@
  ***********************************************************************/
 
 #include <common.h>
-
-#ifdef CONFIG_PS2MULT
 
 #include <pc_keyb.h>
 #include <asm/atomic.h>
@@ -462,5 +459,3 @@ int ps2mult_request_irq(void (*handler)(void *))
 
 	return 0;
 }
-
-#endif /* CONFIG_PS2MULT */

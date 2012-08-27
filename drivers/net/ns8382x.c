@@ -53,6 +53,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <asm/io.h>
 #include <pci.h>
 
@@ -339,6 +340,11 @@ ns8382x_initialize(bd_t * bis)
 		}
 
 		dev = (struct eth_device *) malloc(sizeof *dev);
+		if (!dev) {
+			printf("ns8382x: Can not allocate memory\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 
 		sprintf(dev->name, "dp8382x#%d", card_number);
 		dev->iobase = bus_to_phys(iobase);
@@ -444,7 +450,7 @@ ns8382x_initialize(bd_t * bis)
 	Read and write MII registers using software-generated serial MDIO
 	protocol.  See the MII specifications or DP83840A data sheet for details.
 
-	The maximum data clock rate is 2.5 Mhz.  To meet minimum timing we
+	The maximum data clock rate is 2.5 MHz.  To meet minimum timing we
 	must flush writes to the PCI bus with a PCI read. */
 #define mdio_delay(mdio_addr) INL(dev, mdio_addr)
 

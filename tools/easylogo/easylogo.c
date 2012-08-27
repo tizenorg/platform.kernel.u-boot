@@ -3,15 +3,19 @@
 ** ==============================
 ** (C) 2000 by Paolo Scaffardi (arsenio@tin.it)
 ** AIRVENT SAM s.p.a - RIMINI(ITALY)
+** (C) 2007-2008 Mike Frysinger <vapier@gentoo.org>
 **
 ** This is still under construction!
 */
 
+#include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #pragma pack(1)
 
@@ -48,6 +52,17 @@ typedef struct {
 	void *data, *palette;
 	int width, height, pixels, bpp, pixel_size, size, palette_size, yuyv;
 } image_t;
+
+void *xmalloc (size_t size)
+{
+	void *ret = malloc (size);
+	if (!ret) {
+		fprintf (stderr, "\nerror: malloc(%zu) failed: %s",
+			size, strerror(errno));
+		exit (1);
+	}
+	return ret;
+}
 
 void StringUpperCase (char *str)
 {
@@ -171,7 +186,7 @@ int image_load_tga (image_t * image, char *filename)
 	image->pixel_size = ((image->bpp - 1) / 8) + 1;
 	image->pixels = image->width * image->height;
 	image->size = image->pixels * image->pixel_size;
-	image->data = malloc (image->size);
+	image->data = xmalloc (image->size);
 
 	if (image->bpp != 24) {
 		printf ("Bpp not supported: %d!\n", image->bpp);
@@ -192,7 +207,7 @@ int image_load_tga (image_t * image, char *filename)
 /* Swapping image */
 
 	if (!(header.ImageDescriptorByte & 0x20)) {
-		unsigned char *temp = malloc (image->size);
+		unsigned char *temp = xmalloc (image->size);
 		int linesize = image->pixel_size * image->width;
 		void *dest = image->data,
 			*source = temp + image->size - linesize;
@@ -239,7 +254,7 @@ int image_rgb_to_yuyv (image_t * rgb_image, image_t * yuyv_image)
 	yuyv_image->pixels = yuyv_image->width * yuyv_image->height;
 	yuyv_image->size = yuyv_image->pixels * yuyv_image->pixel_size;
 	dest = (unsigned short *) (yuyv_image->data =
-				   malloc (yuyv_image->size));
+				   xmalloc (yuyv_image->size));
 	yuyv_image->palette = 0;
 	yuyv_image->palette_size = 0;
 
@@ -260,6 +275,37 @@ int image_rgb_to_yuyv (image_t * rgb_image, image_t * yuyv_image)
 #endif
 	return 0;
 }
+
+int image_rgb888_to_rgb565(image_t *rgb888_image, image_t *rgb565_image)
+{
+	rgb_t *rgb_ptr = (rgb_t *) rgb888_image->data;
+	unsigned short *dest;
+	int count = 0;
+
+	rgb565_image->pixel_size = 2;
+	rgb565_image->bpp = 16;
+	rgb565_image->yuyv = 0;
+	rgb565_image->width = rgb888_image->width;
+	rgb565_image->height = rgb888_image->height;
+	rgb565_image->pixels = rgb565_image->width * rgb565_image->height;
+	rgb565_image->size = rgb565_image->pixels * rgb565_image->pixel_size;
+	dest = (unsigned short *) (rgb565_image->data =
+				   xmalloc(rgb565_image->size));
+	rgb565_image->palette = 0;
+	rgb565_image->palette_size = 0;
+
+	while ((count++) < rgb888_image->pixels) {
+
+		*dest++ = ((rgb_ptr->b & 0xF8) << 8) |
+			((rgb_ptr->g & 0xFC) << 3) |
+			(rgb_ptr->r >> 3);
+		rgb_ptr++;
+	}
+
+	return 0;
+}
+
+int use_gzip = 0;
 
 int image_save_header (image_t * image, char *filename, char *varname)
 {
@@ -283,6 +329,65 @@ int image_save_header (image_t * image, char *filename, char *varname)
 	fprintf (file, " *\t\t'x'\t\tis the horizontal position\n");
 	fprintf (file, " *\t\t'y'\t\tis the vertical position\n */\n\n");
 
+	/*  gzip compress */
+	if (use_gzip & 0x1) {
+		const char *errstr = NULL;
+		unsigned char *compressed;
+		struct stat st;
+		FILE *gz;
+		char *gzfilename = xmalloc(strlen (filename) + 20);
+		char *gzcmd = xmalloc(strlen (filename) + 20);
+
+		sprintf (gzfilename, "%s.gz", filename);
+		sprintf (gzcmd, "gzip > %s", gzfilename);
+		gz = popen (gzcmd, "w");
+		if (!gz) {
+			errstr = "\nerror: popen() failed";
+			goto done;
+		}
+		if (fwrite (image->data, image->size, 1, gz) != 1) {
+			errstr = "\nerror: writing data to gzip failed";
+			goto done;
+		}
+		if (pclose (gz)) {
+			errstr = "\nerror: gzip process failed";
+			goto done;
+		}
+
+		gz = fopen (gzfilename, "r");
+		if (!gz) {
+			errstr = "\nerror: open() on gzip data failed";
+			goto done;
+		}
+		if (stat (gzfilename, &st)) {
+			errstr = "\nerror: stat() on gzip file failed";
+			goto done;
+		}
+		compressed = xmalloc (st.st_size);
+		if (fread (compressed, st.st_size, 1, gz) != 1) {
+			errstr = "\nerror: reading gzip data failed";
+			goto done;
+		}
+		fclose (gz);
+
+		unlink (gzfilename);
+
+		dataptr = compressed;
+		count = st.st_size;
+		fprintf (file, "#define EASYLOGO_ENABLE_GZIP %i\n\n", count);
+		if (use_gzip & 0x2)
+			fprintf (file, "static unsigned char EASYLOGO_DECOMP_BUFFER[%i];\n\n", image->size);
+
+ done:
+		free (gzfilename);
+		free (gzcmd);
+
+		if (errstr) {
+			perror (errstr);
+			return -1;
+		}
+	}
+
 	/*	Headers */
 	fprintf (file, "#include <video_easylogo.h>\n\n");
 	/*	Macros */
@@ -300,8 +405,8 @@ int image_save_header (image_t * image, char *filename, char *varname)
 	fprintf (file, "#define	DEF_%s_SIZE\t\t%d\n\n", def_name,
 		 image->size);
 	/*  Declaration */
-	fprintf (file, "unsigned char DEF_%s_DATA[DEF_%s_SIZE] = {\n",
-		 def_name, def_name);
+	fprintf (file, "unsigned char DEF_%s_DATA[] = {\n",
+		 def_name);
 
 	/*	Data */
 	while (count)
@@ -358,7 +463,10 @@ static void usage (int exit_status)
 		"Syntax:	easylogo [options] inputfile [outputvar [outputfile]]\n"
 		"\n"
 		"Options:\n"
-		"  -r     Output RGB instead of YUYV\n"
+		"  -r     Output RGB888 instead of YUYV\n"
+		"  -s     Output RGB565 instead of YUYV\n"
+		"  -g     Compress with gzip\n"
+		"  -b     Preallocate space in bss for decompressing image\n"
 		"  -h     Help output\n"
 		"\n"
 		"Where: 'inputfile'   is the TGA image to load\n"
@@ -371,20 +479,33 @@ static void usage (int exit_status)
 int main (int argc, char *argv[])
 {
 	int c;
-	bool use_rgb = false;
+	bool use_rgb888 = false;
+	bool use_rgb565 = false;
 	char inputfile[DEF_FILELEN],
 		outputfile[DEF_FILELEN], varname[DEF_FILELEN];
 
-	image_t rgb_logo, yuyv_logo;
+	image_t rgb888_logo, rgb565_logo, yuyv_logo;
 
-	while ((c = getopt(argc, argv, "hr")) > 0) {
+	while ((c = getopt(argc, argv, "hrsgb")) > 0) {
 		switch (c) {
 		case 'h':
 			usage (0);
 			break;
 		case 'r':
-			use_rgb = true;
-			puts ("Using 24-bit RGB Output Fromat");
+			use_rgb888 = true;
+			puts("Using 24-bit RGB888 Output Fromat");
+			break;
+		case 's':
+			use_rgb565 = true;
+			puts("Using 16-bit RGB565 Output Fromat");
+			break;
+		case 'g':
+			use_gzip |= 0x1;
+			puts ("Compressing with gzip");
+			break;
+		case 'b':
+			use_gzip |= 0x2;
+			puts ("Preallocating bss space for decompressing image");
 			break;
 		default:
 			usage (1);
@@ -426,28 +547,35 @@ int main (int argc, char *argv[])
 	/* Import TGA logo */
 
 	printf ("L");
-	if (image_load_tga (&rgb_logo, inputfile) < 0) {
+	if (image_load_tga(&rgb888_logo, inputfile) < 0) {
 		printf ("input file not found!\n");
 		exit (1);
 	}
 
-	/* Convert it to YUYV format if wanted */
+	/* Convert, save, and free the image */
 
-	if (!use_rgb) {
+	if (!use_rgb888 && !use_rgb565) {
 		printf ("C");
-		image_rgb_to_yuyv (&rgb_logo, &yuyv_logo);
+		image_rgb_to_yuyv(&rgb888_logo, &yuyv_logo);
+
+		printf("S");
+		image_save_header(&yuyv_logo, outputfile, varname);
+		image_free(&yuyv_logo);
+	} else if (use_rgb565) {
+		printf("C");
+		image_rgb888_to_rgb565(&rgb888_logo, &rgb565_logo);
+
+		printf("S");
+		image_save_header(&rgb565_logo, outputfile, varname);
+		image_free(&rgb565_logo);
+	} else {
+		printf("S");
+		image_save_header(&rgb888_logo, outputfile, varname);
 	}
-
-	/* Save it into a header format */
-
-	printf ("S");
-	image_save_header (use_rgb ? &rgb_logo : &yuyv_logo, outputfile, varname);
 
 	/* Free original image and copy */
 
-	image_free (&rgb_logo);
-	if (!use_rgb)
-		image_free (&yuyv_logo);
+	image_free(&rgb888_logo);
 
 	printf ("\n");
 

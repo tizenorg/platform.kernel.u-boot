@@ -30,10 +30,14 @@
 #include <asm/byteorder.h>
 
 #define CONFIG_SUPPORT_VFAT
+/* Maximum Long File Name length supported here is 128 UTF-16 code units */
+#define VFAT_MAXLEN_BYTES	256 /* Maximum LFN buffer in bytes */
+#define VFAT_MAXSEQ		9   /* Up to 9 of 13 2-byte UTF-16 entries */
+#define LINEAR_PREFETCH_SIZE	(SECTOR_SIZE*2) /* Prefetch buffer size */
 
 #define SECTOR_SIZE FS_BLOCK_SIZE
 
-#define FS_BLOCK_SIZE 512
+#define FS_BLOCK_SIZE	512
 
 #if FS_BLOCK_SIZE != SECTOR_SIZE
 #error FS_BLOCK_SIZE != SECTOR_SIZE - This code needs to be fixed!
@@ -57,37 +61,31 @@
 #define SIGNLEN		8
 
 /* File attributes */
-#define ATTR_RO      1
-#define ATTR_HIDDEN  2
-#define ATTR_SYS     4
-#define ATTR_VOLUME  8
-#define ATTR_DIR     16
-#define ATTR_ARCH    32
+#define ATTR_RO	1
+#define ATTR_HIDDEN	2
+#define ATTR_SYS	4
+#define ATTR_VOLUME	8
+#define ATTR_DIR	16
+#define ATTR_ARCH	32
 
-#define ATTR_VFAT     (ATTR_RO | ATTR_HIDDEN | ATTR_SYS | ATTR_VOLUME)
+#define ATTR_VFAT	(ATTR_RO | ATTR_HIDDEN | ATTR_SYS | ATTR_VOLUME)
 
 #define DELETED_FLAG	((char)0xe5) /* Marks deleted files when in name[0] */
-#define aRING		0x05	     /* Used to represent 'å' in name[0] */
+#define aRING		0x05	     /* Used as special character in name[0] */
 
-/* Indicates that the entry is the last long entry in a set of long
+/*
+ * Indicates that the entry is the last long entry in a set of long
  * dir entries
  */
 #define LAST_LONG_ENTRY_MASK	0x40
 
 /* Flags telling whether we should read a file or list a directory */
-#define LS_NO	0
-#define LS_YES	1
-#define LS_DIR	1
-#define LS_ROOT	2
+#define LS_NO		0
+#define LS_YES		1
+#define LS_DIR		1
+#define LS_ROOT		2
 
-#ifdef DEBUG
-#define FAT_DPRINT(args...)	printf(args)
-#else
-#define FAT_DPRINT(args...)
-#endif
-#define FAT_ERROR(arg)		printf(arg)
-
-#define ISDIRDELIM(c)   ((c) == '/' || (c) == '\\')
+#define ISDIRDELIM(c)	((c) == '/' || (c) == '\\')
 
 #define FSTYPE_NONE	(-1)
 
@@ -108,6 +106,7 @@
 #endif
 
 #define TOLOWER(c)	if((c) >= 'A' && (c) <= 'Z'){(c)+=('a' - 'A');}
+#define TOUPPER(c)	if((c) >= 'a' && (c) <= 'z'){(c)-=('a' - 'A');}
 #define START(dent)	(FAT2CPU16((dent)->start) \
 			+ (mydata->fatsize != 32 ? 0 : \
 			  (FAT2CPU16((dent)->starthi) << 16)))
@@ -166,17 +165,18 @@ typedef struct dir_entry {
 } dir_entry;
 
 typedef struct dir_slot {
-	__u8    id;		/* Sequence number for slot */
-	__u8    name0_4[10];	/* First 5 characters in name */
-	__u8    attr;		/* Attribute byte */
-	__u8    reserved;	/* Unused */
-	__u8    alias_checksum;/* Checksum for 8.3 alias */
-	__u8    name5_10[12];	/* 6 more characters in name */
-	__u16   start;		/* Unused */
-	__u8    name11_12[4];	/* Last 2 characters in name */
+	__u8	id;		/* Sequence number for slot */
+	__u8	name0_4[10];	/* First 5 characters in name */
+	__u8	attr;		/* Attribute byte */
+	__u8	reserved;	/* Unused */
+	__u8	alias_checksum;/* Checksum for 8.3 alias */
+	__u8	name5_10[12];	/* 6 more characters in name */
+	__u16	start;		/* Unused */
+	__u8	name11_12[4];	/* Last 2 characters in name */
 } dir_slot;
 
-/* Private filesystem parameters
+/*
+ * Private filesystem parameters
  *
  * Note: FAT buffer has to be 32 bit aligned
  * (see FAT32 accesses)
@@ -195,13 +195,13 @@ typedef struct {
 typedef int	(file_detectfs_func)(void);
 typedef int	(file_ls_func)(const char *dir);
 typedef long	(file_read_func)(const char *filename, void *buffer,
-				 unsigned long maxsize);
+				 unsigned long offset, unsigned long maxsize);
 
 struct filesystem {
-	file_detectfs_func *detect;
-	file_ls_func	   *ls;
-	file_read_func	   *read;
-	const char	    name[12];
+	file_detectfs_func	*detect;
+	file_ls_func		*ls;
+	file_read_func		*read;
+	const char		name[12];
 };
 
 /* FAT tables */
@@ -213,8 +213,16 @@ file_read_func		file_fat_read;
 int file_cd(const char *path);
 int file_fat_detectfs(void);
 int file_fat_ls(const char *dir);
-long file_fat_read(const char *filename, void *buffer, unsigned long maxsize);
+long file_fat_read (const char *filename, void *buffer,
+	unsigned long offset, unsigned long maxsize);
 const char *file_getfsname(int idx);
 int fat_register_device(block_dev_desc_t *dev_desc, int part_no);
+
+int file_fat_write(const char *filename, void *buffer, unsigned long size);
+
+void file_fat_table(void);
+int mkfs_vfat(block_dev_desc_t *dev_desc, int part_no);
+int do_fat_format (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_fat_fswrite (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 #endif /* _FAT_H_ */

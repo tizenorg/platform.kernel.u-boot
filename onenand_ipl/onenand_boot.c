@@ -24,58 +24,25 @@
  */
 
 #include <common.h>
-#include <version.h>
 
 #include "onenand_ipl.h"
 
-#ifdef CFG_PRINTF
-int print_info(void)
-{
-	printf(XLOADER_VERSION);
-
-	return 0;
-}
-#endif
-
 typedef int (init_fnc_t)(void);
-
-init_fnc_t *init_sequence[] = {
-	board_init,		/* basic board dependent setup */
-#ifdef CFG_PRINTF
-	serial_init,		/* serial communications setup */
-	print_info,
-#endif
-	NULL,
-};
 
 void start_oneboot(void)
 {
-	init_fnc_t **init_fnc_ptr;
 	uchar *buf;
 
-	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
-		if ((*init_fnc_ptr)() != 0)
-			hang();
-	}
+	buf = (uchar *) CONFIG_SYS_LOAD_ADDR;
 
-	buf = (uchar *) CFG_LOAD_ADDR;
+	onenand_read_block(buf);
 
-	if (!onenand_read_block0(buf))
-		buf += ONENAND_BLOCK_SIZE;
-
-	if (buf == (uchar *)CFG_LOAD_ADDR)
-		hang();
-
-	/* go run U-Boot and never return */
-	printf("Starting OS Bootloader...\n");
-	((init_fnc_t *)CFG_LOAD_ADDR)();
+	((init_fnc_t *)CONFIG_SYS_LOAD_ADDR)();
 
 	/* should never come here */
 }
 
 void hang(void)
 {
-	/* if board_hang() returns, hange here */
-	printf("X-Loader hangs\n");
-	for (;;);
+       for (;;);
 }

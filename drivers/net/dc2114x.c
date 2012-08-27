@@ -21,6 +21,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <pci.h>
 
 #undef DEBUG_SROM
@@ -278,6 +279,12 @@ int dc21x4x_initialize(bd_t *bis)
 		debug ("dc21x4x: DEC 21142 PCI Device @0x%x\n", iobase);
 
 		dev = (struct eth_device*) malloc(sizeof *dev);
+
+		if (!dev) {
+			printf("Can not allocalte memory of dc21x4x\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 
 #ifdef CONFIG_TULIP_FIX_DAVICOM
 		sprintf(dev->name, "Davicom#%d", card_number);
@@ -751,11 +758,14 @@ static void update_srom(struct eth_device *dev, bd_t *bis)
 		0x0000, 0x0000, 0x0000, 0x0000,	/* 38 */
 		0x0000, 0x0000, 0x0000, 0x4e07,	/* 3c */
 	};
+	uchar enetaddr[6];
 
 	/* Ethernet Addr... */
-	eeprom[0x0a] = ((bis->bi_enetaddr[1] & 0xff) << 8) | (bis->bi_enetaddr[0] & 0xff);
-	eeprom[0x0b] = ((bis->bi_enetaddr[3] & 0xff) << 8) | (bis->bi_enetaddr[2] & 0xff);
-	eeprom[0x0c] = ((bis->bi_enetaddr[5] & 0xff) << 8) | (bis->bi_enetaddr[4] & 0xff);
+	if (!eth_getenv_enetaddr("ethaddr", enetaddr))
+		return;
+	eeprom[0x0a] = (enetaddr[1] << 8) | enetaddr[0];
+	eeprom[0x0b] = (enetaddr[3] << 8) | enetaddr[2];
+	eeprom[0x0c] = (enetaddr[5] << 8) | enetaddr[4];
 
 	for (i=0; i<0x40; i++) {
 		write_srom(dev, DE4X5_APROM, i, eeprom[i]);

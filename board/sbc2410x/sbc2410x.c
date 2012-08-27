@@ -29,7 +29,8 @@
  */
 
 #include <common.h>
-#include <s3c2410.h>
+#include <netdev.h>
+#include <asm/arch/s3c24x0_cpu.h>
 
 #if defined(CONFIG_CMD_NAND)
 #include <linux/mtd/nand.h>
@@ -74,44 +75,45 @@ static inline void delay (unsigned long loops)
 
 int board_init (void)
 {
-	S3C24X0_CLOCK_POWER * const clk_power = S3C24X0_GetBase_CLOCK_POWER();
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_clock_power * const clk_power =
+					s3c24x0_get_base_clock_power();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	/* to reduce PLL lock time, adjust the LOCKTIME register */
-	clk_power->LOCKTIME = 0xFFFFFF;
+	clk_power->locktime = 0xFFFFFF;
 
 	/* configure MPLL */
-	clk_power->MPLLCON = ((M_MDIV << 12) + (M_PDIV << 4) + M_SDIV);
+	clk_power->mpllcon = ((M_MDIV << 12) + (M_PDIV << 4) + M_SDIV);
 
 	/* some delay between MPLL and UPLL */
 	delay (4000);
 
 	/* configure UPLL */
-	clk_power->UPLLCON = ((U_M_MDIV << 12) + (U_M_PDIV << 4) + U_M_SDIV);
+	clk_power->upllcon = ((U_M_MDIV << 12) + (U_M_PDIV << 4) + U_M_SDIV);
 
 	/* some delay between MPLL and UPLL */
 	delay (8000);
 
 	/* set up the I/O ports */
-	gpio->GPACON = 0x007FFFFF;
-	gpio->GPBCON = 0x00044556;
-	gpio->GPBUP = 0x000007FF;
-	gpio->GPCCON = 0xAAAAAAAA;
-	gpio->GPCUP = 0x0000FFFF;
-	gpio->GPDCON = 0xAAAAAAAA;
-	gpio->GPDUP = 0x0000FFFF;
-	gpio->GPECON = 0xAAAAAAAA;
-	gpio->GPEUP = 0x0000FFFF;
-	gpio->GPFCON = 0x000055AA;
-	gpio->GPFUP = 0x000000FF;
-	gpio->GPGCON = 0xFF95FF3A;
-	gpio->GPGUP = 0x0000FFFF;
-	gpio->GPHCON = 0x0016FAAA;
-	gpio->GPHUP = 0x000007FF;
+	gpio->gpacon = 0x007FFFFF;
+	gpio->gpbcon = 0x00044556;
+	gpio->gpbup = 0x000007FF;
+	gpio->gpccon = 0xAAAAAAAA;
+	gpio->gpcup = 0x0000FFFF;
+	gpio->gpdcon = 0xAAAAAAAA;
+	gpio->gpdup = 0x0000FFFF;
+	gpio->gpecon = 0xAAAAAAAA;
+	gpio->gpeup = 0x0000FFFF;
+	gpio->gpfcon = 0x000055AA;
+	gpio->gpfup = 0x000000FF;
+	gpio->gpgcon = 0xFF95FF3A;
+	gpio->gpgup = 0x0000FFFF;
+	gpio->gphcon = 0x0016FAAA;
+	gpio->gphup = 0x000007FF;
 
-	gpio->EXTINT0=0x22222222;
-	gpio->EXTINT1=0x22222222;
-	gpio->EXTINT2=0x22222222;
+	gpio->extint0 = 0x22222222;
+	gpio->extint1 = 0x22222222;
+	gpio->extint2 = 0x22222222;
 
 	/* arch number of SMDK2410-Board */
 	gd->bd->bi_arch_number = MACH_TYPE_SMDK2410;
@@ -169,12 +171,23 @@ static inline void NF_Init(void)
 
 void nand_init(void)
 {
-	S3C2410_NAND * const nand = S3C2410_GetBase_NAND();
+	struct s3c2410_nand * const nand = s3c2410_get_base_nand();
 
 	NF_Init();
 #ifdef DEBUG
 	printf("NAND flash probing at 0x%.8lX\n", (ulong)nand);
 #endif
 	printf ("%4lu MB\n", nand_probe((ulong)nand) >> 20);
+}
+#endif
+
+#ifdef CONFIG_CMD_NET
+int board_eth_init(bd_t *bis)
+{
+	int rc = 0;
+#ifdef CONFIG_CS8900
+	rc = cs8900_initialize(0, CONFIG_CS8900_BASE);
+#endif
+	return rc;
 }
 #endif

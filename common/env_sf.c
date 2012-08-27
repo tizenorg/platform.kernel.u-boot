@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2000-2002
+ * (C) Copyright 2000-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
@@ -26,30 +26,37 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
-
-#ifdef CFG_ENV_IS_IN_SPI_FLASH
-
 #include <environment.h>
+#include <malloc.h>
 #include <spi_flash.h>
+#include <search.h>
+#include <errno.h>
 
-#ifndef CFG_ENV_SPI_BUS
-# define CFG_ENV_SPI_BUS	0
+#ifndef CONFIG_ENV_SPI_BUS
+# define CONFIG_ENV_SPI_BUS	0
 #endif
-#ifndef CFG_ENV_SPI_CS
-# define CFG_ENV_SPI_CS		0
+#ifndef CONFIG_ENV_SPI_CS
+# define CONFIG_ENV_SPI_CS		0
 #endif
-#ifndef CFG_ENV_SPI_MAX_HZ
-# define CFG_ENV_SPI_MAX_HZ	1000000
+#ifndef CONFIG_ENV_SPI_MAX_HZ
+# define CONFIG_ENV_SPI_MAX_HZ	1000000
 #endif
-#ifndef CFG_ENV_SPI_MODE
-# define CFG_ENV_SPI_MODE	SPI_MODE_3
+#ifndef CONFIG_ENV_SPI_MODE
+# define CONFIG_ENV_SPI_MODE	SPI_MODE_3
 #endif
+
+#ifdef CONFIG_ENV_OFFSET_REDUND
+static ulong env_offset = CONFIG_ENV_OFFSET;
+static ulong env_new_offset = CONFIG_ENV_OFFSET_REDUND;
+
+#define ACTIVE_FLAG   1
+#define OBSOLETE_FLAG 0
+#endif /* CONFIG_ENV_OFFSET_REDUND */
 
 DECLARE_GLOBAL_DATA_PTR;
 
 /* references to names in env_common.c */
 extern uchar default_environment[];
-extern int default_environment_size;
 
 char * env_name_spec = "SPI Flash";
 env_t *env_ptr;
@@ -61,63 +68,309 @@ uchar env_get_char_spec(int index)
 	return *((uchar *)(gd->env_addr + index));
 }
 
+#if defined(CONFIG_ENV_OFFSET_REDUND)
+
 int saveenv(void)
 {
+	env_t	env_new;
+	ssize_t	len;
+	char	*res;
+	u32	saved_size, saved_offset;
+	char	*saved_buffer = NULL;
+	u32	sector = 1;
+	int	ret;
+	char	flag = OBSOLETE_FLAG, new_flag = ACTIVE_FLAG;
+
 	if (!env_flash) {
-		puts("Environment SPI flash not initialized\n");
+		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
+			CONFIG_ENV_SPI_CS,
+			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+		if (!env_flash) {
+			set_default_env("!spi_flash_probe() failed");
+			return 1;
+		}
+	}
+
+	res = (char *)&env_new.data;
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
+	}
+	env_new.crc   = crc32(0, env_new.data, ENV_SIZE);
+	env_new.flags = ACTIVE_FLAG;
+
+	if (gd->env_valid == 1) {
+		env_new_offset = CONFIG_ENV_OFFSET_REDUND;
+		env_offset = CONFIG_ENV_OFFSET;
+	} else {
+		env_new_offset = CONFIG_ENV_OFFSET;
+		env_offset = CONFIG_ENV_OFFSET_REDUND;
+	}
+
+	/* Is the sector larger than the env (i.e. embedded) */
+	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
+		saved_size = CONFIG_ENV_SECT_SIZE - CONFIG_ENV_SIZE;
+		saved_offset = env_new_offset + CONFIG_ENV_SIZE;
+		saved_buffer = malloc(saved_size);
+		if (!saved_buffer) {
+			ret = 1;
+			goto done;
+		}
+		ret = spi_flash_read(env_flash, saved_offset,
+					saved_size, saved_buffer);
+		if (ret)
+			goto done;
+	}
+
+	if (CONFIG_ENV_SIZE > CONFIG_ENV_SECT_SIZE) {
+		sector = CONFIG_ENV_SIZE / CONFIG_ENV_SECT_SIZE;
+		if (CONFIG_ENV_SIZE % CONFIG_ENV_SECT_SIZE)
+			sector++;
 	}
 
 	puts("Erasing SPI flash...");
-	if (spi_flash_erase(env_flash, CFG_ENV_OFFSET, CFG_ENV_SIZE))
-		return 1;
+	ret = spi_flash_erase(env_flash, env_new_offset,
+				sector * CONFIG_ENV_SECT_SIZE);
+	if (ret)
+		goto done;
 
 	puts("Writing to SPI flash...");
-	if (spi_flash_write(env_flash, CFG_ENV_OFFSET, CFG_ENV_SIZE, env_ptr))
-		return 1;
+
+	ret = spi_flash_write(env_flash, env_new_offset,
+		CONFIG_ENV_SIZE, &env_new);
+	if (ret)
+		goto done;
+
+	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
+		ret = spi_flash_write(env_flash, saved_offset,
+					saved_size, saved_buffer);
+		if (ret)
+			goto done;
+	}
+
+	ret = spi_flash_write(env_flash,
+		env_offset + offsetof(env_t, flags),
+		sizeof(env_new.flags), &flag);
+	if (ret)
+		goto done;
 
 	puts("done\n");
-	return 0;
+
+	gd->env_valid = (gd->env_valid == 2 ? 1 : 2);
+
+	printf("Valid environment: %d\n", gd->env_valid);
+
+ done:
+	if (saved_buffer)
+		free(saved_buffer);
+	return ret;
 }
 
 void env_relocate_spec(void)
 {
 	int ret;
+	int crc1_ok = 0, crc2_ok = 0;
+	env_t *tmp_env1 = NULL;
+	env_t *tmp_env2 = NULL;
+	env_t *ep = NULL;
+	uchar flag1, flag2;
+	/* current_env is set only in case both areas are valid! */
+	int current_env = 0;
 
-	env_flash = spi_flash_probe(CFG_ENV_SPI_BUS, CFG_ENV_SPI_CS,
-			CFG_ENV_SPI_MAX_HZ, CFG_ENV_SPI_MODE);
-	if (!env_flash)
-		goto err_probe;
+	tmp_env1 = (env_t *)malloc(CONFIG_ENV_SIZE);
+	tmp_env2 = (env_t *)malloc(CONFIG_ENV_SIZE);
 
-	ret = spi_flash_read(env_flash, CFG_ENV_OFFSET, CFG_ENV_SIZE, env_ptr);
-	if (ret)
+	if (!tmp_env1 || !tmp_env2) {
+		free(tmp_env1);
+		free(tmp_env2);
+		set_default_env("!malloc() failed");
+		return;
+	}
+
+	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+	if (!env_flash) {
+		set_default_env("!spi_flash_probe() failed");
+		return;
+	}
+
+	ret = spi_flash_read(env_flash, CONFIG_ENV_OFFSET,
+				CONFIG_ENV_SIZE, tmp_env1);
+	if (ret) {
+		set_default_env("!spi_flash_read() failed");
 		goto err_read;
+	}
 
-	if (crc32(0, env_ptr->data, ENV_SIZE) != env_ptr->crc)
-		goto err_crc;
+	if (crc32(0, tmp_env1->data, ENV_SIZE) == tmp_env1->crc)
+		crc1_ok = 1;
+	flag1 = tmp_env1->flags;
 
-	gd->env_valid = 1;
+	ret = spi_flash_read(env_flash, CONFIG_ENV_OFFSET_REDUND,
+				CONFIG_ENV_SIZE, tmp_env2);
+	if (!ret) {
+		if (crc32(0, tmp_env2->data, ENV_SIZE) == tmp_env2->crc)
+			crc2_ok = 1;
+		flag2 = tmp_env2->flags;
+	}
 
-	return;
+	if (!crc1_ok && !crc2_ok) {
+		free(tmp_env1);
+		free(tmp_env2);
+		set_default_env("!bad CRC");
+		return;
+	} else if (crc1_ok && !crc2_ok) {
+		gd->env_valid = 1;
+		ep = tmp_env1;
+	} else if (!crc1_ok && crc2_ok) {
+		gd->env_valid = 1;
+	} else if (flag1 == ACTIVE_FLAG && flag2 == OBSOLETE_FLAG) {
+		gd->env_valid = 1;
+	} else if (flag1 == OBSOLETE_FLAG && flag2 == ACTIVE_FLAG) {
+		gd->env_valid = 2;
+	} else if (flag1 == flag2) {
+		gd->env_valid = 2;
+	} else if (flag1 == 0xFF) {
+		gd->env_valid = 2;
+	} else {
+		/*
+		 * this differs from code in env_flash.c, but I think a sane
+		 * default path is desirable.
+		 */
+		gd->env_valid = 2;
+	}
+
+	free(env_ptr);
+
+	if (gd->env_valid == 1)
+		ep = tmp_env1;
+	else
+		ep = tmp_env2;
+
+	ret = env_import((char *)ep, 0);
+	if (!ret) {
+		error("Cannot import environment: errno = %d\n", errno);
+		set_default_env("env_import failed");
+	}
 
 err_read:
 	spi_flash_free(env_flash);
 	env_flash = NULL;
-err_probe:
-err_crc:
-	puts("*** Warning - bad CRC, using default environment\n\n");
+out:
+	if (tmp_env1)
+		free(tmp_env1);
+	if (tmp_env2)
+		free(tmp_env2);
+	free(tmp_env1);
+	free(tmp_env2);
 
-	if (default_environment_size > CFG_ENV_SIZE) {
-		gd->env_valid = 0;
-		puts("*** Error - default environment is too large\n\n");
+	return;
+}
+#else
+int saveenv(void)
+{
+	u32 saved_size, saved_offset;
+	char *saved_buffer = NULL;
+	u32 sector = 1;
+	int ret = 1;
+	env_t	env_new;
+	char	*res;
+	ssize_t	len;
+
+	if (!env_flash) {
+		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
+			CONFIG_ENV_SPI_CS,
+			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+		if (!env_flash) {
+			set_default_env("!spi_flash_probe() failed");
+			return 1;
+		}
+	}
+
+	/* Is the sector larger than the env (i.e. embedded) */
+	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
+		saved_size = CONFIG_ENV_SECT_SIZE - CONFIG_ENV_SIZE;
+		saved_offset = CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE;
+		saved_buffer = malloc(saved_size);
+		if (!saved_buffer) {
+			goto done;
+		}
+		ret = spi_flash_read(env_flash, saved_offset,
+			saved_size, saved_buffer);
+		if (ret)
+			goto done;
+	}
+
+	if (CONFIG_ENV_SIZE > CONFIG_ENV_SECT_SIZE) {
+		sector = CONFIG_ENV_SIZE / CONFIG_ENV_SECT_SIZE;
+		if (CONFIG_ENV_SIZE % CONFIG_ENV_SECT_SIZE)
+			sector++;
+	}
+
+	res = (char *)&env_new.data;
+	len = hexport_r(&env_htab, '\0', &res, ENV_SIZE);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
+		goto done;
+	}
+	env_new.crc = crc32(0, env_new.data, ENV_SIZE);
+
+	puts("Erasing SPI flash...");
+	ret = spi_flash_erase(env_flash, CONFIG_ENV_OFFSET,
+		sector * CONFIG_ENV_SECT_SIZE);
+	if (ret)
+		goto done;
+
+	puts("Writing to SPI flash...");
+	ret = spi_flash_write(env_flash, CONFIG_ENV_OFFSET,
+		CONFIG_ENV_SIZE, &env_new);
+	if (ret)
+		goto done;
+
+	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
+		ret = spi_flash_write(env_flash, saved_offset,
+			saved_size, saved_buffer);
+		if (ret)
+			goto done;
+	}
+
+	ret = 0;
+	puts("done\n");
+
+ done:
+	if (saved_buffer)
+		free(saved_buffer);
+	return ret;
+}
+
+void env_relocate_spec(void)
+{
+	char buf[CONFIG_ENV_SIZE];
+	int ret;
+
+	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+	if (!env_flash) {
+		set_default_env("!spi_flash_probe() failed");
 		return;
 	}
 
-	memset(env_ptr, 0, sizeof(env_t));
-	memcpy(env_ptr->data, default_environment, default_environment_size);
-	env_ptr->crc = crc32(0, env_ptr->data, ENV_SIZE);
-	gd->env_valid = 1;
+	ret = spi_flash_read(env_flash,
+		CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE, buf);
+	if (ret) {
+		set_default_env("!spi_flash_read() failed");
+		goto out;
+	}
+
+	ret = env_import(buf, 1);
+
+	if (ret)
+		gd->env_valid = 1;
+out:
+	spi_flash_free(env_flash);
+	env_flash = NULL;
 }
+#endif
 
 int env_init(void)
 {
@@ -127,5 +380,3 @@ int env_init(void)
 
 	return 0;
 }
-
-#endif /* CFG_ENV_IS_IN_SPI_FLASH */

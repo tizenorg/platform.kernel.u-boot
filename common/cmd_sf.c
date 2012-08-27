@@ -2,7 +2,9 @@
  * Command for accessing SPI flash.
  *
  * Copyright (C) 2008 Atmel Corporation
+ * Licensed under the GPL-2 or later.
  */
+
 #include <common.h>
 #include <spi_flash.h>
 
@@ -17,7 +19,7 @@
 
 static struct spi_flash *flash;
 
-static int do_spi_flash_probe(int argc, char *argv[])
+static int do_spi_flash_probe(int argc, char * const argv[])
 {
 	unsigned int bus = 0;
 	unsigned int cs;
@@ -48,7 +50,7 @@ static int do_spi_flash_probe(int argc, char *argv[])
 			goto usage;
 	}
 	if (argc >= 4) {
-		mode = simple_strtoul(argv[3], &endp, 0);
+		mode = simple_strtoul(argv[3], &endp, 16);
 		if (*argv[3] == 0 || *endp != 0)
 			goto usage;
 	}
@@ -73,7 +75,7 @@ usage:
 	return 1;
 }
 
-static int do_spi_flash_read_write(int argc, char *argv[])
+static int do_spi_flash_read_write(int argc, char * const argv[])
 {
 	unsigned long addr;
 	unsigned long offset;
@@ -120,7 +122,7 @@ usage:
 	return 1;
 }
 
-static int do_spi_flash_erase(int argc, char *argv[])
+static int do_spi_flash_erase(int argc, char * const argv[])
 {
 	unsigned long offset;
 	unsigned long len;
@@ -150,7 +152,7 @@ usage:
 	return 1;
 }
 
-static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	const char *cmd;
 
@@ -175,17 +177,17 @@ static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return do_spi_flash_erase(argc - 1, argv + 1);
 
 usage:
-	printf("Usage:\n%s\n", cmdtp->usage);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	sf,	5,	1,	do_spi_flash,
-	"sf	- SPI flash sub-system\n",
+	"SPI flash sub-system",
 	"probe [bus:]cs [hz] [mode]	- init flash device on given SPI bus\n"
 	"				  and chip select\n"
 	"sf read addr offset len 	- read `len' bytes starting at\n"
 	"				  `offset' to memory at `addr'\n"
 	"sf write addr offset len	- write `len' bytes from memory\n"
 	"				  at `addr' to flash at `offset'\n"
-	"sf erase offset len		- erase `len' bytes from `offset'\n");
+	"sf erase offset len		- erase `len' bytes from `offset'"
+);

@@ -16,8 +16,8 @@
 #include <common.h>
 #include <asm/processor.h>
 #include <image.h>
+#include <net.h>
 
-#if defined(CONFIG_LYNXKDI)
 #include <lynxkdi.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -34,7 +34,7 @@ void lynxkdi_boot (image_header_t *hdr)
 	kbd = gd->bd;
 	parms->clock_ref = kbd->bi_busfreq;
 	parms->dramsz = kbd->bi_memsize;
-	memcpy (parms->ethaddr, kbd->bi_enetaddr, 6);
+	eth_getenv_enetaddr("ethaddr", parms->ethaddr);
 	mtspr (SPRN_SPRG2, 0x0020);
 
 	/* Do a simple check for Bluecat so we can pass the
@@ -66,5 +66,3 @@ void lynxkdi_boot (image_header_t *hdr)
 #else
 #error "Lynx KDI support not implemented for configured CPU"
 #endif
-
-#endif	/* CONFIG_LYNXKDI */

@@ -21,9 +21,10 @@
  * MA 02111-1307 USA
  */
 
+#include <asm-offsets.h>
 #include <ppc_asm.tmpl>
 #include <config.h>
-#include <asm-ppc/mmu.h>
+#include <asm/mmu.h>
 
 /**************************************************************************
  * TLB TABLE
@@ -47,11 +48,11 @@ tlbtab:
 	 * enable SA_I
 	 */
 #ifndef CONFIG_NAND_SPL
-	tlbentry(CFG_BOOT_BASE_ADDR, SZ_16M, CFG_BOOT_BASE_ADDR, 4, AC_R|AC_W|AC_X|SA_G) /* TLB 0 */
+	tlbentry(CONFIG_SYS_BOOT_BASE_ADDR, SZ_16M, CONFIG_SYS_BOOT_BASE_ADDR, 4, AC_RWX | SA_G) /* TLB 0 */
 #else
-	tlbentry(CFG_NAND_BOOT_SPL_SRC, SZ_4K, CFG_NAND_BOOT_SPL_SRC, 4, AC_R|AC_W|AC_X|SA_G)
-	tlbentry(CFG_SDRAM_BASE, SZ_256M, CFG_SDRAM_BASE, 0, AC_R|AC_W|AC_X|SA_G|SA_I)
-	tlbentry(256 << 20, SZ_256M, 256 << 20, 0, AC_R|AC_W|AC_X|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_NAND_BOOT_SPL_SRC, SZ_4K, CONFIG_SYS_NAND_BOOT_SPL_SRC, 4, AC_RWX | SA_G)
+	tlbentry(CONFIG_SYS_SDRAM_BASE, SZ_256M, CONFIG_SYS_SDRAM_BASE, 0, AC_RWX | SA_IG)
+	tlbentry(256 << 20, SZ_256M, 256 << 20, 0, AC_RWX | SA_IG)
 #endif
 
 	/*
@@ -60,37 +61,54 @@ tlbtab:
 	 * routine.
 	 */
 
-#ifdef CFG_INIT_RAM_DCACHE
+#ifdef CONFIG_SYS_INIT_RAM_DCACHE
 	/* TLB-entry for init-ram in dcache (SA_I must be turned off!) */
-	tlbentry(CFG_INIT_RAM_ADDR, SZ_4K, CFG_INIT_RAM_ADDR, 0, AC_R|AC_W|AC_X|SA_G)
+	tlbentry(CONFIG_SYS_INIT_RAM_ADDR, SZ_4K, CONFIG_SYS_INIT_RAM_ADDR, 0, AC_RWX | SA_G)
 #endif
 
-	tlbentry(CFG_PCI_BASE, SZ_256M, 0x00000000, 0xC, AC_R|AC_W|SA_G|SA_I)
-	tlbentry(CFG_PCI_MEMBASE, SZ_256M, 0x20000000, 0xC, AC_R|AC_W|SA_G|SA_I)
-	tlbentry(CFG_PCIE_MEMBASE, SZ_256M, 0xB0000000, 0xD, AC_R|AC_W|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_PCI_BASE, SZ_256M, 0x00000000, 0xC, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_PCI_MEMBASE, SZ_256M, 0x20000000, 0xC, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_PCIE_MEMBASE, SZ_256M, 0xB0000000, 0xD, AC_RW | SA_IG)
 
-	tlbentry(CFG_PCIE0_CFGBASE, SZ_16M, 0x00000000, 0xD, AC_R|AC_W|SA_G|SA_I)
-	tlbentry(CFG_PCIE1_CFGBASE, SZ_16M, 0x20000000, 0xD, AC_R|AC_W|SA_G|SA_I)
-	tlbentry(CFG_PCIE0_XCFGBASE, SZ_1K, 0x10000000, 0xD, AC_R|AC_W|SA_G|SA_I)
-	tlbentry(CFG_PCIE1_XCFGBASE, SZ_1K, 0x30000000, 0xD, AC_R|AC_W|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_PCIE0_CFGBASE, SZ_16M, 0x00000000, 0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_PCIE1_CFGBASE, SZ_16M, 0x20000000, 0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_PCIE0_XCFGBASE, SZ_1K, 0x10000000, 0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_PCIE1_XCFGBASE, SZ_1K, 0x30000000, 0xD, AC_RW | SA_IG)
 
 	/* PCIe UTL register */
-	tlbentry(CFG_PCIE_BASE, SZ_16K, 0x08010000, 0xC, AC_R|AC_W|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_PCIE_BASE, SZ_16K, 0x08010000, 0xC, AC_RW | SA_IG)
 
+#if !defined(CONFIG_ARCHES)
 	/* TLB-entry for NAND */
-	tlbentry(CFG_NAND_ADDR, SZ_16M, CFG_NAND_ADDR, 4, AC_R|AC_W|AC_X|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_NAND_ADDR, SZ_1K, CONFIG_SYS_NAND_ADDR, 4, AC_RWX | SA_IG)
 
 	/* TLB-entry for CPLD */
-	tlbentry(CFG_BCSR_BASE, SZ_1K, CFG_BCSR_BASE, 4, AC_R|AC_W|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_BCSR_BASE, SZ_1K, CONFIG_SYS_BCSR_BASE, 4, AC_RW | SA_IG)
+#else
+	/* TLB-entry for FPGA */
+	tlbentry(CONFIG_SYS_FPGA_BASE, SZ_16M, CONFIG_SYS_FPGA_BASE, 4, AC_RW | SA_IG)
+#endif
 
 	/* TLB-entry for OCM */
-	tlbentry(CFG_OCM_BASE, SZ_16K, 0x00040000, 4, AC_R|AC_W|AC_X|SA_I)
+	tlbentry(CONFIG_SYS_OCM_BASE, SZ_1M, 0x00000000, 4, AC_RWX | SA_I)
 
 	/* TLB-entry for Local Configuration registers => peripherals */
-	tlbentry(CFG_LOCAL_CONF_REGS, SZ_16M, CFG_LOCAL_CONF_REGS, 4, AC_R|AC_W|AC_X|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_LOCAL_CONF_REGS, SZ_16M, CONFIG_SYS_LOCAL_CONF_REGS, 4, AC_RWX | SA_IG)
 
 	/* AHB: Internal USB Peripherals (USB, SATA) */
-	tlbentry(CFG_AHB_BASE, SZ_1M, 0xbff00000, 4, AC_R|AC_W|AC_X|SA_G|SA_I)
+	tlbentry(CONFIG_SYS_AHB_BASE, SZ_1M, 0xbff00000, 4, AC_RWX | SA_IG)
+
+#if defined(CONFIG_RAPIDIO)
+	/* TLB-entries for RapidIO (SRIO) */
+	tlbentry(CONFIG_SYS_SRGPL0_REG_BAR, SZ_16M, CONFIG_SYS_SRGPL0_REG_BAR,
+					0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_SRGPL0_CFG_BAR, SZ_16M, CONFIG_SYS_SRGPL0_CFG_BAR,
+					0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_SRGPL0_MNT_BAR, SZ_16M, CONFIG_SYS_SRGPL0_MNT_BAR,
+					0xD, AC_RW | SA_IG)
+	tlbentry(CONFIG_SYS_I2ODMA_BASE, SZ_1K,  0x00100000,
+					0x4, AC_RW | SA_IG)
+#endif
 
 	tlbtab_end
 
@@ -99,9 +117,9 @@ tlbtab:
 	 * For NAND booting the first TLB has to be reconfigured to full size
 	 * and with caching disabled after running from RAM!
 	 */
-#define TLB00	TLB0(CFG_BOOT_BASE_ADDR, SZ_256M)
-#define TLB01	TLB1(CFG_BOOT_BASE_ADDR, 1)
-#define TLB02	TLB2(AC_R|AC_W|AC_X|SA_G|SA_I)
+#define TLB00	TLB0(CONFIG_SYS_BOOT_BASE_ADDR, SZ_256M)
+#define TLB01	TLB1(CONFIG_SYS_BOOT_BASE_ADDR, 1)
+#define TLB02	TLB2(AC_RWX | SA_IG)
 
 	.globl	reconfig_tlb0
 reconfig_tlb0:

@@ -1,7 +1,5 @@
 #include <common.h>
-#if defined(CONFIG_8xx)
 #include <mpc8xx.h>
-#endif
 #include <pcmcia.h>
 
 #undef	CONFIG_PCMCIA
@@ -14,7 +12,7 @@
 #define	CONFIG_PCMCIA
 #endif
 
-#if defined(CONFIG_8xx)	&& defined(CONFIG_PCMCIA)
+#if defined(CONFIG_PCMCIA)
 
 #if	defined(CONFIG_IDE_8xx_PCCARD)
 extern int check_ide_device (int slot);
@@ -34,8 +32,8 @@ static u_int m8xx_get_speed(u_int ns, u_int is_io);
 
 /* look up table for pgcrx registers */
 u_int *pcmcia_pgcrx[2] = {
-	&((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_pgcra,
-	&((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_pgcrb,
+	&((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_pgcra,
+	&((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_pgcrb,
 };
 
 /*
@@ -59,18 +57,12 @@ static const u_int m8xx_size_to_gray[M8XX_SIZES_NO] =
 
 /* -------------------------------------------------------------------- */
 
-#ifdef	CONFIG_HMI10
-#define	HMI10_FRAM_TIMING	(	PCMCIA_SHT(2)	\
-				|	PCMCIA_SST(2)	\
-				|	PCMCIA_SL(4))
-#endif
-
 #if	defined(CONFIG_LWMON) || defined(CONFIG_NSCU)
-#define	CFG_PCMCIA_TIMING	(	PCMCIA_SHT(9)	\
+#define	CONFIG_SYS_PCMCIA_TIMING	(	PCMCIA_SHT(9)	\
 				|	PCMCIA_SST(3)	\
 				|	PCMCIA_SL(12))
 #else
-#define	CFG_PCMCIA_TIMING	(	PCMCIA_SHT(2)	\
+#define	CONFIG_SYS_PCMCIA_TIMING	(	PCMCIA_SHT(2)	\
 				|	PCMCIA_SST(4)	\
 				|	PCMCIA_SL(9))
 #endif
@@ -88,12 +80,12 @@ int pcmcia_on (void)
 	debug ("Enable PCMCIA " PCMCIA_SLOT_MSG "\n");
 
 	/* intialize the fixed memory windows */
-	win = (pcmcia_win_t *)(&((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_pbr0);
-	base = CFG_PCMCIA_MEM_ADDR;
+	win = (pcmcia_win_t *)(&((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_pbr0);
+	base = CONFIG_SYS_PCMCIA_MEM_ADDR;
 
-	if((reg = m8xx_get_graycode(CFG_PCMCIA_MEM_SIZE)) == -1) {
+	if((reg = m8xx_get_graycode(CONFIG_SYS_PCMCIA_MEM_SIZE)) == -1) {
 		printf ("Cannot set window size to 0x%08x\n",
-			CFG_PCMCIA_MEM_SIZE);
+			CONFIG_SYS_PCMCIA_MEM_SIZE);
 		return (1);
 	}
 
@@ -108,24 +100,13 @@ int pcmcia_on (void)
 		switch (i) {
 #ifdef	CONFIG_IDE_8xx_PCCARD
 		case 4:
-#ifdef	CONFIG_HMI10
-		{	/* map FRAM area */
-			win->or = (	PCMCIA_BSIZE_256K
-				|	PCMCIA_PPS_8
-				|	PCMCIA_PRS_ATTR
-				|	slotbit
-				|	PCMCIA_PV
-				|	HMI10_FRAM_TIMING );
-			break;
-		}
-#endif
 		case 0:	{	/* map attribute memory */
 			win->or = (	PCMCIA_BSIZE_64M
 				|	PCMCIA_PPS_8
 				|	PCMCIA_PRS_ATTR
 				|	slotbit
 				|	PCMCIA_PV
-				|	CFG_PCMCIA_TIMING );
+				|	CONFIG_SYS_PCMCIA_TIMING );
 			break;
 		}
 		case 5:
@@ -135,7 +116,7 @@ int pcmcia_on (void)
 				|	PCMCIA_PRS_IO
 				|	slotbit
 				|	PCMCIA_PV
-				|	CFG_PCMCIA_TIMING );
+				|	CONFIG_SYS_PCMCIA_TIMING );
 			break;
 		}
 		case 6:
@@ -145,22 +126,10 @@ int pcmcia_on (void)
 				|	PCMCIA_PRS_IO
 				|	slotbit
 				|	PCMCIA_PV
-				|	CFG_PCMCIA_TIMING );
+				|	CONFIG_SYS_PCMCIA_TIMING );
 			break;
 		}
 #endif	/* CONFIG_IDE_8xx_PCCARD */
-#ifdef	CONFIG_HMI10
-		case 3: {	/* map I/O window for 4xUART data/ctrl */
-			win->br += 0x40000;
-			win->or = (	PCMCIA_BSIZE_256K
-				|	PCMCIA_PPS_8
-				|	PCMCIA_PRS_IO
-				|	slotbit
-				|	PCMCIA_PV
-				|	CFG_PCMCIA_TIMING );
-			break;
-		}
-#endif	/* CONFIG_HMI10 */
 		default:	/* set to not valid */
 			win->or = 0;
 			break;
@@ -168,7 +137,7 @@ int pcmcia_on (void)
 
 		debug ("MemWin %d: PBR 0x%08lX  POR %08lX\n",
 		       i, win->br, win->or);
-		base += CFG_PCMCIA_MEM_SIZE;
+		base += CONFIG_SYS_PCMCIA_MEM_SIZE;
 		++win;
 	}
 
@@ -198,14 +167,14 @@ int pcmcia_off (void)
 	printf ("Disable PCMCIA " PCMCIA_SLOT_MSG "\n");
 
 	/* clear interrupt state, and disable interrupts */
-	((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_pscr =  PCMCIA_MASK(_slot_);
-	((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_per &= ~PCMCIA_MASK(_slot_);
+	((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_pscr =  PCMCIA_MASK(_slot_);
+	((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_per &= ~PCMCIA_MASK(_slot_);
 
 	/* turn off interrupt and disable CxOE */
 	PCMCIA_PGCRX(_slot_) = __MY_PCMCIA_GCRX_CXOE;
 
 	/* turn off memory windows */
-	win = (pcmcia_win_t *)(&((immap_t *)CFG_IMMR)->im_pcmcia.pcmc_pbr0);
+	win = (pcmcia_win_t *)(&((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia.pcmc_pbr0);
 
 	for (i=0; i<PCMCIA_MEM_WIN_NO; ++i) {
 		/* disable memory window */
@@ -301,4 +270,4 @@ static u_int m8xx_get_speed(u_int ns, u_int is_io)
 }
 #endif	/* 0 */
 
-#endif	/* CONFIG_8xx && CONFIG_PCMCIA */
+#endif	/* CONFIG_PCMCIA */

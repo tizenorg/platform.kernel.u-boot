@@ -53,6 +53,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <asm/io.h>
 #include <pci.h>
 
@@ -320,6 +321,11 @@ natsemi_initialize(bd_t * bis)
 		}
 
 		dev = (struct eth_device *) malloc(sizeof *dev);
+		if (!dev) {
+			printf("natsemi: Can not allocate memory\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 
 		sprintf(dev->name, "dp83815#%d", card_number);
 		dev->iobase = bus_to_phys(iobase);
@@ -408,7 +414,7 @@ natsemi_initialize(bd_t * bis)
    The EEPROM code is for common 93c06/46 EEPROMs w/ 6bit addresses.  */
 
 /* Delay between EEPROM clock transitions.
-   No extra delay is needed with 33Mhz PCI, but future 66Mhz
+   No extra delay is needed with 33MHz PCI, but future 66MHz
    access may need a delay. */
 #define eeprom_delay(ee_addr)	INL(dev, ee_addr)
 
@@ -753,7 +759,8 @@ natsemi_send(struct eth_device *dev, volatile void *packet, int length)
 {
 	u32 i, status = 0;
 	u32 tx_status = 0;
-	vu_long *res = (vu_long *)&tx_status;
+	u32 *tx_ptr = &tx_status;
+	vu_long *res = (vu_long *)tx_ptr;
 
 	/* Stop the transmitter */
 	OUTL(dev, TxOff, ChipCmd);

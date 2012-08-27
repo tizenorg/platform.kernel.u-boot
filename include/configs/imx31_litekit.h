@@ -53,20 +53,25 @@
 /*
  * Size of malloc() pool
  */
-#define CFG_MALLOC_LEN		(CFG_ENV_SIZE + 128 * 1024)
-#define CFG_GBL_DATA_SIZE	128  /* size in bytes reserved for initial data */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 128 * 1024)
 
 /*
  * Hardware drivers
  */
 
-#define CONFIG_MX31_UART	1
-#define CFG_MX31_UART1		1
+#define CONFIG_MXC_UART	1
+#define CONFIG_SYS_MX31_UART1		1
 
 #define CONFIG_HARD_SPI		1
 #define CONFIG_MXC_SPI		1
 #define CONFIG_DEFAULT_SPI_BUS	1
-#define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_2 | SPI_CS_HIGH)
+#define CONFIG_DEFAULT_SPI_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
+
+#define CONFIG_FSL_PMIC
+#define CONFIG_FSL_PMIC_BUS	1
+#define CONFIG_FSL_PMIC_CS	0
+#define CONFIG_FSL_PMIC_CLK	1000000
+#define CONFIG_FSL_PMIC_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
 
 #define CONFIG_RTC_MC13783	1
 
@@ -74,7 +79,7 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_CONS_INDEX	1
 #define CONFIG_BAUDRATE		115200
-#define CFG_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
+#define CONFIG_SYS_BAUDRATE_TABLE	{9600, 19200, 38400, 57600, 115200}
 
 /***********************************************************
  * Command definition
@@ -86,6 +91,7 @@
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_NAND
 
 #define CONFIG_BOOTDELAY	3
 
@@ -101,29 +107,28 @@
 	"prg_uboot=tftpboot 0x80000000 u-boot-imx31_litekit.bin; protect off all; erase 0xa00d0000 0xa01effff; cp.b 0x80000000 0xa00d0000 $(filesize)\0"
 
 
-#define CONFIG_DRIVER_SMC911X		1
-#define CONFIG_DRIVER_SMC911X_BASE	(CS4_BASE + 0x00020000)
-#define CONFIG_DRIVER_SMC911X_32_BIT	1
+#define CONFIG_NET_MULTI
+#define CONFIG_SMC911X		1
+#define CONFIG_SMC911X_BASE	(CS4_BASE + 0x00020000)
+#define CONFIG_SMC911X_32_BIT	1
 
 /*
  * Miscellaneous configurable options
  */
-#define CFG_LONGHELP		/* undef to save memory */
-#define CFG_PROMPT		"uboot> "
-#define CFG_CBSIZE		256  /* Console I/O Buffer Size */
+#define CONFIG_SYS_LONGHELP		/* undef to save memory */
+#define CONFIG_SYS_PROMPT		"uboot> "
+#define CONFIG_SYS_CBSIZE		256  /* Console I/O Buffer Size */
 /* Print Buffer Size */
-#define CFG_PBSIZE		(CFG_CBSIZE+sizeof(CFG_PROMPT)+16)
-#define CFG_MAXARGS		16          /* max number of command args */
-#define CFG_BARGSIZE		CFG_CBSIZE  /* Boot Argument Buffer Size */
+#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
+#define CONFIG_SYS_MAXARGS		16          /* max number of command args */
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE  /* Boot Argument Buffer Size */
 
-#define CFG_MEMTEST_START	0  /* memtest works on */
-#define CFG_MEMTEST_END		0x10000
+#define CONFIG_SYS_MEMTEST_START	0  /* memtest works on */
+#define CONFIG_SYS_MEMTEST_END		0x10000
 
-#undef	CFG_CLKS_IN_HZ		/* everything, incl board info, in Hz */
+#define CONFIG_SYS_LOAD_ADDR		0 /* default load address */
 
-#define CFG_LOAD_ADDR		0 /* default load address */
-
-#define CFG_HZ			32000
+#define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING	1
 
@@ -141,35 +146,50 @@
 #define PHYS_SDRAM_1		CSD0_BASE
 #define PHYS_SDRAM_1_SIZE	(128 * 1024 * 1024)
 
+#define CONFIG_SYS_SDRAM_BASE		CSD0_BASE
+#define CONFIG_SYS_INIT_RAM_ADDR	IRAM_BASE_ADDR
+#define CONFIG_SYS_INIT_RAM_SIZE		IRAM_SIZE
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_SP_ADDR		(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_GBL_DATA_OFFSET)
+
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-#define CFG_FLASH_BASE		CS0_BASE
-#define CFG_MAX_FLASH_BANKS	1           /* max number of memory banks */
-#define CFG_MAX_FLASH_SECT	128	     /* max number of sectors on one chip */
-#define CFG_MONITOR_BASE	CFG_FLASH_BASE /* Monitor at beginning of flash */
+#define CONFIG_SYS_FLASH_BASE		CS0_BASE
+#define CONFIG_SYS_MAX_FLASH_BANKS	1           /* max number of memory banks */
+#define CONFIG_SYS_MAX_FLASH_SECT	128	     /* max number of sectors on one chip */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_FLASH_BASE /* Monitor at beginning of flash */
 
-#define CFG_ENV_ADDR		(CFG_FLASH_BASE + 0x001f0000)
-#define	CFG_ENV_IS_IN_FLASH	1
-#define CFG_ENV_SECT_SIZE	(64 * 1024)
-#define CFG_ENV_SIZE		(64 * 1024)
+#define CONFIG_ENV_ADDR		(CONFIG_SYS_FLASH_BASE + 0x001f0000)
+#define	CONFIG_ENV_IS_IN_FLASH	1
+#define CONFIG_ENV_SECT_SIZE	(64 * 1024)
+#define CONFIG_ENV_SIZE		(64 * 1024)
 
 /*-----------------------------------------------------------------------
  * CFI FLASH driver setup
  */
-#define CFG_FLASH_CFI		1	/* Flash memory is CFI compliant */
-#define CFG_FLASH_CFI_DRIVER	1	/* Use drivers/cfi_flash.c */
-#define CFG_FLASH_USE_BUFFER_WRITE 1	/* Use buffered writes (~10x faster) */
-#define CFG_FLASH_PROTECTION	1	/* Use hardware sector protection */
+#define CONFIG_SYS_FLASH_CFI		1	/* Flash memory is CFI compliant */
+#define CONFIG_FLASH_CFI_DRIVER	1	/* Use drivers/cfi_flash.c */
+#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1	/* Use buffered writes (~10x faster) */
+#define CONFIG_SYS_FLASH_PROTECTION	1	/* Use hardware sector protection */
 
 /* timeout values are in ticks */
-#define CFG_FLASH_ERASE_TOUT	(100*CFG_HZ) /* Timeout for Flash Erase */
-#define CFG_FLASH_WRITE_TOUT	(100*CFG_HZ) /* Timeout for Flash Write */
+#define CONFIG_SYS_FLASH_ERASE_TOUT	(100*CONFIG_SYS_HZ) /* Timeout for Flash Erase */
+#define CONFIG_SYS_FLASH_WRITE_TOUT	(100*CONFIG_SYS_HZ) /* Timeout for Flash Write */
 
 /*
  * JFFS2 partitions
  */
-#undef CONFIG_JFFS2_CMDLINE
+#undef CONFIG_CMD_MTDPARTS
 #define CONFIG_JFFS2_DEV	"nor0"
+
+/*
+ * NAND flash
+ */
+#define CONFIG_NAND_MXC
+#define CONFIG_MXC_NAND_REGS_BASE	NFC_BASE_ADDR
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_BASE		NFC_BASE_ADDR
+#define CONFIG_MXC_NAND_HWECC
 
 #endif /* __CONFIG_H */

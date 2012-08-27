@@ -62,7 +62,7 @@
  * as data ram for buffer descriptors, which is all we use right now.
  * Currently the first 512 and last 256 bytes are used for microcode.
  */
-#ifdef  CFG_ALLOC_DPRAM
+#ifdef  CONFIG_SYS_ALLOC_DPRAM
 
 #define CPM_DATAONLY_BASE	((uint)0x0800)
 #define CPM_DATAONLY_SIZE	((uint)0x0700)
@@ -81,16 +81,16 @@
 
 #endif
 
-#ifndef CFG_CPM_POST_WORD_ADDR
+#ifndef CONFIG_SYS_CPM_POST_WORD_ADDR
 #define CPM_POST_WORD_ADDR	0x07FC
 #else
-#define CPM_POST_WORD_ADDR	CFG_CPM_POST_WORD_ADDR
+#define CPM_POST_WORD_ADDR	CONFIG_SYS_CPM_POST_WORD_ADDR
 #endif
 
-#ifndef CFG_CPM_BOOTCOUNT_ADDR
+#ifndef CONFIG_SYS_CPM_BOOTCOUNT_ADDR
 #define CPM_BOOTCOUNT_ADDR	(CPM_POST_WORD_ADDR - 2*sizeof(ulong))
 #else
-#define CPM_BOOTCOUNT_ADDR	CFG_CPM_BOOTCOUNT_ADDR
+#define CPM_BOOTCOUNT_ADDR	CONFIG_SYS_CPM_BOOTCOUNT_ADDR
 #endif
 
 #define BD_IIC_START	((uint) 0x0400) /* <- please use CPM_I2C_BASE !! */
@@ -579,34 +579,6 @@ typedef struct scc_enet {
 
 /*********************************************************************/
 
-
-/***  CCM  and  PCU E  ***********************************************/
-
-/* The PCU E  and  CCM  use the FEC on a MPC860T for Ethernet */
-
-#if defined (CONFIG_PCU_E) || defined(CONFIG_CCM)
-
-#define	FEC_ENET	/* use FEC for EThernet */
-#undef	SCC_ENET
-
-#define PD_MII_TXD1	((ushort)0x1000)	/* PD  3 */
-#define PD_MII_TXD2	((ushort)0x0800)	/* PD  4 */
-#define PD_MII_TXD3	((ushort)0x0400)	/* PD  5 */
-#define PD_MII_RX_DV	((ushort)0x0200)	/* PD  6 */
-#define PD_MII_RX_ERR	((ushort)0x0100)	/* PD  7 */
-#define PD_MII_RX_CLK	((ushort)0x0080)	/* PD  8 */
-#define PD_MII_TXD0	((ushort)0x0040)	/* PD  9 */
-#define PD_MII_RXD0	((ushort)0x0020)	/* PD 10 */
-#define PD_MII_TX_ERR	((ushort)0x0010)	/* PD 11 */
-#define PD_MII_MDC	((ushort)0x0008)	/* PD 12 */
-#define PD_MII_RXD1	((ushort)0x0004)	/* PD 13 */
-#define PD_MII_RXD2	((ushort)0x0002)	/* PD 14 */
-#define PD_MII_RXD3	((ushort)0x0001)	/* PD 15 */
-
-#define PD_MII_MASK	((ushort)0x1FFF)	/* PD 3...15 */
-
-#endif	/* CONFIG_PCU_E, CONFIG_CCM */
-
 /***  ELPT860 *********************************************************/
 
 #ifdef CONFIG_ELPT860
@@ -827,38 +799,6 @@ typedef struct scc_enet {
 #define SICR_ENET_CLKRT	((uint)0x00002e00)
 
 #endif	/* CONFIG_GENIETV */
-
-/*** GTH ******************************************************/
-
-#ifdef CONFIG_GTH
-#ifdef CONFIG_FEC_ENET
-#define	FEC_ENET	/* use FEC for EThernet */
-#endif	/* CONFIG_FEC_ETHERNET */
-
-/* This ENET stuff is for GTH 10 Mbit ( SCC ) */
-#define	PROFF_ENET	PROFF_SCC1
-#define	CPM_CR_ENET	CPM_CR_CH_SCC1
-#define	SCC_ENET	0
-
-#define PA_ENET_RXD	((ushort)0x0001) /* PA15 */
-#define PA_ENET_TXD	((ushort)0x0002) /* PA14 */
-#define PA_ENET_TCLK	((ushort)0x0800) /* PA4 */
-#define PA_ENET_RCLK	((ushort)0x0400) /* PA5 */
-
-#define PB_ENET_TENA	((uint)0x00001000) /* PB19 */
-
-#define PC_ENET_CLSN	((ushort)0x0010) /* PC11 */
-#define PC_ENET_RENA	((ushort)0x0020) /* PC10 */
-
-/* NOTE. This is reset for 10Mbit port only */
-#define PC_ENET_RESET	((ushort)0x0100)	/* PC 7 */
-
-#define SICR_ENET_MASK	((uint)0x000000ff)
-
-/* TCLK PA4 -->CLK4, RCLK PA5 -->CLK3 */
-#define SICR_ENET_CLKRT	((uint)0x00000037)
-
-#endif	/* CONFIG_GTH */
 
 /*** HERMES-PRO ******************************************************/
 
@@ -1122,11 +1062,11 @@ typedef struct scc_enet {
 #define SICR_ENET_CLKRT	((uint)0x0000003d)
 #endif	/* CONFIG_MBX */
 
-/***  MGSUVD  *********************************************************/
+/***  KM8XX  *********************************************************/
 
-/* The MGSUVD Service Module uses SCC3 for Ethernet */
+/* The KM8XX Service Module uses SCC3 for Ethernet */
 
-#ifdef CONFIG_MGSUVD
+#ifdef CONFIG_KM8XX
 #define PROFF_ENET	PROFF_SCC3		/* Ethernet on SCC3 */
 #define CPM_CR_ENET	CPM_CR_CH_SCC3
 #define SCC_ENET	2
@@ -1145,7 +1085,7 @@ typedef struct scc_enet {
  */
 #define SICR_ENET_MASK	((uint)0x00FF0000)
 #define SICR_ENET_CLKRT	((uint)0x00250000)
-#endif	/* CONFIG_MGSUVD */
+#endif	/* CONFIG_KM8XX */
 
 
 /***  MHPC  ********************************************************/

@@ -3,7 +3,6 @@
  * (C) Copyright 2004
  * DENX Software Engineering
  * Wolfgang Denk, wd@denx.de
- * All rights reserved.
  *
  * PS/2 keyboard driver
  *
@@ -12,8 +11,6 @@
  ***********************************************************************/
 
 #include <common.h>
-
-#ifdef CONFIG_PS2KBD
 
 #include <keyboard.h>
 #include <pc_keyb.h>
@@ -252,5 +249,3 @@ void pckbd_leds(unsigned char leds)
 	kbd_send_data(KBD_CMD_SET_LEDS);
 	kbd_send_data(leds);
 }
-
-#endif /* CONFIG_PS2KBD */

@@ -34,7 +34,7 @@
 #include <malloc.h>		/* for free() prototype */
 #endif
 
-#ifdef CFG_HUSH_PARSER
+#ifdef CONFIG_SYS_HUSH_PARSER
 #include <hush.h>
 #endif
 
@@ -48,14 +48,11 @@ DECLARE_GLOBAL_DATA_PTR;
  * Board-specific Platform code can reimplement show_boot_progress () if needed
  */
 void inline __show_boot_progress (int val) {}
-void inline show_boot_progress (int val) __attribute__((weak, alias("__show_boot_progress")));
+void show_boot_progress (int val) __attribute__((weak, alias("__show_boot_progress")));
 
-#if defined(CONFIG_BOOT_RETRY_TIME) && defined(CONFIG_RESET_TO_RETRY)
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);		/* for do_reset() prototype */
-#endif
-
-extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-
+#if defined(CONFIG_UPDATE_TFTP)
+void update_tftp (void);
+#endif /* CONFIG_UPDATE_TFTP */
 
 #define MAX_DELAY_STOP_STR 32
 
@@ -65,11 +62,11 @@ static int abortboot(int);
 
 #undef DEBUG_PARSER
 
-char        console_buffer[CFG_CBSIZE];		/* console I/O buffer	*/
+char        console_buffer[CONFIG_SYS_CBSIZE + 1];	/* console I/O buffer	*/
 
 static char * delete_char (char *buffer, char *p, int *colp, int *np, int plen);
-static char erase_seq[] = "\b \b";		/* erase sequence	*/
-static char   tab_seq[] = "        ";		/* used to expand TABs	*/
+static const char erase_seq[] = "\b \b";		/* erase sequence	*/
+static const char   tab_seq[] = "        ";		/* used to expand TABs	*/
 
 #ifdef CONFIG_BOOT_RETRY_TIME
 static uint64_t endtime = 0;  /* must be set, default is instant timeout */
@@ -155,7 +152,19 @@ static __inline__ int abortboot(int bootdelay)
 	/* In order to keep up with incoming data, check timeout only
 	 * when catch up.
 	 */
-	while (!abort && get_ticks() <= etime) {
+	do {
+		if (tstc()) {
+			if (presskey_len < presskey_max) {
+				presskey [presskey_len ++] = getc();
+			}
+			else {
+				for (i = 0; i < presskey_max - 1; i ++)
+					presskey [i] = presskey [i + 1];
+
+				presskey [i] = getc();
+			}
+		}
+
 		for (i = 0; i < sizeof(delaykey) / sizeof(delaykey[0]); i ++) {
 			if (delaykey[i].len > 0 &&
 			    presskey_len >= delaykey[i].len &&
@@ -175,19 +184,8 @@ static __inline__ int abortboot(int bootdelay)
 				abort = 1;
 			}
 		}
+	} while (!abort && get_ticks() <= etime);
 
-		if (tstc()) {
-			if (presskey_len < presskey_max) {
-				presskey [presskey_len ++] = getc();
-			}
-			else {
-				for (i = 0; i < presskey_max - 1; i ++)
-					presskey [i] = presskey [i + 1];
-
-				presskey [i] = getc();
-			}
-		}
-	}
 #  if DEBUG_BOOTKEYS
 	if (!abort)
 		puts("key timeout\n");
@@ -214,7 +212,7 @@ static __inline__ int abortboot(int bootdelay)
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else
-	printf("Hit any key to stop autoboot: %2d ", bootdelay);
+	printf("Hit 'ENTER' key to stop autoboot: %2d ", bootdelay);
 #endif
 
 #if defined CONFIG_ZERO_BOOTDELAY_CHECK
@@ -224,9 +222,9 @@ static __inline__ int abortboot(int bootdelay)
 	 */
 	if (bootdelay >= 0) {
 		if (tstc()) {	/* we got a key press	*/
-			(void) getc();  /* consume input	*/
+			if (getc() == 0x0d)	/* ENTER key is only allowed */
+				abort = 1;	/* don't auto boot	*/
 			puts ("\b\b\b 0");
-			abort = 1;	/* don't auto boot	*/
 		}
 	}
 #endif
@@ -269,8 +267,8 @@ static __inline__ int abortboot(int bootdelay)
 
 void main_loop (void)
 {
-#ifndef CFG_HUSH_PARSER
-	static char lastcommand[CFG_CBSIZE] = { 0, };
+#ifndef CONFIG_SYS_HUSH_PARSER
+	static char lastcommand[CONFIG_SYS_CBSIZE] = { 0, };
 	int len;
 	int rc = 1;
 	int flag;
@@ -330,12 +328,12 @@ void main_loop (void)
 	}
 #endif /* CONFIG_VERSION_VARIABLE */
 
-#ifdef CFG_HUSH_PARSER
+#ifdef CONFIG_SYS_HUSH_PARSER
 	u_boot_hush_start ();
 #endif
 
-#ifdef CONFIG_AUTO_COMPLETE
-	install_auto_complete();
+#if defined(CONFIG_HUSH_INIT_VAR)
+	hush_init_var ();
 #endif
 
 #ifdef CONFIG_PREBOOT
@@ -344,7 +342,7 @@ void main_loop (void)
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif
 
-# ifndef CFG_HUSH_PARSER
+# ifndef CONFIG_SYS_HUSH_PARSER
 		run_command (p, 0);
 # else
 		parse_string_outer(p, FLAG_PARSE_SEMICOLON |
@@ -356,6 +354,10 @@ void main_loop (void)
 # endif
 	}
 #endif /* CONFIG_PREBOOT */
+
+#if defined(CONFIG_UPDATE_TFTP)
+	update_tftp ();
+#endif /* CONFIG_UPDATE_TFTP */
 
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
 	s = getenv ("bootdelay");
@@ -390,7 +392,7 @@ void main_loop (void)
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif
 
-# ifndef CFG_HUSH_PARSER
+# ifndef CONFIG_SYS_HUSH_PARSER
 		run_command (s, 0);
 # else
 		parse_string_outer(s, FLAG_PARSE_SEMICOLON |
@@ -406,7 +408,7 @@ void main_loop (void)
 	if (menukey == CONFIG_MENUKEY) {
 	    s = getenv("menucmd");
 	    if (s) {
-# ifndef CFG_HUSH_PARSER
+# ifndef CONFIG_SYS_HUSH_PARSER
 		run_command (s, 0);
 # else
 		parse_string_outer(s, FLAG_PARSE_SEMICOLON |
@@ -415,19 +417,12 @@ void main_loop (void)
 	    }
 	}
 #endif /* CONFIG_MENUKEY */
-#endif	/* CONFIG_BOOTDELAY */
-
-#ifdef CONFIG_AMIGAONEG3SE
-	{
-	    extern void video_banner(void);
-	    video_banner();
-	}
-#endif
+#endif /* CONFIG_BOOTDELAY */
 
 	/*
 	 * Main Loop for Monitor Command Processing
 	 */
-#ifdef CFG_HUSH_PARSER
+#ifdef CONFIG_SYS_HUSH_PARSER
 	parse_file_outer();
 	/* This point is never reached */
 	for (;;);
@@ -441,7 +436,7 @@ void main_loop (void)
 			reset_cmd_timeout();
 		}
 #endif
-		len = readline (CFG_PROMPT);
+		len = readline (CONFIG_SYS_PROMPT);
 
 		flag = 0;	/* assume no special flags for now */
 		if (len > 0)
@@ -472,7 +467,7 @@ void main_loop (void)
 			lastcommand[0] = 0;
 		}
 	}
-#endif /*CFG_HUSH_PARSER*/
+#endif /*CONFIG_SYS_HUSH_PARSER*/
 }
 
 #ifdef CONFIG_BOOT_RETRY_TIME
@@ -513,9 +508,6 @@ void reset_cmd_timeout(void)
 	} while (0)
 
 #define CTL_CH(c)		((c) - 'a' + 1)
-
-#define MAX_CMDBUF_SIZE		256
-
 #define CTL_BACKSPACE		('\b')
 #define DEL			((char)255)
 #define DEL7			((char)127)
@@ -526,7 +518,7 @@ void reset_cmd_timeout(void)
 #define getcmd_cbeep()		getcmd_putch('\a')
 
 #define HIST_MAX		20
-#define HIST_SIZE		MAX_CMDBUF_SIZE
+#define HIST_SIZE		CONFIG_SYS_CBSIZE
 
 static int hist_max = 0;
 static int hist_add_idx = 0;
@@ -534,7 +526,7 @@ static int hist_cur = -1;
 unsigned hist_num = 0;
 
 char* hist_list[HIST_MAX];
-char hist_lines[HIST_MAX][HIST_SIZE];
+char hist_lines[HIST_MAX][HIST_SIZE + 1];	 /* Save room for NULL */
 
 #define add_idx_minus_one() ((hist_add_idx == 0) ? hist_max : hist_add_idx-1)
 
@@ -638,12 +630,10 @@ static void cread_print_hist_list(void)
 
 #define ERASE_TO_EOL() {				\
 	if (num < eol_num) {				\
-		int tmp;				\
-		for (tmp = num; tmp < eol_num; tmp++)	\
-			getcmd_putch(' ');		\
-		while (tmp-- > num)			\
+		printf("%*s", (int)(eol_num - num), ""); \
+		do {					\
 			getcmd_putch(CTL_BACKSPACE);	\
-		eol_num = num;				\
+		} while (--eol_num > num);		\
 	}						\
 }
 
@@ -703,20 +693,22 @@ static int cread_line(const char *const prompt, char *buf, unsigned int *len)
 {
 	unsigned long num = 0;
 	unsigned long eol_num = 0;
-	unsigned long rlen;
 	unsigned long wlen;
 	char ichar;
 	int insert = 1;
 	int esc_len = 0;
-	int rc = 0;
 	char esc_save[8];
+	int init_len = strlen(buf);
+
+	if (init_len)
+		cread_add_str(buf, init_len, 1, &num, &eol_num, buf, *len);
 
 	while (1) {
-		rlen = 1;
 #ifdef CONFIG_BOOT_RETRY_TIME
 		while (!tstc()) {	/* while no incoming data */
 			if (retry_time >= 0 && get_ticks() > endtime)
 				return (-2);	/* timed out */
+			WATCHDOG_RESET();
 		}
 #endif
 
@@ -911,7 +903,7 @@ static int cread_line(const char *const prompt, char *buf, unsigned int *len)
 		cread_add_to_hist(buf);
 	hist_cur = hist_add_idx;
 
-	return (rc);
+	return 0;
 }
 
 #endif /* CONFIG_CMDLINE_EDITING */
@@ -928,6 +920,12 @@ static int cread_line(const char *const prompt, char *buf, unsigned int *len)
  */
 int readline (const char *const prompt)
 {
+	/*
+	 * If console_buffer isn't 0-length the user will be prompted to modify
+	 * it instead of entering it from scratch as desired.
+	 */
+	console_buffer[0] = '\0';
+
 	return readline_into_buffer(prompt, console_buffer);
 }
 
@@ -936,7 +934,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 {
 	char *p = buffer;
 #ifdef CONFIG_CMDLINE_EDITING
-	unsigned int len=MAX_CMDBUF_SIZE;
+	unsigned int len = CONFIG_SYS_CBSIZE;
 	int rc;
 	static int initted = 0;
 
@@ -952,7 +950,8 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 			initted = 1;
 		}
 
-		puts (prompt);
+		if (prompt)
+			puts (prompt);
 
 		rc = cread_line(prompt, p, &len);
 		return rc < 0 ? rc : len;
@@ -977,6 +976,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 		while (!tstc()) {	/* while no incoming data */
 			if (retry_time >= 0 && get_ticks() > endtime)
 				return (-2);	/* timed out */
+			WATCHDOG_RESET();
 		}
 #endif
 		WATCHDOG_RESET();		/* Trigger watchdog, if needed */
@@ -985,6 +985,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 		while (!tstc()) {
 			extern void show_activity(int arg);
 			show_activity(0);
+			WATCHDOG_RESET();
 		}
 #endif
 		c = getc();
@@ -1031,7 +1032,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 			/*
 			 * Must be a normal character then
 			 */
-			if (n < CFG_CBSIZE-2) {
+			if (n < CONFIG_SYS_CBSIZE-2) {
 				if (c == '\t') {	/* expand TABs		*/
 #ifdef CONFIG_AUTO_COMPLETE
 					/* if auto completion triggered just continue */
@@ -1100,7 +1101,7 @@ int parse_line (char *line, char *argv[])
 #ifdef DEBUG_PARSER
 	printf ("parse_line: \"%s\"\n", line);
 #endif
-	while (nargs < CFG_MAXARGS) {
+	while (nargs < CONFIG_SYS_MAXARGS) {
 
 		/* skip any white space */
 		while ((*line == ' ') || (*line == '\t')) {
@@ -1133,7 +1134,7 @@ int parse_line (char *line, char *argv[])
 		*line++ = '\0';		/* terminate current arg	 */
 	}
 
-	printf ("** Too many args (max. %d) **\n", CFG_MAXARGS);
+	printf ("** Too many args (max. %d) **\n", CONFIG_SYS_MAXARGS);
 
 #ifdef DEBUG_PARSER
 	printf ("parse_line: nargs=%d\n", nargs);
@@ -1148,7 +1149,7 @@ static void process_macros (const char *input, char *output)
 	char c, prev;
 	const char *varname_start = NULL;
 	int inputcnt = strlen (input);
-	int outputcnt = CFG_CBSIZE;
+	int outputcnt = CONFIG_SYS_CBSIZE;
 	int state = 0;		/* 0 = waiting for '$'  */
 
 	/* 1 = waiting for '(' or '{' */
@@ -1208,7 +1209,7 @@ static void process_macros (const char *input, char *output)
 		case 2:	/* Waiting for )        */
 			if (c == ')' || c == '}') {
 				int i;
-				char envname[CFG_CBSIZE], *envval;
+				char envname[CONFIG_SYS_CBSIZE], *envval;
 				int envcnt = input - varname_start - 1;	/* Varname # of chars */
 
 				/* Get the varname */
@@ -1259,7 +1260,7 @@ static void process_macros (const char *input, char *output)
  *	0  - command executed but not repeatable, interrupted commands are
  *	     always considered not repeatable
  *	-1 - not executed (unrecognized, bootd recursion or too many args)
- *           (If cmd is NULL or "" or longer than CFG_CBSIZE-1 it is
+ *           (If cmd is NULL or "" or longer than CONFIG_SYS_CBSIZE-1 it is
  *           considered unrecognized)
  *
  * WARNING:
@@ -1273,12 +1274,12 @@ static void process_macros (const char *input, char *output)
 int run_command (const char *cmd, int flag)
 {
 	cmd_tbl_t *cmdtp;
-	char cmdbuf[CFG_CBSIZE];	/* working copy of cmd		*/
+	char cmdbuf[CONFIG_SYS_CBSIZE];	/* working copy of cmd		*/
 	char *token;			/* start of token in cmdbuf	*/
 	char *sep;			/* end of token (separator) in cmdbuf */
-	char finaltoken[CFG_CBSIZE];
+	char finaltoken[CONFIG_SYS_CBSIZE];
 	char *str = cmdbuf;
-	char *argv[CFG_MAXARGS + 1];	/* NULL terminated	*/
+	char *argv[CONFIG_SYS_MAXARGS + 1];	/* NULL terminated	*/
 	int argc, inquotes;
 	int repeatable = 1;
 	int rc = 0;
@@ -1295,7 +1296,7 @@ int run_command (const char *cmd, int flag)
 		return -1;	/* empty command */
 	}
 
-	if (strlen(cmd) >= CFG_CBSIZE) {
+	if (strlen(cmd) >= CONFIG_SYS_CBSIZE) {
 		puts ("## Command too long!\n");
 		return -1;
 	}
@@ -1359,7 +1360,7 @@ int run_command (const char *cmd, int flag)
 
 		/* found - check max args */
 		if (argc > cmdtp->maxargs) {
-			printf ("Usage:\n%s\n", cmdtp->usage);
+			cmd_usage(cmdtp);
 			rc = -1;
 			continue;
 		}
@@ -1398,14 +1399,12 @@ int run_command (const char *cmd, int flag)
 /****************************************************************************/
 
 #if defined(CONFIG_CMD_RUN)
-int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	for (i=1; i<argc; ++i) {
 		char *arg;
@@ -1414,7 +1413,7 @@ int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			printf ("## Error: \"%s\" not defined\n", argv[i]);
 			return 1;
 		}
-#ifndef CFG_HUSH_PARSER
+#ifndef CONFIG_SYS_HUSH_PARSER
 		if (run_command (arg, flag) == -1)
 			return 1;
 #else

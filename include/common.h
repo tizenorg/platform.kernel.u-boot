@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2000-2007
+ * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -27,12 +27,15 @@
 #undef	_LINUX_CONFIG_H
 #define _LINUX_CONFIG_H 1	/* avoid reading Linux autoconf.h file	*/
 
+#ifndef __ASSEMBLY__		/* put C only stuff in this section */
+
 typedef unsigned char		uchar;
 typedef volatile unsigned long	vu_long;
 typedef volatile unsigned short vu_short;
 typedef volatile unsigned char	vu_char;
 
 #include <config.h>
+#include <asm-offsets.h>
 #include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/string.h>
@@ -66,7 +69,6 @@ typedef volatile unsigned char	vu_char;
 #elif defined(CONFIG_MPC5xxx)
 #include <mpc5xxx.h>
 #elif defined(CONFIG_MPC512X)
-#include <mpc512x.h>
 #include <asm/immap_512x.h>
 #elif defined(CONFIG_MPC8220)
 #include <asm/immap_8220.h>
@@ -90,12 +92,12 @@ typedef volatile unsigned char	vu_char;
 #include <mpc85xx.h>
 #include <asm/immap_85xx.h>
 #endif
-#ifdef CONFIG_MPC83XX
+#ifdef CONFIG_MPC83xx
 #include <mpc83xx.h>
 #include <asm/immap_83xx.h>
 #endif
 #ifdef	CONFIG_4xx
-#include <ppc4xx.h>
+#include <asm/ppc4xx.h>
 #endif
 #ifdef CONFIG_HYMOD
 #include <board/hymod/hymod.h>
@@ -105,6 +107,9 @@ typedef volatile unsigned char	vu_char;
 #endif
 #ifdef CONFIG_BLACKFIN
 #include <asm/blackfin.h>
+#endif
+#ifdef CONFIG_SOC_DA8XX
+#include <asm/arch/hardware.h>
 #endif
 
 #include <part.h>
@@ -119,11 +124,18 @@ typedef volatile unsigned char	vu_char;
 #define debugX(level,fmt,args...)
 #endif	/* DEBUG */
 
+#define error(fmt, args...) do {					\
+		printf("ERROR: " fmt "\nat %s:%d/%s()\n",		\
+			##args, __FILE__, __LINE__, __func__);		\
+} while (0)
+
+#ifndef BUG
 #define BUG() do { \
 	printf("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __FUNCTION__); \
 	panic("BUG!"); \
 } while (0)
 #define BUG_ON(condition) do { if (unlikely((condition)!=0)) BUG(); } while(0)
+#endif /* BUG */
 
 typedef void (interrupt_handler_t)(void *);
 
@@ -175,6 +187,18 @@ typedef void (interrupt_handler_t)(void *);
 	({ typeof (X) __x = (X), __y = (Y);	\
 		(__x > __y) ? __x : __y; })
 
+#define MIN(x, y)  min(x, y)
+#define MAX(x, y)  max(x, y)
+
+#if defined(CONFIG_ENV_IS_EMBEDDED)
+#define TOTAL_MALLOC_LEN	CONFIG_SYS_MALLOC_LEN
+#elif ( ((CONFIG_ENV_ADDR+CONFIG_ENV_SIZE) < CONFIG_SYS_MONITOR_BASE) || \
+	(CONFIG_ENV_ADDR >= (CONFIG_SYS_MONITOR_BASE + CONFIG_SYS_MONITOR_LEN)) ) || \
+      defined(CONFIG_ENV_IS_IN_NVRAM)
+#define	TOTAL_MALLOC_LEN	(CONFIG_SYS_MALLOC_LEN + CONFIG_ENV_SIZE)
+#else
+#define	TOTAL_MALLOC_LEN	CONFIG_SYS_MALLOC_LEN
+#endif
 
 /**
  * container_of - cast a member of a structure out to the containing structure
@@ -191,20 +215,12 @@ typedef void (interrupt_handler_t)(void *);
  * Function Prototypes
  */
 
-#ifdef CONFIG_SERIAL_SOFTWARE_FIFO
-void	serial_buffered_init (void);
-void	serial_buffered_putc (const char);
-void	serial_buffered_puts (const char *);
-int	serial_buffered_getc (void);
-int	serial_buffered_tstc (void);
-#endif /* CONFIG_SERIAL_SOFTWARE_FIFO */
-
 void	hang		(void) __attribute__ ((noreturn));
 
 /* */
 phys_size_t initdram (int);
 int	display_options (void);
-void	print_size (phys_size_t, const char *);
+void	print_size(unsigned long long, const char *);
 int	print_buffer (ulong addr, void* data, uint width, uint count, uint linelen);
 
 /* common/main.c */
@@ -216,13 +232,12 @@ int	parse_line (char *, char *[]);
 void	init_cmd_timeout(void);
 void	reset_cmd_timeout(void);
 
-/* lib_$(ARCH)/board.c */
+/* arch/$(ARCH)/lib/board.c */
 void	board_init_f  (ulong) __attribute__ ((noreturn));
 void	board_init_r  (gd_t *, ulong) __attribute__ ((noreturn));
 int	checkboard    (void);
 int	checkflash    (void);
 int	checkdram     (void);
-char *	strmhz(char *buf, long hz);
 int	last_stage_init(void);
 extern ulong monitor_flash_len;
 int mac_read_from_eeprom(void);
@@ -230,25 +245,25 @@ int mac_read_from_eeprom(void);
 /* common/flash.c */
 void flash_perror (int);
 
-/* common/cmd_autoscript.c */
-int	autoscript (ulong addr, const char *fit_uname);
+/* common/cmd_source.c */
+int	source (ulong addr, const char *fit_uname);
 
 extern ulong load_addr;		/* Default Load Address */
+
+/* common/cmd_doc.c */
+void	doc_probe(unsigned long physadr);
 
 /* common/cmd_nvedit.c */
 int	env_init     (void);
 void	env_relocate (void);
 int	envmatch     (uchar *, int);
 char	*getenv	     (char *);
-int	getenv_r     (char *name, char *buf, unsigned len);
+int	getenv_f     (char *name, char *buf, unsigned len);
 int	saveenv	     (void);
 #ifdef CONFIG_PPC		/* ARM version to be fixed! */
 int inline setenv   (char *, char *);
 #else
 int	setenv	     (char *, char *);
-#ifdef CONFIG_HAS_UID
-void	forceenv     (char *, char *);
-#endif
 #endif /* CONFIG_PPC */
 #ifdef CONFIG_ARM
 # include <asm/mach-types.h>
@@ -262,23 +277,24 @@ void	forceenv     (char *, char *);
 #ifdef CONFIG_AUTO_COMPLETE
 int env_complete(char *var, int maxv, char *cmdv[], int maxsz, char *buf);
 #endif
+int get_env_id (void);
 
 void	pci_init      (void);
 void	pci_init_board(void);
 void	pciinfo	      (int, int);
 
 #if defined(CONFIG_PCI) && (defined(CONFIG_4xx) && !defined(CONFIG_AP1000))
-    int	   pci_pre_init	       (struct pci_controller * );
+    int	   pci_pre_init	       (struct pci_controller *);
+    int	   is_pci_host	       (struct pci_controller *);
 #endif
 
 #if defined(CONFIG_PCI) && (defined(CONFIG_440) || defined(CONFIG_405EX))
-#   if defined(CFG_PCI_TARGET_INIT)
+#   if defined(CONFIG_SYS_PCI_TARGET_INIT)
 	void	pci_target_init	     (struct pci_controller *);
 #   endif
-#   if defined(CFG_PCI_MASTER_INIT)
+#   if defined(CONFIG_SYS_PCI_MASTER_INIT)
 	void	pci_master_init	     (struct pci_controller *);
 #   endif
-    int	    is_pci_host		(struct pci_controller *);
 #if defined(CONFIG_440SPE) || \
     defined(CONFIG_460EX) || defined(CONFIG_460GT) || \
     defined(CONFIG_405EX)
@@ -291,6 +307,9 @@ int	misc_init_r   (void);
 
 /* common/exports.c */
 void	jumptable_init(void);
+
+/* common/kallsysm.c */
+const char *symbol_lookup(unsigned long addr, unsigned long *caddr);
 
 /* api/api.c */
 void	api_init (void);
@@ -318,11 +337,13 @@ extern void  pic_write (uchar reg, uchar val);
  * Set this up regardless of board
  * type, to prevent errors.
  */
-#if defined(CONFIG_SPI) || !defined(CFG_I2C_EEPROM_ADDR)
-# define CFG_DEF_EEPROM_ADDR 0
+#if defined(CONFIG_SPI) || !defined(CONFIG_SYS_I2C_EEPROM_ADDR)
+# define CONFIG_SYS_DEF_EEPROM_ADDR 0
 #else
-# define CFG_DEF_EEPROM_ADDR CFG_I2C_EEPROM_ADDR
-#endif /* CONFIG_SPI || !defined(CFG_I2C_EEPROM_ADDR) */
+#if !defined(CONFIG_ENV_EEPROM_IS_ON_I2C)
+# define CONFIG_SYS_DEF_EEPROM_ADDR CONFIG_SYS_I2C_EEPROM_ADDR
+#endif
+#endif /* CONFIG_SPI || !defined(CONFIG_SYS_I2C_EEPROM_ADDR) */
 
 #if defined(CONFIG_SPI)
 extern void spi_init_f (void);
@@ -344,13 +365,6 @@ void	board_serial_init (void);
 void	board_ether_init (void);
 #endif
 
-#if defined(CONFIG_RPXCLASSIC)	|| defined(CONFIG_MBX) || \
-    defined(CONFIG_IAD210)	|| defined(CONFIG_XPEDITE1K) || \
-    defined(CONFIG_METROBOX)    || defined(CONFIG_KAREF) || \
-    defined(CONFIG_V38B)
-void	board_get_enetaddr (uchar *addr);
-#endif
-
 #ifdef CONFIG_HERMES
 /* $(BOARD)/hermes.c */
 void hermes_start_lxt980 (int speed);
@@ -363,8 +377,6 @@ void  display_mem_map(void);
 void  perform_soft_reset(void);
 #endif
 
-void	load_sernum_ethaddr (void);
-
 /* $(BOARD)/$(BOARD).c */
 int board_early_init_f (void);
 int board_late_init (void);
@@ -372,9 +384,9 @@ int board_postclk_init (void); /* after clocks/timebase, before env/serial */
 int board_early_init_r (void);
 void board_poweroff (void);
 
-#if defined(CFG_DRAM_TEST)
+#if defined(CONFIG_SYS_DRAM_TEST)
 int testdram(void);
-#endif /* CFG_DRAM_TEST */
+#endif /* CONFIG_SYS_DRAM_TEST */
 
 /* $(CPU)/start.S */
 #if defined(CONFIG_5xx) || \
@@ -411,7 +423,7 @@ void	trap_init     (ulong);
     defined (CONFIG_MPC8220)	|| \
     defined (CONFIG_MPC85xx)	|| \
     defined (CONFIG_MPC86xx)	|| \
-    defined (CONFIG_MPC83XX)
+    defined (CONFIG_MPC83xx)
 unsigned char	in8(unsigned int);
 void		out8(unsigned int, unsigned char);
 unsigned short	in16(unsigned int);
@@ -432,12 +444,14 @@ unsigned short	in16(unsigned int);
 void		out16(unsigned int, unsigned short value);
 #endif
 
-#if defined (CONFIG_MPC83XX)
+#if defined (CONFIG_MPC83xx)
 void		ppcDWload(unsigned int *addr, unsigned int *ret);
 void		ppcDWstore(unsigned int *addr, unsigned int *value);
 #endif
 
 /* $(CPU)/cpu.c */
+int	cpu_numcores  (void);
+int	probecpu      (void);
 int	checkcpu      (void);
 int	checkicache   (void);
 int	checkdcache   (void);
@@ -454,7 +468,7 @@ void ft_pci_setup(void *blob, bd_t *bd);
 
 /* $(CPU)/serial.c */
 int	serial_init   (void);
-void	serial_addr   (unsigned int);
+void	serial_exit   (void);
 void	serial_setbrg (void);
 void	serial_putc   (const char);
 void	serial_putc_raw(const char);
@@ -489,9 +503,10 @@ int	prt_mpc8220_clks (void);
 ulong	get_OPB_freq (void);
 ulong	get_PCI_freq (void);
 #endif
-#if defined(CONFIG_S3C2400) || defined(CONFIG_S3C2410) || defined(CONFIG_LH7A40X)
-void	s3c2410_irq(void);
-#define ARM920_IRQ_CALLBACK s3c2410_irq
+#if defined(CONFIG_S3C24X0) || \
+    defined(CONFIG_LH7A40X) || \
+    defined(CONFIG_S3C6400) || \
+    defined(CONFIG_EP93XX)
 ulong	get_FCLK (void);
 ulong	get_HCLK (void);
 ulong	get_PCLK (void);
@@ -513,6 +528,7 @@ ulong get_PERCLK2(void);
 ulong get_PERCLK3(void);
 #endif
 ulong	get_bus_freq  (ulong);
+int get_serial_clock(void);
 
 #if defined(CONFIG_MPC85xx)
 typedef MPC85xx_SYS_INFO sys_info_t;
@@ -547,7 +563,7 @@ void	cpu_init_f    (void);
 int	cpu_init_r    (void);
 #if defined(CONFIG_8260)
 int	prt_8260_rsr  (void);
-#elif defined(CONFIG_MPC83XX)
+#elif defined(CONFIG_MPC83xx)
 int	prt_83xx_rsr  (void);
 #endif
 
@@ -569,8 +585,6 @@ uint	dpram_base(void);
 uint	dpram_base_align(uint align);
 uint	dpram_alloc(uint size);
 uint	dpram_alloc_align(uint size,uint align);
-void	post_word_store (ulong);
-ulong	post_word_load (void);
 void	bootcount_store (ulong);
 ulong	bootcount_load (void);
 #define BOOTCOUNT_MAGIC		0xB001C041
@@ -587,25 +601,45 @@ ulong	vfd_setmem (ulong);
 /* $(CPU)/.../video.c */
 ulong	video_setmem (ulong);
 
-/* lib_$(ARCH)/cache.c */
+/* arch/$(ARCH)/lib/cache.c */
 void	flush_cache   (unsigned long, unsigned long);
+void	flush_dcache_range(unsigned long start, unsigned long stop);
+void	invalidate_dcache_range(unsigned long start, unsigned long stop);
 
 
-/* lib_$(ARCH)/ticks.S */
+/* arch/$(ARCH)/lib/ticks.S */
 unsigned long long get_ticks(void);
 void	wait_ticks    (unsigned long);
 
-/* lib_$(ARCH)/time.c */
-void	udelay	      (unsigned long);
+/* arch/$(ARCH)/lib/time.c */
+void	__udelay      (unsigned long);
 ulong	usec2ticks    (unsigned long usec);
 ulong	ticks2usec    (unsigned long ticks);
 int	init_timebase (void);
 
-/* lib_generic/vsprintf.c */
+/* lib/gunzip.c */
+int gunzip(void *, int, unsigned char *, unsigned long *);
+int zunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp,
+						int stoponerr, int offset);
+
+/* lib/net_utils.c */
+#include <net.h>
+static inline IPaddr_t getenv_IPaddr (char *var)
+{
+	return (string_to_ip(getenv(var)));
+}
+
+/* lib/qsort.c */
+void qsort(void *base, size_t nmemb, size_t size,
+	   int(*compar)(const void *, const void *));
+int strcmp_compar(const void *, const void *);
+
+/* lib/time.c */
+void	udelay        (unsigned long);
+
+/* lib/vsprintf.c */
 ulong	simple_strtoul(const char *cp,char **endp,unsigned int base);
-#ifdef CFG_64BIT_VSPRINTF
 unsigned long long	simple_strtoull(const char *cp,char **endp,unsigned int base);
-#endif
 long	simple_strtol(const char *cp,char **endp,unsigned int base);
 void	panic(const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2)));
@@ -613,15 +647,16 @@ int	sprintf(char * buf, const char *fmt, ...)
 		__attribute__ ((format (__printf__, 2, 3)));
 int	vsprintf(char *buf, const char *fmt, va_list args);
 
-/* lib_generic/crc32.c */
-uint32_t crc32 (uint32_t, const unsigned char *, uint);
-uint32_t crc32_wd (uint32_t, const unsigned char *, uint, uint);
-uint32_t crc32_no_comp (uint32_t, const unsigned char *, uint);
+/* lib/strmhz.c */
+char *	strmhz(char *buf, unsigned long hz);
+
+/* lib/crc32.c */
+#include <u-boot/crc.h>
 
 /* common/console.c */
 int	console_init_f(void);	/* Before relocation; uses the serial  stuff	*/
 int	console_init_r(void);	/* After  relocation; uses the console stuff	*/
-int	console_assign (int file, char *devname);	/* Assign the console	*/
+int	console_assign(int file, const char *devname);	/* Assign the console	*/
 int	ctrlc (void);
 int	had_ctrlc (void);	/* have we had a Control-C since last clear? */
 void	clear_ctrlc (void);	/* clear the Control-C condition */
@@ -630,11 +665,9 @@ int	disable_ctrlc (int);	/* 1 to disable, 0 to enable Control-C detect */
 /*
  * STDIO based functions (can always be used)
  */
-
 /* serial stuff */
-void	serial_printf (const char *fmt, ...)
+int	serial_printf (const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2)));
-
 /* stdin */
 int	getc(void);
 int	tstc(void);
@@ -642,9 +675,9 @@ int	tstc(void);
 /* stdout */
 void	putc(const char c);
 void	puts(const char *s);
-void	printf(const char *fmt, ...)
+int	printf(const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2)));
-void	vprintf(const char *fmt, va_list args);
+int	vprintf(const char *fmt, va_list args);
 
 /* stderr */
 #define eputc(c)		fputc(stderr, c)
@@ -654,18 +687,24 @@ void	vprintf(const char *fmt, va_list args);
 /*
  * FILE based functions (can only be used AFTER relocation!)
  */
-
 #define stdin		0
 #define stdout		1
 #define stderr		2
 #define MAX_FILES	3
 
-void	fprintf(int file, const char *fmt, ...)
+int	fprintf(int file, const char *fmt, ...)
 		__attribute__ ((format (__printf__, 2, 3)));
 void	fputs(int file, const char *s);
 void	fputc(int file, const char c);
 int	ftstc(int file);
 int	fgetc(int file);
+
+/*
+ * CONSOLE multiplexing.
+ */
+#ifdef CONFIG_CONSOLE_MUX
+#include <iomux.h>
+#endif
 
 int	pcmcia_init (void);
 
@@ -675,7 +714,26 @@ int	pcmcia_init (void);
 /*
  * Board-specific Platform code can reimplement show_boot_progress () if needed
  */
-void __attribute__((weak)) show_boot_progress (int val);
+void show_boot_progress(int val);
+
+/* Multicore arch functions */
+#ifdef CONFIG_MP
+int cpu_status(int nr);
+int cpu_reset(int nr);
+int cpu_disable(int nr);
+int cpu_release(int nr, int argc, char * const argv[]);
+#endif
+
+#endif /* __ASSEMBLY__ */
+
+/* Put only stuff here that the assembler can digest */
+
+#ifdef CONFIG_POST
+#define CONFIG_HAS_POST
+#ifndef CONFIG_POST_ALT_LIST
+#define CONFIG_POST_STD_LIST
+#endif
+#endif
 
 #ifdef CONFIG_INIT_CRITICAL
 #error CONFIG_INIT_CRITICAL is deprecated!
@@ -684,21 +742,12 @@ void __attribute__((weak)) show_boot_progress (int val);
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
-#define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
+#define ROUND(a,b)		(((a) + (b)) & ~((b) - 1))
+#define DIV_ROUND(n,d)		(((n) + ((d)/2)) / (d))
+#define DIV_ROUND_UP(n,d)	(((n) + (d) - 1) / (d))
+#define roundup(x, y)		((((x) + ((y) - 1)) / (y)) * (y))
 
 #define ALIGN(x,a)		__ALIGN_MASK((x),(typeof(x))(a)-1)
 #define __ALIGN_MASK(x,mask)	(((x)+(mask))&~(mask))
-
-/* Multicore arch functions */
-#ifdef CONFIG_MP
-int cpu_status(int nr);
-int cpu_reset(int nr);
-int cpu_release(int nr, int argc, char *argv[]);
-#endif
-
-#ifdef CONFIG_POST
-#define CONFIG_HAS_POST
-#endif
 
 #endif	/* __COMMON_H_ */

@@ -28,7 +28,7 @@
 #include <dtt.h>
 #include <i2c.h>
 
-int do_dtt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_dtt (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 	unsigned char sensors[] = CONFIG_DTT_SENSORS;
@@ -36,7 +36,7 @@ int do_dtt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 	/* switch to correct I2C bus */
 	old_bus = I2C_GET_BUS();
-	I2C_SET_BUS(CFG_DTT_BUS_NUM);
+	I2C_SET_BUS(CONFIG_SYS_DTT_BUS_NUM);
 
 	/*
 	 * Loop through sensors, read
@@ -55,6 +55,6 @@ int do_dtt (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	  dtt,	1,	1,	do_dtt,
-	  "dtt     - Digital Thermometer and Thermostat\n",
-	  "        - Read temperature from digital thermometer and thermostat.\n"
+	  "Read temperature from Digital Thermometer and Thermostat",
+	  ""
 );

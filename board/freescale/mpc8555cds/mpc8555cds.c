@@ -23,7 +23,9 @@
 #include <common.h>
 #include <pci.h>
 #include <asm/processor.h>
+#include <asm/mmu.h>
 #include <asm/immap_85xx.h>
+#include <asm/fsl_ddr_sdram.h>
 #include <ioports.h>
 #include <spd_sdram.h>
 #include <libfdt.h>
@@ -38,7 +40,6 @@ extern void ddr_enable_ecc(unsigned int dram_size);
 #endif
 
 void local_bus_init(void);
-void sdram_init(void);
 
 /*
  * I/O Port configuration table
@@ -196,7 +197,7 @@ const iop_conf_t iop_conf_tab[4][32] = {
 
 int checkboard (void)
 {
-	volatile ccsr_gur_t *gur = (void *)(CFG_MPC85xx_GUTS_ADDR);
+	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 
 	/* PCI slot in USER bits CSR[6:7] by convention. */
 	uint pci_slot = get_pci_slot ();
@@ -217,17 +218,17 @@ int checkboard (void)
 		MPC85XX_CPU_BOARD_MAJOR (cpu_board_rev),
 		MPC85XX_CPU_BOARD_MINOR (cpu_board_rev), cpu_board_rev);
 
-	printf ("    PCI1: %d bit, %s MHz, %s\n",
+	printf("PCI1: %d bit, %s MHz, %s\n",
 		(pci1_32) ? 32 : 64,
 		(pci1_speed == 33000000) ? "33" :
 		(pci1_speed == 66000000) ? "66" : "unknown",
 		pci1_clk_sel ? "sync" : "async");
 
 	if (pci_dual) {
-		printf ("    PCI2: 32 bit, 66 MHz, %s\n",
+		printf("PCI2: 32 bit, 66 MHz, %s\n",
 			pci2_clk_sel ? "sync" : "async");
 	} else {
-		printf ("    PCI2: disabled\n");
+		printf("PCI2: disabled\n");
 	}
 
 	/*
@@ -238,54 +239,14 @@ int checkboard (void)
 	return 0;
 }
 
-phys_size_t
-initdram(int board_type)
-{
-	long dram_size = 0;
-
-	puts("Initializing\n");
-
-#if defined(CONFIG_DDR_DLL)
-	{
-		/*
-		 * Work around to stabilize DDR DLL MSYNC_IN.
-		 * Errata DDR9 seems to have been fixed.
-		 * This is now the workaround for Errata DDR11:
-		 *    Override DLL = 1, Course Adj = 1, Tap Select = 0
-		 */
-
-		volatile ccsr_gur_t *gur = (void *)(CFG_MPC85xx_GUTS_ADDR);
-
-		gur->ddrdllcr = 0x81000000;
-		asm("sync;isync;msync");
-		udelay(200);
-	}
-#endif
-	dram_size = spd_sdram();
-
-#if defined(CONFIG_DDR_ECC) && !defined(CONFIG_ECC_INIT_VIA_DDRCONTROLLER)
-	/*
-	 * Initialize and enable DDR ECC.
-	 */
-	ddr_enable_ecc(dram_size);
-#endif
-	/*
-	 * SDRAM Initialization
-	 */
-	sdram_init();
-
-	puts("    DDR: ");
-	return dram_size;
-}
-
 /*
  * Initialize Local Bus
  */
 void
 local_bus_init(void)
 {
-	volatile ccsr_gur_t *gur = (void *)(CFG_MPC85xx_GUTS_ADDR);
-	volatile ccsr_lbc_t *lbc = (void *)(CFG_MPC85xx_LBC_ADDR);
+	volatile ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
 
 	uint clkdiv;
 	uint lbc_hz;
@@ -296,13 +257,13 @@ local_bus_init(void)
 	 * Errata LBC11.
 	 * Fix Local Bus clock glitch when DLL is enabled.
 	 *
-	 * If localbus freq is < 66Mhz, DLL bypass mode must be used.
-	 * If localbus freq is > 133Mhz, DLL can be safely enabled.
+	 * If localbus freq is < 66MHz, DLL bypass mode must be used.
+	 * If localbus freq is > 133MHz, DLL can be safely enabled.
 	 * Between 66 and 133, the DLL is enabled with an override workaround.
 	 */
 
 	get_sys_info(&sysinfo);
-	clkdiv = lbc->lcrr & 0x0f;
+	clkdiv = lbc->lcrr & LCRR_CLKDIV;
 	lbc_hz = sysinfo.freqSystemBus / 1000000 / clkdiv;
 
 	if (lbc_hz < 66) {
@@ -328,58 +289,53 @@ local_bus_init(void)
 /*
  * Initialize SDRAM memory on the Local Bus.
  */
-void
-sdram_init(void)
+void lbc_sdram_init(void)
 {
-#if defined(CFG_OR2_PRELIM) && defined(CFG_BR2_PRELIM)
+#if defined(CONFIG_SYS_OR2_PRELIM) && defined(CONFIG_SYS_BR2_PRELIM)
 
 	uint idx;
-	volatile ccsr_lbc_t *lbc = (void *)(CFG_MPC85xx_LBC_ADDR);
-	uint *sdram_addr = (uint *)CFG_LBC_SDRAM_BASE;
+	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
+	uint *sdram_addr = (uint *)CONFIG_SYS_LBC_SDRAM_BASE;
 	uint cpu_board_rev;
 	uint lsdmr_common;
 
-	puts("    SDRAM: ");
-
-	print_size (CFG_LBC_SDRAM_SIZE * 1024 * 1024, "\n");
+	puts("LBC SDRAM: ");
+	print_size(CONFIG_SYS_LBC_SDRAM_SIZE * 1024 * 1024,
+		   "\n       ");
 
 	/*
 	 * Setup SDRAM Base and Option Registers
 	 */
-	lbc->or2 = CFG_OR2_PRELIM;
+	set_lbc_or(2, CONFIG_SYS_OR2_PRELIM);
+	set_lbc_br(2, CONFIG_SYS_BR2_PRELIM);
+	lbc->lbcr = CONFIG_SYS_LBC_LBCR;
 	asm("msync");
 
-	lbc->br2 = CFG_BR2_PRELIM;
-	asm("msync");
-
-	lbc->lbcr = CFG_LBC_LBCR;
-	asm("msync");
-
-	lbc->lsrt = CFG_LBC_LSRT;
-	lbc->mrtpr = CFG_LBC_MRTPR;
+	lbc->lsrt = CONFIG_SYS_LBC_LSRT;
+	lbc->mrtpr = CONFIG_SYS_LBC_MRTPR;
 	asm("msync");
 
 	/*
 	 * Determine which address lines to use baed on CPU board rev.
 	 */
 	cpu_board_rev = get_cpu_board_revision();
-	lsdmr_common = CFG_LBC_LSDMR_COMMON;
+	lsdmr_common = CONFIG_SYS_LBC_LSDMR_COMMON;
 	if (cpu_board_rev == MPC85XX_CPU_BOARD_REV_1_0) {
-		lsdmr_common |= CFG_LBC_LSDMR_BSMA1617;
+		lsdmr_common |= LSDMR_BSMA1617;
 	} else if (cpu_board_rev == MPC85XX_CPU_BOARD_REV_1_1) {
-		lsdmr_common |= CFG_LBC_LSDMR_BSMA1516;
+		lsdmr_common |= LSDMR_BSMA1516;
 	} else {
 		/*
 		 * Assume something unable to identify itself is
 		 * really old, and likely has lines 16/17 mapped.
 		 */
-		lsdmr_common |= CFG_LBC_LSDMR_BSMA1617;
+		lsdmr_common |= LSDMR_BSMA1617;
 	}
 
 	/*
 	 * Issue PRECHARGE ALL command.
 	 */
-	lbc->lsdmr = lsdmr_common | CFG_LBC_LSDMR_OP_PCHALL;
+	lbc->lsdmr = lsdmr_common | LSDMR_OP_PCHALL;
 	asm("sync;msync");
 	*sdram_addr = 0xff;
 	ppcDcbf((unsigned long) sdram_addr);
@@ -389,7 +345,7 @@ sdram_init(void)
 	 * Issue 8 AUTO REFRESH commands.
 	 */
 	for (idx = 0; idx < 8; idx++) {
-		lbc->lsdmr = lsdmr_common | CFG_LBC_LSDMR_OP_ARFRSH;
+		lbc->lsdmr = lsdmr_common | LSDMR_OP_ARFRSH;
 		asm("sync;msync");
 		*sdram_addr = 0xff;
 		ppcDcbf((unsigned long) sdram_addr);
@@ -399,7 +355,7 @@ sdram_init(void)
 	/*
 	 * Issue 8 MODE-set command.
 	 */
-	lbc->lsdmr = lsdmr_common | CFG_LBC_LSDMR_OP_MRW;
+	lbc->lsdmr = lsdmr_common | LSDMR_OP_MRW;
 	asm("sync;msync");
 	*sdram_addr = 0xff;
 	ppcDcbf((unsigned long) sdram_addr);
@@ -408,7 +364,7 @@ sdram_init(void)
 	/*
 	 * Issue NORMAL OP command.
 	 */
-	lbc->lsdmr = lsdmr_common | CFG_LBC_LSDMR_OP_NORMAL;
+	lbc->lsdmr = lsdmr_common | LSDMR_OP_NORMAL;
 	asm("sync;msync");
 	*sdram_addr = 0xff;
 	ppcDcbf((unsigned long) sdram_addr);

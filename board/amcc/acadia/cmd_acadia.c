@@ -38,16 +38,14 @@ static u8 boot_267_nand[] = {
 	0x00, 0x00, 0x00, 0x00
 };
 
-static int do_bootstrap(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_bootstrap(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	u8 chip;
 	u8 *buf;
 	int cpu_freq;
 
-	if (argc < 3) {
-		printf("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 3)
+		return cmd_usage(cmdtp);
 
 	cpu_freq = simple_strtol(argv[1], NULL, 10);
 	if (cpu_freq != 267) {
@@ -84,7 +82,7 @@ static int do_bootstrap(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	if (i2c_write(chip, 0, 1, buf, 16) != 0)
 		printf("Error writing to EEPROM at address 0x%x\n", chip);
-	udelay(CFG_EEPROM_PAGE_WRITE_DELAY_MS * 1000);
+	udelay(CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS * 1000);
 	if (i2c_write(chip, 0x10, 1, buf+16, 4) != 0)
 		printf("Error2 writing to EEPROM at address 0x%x\n", chip);
 
@@ -96,6 +94,6 @@ static int do_bootstrap(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	bootstrap,	3,	0,	do_bootstrap,
-	"bootstrap - program the I2C bootstrap EEPROM\n",
-	"<cpu-freq> <nor|nand> - program the I2C bootstrap EEPROM\n"
-	);
+	"program the I2C bootstrap EEPROM",
+	"<cpu-freq> <nor|nand> - program the I2C bootstrap EEPROM"
+);

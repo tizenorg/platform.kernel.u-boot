@@ -32,8 +32,6 @@
 #include <linux/stat.h>
 #include <linux/time.h>
 
-#if defined(CONFIG_CMD_FAT)
-
 /* Supported filesystems */
 static const struct filesystem filesystems[] = {
 	{ file_fat_detectfs,  file_fat_ls,  file_fat_read,  "FAT" },
@@ -50,11 +48,11 @@ char file_cwd[CWD_LEN+1] = "/";
 const char *
 file_getfsname(int idx)
 {
-	if (idx < 0 || idx >= NUM_FILESYS) return NULL;
+	if (idx < 0 || idx >= NUM_FILESYS)
+		return NULL;
 
 	return filesystems[idx].name;
 }
-
 
 static void
 pathcpy(char *dest, const char *src)
@@ -74,14 +72,13 @@ pathcpy(char *dest, const char *src)
 			return;
 		}
 		++dest;
-		if (ISDIRDELIM(*src)) {
+
+		if (ISDIRDELIM(*src))
 			while (ISDIRDELIM(*src)) src++;
-		} else {
+		else
 			src++;
-		}
 	} while (1);
 }
-
 
 int
 file_cd(const char *path)
@@ -143,7 +140,6 @@ file_cd(const char *path)
 	return 0;
 }
 
-
 int
 file_detectfs(void)
 {
@@ -161,7 +157,6 @@ file_detectfs(void)
 
 	return current_filesystem;
 }
-
 
 int
 file_ls(const char *dir)
@@ -183,9 +178,9 @@ file_ls(const char *dir)
 	return filesystems[current_filesystem].ls(arg);
 }
 
-
 long
-file_read(const char *filename, void *buffer, unsigned long maxsize)
+file_read(const char *filename, void *buffer,
+		unsigned long offset, unsigned long maxsize)
 {
 	char fullpath[1024];
 	const char *arg;
@@ -202,7 +197,6 @@ file_read(const char *filename, void *buffer, unsigned long maxsize)
 		arg = fullpath;
 	}
 
-	return filesystems[current_filesystem].read(arg, buffer, maxsize);
+	return filesystems[current_filesystem].read(arg, buffer,
+							offset, maxsize);
 }
-
-#endif

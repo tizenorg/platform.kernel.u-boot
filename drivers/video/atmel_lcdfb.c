@@ -24,7 +24,6 @@
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/arch/hardware.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/clk.h>
 #include <lcd.h>
@@ -43,6 +42,9 @@ short console_row;
 /* configurable parameters */
 #define ATMEL_LCDC_CVAL_DEFAULT		0xc8
 #define ATMEL_LCDC_DMA_BURST_LEN	8
+#ifndef ATMEL_LCDC_GUARD_TIME
+#define ATMEL_LCDC_GUARD_TIME		1
+#endif
 
 #if defined(CONFIG_AT91SAM9263) || defined(CONFIG_AT91CAP9)
 #define ATMEL_LCDC_FIFO_SIZE		2048
@@ -70,7 +72,7 @@ void lcd_ctrl_init(void *lcdbase)
 
 	/* Turn off the LCD controller and the DMA controller */
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_PWRCON,
-		    1 << ATMEL_LCDC_GUARDT_OFFSET);
+		    ATMEL_LCDC_GUARD_TIME << ATMEL_LCDC_GUARDT_OFFSET);
 
 	/* Wait for the LCDC core to become idle */
 	while (lcdc_readl(panel_info.mmio, ATMEL_LCDC_PWRCON) & ATMEL_LCDC_BUSY)
@@ -108,10 +110,7 @@ void lcd_ctrl_init(void *lcdbase)
 	if (panel_info.vl_tft)
 		value |= ATMEL_LCDC_DISTYPE_TFT;
 
-	if (!(panel_info.vl_sync & ATMEL_LCDC_INVLINE_INVERTED))
-		value |= ATMEL_LCDC_INVLINE_INVERTED;
-	if (!(panel_info.vl_sync & ATMEL_LCDC_INVFRAME_INVERTED))
-		value |= ATMEL_LCDC_INVFRAME_INVERTED;
+	value |= panel_info.vl_sync;
 	value |= (panel_info.vl_bpix << 5);
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_LCDCON2, value);
 
@@ -144,8 +143,9 @@ void lcd_ctrl_init(void *lcdbase)
 
 	/* Set contrast */
 	value = ATMEL_LCDC_PS_DIV8 |
-		ATMEL_LCDC_POL_POSITIVE |
 		ATMEL_LCDC_ENA_PWMENABLE;
+	if (!panel_info.vl_cont_pol_low)
+		value |= ATMEL_LCDC_POL_POSITIVE;
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_CONTRAST_CTR, value);
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_CONTRAST_VAL, ATMEL_LCDC_CVAL_DEFAULT);
 
@@ -154,7 +154,7 @@ void lcd_ctrl_init(void *lcdbase)
 
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_DMACON, ATMEL_LCDC_DMAEN);
 	lcdc_writel(panel_info.mmio, ATMEL_LCDC_PWRCON,
-		    (1 << ATMEL_LCDC_GUARDT_OFFSET) | ATMEL_LCDC_PWR);
+		    (ATMEL_LCDC_GUARD_TIME << ATMEL_LCDC_GUARDT_OFFSET) | ATMEL_LCDC_PWR);
 }
 
 ulong calc_fbsize(void)

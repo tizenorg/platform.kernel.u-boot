@@ -26,7 +26,7 @@
 #include <command.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 #include <i2c.h>
 
 #if defined(CONFIG_ZEUS)
@@ -67,12 +67,12 @@ u8 buf_zeus_pe[] = {
 static int update_boot_eeprom(void)
 {
 	u32 len = 0x20;
-	u8 chip = CFG_I2C_EEPROM_ADDR;
+	u8 chip = CONFIG_SYS_I2C_EEPROM_ADDR;
 	u8 *pbuf;
 	u8 base;
 	int i;
 
-	if (in_be32((void *)GPIO0_IR) & GPIO_VAL(CFG_GPIO_ZEUS_PE)) {
+	if (in_be32((void *)GPIO0_IR) & GPIO_VAL(CONFIG_SYS_GPIO_ZEUS_PE)) {
 		pbuf = buf_zeus_pe;
 		base = 0x40;
 	} else {
@@ -91,15 +91,15 @@ static int update_boot_eeprom(void)
 	return 0;
 }
 
-int do_update_boot_eeprom(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
+int do_update_boot_eeprom(cmd_tbl_t* cmdtp, int flag, int argc, char * const argv[])
 {
 	return update_boot_eeprom();
 }
 
 U_BOOT_CMD (
 	update_boot_eeprom, 1, 1, do_update_boot_eeprom,
-	"update_boot_eeprom  - update boot eeprom content\n",
-	NULL
+	"update boot eeprom content",
+	""
 );
 
 #endif

@@ -25,7 +25,7 @@
 
 #include <common.h>
 #include <command.h>
-#include <s3c2400.h>
+#include <asm/arch/s3c24x0_cpu.h>
 #include <rtc.h>
 
 /*
@@ -106,19 +106,19 @@ extern int i2c_write (uchar, uint, int , uchar* , int);
 extern int i2c_read (uchar, uint, int , uchar* , int);
 extern void tsc2000_reg_init (void);
 extern s32 tsc2000_contact_temp (void);
-extern void spi_init(void);
+extern void tsc2000_spi_init(void);
 
 /* function declarations */
-int do_dip (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-int do_vcc5v (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-int do_burn_in (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-int do_contact_temp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
-int do_burn_in_status (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+int do_dip (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_vcc5v (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_burn_in (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_contact_temp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+int do_burn_in_status (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 int i2c_write_multiple (uchar chip, uint addr, int alen,
 			uchar *buffer, int len);
 int i2c_read_multiple (uchar chip, uint addr, int alen,
 			uchar *buffer, int len);
-int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 /* helper functions */
 static void adc_init (void);
@@ -162,20 +162,18 @@ typedef struct test_function_s {
 test_function_t test_function[BIF_MAX];
 
 
-int do_burn_in (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_burn_in (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 	int cycle_status;
 
-	if (argc > 1) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 1)
+		return cmd_usage(cmdtp);
 
 	led_init ();
 	global_vars_init ();
 	test_function_table_init ();
-	spi_init ();
+	tsc2000_spi_init ();
 
 	if (global_vars_write_to_eeprom () != 0) {
 		printf ("%s: error writing global_vars to eeprom\n",
@@ -258,26 +256,23 @@ int do_burn_in (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	burn_in,	1,	1,	do_burn_in,
-	"burn_in - start burn-in test application on TRAB\n",
+	"start burn-in test application on TRAB",
 	"\n"
 	"    -  start burn-in test application\n"
 	"       The burn-in test could took a while to finish!\n"
-	"       The content of the onboard EEPROM is modified!\n"
+	"       The content of the onboard EEPROM is modified!"
 );
 
 
-int do_dip (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_dip (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i, dip;
 
-	if (argc > 1) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 1)
+		return cmd_usage(cmdtp);
 
-	if ((dip = read_dip ()) == -1) {
+	if ((dip = read_dip ()) == -1)
 		return 1;
-	}
 
 	for (i = 0; i < 4; i++) {
 		if ((dip & (1 << i)) == 0)
@@ -292,25 +287,22 @@ int do_dip (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	dip,	1,	1,	do_dip,
-	"dip     - read dip switch on TRAB\n",
+	"read dip switch on TRAB",
 	"\n"
 	"    - read state of dip switch (S1) on TRAB board\n"
-	"      read sequence: 1-2-3-4; ON=1; OFF=0; e.g.: \"0100\"\n"
+	"      read sequence: 1-2-3-4; ON=1; OFF=0; e.g.: \"0100\""
 );
 
 
-int do_vcc5v (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_vcc5v (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int vcc5v;
 
-	if (argc > 1) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 1)
+		return cmd_usage(cmdtp);
 
-	if ((vcc5v = read_vcc5v ()) == -1) {
+	if ((vcc5v = read_vcc5v ()) == -1)
 		return (1);
-	}
 
 	printf ("%d", (vcc5v / 1000));
 	printf (".%d", (vcc5v % 1000) / 100);
@@ -321,22 +313,20 @@ int do_vcc5v (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	vcc5v,	1,	1,	do_vcc5v,
-	"vcc5v   - read VCC5V on TRAB\n",
+	"read VCC5V on TRAB",
 	"\n"
-	"    - read actual value of voltage VCC5V\n"
+	"    - read actual value of voltage VCC5V"
 );
 
 
-int do_contact_temp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_contact_temp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int contact_temp;
 
-	if (argc > 1) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 1)
+		return cmd_usage(cmdtp);
 
-	spi_init ();
+	tsc2000_spi_init ();
 
 	contact_temp = tsc2000_contact_temp();
 	printf ("%d degree C * 100\n", contact_temp) ;
@@ -346,44 +336,40 @@ int do_contact_temp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	c_temp,	1,	1,	do_contact_temp,
-	"c_temp  - read contact temperature on TRAB\n",
-	"\n"
+	"read contact temperature on TRAB",
+	""
 	"    -  reads the onboard temperature (=contact temperature)\n"
 );
 
 
-int do_burn_in_status (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_burn_in_status (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc > 1) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 1)
+		return cmd_usage(cmdtp);
 
 	if (i2c_read_multiple (I2C_EEPROM_DEV_ADDR, EE_ADDR_STATUS, 1,
-				(unsigned char*) &status, 1)) {
+				(unsigned char*) &status, 1))
 		return (1);
-	}
+
 	if (i2c_read_multiple (I2C_EEPROM_DEV_ADDR, EE_ADDR_PASS_CYCLES, 1,
-				(unsigned char*) &pass_cycles, 2)) {
+				(unsigned char*) &pass_cycles, 2))
 		return (1);
-	}
+
 	if (i2c_read_multiple (I2C_EEPROM_DEV_ADDR, EE_ADDR_FIRST_ERROR_CYCLE,
-				1, (unsigned char*) &first_error_cycle, 2)) {
+				1, (unsigned char*) &first_error_cycle, 2))
 		return (1);
-	}
+
 	if (i2c_read_multiple (I2C_EEPROM_DEV_ADDR, EE_ADDR_FIRST_ERROR_NUM,
-				1, (unsigned char*) &first_error_num, 1)) {
+				1, (unsigned char*) &first_error_num, 1))
 		return (1);
-	}
+
 	if (i2c_read_multiple (I2C_EEPROM_DEV_ADDR, EE_ADDR_FIRST_ERROR_NAME,
 			       1, (unsigned char*)first_error_name,
-			       sizeof (first_error_name))) {
+			       sizeof (first_error_name)))
 		return (1);
-	}
 
-	if (read_max_cycles () != 0) {
+	if (read_max_cycles () != 0)
 		return (1);
-	}
 
 	printf ("max_cycles = %d\n", max_cycles);
 	printf ("status = %d\n", status);
@@ -398,10 +384,10 @@ int do_burn_in_status (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	bis,	1,	1,	do_burn_in_status,
-	"bis     - print burn in status on TRAB\n",
+	"print burn in status on TRAB",
 	"\n"
 	"    -  prints the status variables of the last burn in test\n"
-	"       stored in the onboard EEPROM on TRAB board\n"
+	"       stored in the onboard EEPROM on TRAB board"
 );
 
 static int read_dip (void)
@@ -644,35 +630,35 @@ static int adc_read (unsigned int channel)
 {
 	int j = 1000; /* timeout value for wait loop in us */
 	int result;
-	S3C2400_ADC *padc;
+	struct s3c2400_adc *padc;
 
-	padc = S3C2400_GetBase_ADC();
+	padc = s3c2400_get_base_adc();
 	channel &= 0x7;
 
 	adc_init ();
 
-	padc->ADCCON &= ~ADC_STDBM; /* select normal mode */
-	padc->ADCCON &= ~(0x7 << 3); /* clear the channel bits */
-	padc->ADCCON |= ((channel << 3) | ADC_ENABLE_START);
+	padc->adccon &= ~ADC_STDBM; /* select normal mode */
+	padc->adccon &= ~(0x7 << 3); /* clear the channel bits */
+	padc->adccon |= ((channel << 3) | ADC_ENABLE_START);
 
 	while (j--) {
-		if ((padc->ADCCON & ADC_ENABLE_START) == 0)
+		if ((padc->adccon & ADC_ENABLE_START) == 0)
 			break;
 		udelay (1);
 	}
 
 	if (j == 0) {
 		printf("%s: ADC timeout\n", __FUNCTION__);
-		padc->ADCCON |= ADC_STDBM; /* select standby mode */
+		padc->adccon |= ADC_STDBM; /* select standby mode */
 		return -1;
 	}
 
-	result = padc->ADCDAT & 0x3FF;
+	result = padc->adcdat & 0x3FF;
 
-	padc->ADCCON |= ADC_STDBM; /* select standby mode */
+	padc->adccon |= ADC_STDBM; /* select standby mode */
 
 	debug ("%s: channel %d, result[DIGIT]=%d\n", __FUNCTION__,
-	       (padc->ADCCON >> 3) & 0x7, result);
+	       (padc->adccon >> 3) & 0x7, result);
 
 	/*
 	 * Wait for ADC to be ready for next conversion. This delay value was
@@ -686,12 +672,12 @@ static int adc_read (unsigned int channel)
 
 static void adc_init (void)
 {
-	S3C2400_ADC *padc;
+	struct s3c2400_adc *padc;
 
-	padc = S3C2400_GetBase_ADC();
+	padc = s3c2400_get_base_adc();
 
-	padc->ADCCON &= ~(0xff << 6); /* clear prescaler bits */
-	padc->ADCCON |= ((65 << 6) | ADC_PRSCEN); /* set prescaler */
+	padc->adccon &= ~(0xff << 6); /* clear prescaler bits */
+	padc->adccon |= ((65 << 6) | ADC_PRSCEN); /* set prescaler */
 
 	/*
 	 * Wait some time to avoid problem with very first call of
@@ -707,16 +693,16 @@ static void adc_init (void)
 
 static void led_set (unsigned int state)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	led_init ();
 
 	switch (state) {
 	case 0: /* turn LED off */
-		gpio->PADAT |= (1 << 12);
+		gpio->padat |= (1 << 12);
 		break;
 	case 1: /* turn LED on */
-		gpio->PADAT &= ~(1 << 12);
+		gpio->padat &= ~(1 << 12);
 		break;
 	default:
 		break;
@@ -740,11 +726,11 @@ static void led_blink (void)
 
 static void led_init (void)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	/* configure GPA12 as output and set to High -> LED off */
-	gpio->PACON &= ~(1 << 12);
-	gpio->PADAT |= (1 << 12);
+	gpio->pacon &= ~(1 << 12);
+	gpio->padat |= (1 << 12);
 }
 
 
@@ -842,7 +828,7 @@ static int dummy(void)
 	return (0);
 }
 
-int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int contact_temp;
 	int delay = 0;
@@ -850,16 +836,13 @@ int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	struct rtc_time tm;
 #endif
 
-	if (argc > 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc > 2)
+		return cmd_usage(cmdtp);
 
-	if (argc > 1) {
+	if (argc > 1)
 		delay = simple_strtoul(argv[1], NULL, 10);
-	}
 
-	spi_init ();
+	tsc2000_spi_init ();
 	while (1) {
 
 #if defined(CONFIG_CMD_DATE)
@@ -886,11 +869,11 @@ int do_temp_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	tlog,	2,	1,	do_temp_log,
-	"tlog    - log contact temperature [1/100 C] to console (endlessly)\n",
+	"log contact temperature [1/100 C] to console (endlessly)",
 	"delay\n"
 	"    - contact temperature [1/100 C] is printed endlessly to console\n"
 	"      <delay> specifies the seconds to wait between two measurements\n"
-	"      For each measurment a timestamp is printeted\n"
+	"      For each measurment a timestamp is printeted"
 );
 
 #endif

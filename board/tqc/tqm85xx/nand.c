@@ -41,10 +41,10 @@ DECLARE_GLOBAL_DATA_PTR;
 extern uint get_lbc_clock (void);
 
 /* index of UPM RAM array run pattern for NAND command cycle */
-#define	CFG_NAN_UPM_WRITE_CMD_OFS	0x08
+#define	CONFIG_SYS_NAN_UPM_WRITE_CMD_OFS	0x08
 
 /* index of UPM RAM array run pattern for NAND address cycle */
-#define	CFG_NAND_UPM_WRITE_ADDR_OFS	0x10
+#define	CONFIG_SYS_NAND_UPM_WRITE_ADDR_OFS	0x10
 
 /* Structure for table with supported UPM timings */
 struct upm_freq {
@@ -377,7 +377,7 @@ volatile const u32 *nand_upm_patt;
  */
 static void upmb_write (u_char addr, ulong val)
 {
-	volatile ccsr_lbc_t *lbc = (void *)(CFG_MPC85xx_LBC_ADDR);
+	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
 
 	out_be32 (&lbc->mdr, val);
 
@@ -385,7 +385,7 @@ static void upmb_write (u_char addr, ulong val)
 			MxMR_OP_WARR | (addr & MxMR_MAD_MSK));
 
 	/* dummy access to perform write */
-	out_8 ((void __iomem *)CFG_NAND0_BASE, 0);
+	out_8 ((void __iomem *)CONFIG_SYS_NAND_BASE, 0);
 
 	clrbits_be32(&lbc->mbmr, MxMR_OP_WARR);
 }
@@ -393,14 +393,14 @@ static void upmb_write (u_char addr, ulong val)
 /*
  * Initialize UPM for NAND flash access.
  */
-static void nand_upm_setup (volatile ccsr_lbc_t *lbc)
+static void nand_upm_setup (volatile fsl_lbc_t *lbc)
 {
-	uint i;
-	uint or3 = CFG_OR3_PRELIM;
+	uint i, j;
+	uint or3 = CONFIG_SYS_OR3_PRELIM;
 	uint clock = get_lbc_clock ();
 
-	out_be32 (&lbc->br3, 0);	/* disable bank and reset all bits */
-	out_be32 (&lbc->br3, CFG_BR3_PRELIM);
+	set_lbc_br(3, 0);	/* disable bank and reset all bits */
+	set_lbc_br(3, CONFIG_SYS_BR3_PRELIM);
 
 	/*
 	 * Search appropriate UPM table for bus clock.
@@ -424,13 +424,13 @@ static void nand_upm_setup (volatile ccsr_lbc_t *lbc)
 		/* EAD must be set due to TQM8548 timing specification */
 		or3 |= OR_UPM_EAD;
 
-	out_be32 (&lbc->or3, or3);
+	set_lbc_or(3, or3);
 
 	/* Assign address of table */
 	nand_upm_patt = upm_freq_table[i].upm_patt;
 
-	for (i = 0; i < 64; i++) {
-		upmb_write (i, *nand_upm_patt);
+	for (j = 0; j < 64; j++) {
+		upmb_write (j, *nand_upm_patt);
 		nand_upm_patt++;
 	}
 
@@ -446,7 +446,10 @@ static struct fsl_upm_nand fun = {
 	.width = 8,
 	.upm_cmd_offset = 0x08,
 	.upm_addr_offset = 0x10,
+	.upm_mar_chip_offset = CONFIG_SYS_NAND_CS_DIST,
+	.chip_offset = CONFIG_SYS_NAND_CS_DIST,
 	.chip_delay = NAND_BIG_DELAY_US,
+	.wait_flags = FSL_UPM_WAIT_RUN_PATTERN | FSL_UPM_WAIT_WRITE_BUFFER,
 };
 
 void board_nand_select_device (struct nand_chip *nand, int chip)
@@ -455,7 +458,7 @@ void board_nand_select_device (struct nand_chip *nand, int chip)
 
 int board_nand_init (struct nand_chip *nand)
 {
-	volatile ccsr_lbc_t *lbc = (void *)(CFG_MPC85xx_LBC_ADDR);
+	volatile fsl_lbc_t *lbc = LBC_BASE_ADDR;
 
 	if (!nand_upm_patt)
 		nand_upm_setup (lbc);

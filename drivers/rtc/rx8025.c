@@ -30,7 +30,7 @@
 #include <rtc.h>
 #include <i2c.h>
 
-#if defined(CONFIG_RTC_RX8025) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
 /*---------------------------------------------------------------------*/
 #undef DEBUG_RTC
@@ -42,8 +42,8 @@
 #endif
 /*---------------------------------------------------------------------*/
 
-#ifndef CFG_I2C_RTC_ADDR
-# define CFG_I2C_RTC_ADDR	0x32
+#ifndef CONFIG_SYS_I2C_RTC_ADDR
+# define CONFIG_SYS_I2C_RTC_ADDR	0x32
 #endif
 
 /*
@@ -90,8 +90,6 @@
 #define rtc_read(reg) buf[((reg) + 1) & 0xf]
 
 static void rtc_write (uchar reg, uchar val);
-static uchar bin2bcd (unsigned int n);
-static unsigned bcd2bin (uchar c);
 
 /*
  * Get the current time from the RTC
@@ -102,7 +100,7 @@ int rtc_get (struct rtc_time *tmp)
 	uchar sec, min, hour, mday, wday, mon, year, ctl2;
 	uchar buf[16];
 
-	if (i2c_read(CFG_I2C_RTC_ADDR, 0, 0, buf, 16))
+	if (i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, 16))
 		printf("Error reading from RTC\n");
 
 	sec = rtc_read(RTC_SEC_REG_ADDR);
@@ -136,7 +134,11 @@ int rtc_get (struct rtc_time *tmp)
 
 	tmp->tm_sec  = bcd2bin (sec & 0x7F);
 	tmp->tm_min  = bcd2bin (min & 0x7F);
-	tmp->tm_hour = bcd2bin (hour & 0x3F);
+	if (rtc_read(RTC_CTL1_REG_ADDR) & RTC_CTL1_BIT_2412)
+		tmp->tm_hour = bcd2bin (hour & 0x3F);
+	else
+		tmp->tm_hour = bcd2bin (hour & 0x1F) % 12 +
+			       ((hour & 0x20) ? 12 : 0);
 	tmp->tm_mday = bcd2bin (mday & 0x3F);
 	tmp->tm_mon  = bcd2bin (mon & 0x1F);
 	tmp->tm_year = bcd2bin (year) + ( bcd2bin (year) >= 70 ? 1900 : 2000);
@@ -154,7 +156,7 @@ int rtc_get (struct rtc_time *tmp)
 /*
  * Set the RTC
  */
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	DEBUGR ("Set DATE: %4d-%02d-%02d (wday=%d)  TIME: %2d:%02d:%02d\n",
 		tmp->tm_year, tmp->tm_mon, tmp->tm_mday, tmp->tm_wday,
@@ -172,6 +174,8 @@ void rtc_set (struct rtc_time *tmp)
 	rtc_write (RTC_SEC_REG_ADDR, bin2bcd (tmp->tm_sec));
 
 	rtc_write (RTC_CTL1_REG_ADDR, RTC_CTL1_BIT_2412);
+
+	return 0;
 }
 
 /*
@@ -183,7 +187,7 @@ void rtc_reset (void)
 	uchar buf[16];
 	uchar ctl2;
 
-	if (i2c_read(CFG_I2C_RTC_ADDR, 0,    0,   buf, 16))
+	if (i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0,    0,   buf, 16))
 		printf("Error reading from RTC\n");
 
 	ctl2 = rtc_read(RTC_CTL2_REG_ADDR);
@@ -215,19 +219,9 @@ static void rtc_write (uchar reg, uchar val)
 	uchar buf[2];
 	buf[0] = reg << 4;
 	buf[1] = val;
-	if (i2c_write(CFG_I2C_RTC_ADDR, 0, 0, buf, 2) != 0)
+	if (i2c_write(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, 2) != 0)
 		printf("Error writing to RTC\n");
 
-}
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
 }
 
 #endif /* CONFIG_RTC_RX8025 && CONFIG_CMD_DATE */

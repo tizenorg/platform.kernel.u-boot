@@ -38,7 +38,7 @@ SECTIONS
 	}
 
 	. = ALIGN(4);
-	.rodata : { *(.rodata) }
+	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
 
 	. = ALIGN(4);
 	.data : { *(.data) }
@@ -48,6 +48,6 @@ SECTIONS
 
 	. = ALIGN(4);
 	__bss_start = .;
-	.bss : { *(.bss) }
-	_end = .;
+	.bss : { *(.bss) . = ALIGN(4); }
+	__bss_end__ = .;
 }

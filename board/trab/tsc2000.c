@@ -26,7 +26,9 @@
  */
 
 #include <common.h>
-#include <s3c2400.h>
+#include <asm/arch/s3c24x0_cpu.h>
+#include <asm/io.h>
+#include <div64.h>
 #include "tsc2000.h"
 
 #include "Pt1000_temp_data.h"
@@ -41,28 +43,28 @@
  */
 #define MAX_DEVIATION	18	/* unit: DIGITs of adc; 18 DIGIT = 0.5 °C */
 
-void spi_init(void)
+void tsc2000_spi_init(void)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
-	S3C24X0_SPI * const spi = S3C24X0_GetBase_SPI();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
+	struct s3c24x0_spi * const spi = s3c24x0_get_base_spi();
 	int i;
 
 	/* Configure I/O ports. */
-	gpio->PDCON = (gpio->PDCON & 0xF3FFFF) | 0x040000;
-	gpio->PGCON = (gpio->PGCON & 0x0F3FFF) | 0x008000;
-	gpio->PGCON = (gpio->PGCON & 0x0CFFFF) | 0x020000;
-	gpio->PGCON = (gpio->PGCON & 0x03FFFF) | 0x080000;
+	gpio->pdcon = (gpio->pdcon & 0xF3FFFF) | 0x040000;
+	gpio->pgcon = (gpio->pgcon & 0x0F3FFF) | 0x008000;
+	gpio->pgcon = (gpio->pgcon & 0x0CFFFF) | 0x020000;
+	gpio->pgcon = (gpio->pgcon & 0x03FFFF) | 0x080000;
 
 	CLR_CS_TOUCH();
 
-	spi->ch[0].SPPRE = 0x1F; /* Baud-rate ca. 514kHz */
-	spi->ch[0].SPPIN = 0x01; /* SPI-MOSI holds Level after last bit */
-	spi->ch[0].SPCON = 0x1A; /* Polling, Prescaler, Master, CPOL=0,
+	spi->ch[0].sppre = 0x1F; /* Baud-rate ca. 514kHz */
+	spi->ch[0].sppin = 0x01; /* SPI-MOSI holds Level after last bit */
+	spi->ch[0].spcon = 0x1A; /* Polling, Prescaler, Master, CPOL=0,
 				    CPHA=1 */
 
 	/* Dummy byte ensures clock to be low. */
 	for (i = 0; i < 10; i++) {
-		spi->ch[0].SPTDAT = 0xFF;
+		spi->ch[0].sptdat = 0xFF;
 	}
 	spi_wait_transmit_done();
 }
@@ -70,26 +72,27 @@ void spi_init(void)
 
 void spi_wait_transmit_done(void)
 {
-	S3C24X0_SPI * const spi = S3C24X0_GetBase_SPI();
+	struct s3c24x0_spi * const spi = s3c24x0_get_base_spi();
 
-	while (!(spi->ch[0].SPSTA & 0x01)); /* wait until transfer is done */
+	while (!(spi->ch[0].spsta & 0x01)) /* wait until transfer is done */
+		;
 }
 
 
 void tsc2000_write(unsigned short reg, unsigned short data)
 {
-	S3C24X0_SPI * const spi = S3C24X0_GetBase_SPI();
+	struct s3c24x0_spi * const spi = s3c24x0_get_base_spi();
 	unsigned int command;
 
 	SET_CS_TOUCH();
 	command = reg;
-	spi->ch[0].SPTDAT = (command & 0xFF00) >> 8;
+	spi->ch[0].sptdat = (command & 0xFF00) >> 8;
 	spi_wait_transmit_done();
-	spi->ch[0].SPTDAT = (command & 0x00FF);
+	spi->ch[0].sptdat = (command & 0x00FF);
 	spi_wait_transmit_done();
-	spi->ch[0].SPTDAT = (data & 0xFF00) >> 8;
+	spi->ch[0].sptdat = (data & 0xFF00) >> 8;
 	spi_wait_transmit_done();
-	spi->ch[0].SPTDAT = (data & 0x00FF);
+	spi->ch[0].sptdat = (data & 0x00FF);
 	spi_wait_transmit_done();
 
 	CLR_CS_TOUCH();
@@ -99,30 +102,30 @@ void tsc2000_write(unsigned short reg, unsigned short data)
 unsigned short tsc2000_read (unsigned short reg)
 {
 	unsigned short command, data;
-	S3C24X0_SPI * const spi = S3C24X0_GetBase_SPI();
+	struct s3c24x0_spi * const spi = s3c24x0_get_base_spi();
 
 	SET_CS_TOUCH();
 	command = 0x8000 | reg;
 
-	spi->ch[0].SPTDAT = (command & 0xFF00) >> 8;
+	spi->ch[0].sptdat = (command & 0xFF00) >> 8;
 	spi_wait_transmit_done();
-	spi->ch[0].SPTDAT = (command & 0x00FF);
+	spi->ch[0].sptdat = (command & 0x00FF);
 	spi_wait_transmit_done();
 
-	spi->ch[0].SPTDAT = 0xFF;
+	spi->ch[0].sptdat = 0xFF;
 	spi_wait_transmit_done();
-	data = spi->ch[0].SPRDAT;
-	spi->ch[0].SPTDAT = 0xFF;
+	data = spi->ch[0].sprdat;
+	spi->ch[0].sptdat = 0xFF;
 	spi_wait_transmit_done();
 
 	CLR_CS_TOUCH();
-	return (spi->ch[0].SPRDAT & 0x0FF) | (data << 8);
+	return (spi->ch[0].sprdat & 0x0FF) | (data << 8);
 }
 
 
 void tsc2000_set_mux (unsigned int channel)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	CLR_MUX1_ENABLE; CLR_MUX2_ENABLE;
 	CLR_MUX3_ENABLE; CLR_MUX4_ENABLE;
@@ -199,7 +202,7 @@ void tsc2000_set_mux (unsigned int channel)
 
 void tsc2000_set_range (unsigned int range)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	switch (range) {
 	case 1:
@@ -305,7 +308,7 @@ s32 tsc2000_contact_temp (void)
 
 void tsc2000_reg_init (void)
 {
-	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
+	struct s3c24x0_gpio * const gpio = s3c24x0_get_base_gpio();
 
 	tsc2000_write(TSC2000_REG_ADC, 0x2036);
 	tsc2000_write(TSC2000_REG_REF, 0x0011);
@@ -332,6 +335,7 @@ void tsc2000_reg_init (void)
 int tsc2000_interpolate(long value, long data[][2], long *result)
 {
 	int i;
+	unsigned long long val;
 
 	/* the data is sorted and the first element is upper
 	 * limit so we can easily check for out-of-band values
@@ -347,10 +351,10 @@ int tsc2000_interpolate(long value, long data[][2], long *result)
 	   result in 'long long'.
 	*/
 
-	*result = data[i-1][1] +
-		((unsigned long long)(data[i][1] - data[i-1][1])
-		 * (unsigned long long)(value - data[i-1][0]))
-		/ (data[i][0] - data[i-1][0]);
+	val = ((unsigned long long)(data[i][1] - data[i-1][1])
+		   * (unsigned long long)(value - data[i-1][0]));
+	do_div(val, (data[i][0] - data[i-1][0]));
+	*result = data[i-1][1] + val;
 
 	return 0;
 }

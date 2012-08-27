@@ -3,7 +3,7 @@
 *			 BIOS emulator and interface
 *		       to Realmode X86 Emulator Library
 *
-*  Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
+*  Copyright (C) 2007 Freescale Semiconductor, Inc.
 *  Jason Jin <Jason.jin@freescale.com>
 *
 *		Copyright (C) 1996-1999 SciTech Software, Inc.
@@ -47,9 +47,6 @@
 
 #include <malloc.h>
 #include <common.h>
-
-#if defined(CONFIG_BIOSEMU)
-
 #include "biosemui.h"
 
 BE_sysEnv _BE_env = {{0}};
@@ -147,7 +144,8 @@ void X86API BE_setVGA(BE_VGAInfo * info)
 		_BE_env.biosmem_base = _BE_env.busmem_base + 0x20000;
 		_BE_env.biosmem_limit = 0xC7FFF;
 	}
-	if (*((u32 *) info->LowMem) == 0)
+	if ((info->LowMem[0] == 0) && (info->LowMem[1] == 0) &&
+	    (info->LowMem[2] == 0) && (info->LowMem[3] == 0))
 		_BE_bios_init((u32 *) info->LowMem);
 	memcpy((u8 *) M.mem_base, info->LowMem, sizeof(info->LowMem));
 }
@@ -372,4 +370,3 @@ int X86API BE_int86x(int intno, RMREGS * in, RMREGS * out, RMSREGS * sregs)
 	sregs->gs = M.x86.R_GS;
 	return out->x.ax;
 }
-#endif

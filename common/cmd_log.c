@@ -42,7 +42,7 @@
 
 #include <common.h>
 #include <command.h>
-#include <devices.h>
+#include <stdio_dev.h>
 #include <post.h>
 #include <logbuff.h>
 
@@ -68,7 +68,7 @@ static char *lbuf;
 
 unsigned long __logbuffer_base(void)
 {
-	return CFG_SDRAM_BASE + gd->bd->bi_memsize - LOGBUFF_LEN;
+	return CONFIG_SYS_SDRAM_BASE + gd->bd->bi_memsize - LOGBUFF_LEN;
 }
 unsigned long logbuffer_base (void) __attribute__((weak, alias("__logbuffer_base")));
 
@@ -142,7 +142,7 @@ void logbuff_reset (void)
 
 int drv_logbuff_init (void)
 {
-	device_t logdev;
+	struct stdio_dev logdev;
 	int rc;
 
 	/* Device initialization */
@@ -154,7 +154,7 @@ int drv_logbuff_init (void)
 	logdev.putc  = logbuff_putc;		/* 'putc' function */
 	logdev.puts  = logbuff_puts;		/* 'puts' function */
 
-	rc = device_register (&logdev);
+	rc = stdio_register (&logdev);
 
 	return (rc == 0) ? 1 : rc;
 }
@@ -193,7 +193,7 @@ void logbuff_log(char *msg)
  * Return:      None
  *
  */
-int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *s;
 	unsigned long i, start, size;
@@ -241,22 +241,20 @@ int do_log (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			}
 			return 0;
 		}
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 }
 
 U_BOOT_CMD(
 	log,     255,	1,	do_log,
-	"log     - manipulate logbuffer\n",
+	"manipulate logbuffer",
 	"info   - show pointer details\n"
 	"log reset  - clear contents\n"
 	"log show   - show contents\n"
-	"log append <msg> - append <msg> to the logbuffer\n"
+	"log append <msg> - append <msg> to the logbuffer"
 );
 
 static int logbuff_printk(const char *line)

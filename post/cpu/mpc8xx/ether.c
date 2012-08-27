@@ -36,7 +36,7 @@
  */
 
 #include <post.h>
-#if CONFIG_POST & CFG_POST_ETHER
+#if CONFIG_POST & CONFIG_SYS_POST_ETHER
 #if defined(CONFIG_8xx)
 #include <commproc.h>
 #elif defined(CONFIG_MPC8260)
@@ -109,18 +109,25 @@ static RTXBD *rtx;
 
 static void scc_init (int scc_index)
 {
-	bd_t *bd = gd->bd;
+	uchar ea[6];
 
-	static int proff[] =
-			{ PROFF_SCC1, PROFF_SCC2, PROFF_SCC3, PROFF_SCC4 };
-	static unsigned int cpm_cr[] =
-			{ CPM_CR_CH_SCC1, CPM_CR_CH_SCC2, CPM_CR_CH_SCC3,
-CPM_CR_CH_SCC4 };
+	static int proff[] = {
+				PROFF_SCC1,
+				PROFF_SCC2,
+				PROFF_SCC3,
+				PROFF_SCC4,
+	};
+	static unsigned int cpm_cr[] = {
+				CPM_CR_CH_SCC1,
+				CPM_CR_CH_SCC2,
+				CPM_CR_CH_SCC3,
+				CPM_CR_CH_SCC4,
+	};
 
 	int i;
 	scc_enet_t *pram_ptr;
 
-	volatile immap_t *immr = (immap_t *) CFG_IMMR;
+	volatile immap_t *immr = (immap_t *) CONFIG_SYS_IMMR;
 
 	immr->im_cpm.cp_scc[scc_index].scc_gsmrl &=
 			~(SCC_GSMRL_ENR | SCC_GSMRL_ENT);
@@ -143,7 +150,7 @@ CPM_CR_CH_SCC4 };
 	rxIdx = 0;
 	txIdx = 0;
 
-#ifdef CFG_ALLOC_DPRAM
+#ifdef CONFIG_SYS_ALLOC_DPRAM
 	rtx = (RTXBD *) (immr->im_cpm.cp_dpmem +
 					 dpram_alloc_align (sizeof (RTXBD), 8));
 #else
@@ -296,11 +303,10 @@ CPM_CR_CH_SCC4 };
 	pram_ptr->sen_gaddr3 = 0x0;	/* Group Address Filter 3 (unused) */
 	pram_ptr->sen_gaddr4 = 0x0;	/* Group Address Filter 4 (unused) */
 
-#define ea bd->bi_enetaddr
+	eth_getenv_enetaddr("ethaddr", ea);
 	pram_ptr->sen_paddrh = (ea[5] << 8) + ea[4];
 	pram_ptr->sen_paddrm = (ea[3] << 8) + ea[2];
 	pram_ptr->sen_paddrl = (ea[1] << 8) + ea[0];
-#undef ea
 
 	pram_ptr->sen_pper = 0x0;	/* Persistence (unused) */
 	pram_ptr->sen_iaddr1 = 0x0;	/* Individual Address Filter 1 (unused) */
@@ -452,7 +458,7 @@ CPM_CR_CH_SCC4 };
 
 static void scc_halt (int scc_index)
 {
-	volatile immap_t *immr = (immap_t *) CFG_IMMR;
+	volatile immap_t *immr = (immap_t *) CONFIG_SYS_IMMR;
 
 	immr->im_cpm.cp_scc[scc_index].scc_gsmrl &=
 			~(SCC_GSMRL_ENR | SCC_GSMRL_ENT);
@@ -624,4 +630,4 @@ int ether_post_test (int flags)
 	return res;
 }
 
-#endif /* CONFIG_POST & CFG_POST_ETHER */
+#endif /* CONFIG_POST & CONFIG_SYS_POST_ETHER */

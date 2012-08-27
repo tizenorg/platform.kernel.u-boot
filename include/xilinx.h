@@ -29,25 +29,25 @@
 
 /* Xilinx Model definitions
  *********************************************************************/
-#define CFG_SPARTAN2			CFG_FPGA_DEV( 0x1 )
-#define CFG_VIRTEX_E			CFG_FPGA_DEV( 0x2 )
-#define CFG_VIRTEX2			CFG_FPGA_DEV( 0x4 )
-#define CFG_SPARTAN3			CFG_FPGA_DEV( 0x8 )
-#define CFG_XILINX_SPARTAN2	(CFG_FPGA_XILINX | CFG_SPARTAN2)
-#define CFG_XILINX_VIRTEX_E	(CFG_FPGA_XILINX | CFG_VIRTEX_E)
-#define CFG_XILINX_VIRTEX2	(CFG_FPGA_XILINX | CFG_VIRTEX2)
-#define CFG_XILINX_SPARTAN3	(CFG_FPGA_XILINX | CFG_SPARTAN3)
+#define CONFIG_SYS_SPARTAN2			CONFIG_SYS_FPGA_DEV( 0x1 )
+#define CONFIG_SYS_VIRTEX_E			CONFIG_SYS_FPGA_DEV( 0x2 )
+#define CONFIG_SYS_VIRTEX2			CONFIG_SYS_FPGA_DEV( 0x4 )
+#define CONFIG_SYS_SPARTAN3			CONFIG_SYS_FPGA_DEV( 0x8 )
+#define CONFIG_SYS_XILINX_SPARTAN2	(CONFIG_SYS_FPGA_XILINX | CONFIG_SYS_SPARTAN2)
+#define CONFIG_SYS_XILINX_VIRTEX_E	(CONFIG_SYS_FPGA_XILINX | CONFIG_SYS_VIRTEX_E)
+#define CONFIG_SYS_XILINX_VIRTEX2	(CONFIG_SYS_FPGA_XILINX | CONFIG_SYS_VIRTEX2)
+#define CONFIG_SYS_XILINX_SPARTAN3	(CONFIG_SYS_FPGA_XILINX | CONFIG_SYS_SPARTAN3)
 /* XXX - Add new models here */
 
 
 /* Xilinx Interface definitions
  *********************************************************************/
-#define CFG_XILINX_IF_SS	CFG_FPGA_IF( 0x1 )	/* slave serial		*/
-#define CFG_XILINX_IF_MS	CFG_FPGA_IF( 0x2 )	/* master serial	*/
-#define CFG_XILINX_IF_SP	CFG_FPGA_IF( 0x4 )	/* slave parallel	*/
-#define CFG_XILINX_IF_JTAG	CFG_FPGA_IF( 0x8 )	/* jtag			*/
-#define CFG_XILINX_IF_MSM	CFG_FPGA_IF( 0x10 )	/* master selectmap	*/
-#define CFG_XILINX_IF_SSM	CFG_FPGA_IF( 0x20 )	/* slave selectmap	*/
+#define CONFIG_SYS_XILINX_IF_SS	CONFIG_SYS_FPGA_IF( 0x1 )	/* slave serial		*/
+#define CONFIG_SYS_XILINX_IF_MS	CONFIG_SYS_FPGA_IF( 0x2 )	/* master serial	*/
+#define CONFIG_SYS_XILINX_IF_SP	CONFIG_SYS_FPGA_IF( 0x4 )	/* slave parallel	*/
+#define CONFIG_SYS_XILINX_IF_JTAG	CONFIG_SYS_FPGA_IF( 0x8 )	/* jtag			*/
+#define CONFIG_SYS_XILINX_IF_MSM	CONFIG_SYS_FPGA_IF( 0x10 )	/* master selectmap	*/
+#define CONFIG_SYS_XILINX_IF_SSM	CONFIG_SYS_FPGA_IF( 0x20 )	/* slave selectmap	*/
 
 /* Xilinx types
  *********************************************************************/
@@ -84,7 +84,6 @@ typedef struct {		/* typedef Xilinx_desc */
 extern int xilinx_load( Xilinx_desc *desc, void *image, size_t size );
 extern int xilinx_dump( Xilinx_desc *desc, void *buf, size_t bsize );
 extern int xilinx_info( Xilinx_desc *desc );
-extern int xilinx_reloc( Xilinx_desc *desc, ulong reloc_offset );
 
 /* Board specific implementation specific function types
  *********************************************************************/
@@ -101,5 +100,6 @@ typedef int (*Xilinx_busy_fn)( int cookie );
 typedef int (*Xilinx_abort_fn)( int cookie );
 typedef int (*Xilinx_pre_fn)( int cookie );
 typedef int (*Xilinx_post_fn)( int cookie );
+typedef int (*Xilinx_bwr_fn)( void *buf, size_t len, int flush, int cookie );
 
 #endif  /* _XILINX_H_ */

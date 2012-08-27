@@ -222,7 +222,7 @@ static int fpga_load (fpga_t* fpga, ulong addr, int checkall)
 
 /* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . */
 
-int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     ulong addr = 0;
     int i;
@@ -286,16 +286,15 @@ int do_fpga (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
     return 0;
 
  failure:
-    printf ("Usage:\n%s\n", cmdtp->usage);
-    return 1;
+    return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	fpga,	4,	1,	do_fpga,
-	"fpga    - access FPGA(s)\n",
+	"access FPGA(s)",
 	"fpga status [name] - print FPGA status\n"
 	"fpga reset  [name] - reset FPGA\n"
-	"fpga load [name] addr - load FPGA configuration data\n"
+	"fpga load [name] addr - load FPGA configuration data"
 );
 
 #endif

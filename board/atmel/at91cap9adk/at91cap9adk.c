@@ -26,15 +26,19 @@
 #include <asm/arch/at91cap9.h>
 #include <asm/arch/at91cap9_matrix.h>
 #include <asm/arch/at91sam9_smc.h>
+#include <asm/arch/at91_common.h>
 #include <asm/arch/at91_pmc.h>
 #include <asm/arch/at91_rstc.h>
+#include <asm/arch/clk.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/io.h>
+#include <asm/arch/hardware.h>
 #include <lcd.h>
 #include <atmel_lcdc.h>
 #if defined(CONFIG_RESET_PHY_R) && defined(CONFIG_MACB)
 #include <net.h>
 #endif
+#include <netdev.h>
 
 #define MP_BLOCK_3_BASE	0xFDF00000
 
@@ -44,33 +48,6 @@ DECLARE_GLOBAL_DATA_PTR;
 /*
  * Miscelaneous platform dependent initialisations
  */
-
-static void at91cap9_serial_hw_init(void)
-{
-#ifdef CONFIG_USART0
-	at91_set_A_periph(AT91_PIN_PA22, 1);		/* TXD0 */
-	at91_set_A_periph(AT91_PIN_PA23, 0);		/* RXD0 */
-	at91_sys_write(AT91_PMC_PCER, 1 << AT91_ID_US0);
-#endif
-
-#ifdef CONFIG_USART1
-	at91_set_A_periph(AT91_PIN_PD0, 1);		/* TXD1 */
-	at91_set_A_periph(AT91_PIN_PD1, 0);		/* RXD1 */
-	at91_sys_write(AT91_PMC_PCER, 1 << AT91_ID_US1);
-#endif
-
-#ifdef CONFIG_USART2
-	at91_set_A_periph(AT91_PIN_PD2, 1);		/* TXD2 */
-	at91_set_A_periph(AT91_PIN_PD3, 0);		/* RXD2 */
-	at91_sys_write(AT91_PMC_PCER, 1 << AT91_ID_US2);
-#endif
-
-#ifdef CONFIG_USART3	/* DBGU */
-	at91_set_A_periph(AT91_PIN_PC30, 0);		/* DRXD */
-	at91_set_A_periph(AT91_PIN_PC31, 1);		/* DTXD */
-	at91_sys_write(AT91_PMC_PCER, 1 << AT91_ID_SYS);
-#endif
-}
 
 static void at91cap9_slowclock_hw_init(void)
 {
@@ -84,7 +61,6 @@ static void at91cap9_slowclock_hw_init(void)
 	if (at91_sys_read(AT91_PMC_VER) == ARCH_ID_AT91CAP9_REVC) {
 		unsigned i, tmp = at91_sys_read(AT91_SCKCR);
 		if ((tmp & AT91CAP9_SCKCR_OSCSEL) == AT91CAP9_SCKCR_OSCSEL_RC) {
-			extern void timer_init(void);
 			timer_init();
 			tmp |= AT91CAP9_SCKCR_OSC32EN;
 			at91_sys_write(AT91_SCKCR, tmp);
@@ -145,9 +121,9 @@ static void at91cap9_nand_hw_init(void)
 	at91_sys_write(AT91_SMC_MODE(3),
 		       AT91_SMC_READMODE | AT91_SMC_WRITEMODE |
 		       AT91_SMC_EXNWMODE_DISABLE |
-#ifdef CFG_NAND_DBW_16
+#ifdef CONFIG_SYS_NAND_DBW_16
 		       AT91_SMC_DBW_16 |
-#else /* CFG_NAND_DBW_8 */
+#else /* CONFIG_SYS_NAND_DBW_8 */
 		       AT91_SMC_DBW_8 |
 #endif
 		       AT91_SMC_TDF_(1));
@@ -157,21 +133,7 @@ static void at91cap9_nand_hw_init(void)
 	/* RDY/BSY is not connected */
 
 	/* Enable NandFlash */
-	at91_set_gpio_output(AT91_PIN_PD15, 1);
-}
-#endif
-
-#ifdef CONFIG_HAS_DATAFLASH
-static void at91cap9_spi_hw_init(void)
-{
-	at91_set_B_periph(AT91_PIN_PA5, 0);	/* SPI0_NPCS0 */
-
-	at91_set_B_periph(AT91_PIN_PA0, 0);	/* SPI0_MISO */
-	at91_set_B_periph(AT91_PIN_PA1, 0);	/* SPI0_MOSI */
-	at91_set_B_periph(AT91_PIN_PA2, 0);	/* SPI0_SPCK */
-
-	/* Enable clock */
-	at91_sys_write(AT91_PMC_PCER, 1 << AT91CAP9_ID_SPI0);
+	at91_set_gpio_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
 }
 #endif
 
@@ -215,27 +177,8 @@ static void at91cap9_macb_hw_init(void)
 	       pin_to_mask(AT91_PIN_PB26),
 	       pin_to_controller(AT91_PIN_PA0) + PIO_PUER);
 
-	at91_set_A_periph(AT91_PIN_PB21, 0);	/* ETXCK_EREFCK */
-	at91_set_A_periph(AT91_PIN_PB22, 0);	/* ERXDV */
-	at91_set_A_periph(AT91_PIN_PB25, 0);	/* ERX0 */
-	at91_set_A_periph(AT91_PIN_PB26, 0);	/* ERX1 */
-	at91_set_A_periph(AT91_PIN_PB27, 0);	/* ERXER */
-	at91_set_A_periph(AT91_PIN_PB28, 0);	/* ETXEN */
-	at91_set_A_periph(AT91_PIN_PB23, 0);	/* ETX0 */
-	at91_set_A_periph(AT91_PIN_PB24, 0);	/* ETX1 */
-	at91_set_A_periph(AT91_PIN_PB30, 0);	/* EMDIO */
-	at91_set_A_periph(AT91_PIN_PB29, 0);	/* EMDC */
+	at91_macb_hw_init();
 
-#ifndef CONFIG_RMII
-	at91_set_B_periph(AT91_PIN_PC25, 0);	/* ECRS */
-	at91_set_B_periph(AT91_PIN_PC26, 0);	/* ECOL */
-	at91_set_B_periph(AT91_PIN_PC22, 0);	/* ERX2 */
-	at91_set_B_periph(AT91_PIN_PC23, 0);	/* ERX3 */
-	at91_set_B_periph(AT91_PIN_PC27, 0);	/* ERXCK */
-	at91_set_B_periph(AT91_PIN_PC20, 0);	/* ETX2 */
-	at91_set_B_periph(AT91_PIN_PC21, 0);	/* ETX3 */
-	at91_set_B_periph(AT91_PIN_PC24, 0);	/* ETXER */
-#endif
 	/* Unlock EMAC, 3 0 2 1 sequence */
 #define MP_MAC_KEY0	0x5969cb2a
 #define MP_MAC_KEY1	0xb4a1872e
@@ -324,6 +267,35 @@ static void at91cap9_lcd_hw_init(void)
 
 	gd->fb_base = 0;
 }
+
+#ifdef CONFIG_LCD_INFO
+#include <nand.h>
+#include <version.h>
+
+void lcd_show_board_info(void)
+{
+	ulong dram_size, nand_size;
+	int i;
+	char temp[32];
+
+	lcd_printf ("%s\n", U_BOOT_VERSION);
+	lcd_printf ("(C) 2008 ATMEL Corp\n");
+	lcd_printf ("at91support@atmel.com\n");
+	lcd_printf ("%s CPU at %s MHz\n",
+		CONFIG_SYS_AT91_CPU_NAME,
+		strmhz(temp, get_cpu_clk_rate()));
+
+	dram_size = 0;
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
+		dram_size += gd->bd->bi_dram[i].size;
+	nand_size = 0;
+	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++)
+		nand_size += nand_info[i].size;
+	lcd_printf ("  %ld MB SDRAM, %ld MB NAND\n",
+		dram_size >> 20,
+		nand_size >> 20 );
+}
+#endif /* CONFIG_LCD_INFO */
 #endif
 
 int board_init(void)
@@ -336,14 +308,14 @@ int board_init(void)
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
-	at91cap9_serial_hw_init();
+	at91_serial_hw_init();
 	at91cap9_slowclock_hw_init();
 	at91cap9_nor_hw_init();
 #ifdef CONFIG_CMD_NAND
 	at91cap9_nand_hw_init();
 #endif
 #ifdef CONFIG_HAS_DATAFLASH
-	at91cap9_spi_hw_init();
+	at91_spi0_hw_init(1 << 0);
 #endif
 #ifdef CONFIG_MACB
 	at91cap9_macb_hw_init();
@@ -367,12 +339,14 @@ int dram_init(void)
 #ifdef CONFIG_RESET_PHY_R
 void reset_phy(void)
 {
-#ifdef CONFIG_MACB
-	/*
-	 * Initialize ethernet HW addr prior to starting Linux,
-	 * needed for nfsroot
-	 */
-	eth_init(gd->bd);
-#endif
 }
 #endif
+
+int board_eth_init(bd_t *bis)
+{
+	int rc = 0;
+#ifdef CONFIG_MACB
+	rc = macb_eth_initialize(0, (void *)AT91CAP9_BASE_EMAC, 0x00);
+#endif
+	return rc;
+}

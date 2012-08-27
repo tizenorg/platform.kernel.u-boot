@@ -34,20 +34,20 @@
 #endif
 
 /* SPI mode flags */
-#define	SPI_CPHA	0x01			/* clock phase */
-#define	SPI_CPOL	0x02			/* clock polarity */
-#define	SPI_MODE_0	(0|0)			/* (original MicroWire) */
+#define	SPI_CPHA	0x01	/* clock phase */
+#define	SPI_CPOL	0x02	/* clock polarity */
+#define	SPI_MODE_0	(0|0)	/* (original MicroWire) */
 #define	SPI_MODE_1	(0|SPI_CPHA)
 #define	SPI_MODE_2	(SPI_CPOL|0)
 #define	SPI_MODE_3	(SPI_CPOL|SPI_CPHA)
-#define	SPI_CS_HIGH	0x04			/* CS active high */
-#define	SPI_LSB_FIRST	0x08			/* per-word bits-on-wire */
-#define	SPI_3WIRE	0x10			/* SI/SO signals shared */
-#define	SPI_LOOP	0x20			/* loopback mode */
+#define	SPI_CS_HIGH	0x04	/* CS active high */
+#define	SPI_LSB_FIRST	0x08	/* per-word bits-on-wire */
+#define	SPI_3WIRE	0x10	/* SI/SO signals shared */
+#define	SPI_LOOP	0x20	/* loopback mode */
 
 /* SPI transfer flags */
-#define SPI_XFER_BEGIN	0x01			/* Assert CS before transfer */
-#define SPI_XFER_END	0x02			/* Deassert CS after transfer */
+#define SPI_XFER_BEGIN	0x01	/* Assert CS before transfer */
+#define SPI_XFER_END	0x02	/* Deassert CS after transfer */
 
 /*-----------------------------------------------------------------------
  * Representation of a SPI slave, i.e. what we're communicating with.
@@ -58,9 +58,57 @@
  *   cs:	ID of the chip select connected to the slave.
  */
 struct spi_slave {
-	unsigned int	bus;
-	unsigned int	cs;
+	unsigned int bus;
+	unsigned int cs;
 };
+
+#define COMMAND_ONLY		0xFE
+#define DATA_ONLY		0xFF
+#define ACTIVE_LOW		0
+#define ACTIVE_HIGH		1
+
+#if defined(CONFIG_OMAP)
+struct spi_platform_data {
+	struct omap_gpio_bank *cs_bank;
+	struct omap_gpio_bank *clk_bank;
+	struct omap_gpio_bank *si_bank;
+	struct omap_gpio_bank *so_bank;
+
+	unsigned int cs_num;
+	unsigned int clk_num;
+	unsigned int si_num;
+	unsigned int so_num;
+
+	unsigned int mode;
+	unsigned int cs_active;
+	unsigned int word_len;
+
+	unsigned int set_rev;
+};
+#else
+struct spi_platform_data {
+	struct s5p_gpio_bank *cs_bank;
+	struct s5p_gpio_bank *clk_bank;
+	struct s5p_gpio_bank *si_bank;
+	struct s5p_gpio_bank *so_bank;
+
+	unsigned int cs_num;
+	unsigned int clk_num;
+	unsigned int si_num;
+	unsigned int so_num;
+
+	unsigned int mode;
+	unsigned int cs_active;
+	unsigned int word_len;
+
+	unsigned int set_rev;
+};
+#endif
+
+void spi_gpio_write(struct spi_platform_data *spi,
+		    unsigned int address, unsigned int command);
+
+int spi_gpio_read(struct spi_platform_data *spi);
 
 /*-----------------------------------------------------------------------
  * Initialization, must be called once on start up.
@@ -86,7 +134,7 @@ void spi_init(void);
  * calls, or NULL if one or more of the parameters are not supported.
  */
 struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
-		unsigned int max_hz, unsigned int mode);
+				  unsigned int max_hz, unsigned int mode);
 
 /*-----------------------------------------------------------------------
  * Free any memory associated with a SPI slave.
@@ -144,8 +192,8 @@ void spi_release_bus(struct spi_slave *slave);
  *
  *   Returns: 0 on success, not 0 on failure
  */
-int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
-		void *din, unsigned long flags);
+int spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
+	     void *din, unsigned long flags);
 
 /*-----------------------------------------------------------------------
  * Determine if a SPI chipselect is valid.
@@ -155,7 +203,7 @@ int  spi_xfer(struct spi_slave *slave, unsigned int bitlen, const void *dout,
  * Returns: 1 if bus:cs identifies a valid chip on this board, 0
  * otherwise.
  */
-int  spi_cs_is_valid(unsigned int bus, unsigned int cs);
+int spi_cs_is_valid(unsigned int bus, unsigned int cs);
 
 /*-----------------------------------------------------------------------
  * Activate a SPI chipselect.
@@ -197,4 +245,4 @@ static inline int spi_w8r8(struct spi_slave *slave, unsigned char byte)
 	return ret < 0 ? ret : din[1];
 }
 
-#endif	/* _SPI_H_ */
+#endif				/* _SPI_H_ */

@@ -30,7 +30,7 @@
 
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -38,30 +38,29 @@ DECLARE_GLOBAL_DATA_PTR;
 #define REBOOT_NOP	0x00000000
 #define REBOOT_DO_POST	0x00000001
 
-extern flash_info_t flash_info[CFG_MAX_FLASH_BANKS]; /* info for FLASH chips	*/
+extern flash_info_t flash_info[CONFIG_SYS_MAX_FLASH_BANKS]; /* info for FLASH chips	*/
 extern env_t *env_ptr;
 extern uchar default_environment[];
 
 ulong flash_get_size(ulong base, int banknum);
 void env_crc_update(void);
-int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 static u32 start_time;
 
 int board_early_init_f(void)
 {
-	mtdcr(uicsr, 0xFFFFFFFF);	/* clear all ints */
-	mtdcr(uicer, 0x00000000);	/* disable all ints */
-	mtdcr(uiccr, 0x00000000);
-	mtdcr(uicpr, 0xFFFF7F00);	/* set int polarities */
-	mtdcr(uictr, 0x00000000);	/* set int trigger levels */
-	mtdcr(uicsr, 0xFFFFFFFF);	/* clear all ints */
-	mtdcr(uicvcr, 0x00000001);	/* set vect base=0,INT0 highest priority */
+	mtdcr(UIC0SR, 0xFFFFFFFF);	/* clear all ints */
+	mtdcr(UIC0ER, 0x00000000);	/* disable all ints */
+	mtdcr(UIC0CR, 0x00000000);
+	mtdcr(UIC0PR, 0xFFFF7F00);	/* set int polarities */
+	mtdcr(UIC0TR, 0x00000000);	/* set int trigger levels */
+	mtdcr(UIC0SR, 0xFFFFFFFF);	/* clear all ints */
+	mtdcr(UIC0VCR, 0x00000001);	/* set vect base=0,INT0 highest priority */
 
 	/*
 	 * Configure CPC0_PCI to enable PerWE as output
 	 */
-	mtdcr(cpc0_pci, CPC0_PCI_SPE);
+	mtdcr(CPC0_PCI, CPC0_PCI_SPE);
 
 	return 0;
 }
@@ -73,8 +72,8 @@ int misc_init_r(void)
 	u32 post_magic;
 	u32 post_val;
 
-	post_magic = in_be32((void *)CFG_POST_MAGIC);
-	post_val = in_be32((void *)CFG_POST_VAL);
+	post_magic = in_be32((void *)CONFIG_SYS_POST_MAGIC);
+	post_val = in_be32((void *)CONFIG_SYS_POST_VAL);
 	if ((post_magic == REBOOT_MAGIC) && (post_val == REBOOT_DO_POST)) {
 		/*
 		 * Set special bootline bootparameter to pass this POST boot
@@ -87,7 +86,7 @@ int misc_init_r(void)
 		 * via the sw-reset button. So disable further tests
 		 * upon next bootup here.
 		 */
-		out_be32((void *)CFG_POST_VAL, REBOOT_NOP);
+		out_be32((void *)CONFIG_SYS_POST_VAL, REBOOT_NOP);
 	} else {
 		/*
 		 * Only run POST when initiated via the sw-reset button mechanism
@@ -107,7 +106,7 @@ int misc_init_r(void)
 	/* Re-do sizing to get full correct info */
 
 	/* adjust flash start and offset */
-	mfebc(pb0cr, pbcr);
+	mfebc(PB0CR, pbcr);
 	switch (gd->bd->bi_flashsize) {
 	case 1 << 20:
 		size_val = 0;
@@ -135,7 +134,7 @@ int misc_init_r(void)
 		break;
 	}
 	pbcr = (pbcr & 0x0001ffff) | gd->bd->bi_flashstart | (size_val << 17);
-	mtebc(pb0cr, pbcr);
+	mtebc(PB0CR, pbcr);
 
 	/*
 	 * Re-check to get correct base address
@@ -144,14 +143,14 @@ int misc_init_r(void)
 
 	/* Monitor protection ON by default */
 	(void)flash_protect(FLAG_PROTECT_SET,
-			    -CFG_MONITOR_LEN,
+			    -CONFIG_SYS_MONITOR_LEN,
 			    0xffffffff,
 			    &flash_info[0]);
 
 	/* Env protection ON by default */
 	(void)flash_protect(FLAG_PROTECT_SET,
-			    CFG_ENV_ADDR_REDUND,
-			    CFG_ENV_ADDR_REDUND + 2*CFG_ENV_SECT_SIZE - 1,
+			    CONFIG_ENV_ADDR_REDUND,
+			    CONFIG_ENV_ADDR_REDUND + 2*CONFIG_ENV_SECT_SIZE - 1,
 			    &flash_info[0]);
 
 	return 0;
@@ -166,7 +165,7 @@ int checkboard(void)
 
 	puts("Board: Zeus-");
 
-	if (in_be32((void *)GPIO0_IR) & GPIO_VAL(CFG_GPIO_ZEUS_PE))
+	if (in_be32((void *)GPIO0_IR) & GPIO_VAL(CONFIG_SYS_GPIO_ZEUS_PE))
 		puts("PE");
 	else
 		puts("CE");
@@ -180,37 +179,14 @@ int checkboard(void)
 	putc('\n');
 
 	/* both LED's off */
-	gpio_write_bit(CFG_GPIO_LED_RED, 0);
-	gpio_write_bit(CFG_GPIO_LED_GREEN, 0);
+	gpio_write_bit(CONFIG_SYS_GPIO_LED_RED, 0);
+	gpio_write_bit(CONFIG_SYS_GPIO_LED_GREEN, 0);
 	udelay(10000);
 	/* and on again */
-	gpio_write_bit(CFG_GPIO_LED_RED, 1);
-	gpio_write_bit(CFG_GPIO_LED_GREEN, 1);
+	gpio_write_bit(CONFIG_SYS_GPIO_LED_RED, 1);
+	gpio_write_bit(CONFIG_SYS_GPIO_LED_GREEN, 1);
 
 	return (0);
-}
-
-static u32 detect_sdram_size(void)
-{
-	u32 val;
-	u32 size;
-
-	mfsdram(mem_mb0cf, val);
-	size = (4 << 20) << ((val & 0x000e0000) >> 17);
-
-	/*
-	 * Check if 2nd bank is enabled too
-	 */
-	mfsdram(mem_mb1cf, val);
-	if (val & 1)
-		size += (4 << 20) << ((val & 0x000e0000) >> 17);
-
-	return size;
-}
-
-phys_size_t initdram (int board_type)
-{
-	return detect_sdram_size();
 }
 
 static int default_env_var(char *buf, char *var)
@@ -245,27 +221,8 @@ static int restore_default(void)
 	char *buf_save;
 	u32 crc;
 
-	/*
-	 * Unprotect and erase environment area
-	 */
-	flash_protect(FLAG_PROTECT_CLEAR,
-		      CFG_ENV_ADDR_REDUND,
-		      CFG_ENV_ADDR_REDUND + 2*CFG_ENV_SECT_SIZE - 1,
-		      &flash_info[0]);
+	set_default_env("");
 
-	flash_sect_erase(CFG_ENV_ADDR_REDUND,
-			 CFG_ENV_ADDR_REDUND + 2*CFG_ENV_SECT_SIZE - 1);
-
-	/*
-	 * Now restore default environment from U-Boot image
-	 * -> ipaddr, serverip...
-	 */
-	memset(env_ptr, 0, sizeof(env_t));
-	memcpy(env_ptr->data, default_environment, ENV_SIZE);
-#ifdef CFG_REDUNDAND_ENVIRONMENT
-	env_ptr->flags = 0xFF;
-#endif
-	env_crc_update();
 	gd->env_valid = 1;
 
 	/*
@@ -274,6 +231,10 @@ static int restore_default(void)
 	 * -> ethaddr, eth1addr, serial#
 	 */
 	buf = buf_save = malloc(FACTORY_RESET_ENV_SIZE);
+	if (buf == NULL) {
+		printf("ERROR: malloc() failed\n");
+		return -1;
+	}
 	if (eeprom_read(FACTORY_RESET_I2C_EEPROM, FACTORY_RESET_ENV_OFFS,
 			(u8 *)buf, FACTORY_RESET_ENV_SIZE)) {
 		puts("\nError reading EEPROM!\n");
@@ -301,7 +262,7 @@ static int restore_default(void)
 	return 0;
 }
 
-int do_set_default(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_set_default(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	char *buf;
 	char *buf_save;
@@ -350,16 +311,16 @@ int do_set_default(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	setdef,	4,	1,	do_set_default,
-	"setdef  - write board-specific values to EEPROM (ethaddr...)\n",
-	"ethaddr eth1addr serial#\n    - write board-specific values to EEPROM\n"
+	"write board-specific values to EEPROM (ethaddr...)",
+	"ethaddr eth1addr serial#\n    - write board-specific values to EEPROM"
 	);
 
 static inline int sw_reset_pressed(void)
 {
-	return !(in_be32((void *)GPIO0_IR) & GPIO_VAL(CFG_GPIO_SW_RESET));
+	return !(in_be32((void *)GPIO0_IR) & GPIO_VAL(CONFIG_SYS_GPIO_SW_RESET));
 }
 
-int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
+int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char * const argv[])
 {
 	int delta;
 	int count = 0;
@@ -379,16 +340,16 @@ int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 		if (!sw_reset_pressed())
 			break;
 
-		if ((delta > CFG_TIME_POST) && !post) {
+		if ((delta > CONFIG_SYS_TIME_POST) && !post) {
 			printf("\nWhen released now, POST tests will be started.");
-			gpio_write_bit(CFG_GPIO_LED_GREEN, 0);
+			gpio_write_bit(CONFIG_SYS_GPIO_LED_GREEN, 0);
 			post = 1;
 		}
 
-		if ((delta > CFG_TIME_FACTORY_RESET) && !factory_reset) {
+		if ((delta > CONFIG_SYS_TIME_FACTORY_RESET) && !factory_reset) {
 			printf("\nWhen released now, factory default values"
 			       " will be restored.");
-			gpio_write_bit(CFG_GPIO_LED_RED, 0);
+			gpio_write_bit(CONFIG_SYS_GPIO_LED_RED, 0);
 			factory_reset = 1;
 		}
 
@@ -400,7 +361,7 @@ int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 
 	printf("\nSW-Reset Button released after %d milli-seconds!\n", delta);
 
-	if (delta > CFG_TIME_FACTORY_RESET) {
+	if (delta > CONFIG_SYS_TIME_FACTORY_RESET) {
 		printf("Starting factory reset value restoration...\n");
 
 		/*
@@ -416,14 +377,14 @@ int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 		return 0;
 	}
 
-	if (delta > CFG_TIME_POST) {
+	if (delta > CONFIG_SYS_TIME_POST) {
 		printf("Starting POST configuration...\n");
 
 		/*
 		 * Enable POST upon next bootup
 		 */
-		out_be32((void *)CFG_POST_MAGIC, REBOOT_MAGIC);
-		out_be32((void *)CFG_POST_VAL, REBOOT_DO_POST);
+		out_be32((void *)CONFIG_SYS_POST_MAGIC, REBOOT_MAGIC);
+		out_be32((void *)CONFIG_SYS_POST_VAL, REBOOT_DO_POST);
 		post_bootmode_init();
 
 		/*
@@ -441,8 +402,8 @@ int do_chkreset(cmd_tbl_t* cmdtp, int flag, int argc, char* argv[])
 
 U_BOOT_CMD (
 	chkreset, 1, 1, do_chkreset,
-	"chkreset- Check for status of SW-reset button and act accordingly\n",
-	NULL
+	"Check for status of SW-reset button and act accordingly",
+	""
 );
 
 #if defined(CONFIG_POST)
@@ -455,8 +416,8 @@ int post_hotkeys_pressed(void)
 	u32 post_magic;
 	u32 post_val;
 
-	post_magic = in_be32((void *)CFG_POST_MAGIC);
-	post_val = in_be32((void *)CFG_POST_VAL);
+	post_magic = in_be32((void *)CONFIG_SYS_POST_MAGIC);
+	post_val = in_be32((void *)CONFIG_SYS_POST_VAL);
 
 	if ((post_magic == REBOOT_MAGIC) && (post_val == REBOOT_DO_POST))
 		return 1;

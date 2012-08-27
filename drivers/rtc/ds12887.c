@@ -28,7 +28,7 @@
 #include <config.h>
 #include <rtc.h>
 
-#if defined(CONFIG_RTC_DS12887) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
 #define RTC_SECONDS			0x00
 #define RTC_SECONDS_ALARM		0x01
@@ -75,18 +75,6 @@ static void rtc_write (uchar reg, uchar val)
 #else
 # error Board specific rtc access functions should be supplied
 #endif
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
-}
-
-/* ------------------------------------------------------------------------- */
 
 int rtc_get (struct rtc_time *tmp)
 {
@@ -154,7 +142,7 @@ else
 	return 0;
 }
 
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	uchar save_ctrl_b;
 	uchar sec, min, hour, mday, wday, mon, year;
@@ -202,6 +190,8 @@ void rtc_set (struct rtc_time *tmp)
 	/* enables the RTC to update the regs */
 	save_ctrl_b &= ~RTC_CB_SET;
 	rtc_write(RTC_CONTROL_B, save_ctrl_b);
+
+	return 0;
 }
 
 void rtc_reset (void)

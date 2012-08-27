@@ -3,7 +3,7 @@
 *		     Video BOOT Graphics Card POST Module
 *
 *  ========================================================================
-*   Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
+*   Copyright (C) 2007 Freescale Semiconductor, Inc.
 *   Jason Jin <Jason.jin@freescale.com>
 *
 *   Copyright (C) 1991-2004 SciTech Software, Inc. All rights reserved.
@@ -46,9 +46,6 @@
 *		BIOS in u-boot.
 ****************************************************************************/
 #include <common.h>
-
-#ifdef CONFIG_BIOSEMU
-
 #include "biosemui.h"
 #include <malloc.h>
 
@@ -176,7 +173,7 @@ Maps a pointer to the BIOS image on the graphics card on the PCI bus.
 ****************************************************************************/
 void *PCI_mapBIOSImage(pci_dev_t pcidev)
 {
-	u32 BIOSImagePhys;
+	u32 BIOSImageBus;
 	int BIOSImageBAR;
 	u8 *BIOSImage;
 
@@ -198,16 +195,18 @@ void *PCI_mapBIOSImage(pci_dev_t pcidev)
 	 specific programming for different cards to solve this problem.
 	*/
 
-	if ((BIOSImagePhys = PCI_findBIOSAddr(pcidev, &BIOSImageBAR)) == 0) {
+	BIOSImageBus = PCI_findBIOSAddr(pcidev, &BIOSImageBAR);
+	if (BIOSImageBus == 0) {
 		printf("Find bios addr error\n");
 		return NULL;
 	}
 
-	BIOSImage = (u8 *) BIOSImagePhys;
+	BIOSImage = pci_bus_to_virt(pcidev, BIOSImageBus,
+				    PCI_REGION_MEM, 0, MAP_NOCACHE);
 
 	/*Change the PCI BAR registers to map it onto the bus.*/
 	pci_write_config_dword(pcidev, BIOSImageBAR, 0);
-	pci_write_config_dword(pcidev, PCI_ROM_ADDRESS, BIOSImagePhys | 0x1);
+	pci_write_config_dword(pcidev, PCI_ROM_ADDRESS, BIOSImageBus | 0x1);
 
 	udelay(1);
 
@@ -318,7 +317,8 @@ int BootVideoCardBIOS(pci_dev_t pcidev, BE_VGAInfo ** pVGAInfo, int cleanUp)
 	BE_init(0, 65536, VGAInfo, 0);
 
 	/*Post all the display controller BIOS'es*/
-	PCI_postController(pcidev, VGAInfo);
+	if (!PCI_postController(pcidev, VGAInfo))
+		return false;
 
 	/*Cleanup and exit the emulator if requested. If the BIOS emulator
 	is needed after booting the card, we will not call BE_exit and
@@ -336,5 +336,3 @@ int BootVideoCardBIOS(pci_dev_t pcidev, BE_VGAInfo ** pVGAInfo, int cleanUp)
 		*pVGAInfo = VGAInfo;
 	return true;
 }
-
-#endif

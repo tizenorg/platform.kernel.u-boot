@@ -31,7 +31,6 @@
 #include <command.h>
 #include <rtc.h>
 #include <i2c.h>
-#include <bcd.h>
 
 #if defined(CONFIG_CMD_DATE)
 
@@ -68,7 +67,7 @@ int rtc_get(struct rtc_time *tm)
 {
 	u8 buf[M41T62_DATETIME_REG_SIZE];
 
-	i2c_read(CFG_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE);
+	i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE);
 
 	debug("%s: raw read data - sec=%02x, min=%02x, hr=%02x, "
 	      "mday=%02x, mon=%02x, year=%02x, wday=%02x, y2k=%02x\n",
@@ -76,16 +75,16 @@ int rtc_get(struct rtc_time *tm)
 	      buf[0], buf[1], buf[2], buf[3],
 	      buf[4], buf[5], buf[6], buf[7]);
 
-	tm->tm_sec = BCD2BIN(buf[M41T62_REG_SEC] & 0x7f);
-	tm->tm_min = BCD2BIN(buf[M41T62_REG_MIN] & 0x7f);
-	tm->tm_hour = BCD2BIN(buf[M41T62_REG_HOUR] & 0x3f);
-	tm->tm_mday = BCD2BIN(buf[M41T62_REG_DAY] & 0x3f);
+	tm->tm_sec = bcd2bin(buf[M41T62_REG_SEC] & 0x7f);
+	tm->tm_min = bcd2bin(buf[M41T62_REG_MIN] & 0x7f);
+	tm->tm_hour = bcd2bin(buf[M41T62_REG_HOUR] & 0x3f);
+	tm->tm_mday = bcd2bin(buf[M41T62_REG_DAY] & 0x3f);
 	tm->tm_wday = buf[M41T62_REG_WDAY] & 0x07;
-	tm->tm_mon = BCD2BIN(buf[M41T62_REG_MON] & 0x1f);
+	tm->tm_mon = bcd2bin(buf[M41T62_REG_MON] & 0x1f);
 
 	/* assume 20YY not 19YY, and ignore the Century Bit */
 	/* U-Boot needs to add 1900 here */
-	tm->tm_year = BCD2BIN(buf[M41T62_REG_YEAR]) + 100 + 1900;
+	tm->tm_year = bcd2bin(buf[M41T62_REG_YEAR]) + 100 + 1900;
 
 	debug("%s: tm is secs=%d, mins=%d, hours=%d, "
 	      "mday=%d, mon=%d, year=%d, wday=%d\n",
@@ -96,7 +95,7 @@ int rtc_get(struct rtc_time *tm)
 	return 0;
 }
 
-void rtc_set(struct rtc_time *tm)
+int rtc_set(struct rtc_time *tm)
 {
 	u8 buf[M41T62_DATETIME_REG_SIZE];
 
@@ -104,27 +103,31 @@ void rtc_set(struct rtc_time *tm)
 	      tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_wday,
 	      tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-	i2c_read(CFG_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE);
+	i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE);
 
 	/* Merge time-data and register flags into buf[0..7] */
 	buf[M41T62_REG_SSEC] = 0;
 	buf[M41T62_REG_SEC] =
-		BIN2BCD(tm->tm_sec) | (buf[M41T62_REG_SEC] & ~0x7f);
+		bin2bcd(tm->tm_sec) | (buf[M41T62_REG_SEC] & ~0x7f);
 	buf[M41T62_REG_MIN] =
-		BIN2BCD(tm->tm_min) | (buf[M41T62_REG_MIN] & ~0x7f);
+		bin2bcd(tm->tm_min) | (buf[M41T62_REG_MIN] & ~0x7f);
 	buf[M41T62_REG_HOUR] =
-		BIN2BCD(tm->tm_hour) | (buf[M41T62_REG_HOUR] & ~0x3f) ;
+		bin2bcd(tm->tm_hour) | (buf[M41T62_REG_HOUR] & ~0x3f) ;
 	buf[M41T62_REG_WDAY] =
 		(tm->tm_wday & 0x07) | (buf[M41T62_REG_WDAY] & ~0x07);
 	buf[M41T62_REG_DAY] =
-		BIN2BCD(tm->tm_mday) | (buf[M41T62_REG_DAY] & ~0x3f);
+		bin2bcd(tm->tm_mday) | (buf[M41T62_REG_DAY] & ~0x3f);
 	buf[M41T62_REG_MON] =
-		BIN2BCD(tm->tm_mon) | (buf[M41T62_REG_MON] & ~0x1f);
+		bin2bcd(tm->tm_mon) | (buf[M41T62_REG_MON] & ~0x1f);
 	/* assume 20YY not 19YY */
-	buf[M41T62_REG_YEAR] = BIN2BCD(tm->tm_year % 100);
+	buf[M41T62_REG_YEAR] = bin2bcd(tm->tm_year % 100);
 
-	if (i2c_write(CFG_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE))
+	if (i2c_write(CONFIG_SYS_I2C_RTC_ADDR, 0, 1, buf, M41T62_DATETIME_REG_SIZE)) {
 		printf("I2C write failed in %s()\n", __func__);
+		return -1;
+	}
+
+	return 0;
 }
 
 void rtc_reset(void)

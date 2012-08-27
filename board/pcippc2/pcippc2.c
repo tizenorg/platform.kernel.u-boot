@@ -28,6 +28,7 @@
 #include <linux/mtd/doc2000.h>
 #include <watchdog.h>
 #include <pci.h>
+#include <netdev.h>
 
 #include "hardware.h"
 #include "pcippc2.h"
@@ -68,7 +69,7 @@ phys_size_t initdram (int board_type)
 	return cpc710_ram_init ();
 }
 
-int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	out32 (REG (CPC0, SPOR), 0);
 	iobarrier_rw ();
@@ -146,10 +147,12 @@ void pci_init_board (void)
 	cpc710_pci_enable_timeout ();
 }
 
+#ifdef CONFIG_CMD_DOC
 void doc_init (void)
 {
 	doc_probe (pcippc2_fpga1_phys + HW_FPGA1_DOC);
 }
+#endif
 
 void pcippc2_cpci3264_init (void)
 {
@@ -203,7 +206,7 @@ void watchdog_reset (void)
 }
 
 #if defined(CONFIG_CMD_BSP)
-int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 1:
@@ -229,17 +232,21 @@ int do_wd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	default:
 		break;
 	}
-	printf ("Usage:\n%s\n", cmdtp->usage);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	wd,	2,	1,	do_wd,
-	"wd      - check and set watchdog\n",
+	"check and set watchdog",
 	"on   - switch watchDog on\n"
 	"wd off  - switch watchdog off\n"
-	"wd      - print current status\n"
+	"wd      - print current status"
 );
 
 #endif
 #endif	/* CONFIG_WATCHDOG */
+
+int board_eth_init(bd_t *bis)
+{
+	return pci_eth_init(bis);
+}

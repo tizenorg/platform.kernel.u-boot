@@ -1,79 +1,106 @@
 /*
  * COM1 NS16550 support
- * originally from linux source (arch/ppc/boot/ns16550.c)
- * modified to use CFG_ISA_MEM and new defines
+ * originally from linux source (arch/powerpc/boot/ns16550.c)
+ * modified to use CONFIG_SYS_ISA_MEM and new defines
  */
 
 #include <config.h>
-
-#ifdef CFG_NS16550
-
 #include <ns16550.h>
+#include <watchdog.h>
+#include <linux/types.h>
+#include <asm/io.h>
 
-#define LCRVAL LCR_8N1					/* 8 data, 1 stop, no parity */
-#define MCRVAL (MCR_DTR | MCR_RTS)			/* RTS/DTR */
-#define FCRVAL (FCR_FIFO_EN | FCR_RXSR | FCR_TXSR)	/* Clear & enable FIFOs */
+#define UART_LCRVAL UART_LCR_8N1		/* 8 data, 1 stop, no parity */
+#define UART_MCRVAL (UART_MCR_DTR | \
+		     UART_MCR_RTS)		/* RTS/DTR */
+#define UART_FCRVAL (UART_FCR_FIFO_EN |	\
+		     UART_FCR_RXSR |	\
+		     UART_FCR_TXSR)		/* Clear & enable FIFOs */
+#ifdef CONFIG_SYS_NS16550_PORT_MAPPED
+#define serial_out(x,y)	outb(x,(ulong)y)
+#define serial_in(y)	inb((ulong)y)
+#else
+#define serial_out(x,y) writeb(x,y)
+#define serial_in(y) 	readb(y)
+#endif
+
+#ifndef CONFIG_SYS_NS16550_IER
+#define CONFIG_SYS_NS16550_IER  0x00
+#endif /* CONFIG_SYS_NS16550_IER */
 
 void NS16550_init (NS16550_t com_port, int baud_divisor)
 {
-	com_port->ier = 0x00;
-#ifdef CONFIG_OMAP
-	com_port->mdr1 = 0x7;	/* mode select reset TL16C750*/
+	serial_out(CONFIG_SYS_NS16550_IER, &com_port->ier);
+#if defined(CONFIG_OMAP) && !defined(CONFIG_OMAP3_ZOOM2)
+	serial_out(0x7, &com_port->mdr1);	/* mode select reset TL16C750*/
 #endif
-	com_port->lcr = LCR_BKSE | LCRVAL;
-	com_port->dll = 0;
-	com_port->dlm = 0;
-	com_port->lcr = LCRVAL;
-	com_port->mcr = MCRVAL;
-	com_port->fcr = FCRVAL;
-	com_port->lcr = LCR_BKSE | LCRVAL;
-	com_port->dll = baud_divisor & 0xff;
-	com_port->dlm = (baud_divisor >> 8) & 0xff;
-	com_port->lcr = LCRVAL;
-#if defined(CONFIG_OMAP)
+	serial_out(UART_LCR_BKSE | UART_LCRVAL, (ulong)&com_port->lcr);
+	serial_out(0, &com_port->dll);
+	serial_out(0, &com_port->dlm);
+	serial_out(UART_LCRVAL, &com_port->lcr);
+	serial_out(UART_MCRVAL, &com_port->mcr);
+	serial_out(UART_FCRVAL, &com_port->fcr);
+	serial_out(UART_LCR_BKSE | UART_LCRVAL, &com_port->lcr);
+	serial_out(baud_divisor & 0xff, &com_port->dll);
+	serial_out((baud_divisor >> 8) & 0xff, &com_port->dlm);
+	serial_out(UART_LCRVAL, &com_port->lcr);
+#if defined(CONFIG_OMAP) && !defined(CONFIG_OMAP3_ZOOM2)
 #if defined(CONFIG_APTIX)
-	com_port->mdr1 = 3;	/* /13 mode so Aptix 6MHz can hit 115200 */
+	serial_out(3, &com_port->mdr1);	/* /13 mode so Aptix 6MHz can hit 115200 */
 #else
-	com_port->mdr1 = 0;	/* /16 is proper to hit 115200 with 48MHz */
+	serial_out(0, &com_port->mdr1);	/* /16 is proper to hit 115200 with 48MHz */
 #endif
-#endif
+#endif /* CONFIG_OMAP */
 }
 
+#ifndef CONFIG_NS16550_MIN_FUNCTIONS
 void NS16550_reinit (NS16550_t com_port, int baud_divisor)
 {
-	com_port->ier = 0x00;
-	com_port->lcr = LCR_BKSE | LCRVAL;
-	com_port->dll = 0;
-	com_port->dlm = 0;
-	com_port->lcr = LCRVAL;
-	com_port->mcr = MCRVAL;
-	com_port->fcr = FCRVAL;
-	com_port->lcr = LCR_BKSE;
-	com_port->dll = baud_divisor & 0xff;
-	com_port->dlm = (baud_divisor >> 8) & 0xff;
-	com_port->lcr = LCRVAL;
+	serial_out(CONFIG_SYS_NS16550_IER, &com_port->ier);
+	serial_out(UART_LCR_BKSE | UART_LCRVAL, &com_port->lcr);
+	serial_out(0, &com_port->dll);
+	serial_out(0, &com_port->dlm);
+	serial_out(UART_LCRVAL, &com_port->lcr);
+	serial_out(UART_MCRVAL, &com_port->mcr);
+	serial_out(UART_FCRVAL, &com_port->fcr);
+	serial_out(UART_LCR_BKSE, &com_port->lcr);
+	serial_out(baud_divisor & 0xff, &com_port->dll);
+	serial_out((baud_divisor >> 8) & 0xff, &com_port->dlm);
+	serial_out(UART_LCRVAL, &com_port->lcr);
 }
+#endif /* CONFIG_NS16550_MIN_FUNCTIONS */
 
 void NS16550_putc (NS16550_t com_port, char c)
 {
-	while ((com_port->lsr & LSR_THRE) == 0);
-	com_port->thr = c;
+	while ((serial_in(&com_port->lsr) & UART_LSR_THRE) == 0);
+	serial_out(c, &com_port->thr);
+
+	/*
+	 * Call watchdog_reset() upon newline. This is done here in putc
+	 * since the environment code uses a single puts() to print the complete
+	 * environment upon "printenv". So we can't put this watchdog call
+	 * in puts().
+	 */
+	if (c == '\n')
+		WATCHDOG_RESET();
 }
 
+#ifndef CONFIG_NS16550_MIN_FUNCTIONS
 char NS16550_getc (NS16550_t com_port)
 {
-	while ((com_port->lsr & LSR_DR) == 0) {
+	while ((serial_in(&com_port->lsr) & UART_LSR_DR) == 0) {
 #ifdef CONFIG_USB_TTY
 		extern void usbtty_poll(void);
 		usbtty_poll();
 #endif
+		WATCHDOG_RESET();
 	}
-	return (com_port->rbr);
+	return serial_in(&com_port->rbr);
 }
 
 int NS16550_tstc (NS16550_t com_port)
 {
-	return ((com_port->lsr & LSR_DR) != 0);
+	return ((serial_in(&com_port->lsr) & UART_LSR_DR) != 0);
 }
 
-#endif
+#endif /* CONFIG_NS16550_MIN_FUNCTIONS */

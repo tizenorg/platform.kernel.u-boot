@@ -55,13 +55,13 @@ SECTIONS
     /* WARNING - the following is hand-optimized to fit within	*/
     /* the sector layout of our flash chips!	XXX FIXME XXX	*/
 
-    cpu/mcf547x_8x/start.o		(.text)
-    lib_m68k/traps.o		(.text)
-    lib_m68k/interrupts.o	(.text)
+    arch/m68k/cpu/mcf547x_8x/start.o		(.text)
+    arch/m68k/lib/traps.o		(.text)
+    arch/m68k/lib/interrupts.o	(.text)
     common/dlmalloc.o		(.text)
 
     . = DEFINED(env_offset) ? env_offset : .;
-    common/environment.o	(.text)
+    common/env_embedded.o	(.text)
 
     *(.text)
     *(.fixup)
@@ -71,8 +71,7 @@ SECTIONS
   PROVIDE (etext = .);
   .rodata    :
   {
-    *(.rodata)
-    *(.rodata1)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   }
   .fini      : { *(.fini)    } =0
   .ctors     : { *(.ctors)   }
@@ -137,6 +136,6 @@ SECTIONS
    . = ALIGN(4);
    _ebss = .;
   }
-  _end = . ;
+  __bss_end__ = . ;
   PROVIDE (end = .);
 }

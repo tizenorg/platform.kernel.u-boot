@@ -40,13 +40,13 @@
 #endif
 
 /* CONFIG_FPGA bit assignments */
-#define CFG_FPGA_MAN(x)		(x)
-#define CFG_FPGA_DEV(x)		((x) << 8 )
-#define CFG_FPGA_IF(x)		((x) << 16 )
+#define CONFIG_SYS_FPGA_MAN(x)		(x)
+#define CONFIG_SYS_FPGA_DEV(x)		((x) << 8 )
+#define CONFIG_SYS_FPGA_IF(x)		((x) << 16 )
 
 /* FPGA Manufacturer bits in CONFIG_FPGA */
-#define CFG_FPGA_XILINX		CFG_FPGA_MAN( 0x1 )
-#define CFG_FPGA_ALTERA		CFG_FPGA_MAN( 0x2 )
+#define CONFIG_SYS_FPGA_XILINX		CONFIG_SYS_FPGA_MAN( 0x1 )
+#define CONFIG_SYS_FPGA_ALTERA		CONFIG_SYS_FPGA_MAN( 0x2 )
 
 
 /* fpga_xxxx function return value definitions */
@@ -61,6 +61,7 @@ typedef enum {			/* typedef fpga_type */
 	fpga_min_type,		/* range check value */
 	fpga_xilinx,		/* Xilinx Family) */
 	fpga_altera,		/* unimplemented */
+	fpga_lattice,		/* Lattice family */
 	fpga_undefined		/* invalid range check value */
 } fpga_type;			/* end, typedef fpga_type */
 
@@ -71,7 +72,7 @@ typedef struct {		/* typedef fpga_desc */
 
 
 /* root function definitions */
-extern void fpga_init( ulong reloc_off );
+extern void fpga_init( void );
 extern int fpga_add( fpga_type devtype, void *desc );
 extern int fpga_count( void );
 extern int fpga_load( int devnum, void *buf, size_t bsize );

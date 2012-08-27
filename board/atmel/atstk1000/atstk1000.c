@@ -24,10 +24,26 @@
 #include <asm/io.h>
 #include <asm/sdram.h>
 #include <asm/arch/clk.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/hmatrix.h>
+#include <asm/arch/mmu.h>
+#include <asm/arch/portmux.h>
+#include <netdev.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+struct mmu_vm_range mmu_vmr_table[CONFIG_SYS_NR_VM_REGIONS] = {
+	{
+		.virt_pgno	= CONFIG_SYS_FLASH_BASE >> PAGE_SHIFT,
+		.nr_pages	= CONFIG_SYS_FLASH_SIZE >> PAGE_SHIFT,
+		.phys		= (CONFIG_SYS_FLASH_BASE >> PAGE_SHIFT)
+					| MMU_VMR_CACHE_NONE,
+	}, {
+		.virt_pgno	= CONFIG_SYS_SDRAM_BASE >> PAGE_SHIFT,
+		.nr_pages	= EBI_SDRAM_SIZE >> PAGE_SHIFT,
+		.phys		= (CONFIG_SYS_SDRAM_BASE >> PAGE_SHIFT)
+					| MMU_VMR_CACHE_WRBACK,
+	},
+};
 
 static const struct sdram_config sdram_config = {
 #if defined(CONFIG_ATSTK1006)
@@ -77,14 +93,14 @@ int board_early_init_f(void)
 	/* Enable SDRAM in the EBI mux */
 	hmatrix_slave_write(EBI, SFR, HMATRIX_BIT(EBI_SDRAM_ENABLE));
 
-	gpio_enable_ebi();
-	gpio_enable_usart1();
+	portmux_enable_ebi(sdram_config.data_bits, 23, 0, PORTMUX_DRIVE_HIGH);
+	portmux_enable_usart1(PORTMUX_DRIVE_MIN);
 #if defined(CONFIG_MACB)
-	gpio_enable_macb0();
-	gpio_enable_macb1();
+	portmux_enable_macb0(PORTMUX_MACB_MII, PORTMUX_DRIVE_LOW);
+	portmux_enable_macb1(PORTMUX_MACB_MII, PORTMUX_DRIVE_LOW);
 #endif
 #if defined(CONFIG_MMC)
-	gpio_enable_mmci();
+	portmux_enable_mmci(0, PORTMUX_MMCI_4BIT, PORTMUX_DRIVE_LOW);
 #endif
 
 	return 0;
@@ -96,12 +112,10 @@ phys_size_t initdram(int board_type)
 	unsigned long actual_size;
 	void *sdram_base;
 
-	sdram_base = map_physmem(EBI_SDRAM_BASE, EBI_SDRAM_SIZE, MAP_NOCACHE);
+	sdram_base = uncached(EBI_SDRAM_BASE);
 
 	expected_size = sdram_init(sdram_base, &sdram_config);
 	actual_size = get_ram_size(sdram_base, expected_size);
-
-	unmap_physmem(sdram_base, EBI_SDRAM_SIZE);
 
 	if (expected_size != actual_size)
 		printf("Warning: Only %lu of %lu MiB SDRAM is working\n",
@@ -110,8 +124,18 @@ phys_size_t initdram(int board_type)
 	return actual_size;
 }
 
-void board_init_info(void)
+int board_early_init_r(void)
 {
 	gd->bd->bi_phy_id[0] = 0x10;
 	gd->bd->bi_phy_id[1] = 0x11;
+	return 0;
 }
+
+#ifdef CONFIG_CMD_NET
+int board_eth_init(bd_t *bi)
+{
+	macb_eth_initialize(0, (void *)MACB0_BASE, bi->bi_phy_id[0]);
+	macb_eth_initialize(1, (void *)MACB1_BASE, bi->bi_phy_id[1]);
+	return 0;
+}
+#endif

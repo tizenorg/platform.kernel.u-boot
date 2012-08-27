@@ -30,20 +30,18 @@
 
 /* Allow ports to override the default behavior */
 __attribute__((weak))
-unsigned long do_go_exec (ulong (*entry)(int, char *[]), int argc, char *argv[])
+unsigned long do_go_exec (ulong (*entry)(int, char * const []), int argc, char * const argv[])
 {
 	return entry (argc, argv);
 }
 
-int do_go (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_go (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong	addr, rc;
 	int     rcode = 0;
 
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	addr = simple_strtoul(argv[1], NULL, 16);
 
@@ -63,16 +61,14 @@ int do_go (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 /* -------------------------------------------------------------------- */
 
 U_BOOT_CMD(
-	go, CFG_MAXARGS, 1,	do_go,
-	"go      - start application at address 'addr'\n",
+	go, CONFIG_SYS_MAXARGS, 1,	do_go,
+	"start application at address 'addr'",
 	"addr [arg ...]\n    - start application at address 'addr'\n"
-	"      passing 'arg' as arguments\n"
+	"      passing 'arg' as arguments"
 );
-
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
 
 U_BOOT_CMD(
 	reset, 1, 0,	do_reset,
-	"reset   - Perform RESET of the CPU\n",
-	NULL
+	"Perform RESET of the CPU",
+	""
 );

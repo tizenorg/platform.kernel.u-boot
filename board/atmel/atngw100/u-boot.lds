@@ -36,8 +36,7 @@ SECTIONS
 	_etext = .;
 
 	.rodata : {
-		*(.rodata)
-		*(.rodata.*)
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
 	}
 
 	. = ALIGN(8);
@@ -69,5 +68,5 @@ SECTIONS
 		*(.bss.*)
 	}
 	. = ALIGN(8);
-	_end = .;
+	__bss_end__ = .;
 }

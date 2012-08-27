@@ -34,7 +34,7 @@
 #include <rtc.h>
 #include <i2c.h>
 
-#if defined(CONFIG_RTC_RS5C372A) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 /*
  * Reads are always done starting with register 15, which requires some
  * jumping-through-hoops to access the data correctly.
@@ -50,8 +50,8 @@ static unsigned int rtc_debug = DEBUG;
 #define rtc_debug 0	/* gcc will remove all the debug code for us */
 #endif
 
-#ifndef CFG_I2C_RTC_ADDR
-#define CFG_I2C_RTC_ADDR 0x32
+#ifndef CONFIG_SYS_I2C_RTC_ADDR
+#define CONFIG_SYS_I2C_RTC_ADDR 0x32
 #endif
 
 #define RS5C372_RAM_SIZE 0x10
@@ -67,9 +67,6 @@ static unsigned int rtc_debug = DEBUG;
 #define HOURS_24(n)	bcd2bin((n) & 0x3F)
 
 
-static uchar bin2bcd (unsigned int n);
-static unsigned bcd2bin (uchar c);
-
 static int setup_done = 0;
 
 static int
@@ -77,7 +74,7 @@ rs5c372_readram(unsigned char *buf, int len)
 {
 	int ret;
 
-	ret = i2c_read(CFG_I2C_RTC_ADDR, 0, 0, buf, len);
+	ret = i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, len);
 	if (ret != 0) {
 		printf("%s: failed to read\n", __FUNCTION__);
 		return ret;
@@ -117,7 +114,7 @@ rs5c372_enable(void)
 	buf[14] = 0; /* reg. 13 */
 	buf[15] = 0; /* reg. 14 */
 	buf[16] = USE_24HOUR_MODE; /* reg. 15 */
-	ret = i2c_write(CFG_I2C_RTC_ADDR, 0, 0, buf, RS5C372_RAM_SIZE+1);
+	ret = i2c_write(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, RS5C372_RAM_SIZE+1);
 	if (ret != 0) {
 		printf("%s: failed\n", __FUNCTION__);
 		return;
@@ -195,8 +192,7 @@ rtc_get (struct rtc_time *tmp)
 /*
  * Set the RTC
  */
-void
-rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	unsigned char buf[8], reg15;
 	int ret;
@@ -205,7 +201,7 @@ rtc_set (struct rtc_time *tmp)
 		rs5c372_enable();
 
 	if (!setup_done)
-		return;
+		return -1;
 
 	if(rtc_debug > 2) {
 		printf("rtc_set: tm_year = %d\n", tmp->tm_year);
@@ -219,7 +215,7 @@ rtc_set (struct rtc_time *tmp)
 	memset(buf, 0, sizeof(buf));
 
 	/* only read register 15 */
-	ret = i2c_read(CFG_I2C_RTC_ADDR, 0, 0, buf, 1);
+	ret = i2c_read(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, 1);
 
 	if (ret == 0) {
 		/* need to save register 15 */
@@ -248,12 +244,16 @@ rtc_set (struct rtc_time *tmp)
 			printf("WARNING: year should be between 1970 and 2069!\n");
 		buf[7] = bin2bcd(tmp->tm_year % 100);
 
-		ret = i2c_write(CFG_I2C_RTC_ADDR, 0, 0, buf, 8);
-		if (ret != 0)
+		ret = i2c_write(CONFIG_SYS_I2C_RTC_ADDR, 0, 0, buf, 8);
+		if (ret != 0) {
 			printf("rs5c372_set_datetime(), i2c_master_send() returned %d\n",ret);
+			return -1;
+		}
+	} else {
+		return -1;
 	}
 
-	return;
+	return 0;
 }
 
 /*
@@ -288,15 +288,4 @@ rtc_reset (void)
 	return;
 }
 
-static unsigned int
-bcd2bin (unsigned char n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char
-bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
-}
 #endif

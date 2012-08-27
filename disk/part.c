@@ -35,6 +35,7 @@
 #endif
 
 #if (defined(CONFIG_CMD_IDE) || \
+     defined(CONFIG_CMD_MG_DISK) || \
      defined(CONFIG_CMD_SATA) || \
      defined(CONFIG_CMD_SCSI) || \
      defined(CONFIG_CMD_USB) || \
@@ -65,6 +66,9 @@ static const struct block_drvr block_drvr[] = {
 #if defined(CONFIG_SYSTEMACE)
 	{ .name = "ace", .get_dev = systemace_get_dev, },
 #endif
+#if defined(CONFIG_CMD_MG_DISK)
+	{ .name = "mgd", .get_dev = mg_disk_get_dev, },
+#endif
 	{ },
 };
 
@@ -74,10 +78,20 @@ block_dev_desc_t *get_dev(char* ifname, int dev)
 {
 	const struct block_drvr *drvr = block_drvr;
 	block_dev_desc_t* (*reloc_get_dev)(int dev);
+	char *name;
 
-	while (drvr->name) {
-		reloc_get_dev = drvr->get_dev + gd->reloc_off;
-		if (strncmp(ifname, drvr->name, strlen(drvr->name)) == 0)
+	name = drvr->name;
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
+	name += gd->reloc_off;
+#endif
+	while (name) {
+		name = drvr->name;
+		reloc_get_dev = drvr->get_dev;
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
+		name += gd->reloc_off;
+		reloc_get_dev += gd->reloc_off;
+#endif
+		if (strncmp(ifname, name, strlen(name)) == 0)
 			return reloc_get_dev(dev);
 		drvr++;
 	}
@@ -91,6 +105,7 @@ block_dev_desc_t *get_dev(char* ifname, int dev)
 #endif
 
 #if (defined(CONFIG_CMD_IDE) || \
+     defined(CONFIG_CMD_MG_DISK) || \
      defined(CONFIG_CMD_SATA) || \
      defined(CONFIG_CMD_SCSI) || \
      defined(CONFIG_CMD_USB) || \
@@ -101,13 +116,35 @@ block_dev_desc_t *get_dev(char* ifname, int dev)
 /*
  * reports device info to the user
  */
+
+#ifdef CONFIG_LBA48
+typedef uint64_t lba512_t;
+#else
+typedef lbaint_t lba512_t;
+#endif
+
+/*
+ * Overflowless variant of (block_count * mul_by / div_by)
+ * when div_by > mul_by
+ */
+static lba512_t lba512_muldiv (lba512_t block_count, lba512_t mul_by, lba512_t div_by)
+{
+	lba512_t bc_quot, bc_rem;
+
+	/* x * m / d == x / d * m + (x % d) * m / d */
+	bc_quot = block_count / div_by;
+	bc_rem  = block_count - div_by * bc_quot;
+	return bc_quot * mul_by + (bc_rem * mul_by) / div_by;
+}
+
 void dev_print (block_dev_desc_t *dev_desc)
 {
-#ifdef CONFIG_LBA48
-	uint64_t lba512; /* number of blocks if 512bytes block size */
-#else
-	lbaint_t lba512;
-#endif
+	lba512_t lba512; /* number of blocks if 512bytes block size */
+
+	if (dev_desc->type == DEV_TYPE_UNKNOWN) {
+		puts ("not available\n");
+		return;
+	}
 
 	switch (dev_desc->if_type) {
 	case IF_TYPE_SCSI:
@@ -117,6 +154,7 @@ void dev_print (block_dev_desc_t *dev_desc)
 			dev_desc->product,
 			dev_desc->revision);
 		break;
+	case IF_TYPE_ATAPI:
 	case IF_TYPE_IDE:
 	case IF_TYPE_SATA:
 		printf ("Model: %s Firm: %s Ser#: %s\n",
@@ -124,9 +162,22 @@ void dev_print (block_dev_desc_t *dev_desc)
 			dev_desc->revision,
 			dev_desc->product);
 		break;
+	case IF_TYPE_SD:
+	case IF_TYPE_MMC:
+	case IF_TYPE_USB:
+		printf ("Vendor: %s Rev: %s Prod: %s\n",
+			dev_desc->vendor,
+			dev_desc->revision,
+			dev_desc->product);
+		break;
+	case IF_TYPE_DOC:
+		puts("device type DOC\n");
+		return;
 	case IF_TYPE_UNKNOWN:
+		puts("device type unknown\n");
+		return;
 	default:
-		puts ("not available\n");
+		printf("Unhandled device type: %i\n", dev_desc->if_type);
 		return;
 	}
 	puts ("            Type: ");
@@ -157,8 +208,9 @@ void dev_print (block_dev_desc_t *dev_desc)
 		lba = dev_desc->lba;
 
 		lba512 = (lba * (dev_desc->blksz/512));
-		mb = (10 * lba512) / 2048;	/* 2048 = (1024 * 1024) / 512 MB */
 		/* round to 1 digit */
+		mb = lba512_muldiv(lba512, 10, 2048);	/* 2048 = (1024 * 1024) / 512 MB */
+
 		mb_quot	= mb / 10;
 		mb_rem	= mb - (10 * mb_quot);
 
@@ -169,8 +221,8 @@ void dev_print (block_dev_desc_t *dev_desc)
 		if (dev_desc->lba48)
 			printf ("            Supports 48-bit addressing\n");
 #endif
-#if defined(CFG_64BIT_LBA) && defined(CFG_64BIT_VSPRINTF)
-		printf ("            Capacity: %ld.%ld MB = %ld.%ld GB (%qd x %ld)\n",
+#if defined(CONFIG_SYS_64BIT_LBA)
+		printf ("            Capacity: %ld.%ld MB = %ld.%ld GB (%Ld x %ld)\n",
 			mb_quot, mb_rem,
 			gb_quot, gb_rem,
 			lba,
@@ -189,16 +241,18 @@ void dev_print (block_dev_desc_t *dev_desc)
 #endif
 
 #if (defined(CONFIG_CMD_IDE) || \
+     defined(CONFIG_CMD_MG_DISK) || \
      defined(CONFIG_CMD_SATA) || \
      defined(CONFIG_CMD_SCSI) || \
      defined(CONFIG_CMD_USB) || \
      defined(CONFIG_MMC)		|| \
-     defined(CONFIG_SYSTEMACE)          )
+     defined(CONFIG_SYSTEMACE) )
 
 #if defined(CONFIG_MAC_PARTITION) || \
     defined(CONFIG_DOS_PARTITION) || \
     defined(CONFIG_ISO_PARTITION) || \
-    defined(CONFIG_AMIGA_PARTITION)
+    defined(CONFIG_AMIGA_PARTITION) || \
+    defined(CONFIG_EFI_PARTITION)
 
 void init_part (block_dev_desc_t * dev_desc)
 {
@@ -212,6 +266,14 @@ void init_part (block_dev_desc_t * dev_desc)
 #ifdef CONFIG_MAC_PARTITION
 	if (test_part_mac(dev_desc) == 0) {
 		dev_desc->part_type = PART_TYPE_MAC;
+		return;
+	}
+#endif
+
+/* must be placed before DOS partition detection */
+#ifdef CONFIG_EFI_PARTITION
+	if (test_part_efi(dev_desc) == 0) {
+		dev_desc->part_type = PART_TYPE_EFI;
 		return;
 	}
 #endif
@@ -272,6 +334,15 @@ int get_partition_info (block_dev_desc_t *dev_desc, int part
 	    }
 	    break;
 #endif
+
+#ifdef CONFIG_EFI_PARTITION
+	case PART_TYPE_EFI:
+		if (get_partition_info_efi(dev_desc,part,info) == 0) {
+			PRINTF ("## Valid EFI partition found ##\n");
+			return (0);
+		}
+		break;
+#endif
 	default:
 		break;
 	}
@@ -299,6 +370,9 @@ static void print_part_header (const char *type, block_dev_desc_t * dev_desc)
 		break;
 	case IF_TYPE_DOC:
 		puts ("DOC");
+		break;
+	case IF_TYPE_MMC:
+		puts ("MMC");
 		break;
 	default:
 		puts ("UNKNOWN");
@@ -342,14 +416,23 @@ void print_part (block_dev_desc_t * dev_desc)
 	    print_part_amiga (dev_desc);
 	    return;
 #endif
+
+#ifdef CONFIG_EFI_PARTITION
+	case PART_TYPE_EFI:
+		PRINTF ("## Testing for valid EFI partition ##\n");
+		print_part_header ("EFI", dev_desc);
+		print_part_efi (dev_desc);
+		return;
+#endif
 	}
 	puts ("## Unknown partition table\n");
 }
 
 
-#else	/* neither MAC nor DOS nor ISO partition configured */
+#else	/* neither MAC nor DOS nor ISO nor AMIGA nor EFI partition configured */
 # error neither CONFIG_MAC_PARTITION nor CONFIG_DOS_PARTITION
-# error nor CONFIG_ISO_PARTITION configured!
+# error nor CONFIG_ISO_PARTITION nor CONFIG_AMIGA_PARTITION
+# error nor CONFIG_EFI_PARTITION configured!
 #endif
 
 #endif

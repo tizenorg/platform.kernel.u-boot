@@ -36,39 +36,6 @@
 #define	power_on_5_0(slot)	do {} while (0)
 #define	power_on_3_3(slot)	do {} while (0)
 
-#elif	defined(CONFIG_HMI10)
-
-static inline void power_config(int slot)
-{
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
-	/*
-	 * Configure Port B  pins for
-	 * 5 Volts Enable and 3 Volts enable
-	*/
-	immap->im_cpm.cp_pbpar &= ~(0x00000300);
-}
-
-static inline void power_off(int slot)
-{
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
-	/* remove all power */
-	immap->im_cpm.cp_pbdat |= 0x00000300;
-}
-
-static inline void power_on_5_0(int slot)
-{
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
-	immap->im_cpm.cp_pbdat &= ~(0x0000100);
-	immap->im_cpm.cp_pbdir |= 0x00000300;
-}
-
-static inline void power_on_3_3(int slot)
-{
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
-	immap->im_cpm.cp_pbdat &= ~(0x0000200);
-	immap->im_cpm.cp_pbdir |= 0x00000300;
-}
-
 #elif	defined(CONFIG_VIRTLAB2)
 
 #define	power_config(slot)	do {} while (0)
@@ -97,7 +64,7 @@ static inline void power_on_3_3(int slot)
 
 static inline void power_config(int slot)
 {
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
+	volatile immap_t *immap = (immap_t *)CONFIG_SYS_IMMR;
 	/*
 	* Configure Port C pins for
 	* 5 Volts Enable and 3 Volts enable
@@ -108,41 +75,32 @@ static inline void power_config(int slot)
 
 static inline void power_off(int slot)
 {
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
+	volatile immap_t *immap = (immap_t *)CONFIG_SYS_IMMR;
 	immap->im_ioport.iop_pcdat &= ~(0x0002 | 0x0004);
 }
 
 static inline void power_on_5_0(int slot)
 {
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
+	volatile immap_t *immap = (immap_t *)CONFIG_SYS_IMMR;
 	immap->im_ioport.iop_pcdat |= 0x0004;
 	immap->im_ioport.iop_pcdir |= (0x0002 | 0x0004);
 }
 
 static inline void power_on_3_3(int slot)
 {
-	volatile immap_t *immap = (immap_t *)CFG_IMMR;
+	volatile immap_t *immap = (immap_t *)CONFIG_SYS_IMMR;
 	immap->im_ioport.iop_pcdat |= 0x0002;
 	immap->im_ioport.iop_pcdir |= (0x0002 | 0x0004);
 }
 
 #endif
 
-#ifdef	CONFIG_HMI10
 static inline int check_card_is_absent(int slot)
 {
 	volatile pcmconf8xx_t *pcmp =
-		(pcmconf8xx_t *)(&(((immap_t *)CFG_IMMR)->im_pcmcia));
-	return pcmp->pcmc_pipr & (0x10000000 >> (slot << 4));
-}
-#else
-static inline int check_card_is_absent(int slot)
-{
-	volatile pcmconf8xx_t *pcmp =
-		(pcmconf8xx_t *)(&(((immap_t *)CFG_IMMR)->im_pcmcia));
+		(pcmconf8xx_t *)(&(((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia));
 	return pcmp->pcmc_pipr & (0x18000000 >> (slot << 4));
 }
-#endif
 
 #ifdef	NSCU_OE_INV
 #define	NSCU_GCRX_CXOE	0
@@ -153,9 +111,9 @@ static inline int check_card_is_absent(int slot)
 int pcmcia_hardware_enable(int slot)
 {
 	volatile pcmconf8xx_t *pcmp =
-		(pcmconf8xx_t *)(&(((immap_t *)CFG_IMMR)->im_pcmcia));
+		(pcmconf8xx_t *)(&(((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia));
 	volatile sysconf8xx_t *sysp =
-		(sysconf8xx_t *)(&(((immap_t *)CFG_IMMR)->im_siu_conf));
+		(sysconf8xx_t *)(&(((immap_t *)CONFIG_SYS_IMMR)->im_siu_conf));
 	uint reg, mask;
 
 	debug ("hardware_enable: " PCMCIA_BOARD_MSG " Slot %c\n", 'A'+slot);
@@ -271,7 +229,7 @@ int pcmcia_voltage_set(int slot, int vcc, int vpp)
 	u_long reg;
 # ifdef DEBUG
 	volatile pcmconf8xx_t *pcmp =
-		(pcmconf8xx_t *)(&(((immap_t *)CFG_IMMR)->im_pcmcia));
+		(pcmconf8xx_t *)(&(((immap_t *)CONFIG_SYS_IMMR)->im_pcmcia));
 # endif
 
 	debug ("voltage_set: " PCMCIA_BOARD_MSG

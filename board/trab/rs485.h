@@ -2,8 +2,8 @@
  * (C) Copyright 2003
  * Martin Krause, TQ-Systems GmbH, <martin.krause@tqs.de>
  *
- * Based on cpu/arm920t/serial.c, by Gary Jennejohn
- * (C) Copyright 2002 Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+ * Based on arch/arm/cpu/arm920t/serial.c, by Gary Jennejohn
+ * (C) Copyright 2002 Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #ifndef _RS485_H_
 #define _RS485_H_
 
-#include <s3c2400.h>
+#include <asm/arch/s3c24x0_cpu.h>
 
 int rs485_init (void);
 int rs485_getc (void);

@@ -35,7 +35,7 @@
 #include <asm/mmu.h>
 #include <asm/io.h>
 #include <asm/cache.h>
-#include <ppc440.h>
+#include <asm/ppc440.h>
 #include <watchdog.h>
 
 /*
@@ -45,10 +45,10 @@
  * memory.
  *
  * If at some time this restriction doesn't apply anymore, just define
- * CFG_ENABLE_SDRAM_CACHE in the board config file and this code should setup
+ * CONFIG_4xx_DCACHE in the board config file and this code should setup
  * everything correctly.
  */
-#ifdef CFG_ENABLE_SDRAM_CACHE
+#ifdef CONFIG_4xx_DCACHE
 #define MY_TLB_WORD2_I_ENABLE	0			/* enable caching on SDRAM */
 #else
 #define MY_TLB_WORD2_I_ENABLE	TLB_WORD2_I_ENABLE	/* disable caching on SDRAM */
@@ -116,7 +116,7 @@ static void program_ecc(u32 start_address,
 	 * Because of 440EPx errata CHIP 11, we don't touch the last 256
 	 * bytes of SDRAM.
 	 */
-	bytes_remaining = num_bytes - CFG_MEM_TOP_HIDE;
+	bytes_remaining = num_bytes - CONFIG_SYS_MEM_TOP_HIDE;
 
 	/*
 	 * We have to write the ECC bytes by zeroing and flushing in smaller
@@ -160,49 +160,6 @@ static void program_ecc(u32 start_address,
  ************************************************************************/
 phys_size_t initdram (int board_type)
 {
-#if 0 /* test-only: will remove this define later, when ECC problems are solved! */
-	/* CL=3 */
-	mtsdram(DDR0_02, 0x00000000);
-
-	mtsdram(DDR0_00, 0x0000190A);
-	mtsdram(DDR0_01, 0x01000000);
-	mtsdram(DDR0_03, 0x02030603); /* A suitable burst length was taken. CAS is right for our board */
-
-	mtsdram(DDR0_04, 0x0A030300);
-	mtsdram(DDR0_05, 0x02020308);
-	mtsdram(DDR0_06, 0x0103C812);
-	mtsdram(DDR0_07, 0x00090100);
-	mtsdram(DDR0_08, 0x02c80001);
-	mtsdram(DDR0_09, 0x00011D5F);
-	mtsdram(DDR0_10, 0x00000300);
-	mtsdram(DDR0_11, 0x000CC800);
-	mtsdram(DDR0_12, 0x00000003);
-	mtsdram(DDR0_14, 0x00000000);
-	mtsdram(DDR0_17, 0x1e000000);
-	mtsdram(DDR0_18, 0x1e1e1e1e);
-	mtsdram(DDR0_19, 0x1e1e1e1e);
-	mtsdram(DDR0_20, 0x0B0B0B0B);
-	mtsdram(DDR0_21, 0x0B0B0B0B);
-#ifdef CONFIG_DDR_ECC
-	mtsdram(DDR0_22, 0x00267F0B | DDR0_22_CTRL_RAW_ECC_ENABLE); /* enable ECC	*/
-#else
-	mtsdram(DDR0_22, 0x00267F0B);
-#endif
-
-	mtsdram(DDR0_23, 0x01000000);
-	mtsdram(DDR0_24, 0x01010001);
-
-	mtsdram(DDR0_26, 0x2D93028A);
-	mtsdram(DDR0_27, 0x0784682B);
-
-	mtsdram(DDR0_28, 0x00000080);
-	mtsdram(DDR0_31, 0x00000000);
-	mtsdram(DDR0_42, 0x01000006);
-
-	mtsdram(DDR0_43, 0x030A0200);
-	mtsdram(DDR0_44, 0x00000003);
-	mtsdram(DDR0_02, 0x00000001); /* Activate the denali core */
-#else
 	/* CL=4 */
 	mtsdram(DDR0_02, 0x00000000);
 
@@ -216,7 +173,7 @@ phys_size_t initdram (int board_type)
 	mtsdram(DDR0_07, 0x00090100);
 	mtsdram(DDR0_08, 0x03c80001);
 	mtsdram(DDR0_09, 0x00011D5F);
-	mtsdram(DDR0_10, 0x00000300);
+	mtsdram(DDR0_10, 0x00000100);
 	mtsdram(DDR0_11, 0x000CC800);
 	mtsdram(DDR0_12, 0x00000003);
 	mtsdram(DDR0_14, 0x00000000);
@@ -244,7 +201,6 @@ phys_size_t initdram (int board_type)
 	mtsdram(DDR0_43, 0x050A0200);
 	mtsdram(DDR0_44, 0x00000005);
 	mtsdram(DDR0_02, 0x00000001); /* Activate the denali core */
-#endif
 
 	denali_wait_for_dlllock();
 
@@ -252,30 +208,44 @@ phys_size_t initdram (int board_type)
 	/* -----------------------------------------------------------+
 	 * Perform data eye search if requested.
 	 * ----------------------------------------------------------*/
-	program_tlb(0, CFG_SDRAM_BASE, CFG_MBYTES_SDRAM << 20,
+	program_tlb(0, CONFIG_SYS_SDRAM_BASE, CONFIG_SYS_MBYTES_SDRAM << 20,
 		    TLB_WORD2_I_ENABLE);
 	denali_core_search_data_eye();
-	remove_tlb(CFG_SDRAM_BASE, CFG_MBYTES_SDRAM << 20);
+	remove_tlb(CONFIG_SYS_SDRAM_BASE, CONFIG_SYS_MBYTES_SDRAM << 20);
 #endif
 
 	/*
 	 * Program tlb entries for this size (dynamic)
 	 */
-	program_tlb(0, CFG_SDRAM_BASE, CFG_MBYTES_SDRAM << 20,
+	program_tlb(0, CONFIG_SYS_SDRAM_BASE, CONFIG_SYS_MBYTES_SDRAM << 20,
 		    MY_TLB_WORD2_I_ENABLE);
 
+#if defined(CONFIG_DDR_ECC)
+#if defined(CONFIG_4xx_DCACHE)
+	/*
+	 * If ECC is enabled, initialize the parity bits.
+	 */
+	program_ecc(0, CONFIG_SYS_MBYTES_SDRAM << 20, 0);
+#else /* CONFIG_4xx_DCACHE */
 	/*
 	 * Setup 2nd TLB with same physical address but different virtual address
 	 * with cache enabled. This is done for fast ECC generation.
 	 */
-	program_tlb(0, CFG_DDR_CACHED_ADDR, CFG_MBYTES_SDRAM << 20, 0);
+	program_tlb(0, CONFIG_SYS_DDR_CACHED_ADDR, CONFIG_SYS_MBYTES_SDRAM << 20, 0);
 
-#ifdef CONFIG_DDR_ECC
 	/*
 	 * If ECC is enabled, initialize the parity bits.
 	 */
-	program_ecc(CFG_DDR_CACHED_ADDR, CFG_MBYTES_SDRAM << 20, 0);
-#endif
+	program_ecc(CONFIG_SYS_DDR_CACHED_ADDR, CONFIG_SYS_MBYTES_SDRAM << 20, 0);
+
+	/*
+	 * Now after initialization (auto-calibration and ECC generation)
+	 * remove the TLB entries with caches enabled and program again with
+	 * desired cache functionality
+	 */
+	remove_tlb(CONFIG_SYS_DDR_CACHED_ADDR, CONFIG_SYS_MBYTES_SDRAM << 20);
+#endif /* CONFIG_4xx_DCACHE */
+#endif /* CONFIG_DDR_ECC */
 
 	/*
 	 * Clear possible errors resulting from data-eye-search.
@@ -284,5 +254,5 @@ phys_size_t initdram (int board_type)
 	 */
 	set_mcsr(get_mcsr());
 
-	return (CFG_MBYTES_SDRAM << 20);
+	return (CONFIG_SYS_MBYTES_SDRAM << 20);
 }

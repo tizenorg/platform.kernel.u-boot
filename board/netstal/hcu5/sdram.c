@@ -35,7 +35,7 @@
 #include <asm/io.h>
 #include <asm/mmu.h>
 #include <asm/cache.h>
-#include <ppc440.h>
+#include <asm/ppc440.h>
 
 void hcu_led_set(u32 value);
 void dcbz_area(u32 start_address, u32 num_bytes);
@@ -89,11 +89,11 @@ static int wait_for_dlllock(void)
 	/* -----------------------------------------------------------+
 	 * Wait for the DCC master delay line to finish calibration
 	 * ----------------------------------------------------------*/
-	mtdcr(memcfga, DDR0_17);
+	mtdcr(SDRAM0_CFGADDR, DDR0_17);
 	val = DDR0_17_DLLLOCKREG_UNLOCKED;
 
 	while (wait != 0xffff) {
-		val = mfdcr(memcfgd);
+		val = mfdcr(SDRAM0_CFGDATA);
 		if ((val & DDR0_17_DLLLOCKREG_MASK) ==
 		    DDR0_17_DLLLOCKREG_LOCKED)
 			/* dlllockreg bit on */
@@ -122,7 +122,7 @@ void sdram_panic(const char *reason)
 }
 
 #ifdef CONFIG_DDR_ECC
-static void blank_string(int size)
+void blank_string(int size)
 {
 	int i;
 
@@ -144,7 +144,7 @@ static void program_ecc(unsigned long start_address, unsigned long num_bytes)
 	u32 *magicPtr;
 	u32 magic;
 
-	if ((mfspr(dbcr0) & 0x80000000) == 0) {
+	if ((mfspr(SPRN_DBCR0) & 0x80000000) == 0) {
 		/* only if no external debugger is alive!
 		 * Check whether vxWorks is using EDR logging, if yes zero
 		 * also PostMortem and user reserved memory
@@ -182,7 +182,7 @@ static void program_ecc(unsigned long start_address, unsigned long num_bytes)
 	 * If not done, then we could get an interrupt later on when
 	 * exceptions are enabled.
 	 */
-	mtspr(mcsr, mfspr(mcsr));
+	mtspr(SPRN_MCSR, mfspr(SPRN_MCSR));
 
 	/* Set 'int_mask' parameter to functionnal value */
 	mfsdram(DDR0_01, val);
@@ -263,20 +263,20 @@ phys_size_t initdram (int board_type)
 	/*
 	 * Program tlb entries for this size (dynamic)
 	 */
-	remove_tlb(CFG_SDRAM_BASE, 256 << 20);
+	remove_tlb(CONFIG_SYS_SDRAM_BASE, 256 << 20);
 	program_tlb(0, 0, dram_size, TLB_WORD2_W_ENABLE | TLB_WORD2_I_ENABLE);
 
 	/*
 	 * Setup 2nd TLB with same physical address but different virtual
 	 * address with cache enabled. This is done for fast ECC generation.
 	 */
-	program_tlb(0, CFG_DDR_CACHED_ADDR, dram_size, 0);
+	program_tlb(0, CONFIG_SYS_DDR_CACHED_ADDR, dram_size, 0);
 
 #ifdef CONFIG_DDR_ECC
 	/*
 	 * If ECC is enabled, initialize the parity bits.
 	 */
-	program_ecc(CFG_DDR_CACHED_ADDR, dram_size);
+	program_ecc(CONFIG_SYS_DDR_CACHED_ADDR, dram_size);
 #endif
 
 	return (dram_size);

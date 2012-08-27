@@ -28,7 +28,7 @@
  */
 #include <common.h>
 #include <asm/processor.h>
-#include <devices.h>
+#include <stdio_dev.h>
 #include "isa.h"
 #include "kbd.h"
 
@@ -203,7 +203,7 @@ int isa_kbd_init(void)
 	}
 }
 
-#ifdef CFG_CONSOLE_OVERWRITE_ROUTINE
+#ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 extern int overwrite_console (void);
 #else
 int overwrite_console (void)
@@ -215,7 +215,7 @@ int overwrite_console (void)
 int drv_isa_kbd_init (void)
 {
 	int error;
-	device_t kbddev ;
+	struct stdio_dev kbddev ;
 	char *stdinname  = getenv ("stdin");
 
 	if(isa_kbd_init()==-1)
@@ -228,7 +228,7 @@ int drv_isa_kbd_init (void)
 	kbddev.getc = kbd_getc ;
 	kbddev.tstc = kbd_testc ;
 
-	error = device_register (&kbddev);
+	error = stdio_register (&kbddev);
 	if(error==0) {
 		/* check if this is the standard input device */
 		if(strcmp(stdinname,DEVNAME)==0) {
@@ -452,22 +452,22 @@ unsigned char handle_kbd_event(void)
  */
 unsigned char kbd_read_status(void)
 {
-	return(in8(CFG_ISA_IO_BASE_ADDRESS + KDB_COMMAND_PORT));
+	return(in8(CONFIG_SYS_ISA_IO_BASE_ADDRESS + KDB_COMMAND_PORT));
 }
 
 unsigned char kbd_read_input(void)
 {
-	return(in8(CFG_ISA_IO_BASE_ADDRESS + KDB_DATA_PORT));
+	return(in8(CONFIG_SYS_ISA_IO_BASE_ADDRESS + KDB_DATA_PORT));
 }
 
 void kbd_write_command(unsigned char cmd)
 {
-	out8(CFG_ISA_IO_BASE_ADDRESS + KDB_COMMAND_PORT,cmd);
+	out8(CONFIG_SYS_ISA_IO_BASE_ADDRESS + KDB_COMMAND_PORT,cmd);
 }
 
 void kbd_write_output(unsigned char data)
 {
-	out8(CFG_ISA_IO_BASE_ADDRESS + KDB_DATA_PORT, data);
+	out8(CONFIG_SYS_ISA_IO_BASE_ADDRESS + KDB_DATA_PORT, data);
 }
 
 int kbd_read_data(void)

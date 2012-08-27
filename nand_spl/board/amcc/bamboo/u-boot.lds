@@ -26,7 +26,7 @@ SECTIONS
 {
   .resetvec 0x00800FFC :
   {
-    *(.resetvec)
+    KEEP(*(.resetvec))
   } = 0xffff
 
   .text      :
@@ -44,7 +44,7 @@ SECTIONS
 
   .data    :
   {
-    *(.rodata*)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
     *(.data*)
     *(.sdata*)
     __got2_start = .;
@@ -59,7 +59,8 @@ SECTIONS
   {
    *(.sbss)
    *(.bss)
+   . = ALIGN(4);
   }
 
-  _end = . ;
+  __bss_end__ = . ;
 }

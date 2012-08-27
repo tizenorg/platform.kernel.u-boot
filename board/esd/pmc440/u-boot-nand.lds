@@ -53,25 +53,22 @@ SECTIONS
     /* WARNING - the following is hand-optimized to fit within	*/
     /* the sector layout of our flash chips!	XXX FIXME XXX	*/
 
-    cpu/ppc4xx/start.o	(.text)
+    arch/powerpc/cpu/ppc4xx/start.o	(.text)
 
     /* Align to next NAND block */
     . = ALIGN(0x4000);
-    common/environment.o  (.ppcenv)
+    common/env_embedded.o  (.ppcenv)
     /* Keep some space here for redundant env and potential bad env blocks */
     . = ALIGN(0x10000);
 
     *(.text)
-    *(.fixup)
     *(.got1)
   }
   _etext = .;
   PROVIDE (etext = .);
   .rodata    :
   {
-    *(.rodata)
-    *(.rodata1)
-    *(.rodata.str1.4)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   }
   .fini      : { *(.fini)    } =0
   .ctors     : { *(.ctors)   }
@@ -129,8 +126,9 @@ SECTIONS
    *(.dynbss)
    *(.bss)
    *(COMMON)
+   . = ALIGN(4);
   }
 
-  _end = . ;
+  __bss_end__ = . ;
   PROVIDE (end = .);
 }

@@ -254,7 +254,7 @@ static long int try_init (volatile memctl8260_t * memctl, ulong sdmr,
 	 *  accessing the SDRAM with a single-byte transaction."
 	 *
 	 * The appropriate BRx/ORx registers have already been set when we
-	 * get here. The SDRAM can be accessed at the address CFG_SDRAM_BASE.
+	 * get here. The SDRAM can be accessed at the address CONFIG_SYS_SDRAM_BASE.
 	 */
 
 	*sdmr_ptr = sdmr | PSDMR_OP_PREA;
@@ -265,7 +265,7 @@ static long int try_init (volatile memctl8260_t * memctl, ulong sdmr,
 		*base = c;
 
 	*sdmr_ptr = sdmr | PSDMR_OP_MRW;
-	*(base + CFG_MRS_OFFS) = c;	/* setting MR on address lines */
+	*(base + CONFIG_SYS_MRS_OFFS) = c;	/* setting MR on address lines */
 
 	*sdmr_ptr = sdmr | PSDMR_OP_NORM | PSDMR_RFEN;
 	*base = c;
@@ -278,7 +278,7 @@ static long int try_init (volatile memctl8260_t * memctl, ulong sdmr,
 
 phys_size_t initdram (int board_type)
 {
-	volatile immap_t *immap = (immap_t *) CFG_IMMR;
+	volatile immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
 	volatile memctl8260_t *memctl = &immap->im_memctl;
 
 	long psize, lsize;
@@ -286,15 +286,15 @@ phys_size_t initdram (int board_type)
 	psize = 16 * 1024 * 1024;
 	lsize = 0;
 
-	memctl->memc_psrt = CFG_PSRT;
-	memctl->memc_mptpr = CFG_MPTPR;
+	memctl->memc_psrt = CONFIG_SYS_PSRT;
+	memctl->memc_mptpr = CONFIG_SYS_MPTPR;
 
-#ifndef CFG_RAMBOOT
+#ifndef CONFIG_SYS_RAMBOOT
 	/* 60x SDRAM setup:
 	 */
-	psize = try_init (memctl, CFG_PSDMR, CFG_OR2,
-						  (uchar *) CFG_SDRAM_BASE);
-#endif /* CFG_RAMBOOT */
+	psize = try_init (memctl, CONFIG_SYS_PSDMR, CONFIG_SYS_OR2,
+						  (uchar *) CONFIG_SYS_SDRAM_BASE);
+#endif /* CONFIG_SYS_RAMBOOT */
 
 	icache_enable ();
 
@@ -304,44 +304,104 @@ phys_size_t initdram (int board_type)
 int misc_init_r (void)
 {
 	gd->bd->bi_flashstart = 0xff800000;
+	return 0;
 }
 
 #if defined(CONFIG_CMD_NAND)
-extern ulong
-nand_probe (ulong physadr);
+#include <nand.h>
+#include <linux/mtd/mtd.h>
+#include <asm/io.h>
 
-void
-nand_init (void)
+static u8 hwctl;
+
+static void ids_nand_hwctrl(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 {
-	ulong totlen = 0;
+	struct nand_chip *this = mtd->priv;
 
-	debug ("Probing at 0x%.8x\n", CFG_NAND0_BASE);
-	totlen += nand_probe (CFG_NAND0_BASE);
+	if (ctrl & NAND_CTRL_CHANGE) {
+		if ( ctrl & NAND_CLE ) {
+			hwctl |= 0x1;
+			writeb(0x00, (this->IO_ADDR_W + 0x0a));
+		} else {
+			hwctl &= ~0x1;
+			writeb(0x00, (this->IO_ADDR_W + 0x08));
+		}
+		if ( ctrl & NAND_ALE ) {
+			hwctl |= 0x2;
+			writeb(0x00, (this->IO_ADDR_W + 0x09));
+		} else {
+			hwctl &= ~0x2;
+			writeb(0x00, (this->IO_ADDR_W + 0x08));
+		}
+		if ( (ctrl & NAND_NCE) != NAND_NCE)
+			writeb(0x00, (this->IO_ADDR_W + 0x0c));
+		else
+			writeb(0x00, (this->IO_ADDR_W + 0x08));
+	}
+	if (cmd != NAND_CMD_NONE)
+		writeb(cmd, this->IO_ADDR_W);
 
-	printf ("%4lu MB\n", totlen >>20);
+}
+
+static u_char ids_nand_read_byte(struct mtd_info *mtd)
+{
+	struct nand_chip *this = mtd->priv;
+
+	return readb(this->IO_ADDR_R);
+}
+
+static void ids_nand_write_buf(struct mtd_info *mtd, const u_char *buf, int len)
+{
+	struct nand_chip *nand = mtd->priv;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (hwctl & 0x1)
+			writeb(buf[i], (nand->IO_ADDR_W + 0x02));
+		else if (hwctl & 0x2)
+			writeb(buf[i], (nand->IO_ADDR_W + 0x01));
+		else
+			writeb(buf[i], nand->IO_ADDR_W);
+	}
+}
+
+static void ids_nand_read_buf(struct mtd_info *mtd, u_char *buf, int len)
+{
+	struct nand_chip *this = mtd->priv;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		buf[i] = readb(this->IO_ADDR_R);
+	}
+}
+
+static int ids_nand_dev_ready(struct mtd_info *mtd)
+{
+	/* constant delay (see also tR in the datasheet) */
+	udelay(12);
+	return 1;
+}
+
+int board_nand_init(struct nand_chip *nand)
+{
+	nand->ecc.mode = NAND_ECC_SOFT;
+
+	/* Reference hardware control function */
+	nand->cmd_ctrl  = ids_nand_hwctrl;
+	nand->read_byte  = ids_nand_read_byte;
+	nand->write_buf  = ids_nand_write_buf;
+	nand->read_buf   = ids_nand_read_buf;
+	nand->dev_ready  = ids_nand_dev_ready;
+	nand->chip_delay = 12;
+
+	return 0;
 }
 
 #endif	/* CONFIG_CMD_NAND */
 
 #if defined(CONFIG_OF_BOARD_SETUP) && defined(CONFIG_OF_LIBFDT)
-/*
- * update "memory" property in the blob
- */
-void ft_blob_update(void *blob, bd_t *bd)
-{
-	int ret;
-
-	ret = fdt_fixup_memory(blob, (u64)bd->bi_memstart, (u64)bd->bi_memsize);
-
-	if (ret < 0) {
-		printf("ft_blob_update(): cannot set /memory/reg "
-			"property err:%s\n", fdt_strerror(ret));
-	}
-}
-
 void ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_cpu_setup( blob, bd);
-	ft_blob_update(blob, bd);
 }
 #endif /* defined(CONFIG_OF_BOARD_SETUP) && defined(CONFIG_OF_LIBFDT) */

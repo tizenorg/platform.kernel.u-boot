@@ -23,6 +23,7 @@
 
 #include <common.h>
 #include <command.h>
+#include <netdev.h>
 #include <asm/inca-ip.h>
 #include <asm/regdef.h>
 #include <asm/mipsregs.h>
@@ -128,14 +129,14 @@ phys_size_t initdram(int board_type)
 {
 	/* The only supported number of SDRAM banks is 4.
 	 */
-#define CFG_NB	4
+#define CONFIG_SYS_NB	4
 
 	ulong	cfgpb0	= *INCA_IP_SDRAM_MC_CFGPB0;
 	ulong	cfgdw	= *INCA_IP_SDRAM_MC_CFGDW;
 	int	cols	= cfgpb0 & 0xF;
 	int	rows	= (cfgpb0 & 0xF0) >> 4;
 	int	dw	= cfgdw & 0xF;
-	ulong	size	= (1 << (rows + cols)) * (1 << (dw - 1)) * CFG_NB;
+	ulong	size	= (1 << (rows + cols)) * (1 << (dw - 1)) * CONFIG_SYS_NB;
 	void (*  sdram_init) (ulong);
 
 	sdram_init = (void (*)(ulong)) CKSEG0ADDR(&sdram_timing_init);
@@ -221,10 +222,10 @@ static void programLoad(void)
 	FUNCPTR absEntry;
 	ulong *src,*dst;
 
-	src = (ulong *)(TEXT_BASE + 0x428);
+	src = (ulong *)(CONFIG_SYS_TEXT_BASE + 0x428);
 	dst = (ulong *)0xbf0081d0;
 
-	absEntry = (FUNCPTR)(TEXT_BASE + 0x400);
+	absEntry = (FUNCPTR)(CONFIG_SYS_TEXT_BASE + 0x400);
 	absEntry(src,dst,0x6);
 
 	src = (ulong *)((ulong)copydwords & 0xfffffff8);
@@ -252,25 +253,32 @@ void copy_code (ulong dest_addr)
 
 	/* copy u-boot code
 	 */
-	copyLongs((ulong *)CFG_MONITOR_BASE,
+	copyLongs((ulong *)CONFIG_SYS_MONITOR_BASE,
 		  (ulong *)dest_addr,
-		  ((ulong)&uboot_end_data - CFG_MONITOR_BASE + 3) / 4);
+		  ((ulong)&uboot_end_data - CONFIG_SYS_MONITOR_BASE + 3) / 4);
 
 
 	/* flush caches
 	 */
 
 	start = CKSEG0;
-	end = start + CFG_DCACHE_SIZE;
+	end = start + CONFIG_SYS_DCACHE_SIZE;
 	while(start < end) {
 		cache_unroll(start,Index_Writeback_Inv_D);
-		start += CFG_CACHELINE_SIZE;
+		start += CONFIG_SYS_CACHELINE_SIZE;
 	}
 
 	start = CKSEG0;
-	end = start + CFG_ICACHE_SIZE;
+	end = start + CONFIG_SYS_ICACHE_SIZE;
 	while(start < end) {
 		cache_unroll(start,Index_Invalidate_I);
-		start += CFG_CACHELINE_SIZE;
+		start += CONFIG_SYS_CACHELINE_SIZE;
 	}
 }
+
+#ifdef CONFIG_PLB2800_ETHER
+int board_eth_init(bd_t *bis)
+{
+	return plb2800_eth_initialize(bis);
+}
+#endif

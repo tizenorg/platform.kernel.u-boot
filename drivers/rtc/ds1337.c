@@ -32,7 +32,7 @@
 #include <rtc.h>
 #include <i2c.h>
 
-#if defined(CONFIG_RTC_DS1337) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
 /*---------------------------------------------------------------------*/
 #undef DEBUG_RTC
@@ -56,6 +56,7 @@
 #define RTC_YR_REG_ADDR		0x6
 #define RTC_CTL_REG_ADDR	0x0e
 #define RTC_STAT_REG_ADDR	0x0f
+#define RTC_TC_REG_ADDR		0x10
 
 /*
  * RTC control register bits
@@ -77,9 +78,6 @@
 
 static uchar rtc_read (uchar reg);
 static void rtc_write (uchar reg, uchar val);
-static uchar bin2bcd (unsigned int n);
-static unsigned bcd2bin (uchar c);
-
 
 /*
  * Get the current time from the RTC
@@ -132,7 +130,7 @@ int rtc_get (struct rtc_time *tmp)
 /*
  * Set the RTC
  */
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	uchar century;
 
@@ -150,6 +148,8 @@ void rtc_set (struct rtc_time *tmp)
 	rtc_write (RTC_HR_REG_ADDR, bin2bcd (tmp->tm_hour));
 	rtc_write (RTC_MIN_REG_ADDR, bin2bcd (tmp->tm_min));
 	rtc_write (RTC_SEC_REG_ADDR, bin2bcd (tmp->tm_sec));
+
+	return 0;
 }
 
 
@@ -158,10 +158,10 @@ void rtc_set (struct rtc_time *tmp)
  * SQW/INTB* pin and program it for 32,768 Hz output. Note that
  * according to the datasheet, turning on the square wave output
  * increases the current drain on the backup battery from about
- * 600 nA to 2uA. Define CFG_RTC_DS1337_NOOSC if you wish to turn
+ * 600 nA to 2uA. Define CONFIG_SYS_RTC_DS1337_NOOSC if you wish to turn
  * off the OSC output.
  */
-#ifdef CFG_RTC_DS1337_NOOSC
+#ifdef CONFIG_SYS_RTC_DS1337_NOOSC
  #define RTC_DS1337_RESET_VAL \
 	(RTC_CTL_BIT_INTCN | RTC_CTL_BIT_RS1 | RTC_CTL_BIT_RS2)
 #else
@@ -170,6 +170,9 @@ void rtc_set (struct rtc_time *tmp)
 void rtc_reset (void)
 {
 	rtc_write (RTC_CTL_REG_ADDR, RTC_DS1337_RESET_VAL);
+#ifdef CONFIG_SYS_DS1339_TCR_VAL
+	rtc_write (RTC_TC_REG_ADDR, CONFIG_SYS_DS1339_TCR_VAL);
+#endif
 }
 
 
@@ -180,23 +183,13 @@ void rtc_reset (void)
 static
 uchar rtc_read (uchar reg)
 {
-	return (i2c_reg_read (CFG_I2C_RTC_ADDR, reg));
+	return (i2c_reg_read (CONFIG_SYS_I2C_RTC_ADDR, reg));
 }
 
 
 static void rtc_write (uchar reg, uchar val)
 {
-	i2c_reg_write (CFG_I2C_RTC_ADDR, reg, val);
-}
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
+	i2c_reg_write (CONFIG_SYS_I2C_RTC_ADDR, reg, val);
 }
 
 #endif

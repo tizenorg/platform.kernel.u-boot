@@ -35,7 +35,7 @@
 
 #include <post.h>
 
-#if CONFIG_POST & CFG_POST_ECC
+#if CONFIG_POST & CONFIG_SYS_POST_ECC
 
 /*
  * MEMORY ECC test
@@ -45,7 +45,7 @@
 #include <asm/processor.h>
 #include <asm/mmu.h>
 #include <asm/io.h>
-#include <ppc440.h>
+#include <asm/ppc440.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -174,6 +174,7 @@ static int test_ecc(uint32_t ecc_addr)
 	clear_and_enable_ecc();
 	out_be32(ecc_mem, ECC_PATTERN);
 	out_be32(ecc_mem + 1, ECC_PATTERN);
+	ppcDcbf((u32)ecc_mem);
 
 	/* Verify no ECC error reading back */
 	value = in_be32(ecc_mem);
@@ -193,6 +194,7 @@ static int test_ecc(uint32_t ecc_addr)
 
 	/* Test for correctable error by creating a one-bit error */
 	out_be32(ecc_mem, ECC_PATTERN_CORR);
+	ppcDcbf((u32)ecc_mem);
 	clear_and_enable_ecc();
 	value = in_be32(ecc_mem);
 	disable_ecc();
@@ -212,6 +214,7 @@ static int test_ecc(uint32_t ecc_addr)
 
 	/* Test for uncorrectable error by creating a two-bit error */
 	out_be32(ecc_mem, ECC_PATTERN_UNCORR);
+	ppcDcbf((u32)ecc_mem);
 	clear_and_enable_ecc();
 	value = in_be32(ecc_mem);
 	disable_ecc();
@@ -232,6 +235,7 @@ static int test_ecc(uint32_t ecc_addr)
 
 	/* Remove error from SDRAM and enable ECC. */
 	out_be32(ecc_mem, ECC_PATTERN);
+	ppcDcbf((u32)ecc_mem);
 	clear_and_enable_ecc();
 
 	return ret;
@@ -267,5 +271,5 @@ int ecc_post_test(int flags)
 	debug("ecc_post_test() returning %d\n", ret);
 	return ret;
 }
-#endif /* CONFIG_POST & CFG_POST_ECC */
+#endif /* CONFIG_POST & CONFIG_SYS_POST_ECC */
 #endif /* defined(CONFIG_440EPX) || defined(CONFIG_440GRX) */

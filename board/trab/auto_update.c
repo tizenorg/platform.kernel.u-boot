@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2003
- * Gary Jennejohn, DENX Software Engineering, gj@denx.de.
+ * Gary Jennejohn, DENX Software Engineering, garyj@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -28,7 +28,7 @@
 #include <asm/byteorder.h>
 #include <usb.h>
 
-#ifdef CFG_HUSH_PARSER
+#ifdef CONFIG_SYS_HUSH_PARSER
 #include <hush.h>
 #endif
 
@@ -42,8 +42,8 @@
 #error "must define CONFIG_USB_STORAGE"
 #endif
 
-#ifndef CFG_HUSH_PARSER
-#error "must define CFG_HUSH_PARSER"
+#ifndef CONFIG_SYS_HUSH_PARSER
+#error "must define CONFIG_SYS_HUSH_PARSER"
 #endif
 
 #if !defined(CONFIG_CMD_FAT)

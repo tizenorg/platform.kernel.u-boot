@@ -22,7 +22,7 @@
  */
 #include <common.h>
 #include <ns16550.h>
-#include <console.h>
+#include <stdio_dev.h>
 
 /* Button codes from the AVR */
 #define PWRR			0x20		/* Power button release	*/
@@ -79,8 +79,8 @@ static char envbuffer[16];
 
 void init_AVR_DUART (void)
 {
-	NS16550_t AVR_port = (NS16550_t) CFG_NS16550_COM2;
-	int clock_divisor = CFG_NS16550_CLK / 16 / 9600;
+	NS16550_t AVR_port = (NS16550_t) CONFIG_SYS_NS16550_COM2;
+	int clock_divisor = CONFIG_SYS_NS16550_CLK / 16 / 9600;
 
 	/*
 	 * AVR port init sequence taken from
@@ -90,12 +90,12 @@ void init_AVR_DUART (void)
 	 */
 	AVR_port->lcr = 0x00;
 	AVR_port->ier = 0x00;
-	AVR_port->lcr = LCR_BKSE;
+	AVR_port->lcr = UART_LCR_BKSE;
 	AVR_port->dll = clock_divisor & 0xff;
 	AVR_port->dlm = (clock_divisor >> 8) & 0xff;
-	AVR_port->lcr = LCR_WLS_8 | LCR_PEN | LCR_EPS;
+	AVR_port->lcr = UART_LCR_WLS_8 | UART_LCR_PEN | UART_LCR_EPS;
 	AVR_port->mcr = 0x00;
-	AVR_port->fcr = FCR_FIFO_EN | FCR_RXSR | FCR_TXSR;
+	AVR_port->fcr = UART_FCR_FIFO_EN | UART_FCR_RXSR | UART_FCR_TXSR;
 
 	miconCntl_DisWDT();
 
@@ -105,12 +105,12 @@ void init_AVR_DUART (void)
 
 static inline int avr_tstc(void)
 {
-	return (NS16550_tstc((NS16550_t)CFG_NS16550_COM2));
+	return (NS16550_tstc((NS16550_t)CONFIG_SYS_NS16550_COM2));
 }
 
 static inline char avr_getc(void)
 {
-	return (NS16550_getc((NS16550_t)CFG_NS16550_COM2));
+	return (NS16550_getc((NS16550_t)CONFIG_SYS_NS16550_COM2));
 }
 
 static int push_timeout(char button_code)

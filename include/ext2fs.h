@@ -25,7 +25,8 @@
  * from the original ext2 fs code, as found in the linux kernel.
  */
 
-
+#ifndef __EXT2__
+#define __EXT2__
 #define SECTOR_SIZE		0x200
 #define SECTOR_BITS		9
 
@@ -72,10 +73,29 @@ typedef enum
   MAX_ERR_NUM
 } ext2fs_error_t;
 
+typedef enum {
+		HARD_LINK=0,
+		SOFT_LINK
+}link_t;
 
 extern int ext2fs_set_blk_dev(block_dev_desc_t *rbdd, int part);
-extern int ext2fs_ls (char *dirname);
-extern int ext2fs_open (char *filename);
+extern int ext2fs_ls (const char *dirname);
+extern int ext2fs_open (const char *filename);
 extern int ext2fs_read (char *buf, unsigned len);
 extern int ext2fs_mount (unsigned part_length);
 extern int ext2fs_close(void);
+int ext2_register_device (block_dev_desc_t * dev_desc, int part_no);
+int ext2fs_write(block_dev_desc_t *dev_desc, int part_no,char *filename,
+					unsigned char* buffer,unsigned long sizebytes);
+int ext4fs_if_filename_exists_in_root(block_dev_desc_t *dev_desc,char *filename, unsigned int blknr);
+void put_ext4(block_dev_desc_t *dev_desc,uint64_t off, void *buf, uint32_t size);
+
+void PUT(block_dev_desc_t *dev_desc,uint64_t off, void *buf, uint32_t size);
+void* xzalloc(size_t size);
+int ext2_fs_update(block_dev_desc_t *dev_desc);
+int get_bgdtable(void );
+void ext2_fs_deinit(void );
+int ext2_fs_init(void );
+uint32_t div_roundup(uint32_t size, uint32_t n);
+void* xmalloc(size_t size);
+#endif

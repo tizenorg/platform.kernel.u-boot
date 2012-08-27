@@ -29,7 +29,6 @@
 #include <common.h>
 #include <miiphy.h>
 
-#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
 #include <asm/types.h>
 #include <linux/list.h>
 #include <malloc.h>
@@ -47,21 +46,45 @@
 
 struct mii_dev {
 	struct list_head link;
-	char *name;
-	int (*read) (char *devname, unsigned char addr,
+	const char *name;
+	int (*read) (const char *devname, unsigned char addr,
 		     unsigned char reg, unsigned short *value);
-	int (*write) (char *devname, unsigned char addr,
+	int (*write) (const char *devname, unsigned char addr,
 		      unsigned char reg, unsigned short value);
 };
 
 static struct list_head mii_devs;
 static struct mii_dev *current_mii;
 
+/*
+ * Lookup the mii_dev struct by the registered device name.
+ */
+static struct mii_dev *miiphy_get_dev_by_name(const char *devname, int quiet)
+{
+	struct list_head *entry;
+	struct mii_dev *dev;
+
+	if (!devname) {
+		printf("NULL device name!\n");
+		return NULL;
+	}
+
+	list_for_each(entry, &mii_devs) {
+		dev = list_entry(entry, struct mii_dev, link);
+		if (strcmp(dev->name, devname) == 0)
+			return dev;
+	}
+
+	if (!quiet)
+		printf("No such device: %s\n", devname);
+	return NULL;
+}
+
 /*****************************************************************************
  *
  * Initialize global data. Need to be called before any other miiphy routine.
  */
-void miiphy_init ()
+void miiphy_init(void)
 {
 	INIT_LIST_HEAD (&mii_devs);
 	current_mii = NULL;
@@ -71,25 +94,21 @@ void miiphy_init ()
  *
  * Register read and write MII access routines for the device <name>.
  */
-void miiphy_register (char *name,
-		      int (*read) (char *devname, unsigned char addr,
+void miiphy_register(const char *name,
+		      int (*read) (const char *devname, unsigned char addr,
 				   unsigned char reg, unsigned short *value),
-		      int (*write) (char *devname, unsigned char addr,
+		      int (*write) (const char *devname, unsigned char addr,
 				    unsigned char reg, unsigned short value))
 {
-	struct list_head *entry;
 	struct mii_dev *new_dev;
-	struct mii_dev *miidev;
 	unsigned int name_len;
+	char *new_name;
 
 	/* check if we have unique name */
-	list_for_each (entry, &mii_devs) {
-		miidev = list_entry (entry, struct mii_dev, link);
-		if (strcmp (miidev->name, name) == 0) {
-			printf ("miiphy_register: non unique device name "
-				"'%s'\n", name);
-			return;
-		}
+	new_dev = miiphy_get_dev_by_name(name, 1);
+	if (new_dev) {
+		printf("miiphy_register: non unique device name '%s'\n", name);
+		return;
 	}
 
 	/* allocate memory */
@@ -108,9 +127,9 @@ void miiphy_register (char *name,
 	INIT_LIST_HEAD (&new_dev->link);
 	new_dev->read = read;
 	new_dev->write = write;
-	new_dev->name = (char *)(new_dev + 1);
-	strncpy (new_dev->name, name, name_len);
-	new_dev->name[name_len] = '\0';
+	new_dev->name = new_name = (char *)(new_dev + 1);
+	strncpy (new_name, name, name_len);
+	new_name[name_len] = '\0';
 
 	debug ("miiphy_register: added '%s', read=0x%08lx, write=0x%08lx\n",
 	       new_dev->name, new_dev->read, new_dev->write);
@@ -122,30 +141,39 @@ void miiphy_register (char *name,
 		current_mii = new_dev;
 }
 
-int miiphy_set_current_dev (char *devname)
+int miiphy_set_current_dev(const char *devname)
 {
-	struct list_head *entry;
 	struct mii_dev *dev;
 
-	list_for_each (entry, &mii_devs) {
-		dev = list_entry (entry, struct mii_dev, link);
-
-		if (strcmp (devname, dev->name) == 0) {
-			current_mii = dev;
-			return 0;
-		}
+	dev = miiphy_get_dev_by_name(devname, 0);
+	if (dev) {
+		current_mii = dev;
+		return 0;
 	}
 
-	printf ("No such device: %s\n", devname);
 	return 1;
 }
 
-char *miiphy_get_current_dev ()
+const char *miiphy_get_current_dev(void)
 {
 	if (current_mii)
 		return current_mii->name;
 
 	return NULL;
+}
+
+static struct mii_dev *miiphy_get_active_dev(const char *devname)
+{
+	/* If the current mii is the one we want, return it */
+	if (current_mii)
+		if (strcmp(current_mii->name, devname) == 0)
+			return current_mii;
+
+	/* Otherwise, set the active one to the one we want */
+	if (miiphy_set_current_dev(devname))
+		return NULL;
+	else
+		return current_mii;
 }
 
 /*****************************************************************************
@@ -156,33 +184,16 @@ char *miiphy_get_current_dev ()
  * Returns:
  *   0 on success
  */
-int miiphy_read (char *devname, unsigned char addr, unsigned char reg,
+int miiphy_read(const char *devname, unsigned char addr, unsigned char reg,
 		 unsigned short *value)
 {
-	struct list_head *entry;
 	struct mii_dev *dev;
-	int found_dev = 0;
-	int read_ret = 0;
 
-	if (!devname) {
-		printf ("NULL device name!\n");
-		return 1;
-	}
+	dev = miiphy_get_active_dev(devname);
+	if (dev)
+		return dev->read(devname, addr, reg, value);
 
-	list_for_each (entry, &mii_devs) {
-		dev = list_entry (entry, struct mii_dev, link);
-
-		if (strcmp (devname, dev->name) == 0) {
-			found_dev = 1;
-			read_ret = dev->read (devname, addr, reg, value);
-			break;
-		}
-	}
-
-	if (found_dev == 0)
-		printf ("No such device: %s\n", devname);
-
-	return ((found_dev) ? read_ret : 1);
+	return 1;
 }
 
 /*****************************************************************************
@@ -193,33 +204,16 @@ int miiphy_read (char *devname, unsigned char addr, unsigned char reg,
  * Returns:
  *   0 on success
  */
-int miiphy_write (char *devname, unsigned char addr, unsigned char reg,
+int miiphy_write(const char *devname, unsigned char addr, unsigned char reg,
 		  unsigned short value)
 {
-	struct list_head *entry;
 	struct mii_dev *dev;
-	int found_dev = 0;
-	int write_ret = 0;
 
-	if (!devname) {
-		printf ("NULL device name!\n");
-		return 1;
-	}
+	dev = miiphy_get_active_dev(devname);
+	if (dev)
+		return dev->write(devname, addr, reg, value);
 
-	list_for_each (entry, &mii_devs) {
-		dev = list_entry (entry, struct mii_dev, link);
-
-		if (strcmp (devname, dev->name) == 0) {
-			found_dev = 1;
-			write_ret = dev->write (devname, addr, reg, value);
-			break;
-		}
-	}
-
-	if (found_dev == 0)
-		printf ("No such device: %s\n", devname);
-
-	return ((found_dev) ? write_ret : 1);
+	return 1;
 }
 
 /*****************************************************************************
@@ -253,26 +247,26 @@ void miiphy_listdev (void)
  * Returns:
  *   0 on success
  */
-int miiphy_info (char *devname, unsigned char addr, unsigned int *oui,
+int miiphy_info(const char *devname, unsigned char addr, unsigned int *oui,
 		 unsigned char *model, unsigned char *rev)
 {
 	unsigned int reg = 0;
 	unsigned short tmp;
 
-	if (miiphy_read (devname, addr, PHY_PHYIDR2, &tmp) != 0) {
+	if (miiphy_read (devname, addr, MII_PHYSID2, &tmp) != 0) {
 		debug ("PHY ID register 2 read failed\n");
 		return (-1);
 	}
 	reg = tmp;
 
-	debug ("PHY_PHYIDR2 @ 0x%x = 0x%04x\n", addr, reg);
+	debug ("MII_PHYSID2 @ 0x%x = 0x%04x\n", addr, reg);
 
 	if (reg == 0xFFFF) {
 		/* No physical device present at this address */
 		return (-1);
 	}
 
-	if (miiphy_read (devname, addr, PHY_PHYIDR1, &tmp) != 0) {
+	if (miiphy_read (devname, addr, MII_PHYSID1, &tmp) != 0) {
 		debug ("PHY ID register 1 read failed\n");
 		return (-1);
 	}
@@ -291,16 +285,16 @@ int miiphy_info (char *devname, unsigned char addr, unsigned int *oui,
  * Returns:
  *   0 on success
  */
-int miiphy_reset (char *devname, unsigned char addr)
+int miiphy_reset(const char *devname, unsigned char addr)
 {
 	unsigned short reg;
-	int loop_cnt;
+	int timeout = 500;
 
-	if (miiphy_read (devname, addr, PHY_BMCR, &reg) != 0) {
+	if (miiphy_read (devname, addr, MII_BMCR, &reg) != 0) {
 		debug ("PHY status read failed\n");
 		return (-1);
 	}
-	if (miiphy_write (devname, addr, PHY_BMCR, reg | 0x8000) != 0) {
+	if (miiphy_write (devname, addr, MII_BMCR, reg | BMCR_RESET) != 0) {
 		debug ("PHY reset failed\n");
 		return (-1);
 	}
@@ -312,13 +306,13 @@ int miiphy_reset (char *devname, unsigned char addr)
 	 * auto-clearing).  This should happen within 0.5 seconds per the
 	 * IEEE spec.
 	 */
-	loop_cnt = 0;
 	reg = 0x8000;
-	while (((reg & 0x8000) != 0) && (loop_cnt++ < 1000000)) {
-		if (miiphy_read (devname, addr, PHY_BMCR, &reg) != 0) {
-			debug ("PHY status read failed\n");
-			return (-1);
+	while (((reg & 0x8000) != 0) && timeout--) {
+		if (miiphy_read(devname, addr, MII_BMCR, &reg) != 0) {
+			debug("PHY status read failed\n");
+			return -1;
 		}
+		udelay(1000);
 	}
 	if ((reg & 0x8000) == 0) {
 		return (0);
@@ -333,7 +327,7 @@ int miiphy_reset (char *devname, unsigned char addr)
  *
  * Determine the ethernet speed (10/100/1000).  Return 10 on error.
  */
-int miiphy_speed (char *devname, unsigned char addr)
+int miiphy_speed(const char *devname, unsigned char addr)
 {
 	u16 bmcr, anlpar;
 
@@ -351,7 +345,7 @@ int miiphy_speed (char *devname, unsigned char addr)
 	 * No 1000BASE-X, so assume 1000BASE-T/100BASE-TX/10BASE-T register set.
 	 */
 	/* Check for 1000BASE-T. */
-	if (miiphy_read (devname, addr, PHY_1000BTSR, &btsr)) {
+	if (miiphy_read (devname, addr, MII_STAT1000, &btsr)) {
 		printf ("PHY 1000BT status");
 		goto miiphy_read_failed;
 	}
@@ -362,23 +356,23 @@ int miiphy_speed (char *devname, unsigned char addr)
 #endif /* CONFIG_PHY_GIGE */
 
 	/* Check Basic Management Control Register first. */
-	if (miiphy_read (devname, addr, PHY_BMCR, &bmcr)) {
+	if (miiphy_read (devname, addr, MII_BMCR, &bmcr)) {
 		printf ("PHY speed");
 		goto miiphy_read_failed;
 	}
 	/* Check if auto-negotiation is on. */
-	if (bmcr & PHY_BMCR_AUTON) {
+	if (bmcr & BMCR_ANENABLE) {
 		/* Get auto-negotiation results. */
-		if (miiphy_read (devname, addr, PHY_ANLPAR, &anlpar)) {
+		if (miiphy_read (devname, addr, MII_LPA, &anlpar)) {
 			printf ("PHY AN speed");
 			goto miiphy_read_failed;
 		}
-		return (anlpar & PHY_ANLPAR_100) ? _100BASET : _10BASET;
+		return (anlpar & LPA_100) ? _100BASET : _10BASET;
 	}
 	/* Get speed from basic control settings. */
-	return (bmcr & PHY_BMCR_100MB) ? _100BASET : _10BASET;
+	return (bmcr & BMCR_SPEED100) ? _100BASET : _10BASET;
 
-      miiphy_read_failed:
+miiphy_read_failed:
 	printf (" read failed, assuming 10BASE-T\n");
 	return _10BASET;
 }
@@ -387,7 +381,7 @@ int miiphy_speed (char *devname, unsigned char addr)
  *
  * Determine full/half duplex.  Return half on error.
  */
-int miiphy_duplex (char *devname, unsigned char addr)
+int miiphy_duplex(const char *devname, unsigned char addr)
 {
 	u16 bmcr, anlpar;
 
@@ -397,7 +391,7 @@ int miiphy_duplex (char *devname, unsigned char addr)
 	/* Check for 1000BASE-X. */
 	if (miiphy_is_1000base_x (devname, addr)) {
 		/* 1000BASE-X */
-		if (miiphy_read (devname, addr, PHY_ANLPAR, &anlpar)) {
+		if (miiphy_read (devname, addr, MII_LPA, &anlpar)) {
 			printf ("1000BASE-X PHY AN duplex");
 			goto miiphy_read_failed;
 		}
@@ -406,7 +400,7 @@ int miiphy_duplex (char *devname, unsigned char addr)
 	 * No 1000BASE-X, so assume 1000BASE-T/100BASE-TX/10BASE-T register set.
 	 */
 	/* Check for 1000BASE-T. */
-	if (miiphy_read (devname, addr, PHY_1000BTSR, &btsr)) {
+	if (miiphy_read (devname, addr, MII_STAT1000, &btsr)) {
 		printf ("PHY 1000BT status");
 		goto miiphy_read_failed;
 	}
@@ -420,24 +414,24 @@ int miiphy_duplex (char *devname, unsigned char addr)
 #endif /* CONFIG_PHY_GIGE */
 
 	/* Check Basic Management Control Register first. */
-	if (miiphy_read (devname, addr, PHY_BMCR, &bmcr)) {
+	if (miiphy_read (devname, addr, MII_BMCR, &bmcr)) {
 		puts ("PHY duplex");
 		goto miiphy_read_failed;
 	}
 	/* Check if auto-negotiation is on. */
-	if (bmcr & PHY_BMCR_AUTON) {
+	if (bmcr & BMCR_ANENABLE) {
 		/* Get auto-negotiation results. */
-		if (miiphy_read (devname, addr, PHY_ANLPAR, &anlpar)) {
+		if (miiphy_read (devname, addr, MII_LPA, &anlpar)) {
 			puts ("PHY AN duplex");
 			goto miiphy_read_failed;
 		}
-		return (anlpar & (PHY_ANLPAR_10FD | PHY_ANLPAR_TXFD)) ?
+		return (anlpar & (LPA_10FULL | LPA_100FULL)) ?
 		    FULL : HALF;
 	}
 	/* Get speed from basic control settings. */
-	return (bmcr & PHY_BMCR_DPLX) ? FULL : HALF;
+	return (bmcr & BMCR_FULLDPLX) ? FULL : HALF;
 
-      miiphy_read_failed:
+miiphy_read_failed:
 	printf (" read failed, assuming half duplex\n");
 	return HALF;
 }
@@ -447,44 +441,43 @@ int miiphy_duplex (char *devname, unsigned char addr)
  * Return 1 if PHY supports 1000BASE-X, 0 if PHY supports 10BASE-T/100BASE-TX/
  * 1000BASE-T, or on error.
  */
-int miiphy_is_1000base_x (char *devname, unsigned char addr)
+int miiphy_is_1000base_x(const char *devname, unsigned char addr)
 {
 #if defined(CONFIG_PHY_GIGE)
 	u16 exsr;
 
-	if (miiphy_read (devname, addr, PHY_EXSR, &exsr)) {
+	if (miiphy_read (devname, addr, MII_ESTATUS, &exsr)) {
 		printf ("PHY extended status read failed, assuming no "
 			"1000BASE-X\n");
 		return 0;
 	}
-	return 0 != (exsr & (PHY_EXSR_1000XF | PHY_EXSR_1000XH));
+	return 0 != (exsr & (ESTATUS_1000XF | ESTATUS_1000XH));
 #else
 	return 0;
 #endif
 }
 
-#ifdef CFG_FAULT_ECHO_LINK_DOWN
+#ifdef CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 /*****************************************************************************
  *
  * Determine link status
  */
-int miiphy_link (char *devname, unsigned char addr)
+int miiphy_link(const char *devname, unsigned char addr)
 {
 	unsigned short reg;
 
 	/* dummy read; needed to latch some phys */
-	(void)miiphy_read (devname, addr, PHY_BMSR, &reg);
-	if (miiphy_read (devname, addr, PHY_BMSR, &reg)) {
-		puts ("PHY_BMSR read failed, assuming no link\n");
+	(void)miiphy_read (devname, addr, MII_BMSR, &reg);
+	if (miiphy_read (devname, addr, MII_BMSR, &reg)) {
+		puts ("MII_BMSR read failed, assuming no link\n");
 		return (0);
 	}
 
 	/* Determine if a link is active */
-	if ((reg & PHY_BMSR_LS) != 0) {
+	if ((reg & BMSR_LSTATUS) != 0) {
 		return (1);
 	} else {
 		return (0);
 	}
 }
 #endif
-#endif /* CONFIG_MII */

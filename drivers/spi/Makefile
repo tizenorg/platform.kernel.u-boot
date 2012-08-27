@@ -23,11 +23,23 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libspi.a
+LIB	:= $(obj)libspi.o
 
-COBJS-$(CONFIG_MPC8XXX_SPI) += mpc8xxx_spi.o
+COBJS-$(CONFIG_ALTERA_SPI) += altera_spi.o
+COBJS-$(CONFIG_ATMEL_DATAFLASH_SPI) += atmel_dataflash_spi.o
 COBJS-$(CONFIG_ATMEL_SPI) += atmel_spi.o
+COBJS-$(CONFIG_BFIN_SPI) += bfin_spi.o
+COBJS-$(CONFIG_CF_SPI) += cf_spi.o
+COBJS-$(CONFIG_DAVINCI_SPI) += davinci_spi.o
+COBJS-$(CONFIG_KIRKWOOD_SPI) += kirkwood_spi.o
+COBJS-$(CONFIG_MPC52XX_SPI) += mpc52xx_spi.o
+COBJS-$(CONFIG_MPC8XXX_SPI) += mpc8xxx_spi.o
 COBJS-$(CONFIG_MXC_SPI) += mxc_spi.o
+COBJS-$(CONFIG_OMAP3_SPI) += omap3_spi.o
+COBJS-$(CONFIG_SOFT_SPI) += soft_spi.o
+COBJS-$(CONFIG_SH_SPI) += sh_spi.o
+COBJS-$(CONFIG_SPI_GPIO) += spi_gpio.o
+COBJS-$(CONFIG_OMAP4_SPI) += omap4_spi_gpio.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
@@ -36,7 +48,7 @@ OBJS	:= $(addprefix $(obj),$(COBJS))
 all:	$(LIB)
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 #########################################################################
 

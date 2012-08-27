@@ -56,7 +56,7 @@ static XEmac Emac;
 static char etherrxbuff[PKTSIZE_ALIGN];	/* Receive buffer */
 
 /* hardcoded MAC address for the Xilinx EMAC Core when env is nowhere*/
-#ifdef CFG_ENV_IS_NOWHERE
+#ifdef CONFIG_ENV_IS_NOWHERE
 static u8 EMACAddr[ENET_ADDR_LENGTH] = { 0x00, 0x0a, 0x35, 0x00, 0x22, 0x01 };
 #endif
 
@@ -74,6 +74,7 @@ eth_init(bd_t * bis)
 {
 	u32 Options;
 	XStatus Result;
+	uchar enetaddr[6];
 
 #ifdef DEBUG
 	printf("EMAC Initialization Started\n\r");
@@ -87,11 +88,14 @@ eth_init(bd_t * bis)
 	/* make sure the Emac is stopped before it is started */
 	(void) XEmac_Stop(&Emac);
 
-#ifdef CFG_ENV_IS_NOWHERE
-	memcpy(bis->bi_enetaddr, EMACAddr, 6);
+	if (!eth_getenv_enetaddr("ethaddr", enetaddr)) {
+#ifdef CONFIG_ENV_IS_NOWHERE
+		memcpy(enetaddr, EMACAddr, 6);
+		eth_setenv_enetaddr("ethaddr", enetaddr);
 #endif
+	}
 
-	Result = XEmac_SetMacAddress(&Emac, bis->bi_enetaddr);
+	Result = XEmac_SetMacAddress(&Emac, enetaddr);
 	if (Result != XST_SUCCESS) {
 		return 0;
 	}

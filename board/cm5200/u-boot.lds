@@ -50,15 +50,12 @@ SECTIONS
   .plt : { *(.plt) }
   .text      :
   {
-    cpu/mpc5xxx/start.o	(.text)
+    arch/powerpc/cpu/mpc5xxx/start.o	(.text)
     *(.text)
-    *(.fixup)
     *(.got1)
     . = ALIGN(16);
-    *(.rodata)
-    *(.rodata1)
-    *(.rodata.str1.4)
     *(.eh_frame)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
   }
   .fini      : { *(.fini)    } =0
   .ctors     : { *(.ctors)   }
@@ -116,7 +113,8 @@ SECTIONS
    *(.dynbss)
    *(.bss)
    *(COMMON)
+   . = ALIGN(4);
   }
-  _end = . ;
+  __bss_end__ = . ;
   PROVIDE (end = .);
 }

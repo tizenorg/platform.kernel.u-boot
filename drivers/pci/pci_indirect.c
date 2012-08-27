@@ -11,7 +11,6 @@
 
 #include <common.h>
 
-#ifdef CONFIG_PCI
 #if (!defined(__I386__) && !defined(CONFIG_IXDP425))
 
 #include <asm/processor.h>
@@ -60,7 +59,8 @@ indirect_##rw##_config_##size(struct pci_controller *hose,               \
 	cfg_##rw(val, hose->cfg_data + (offset & mask), type, op);       \
 	return 0;                                                        \
 }
-#elif defined(CONFIG_440GX) || defined(CONFIG_440EP) || defined(CONFIG_440GR) || defined(CONFIG_440SPE)
+#elif defined(CONFIG_440GX)  || defined(CONFIG_440GP) || defined(CONFIG_440SP) || \
+      defined(CONFIG_440SPE) || defined(CONFIG_460EX) || defined(CONFIG_460GT)
 #define INDIRECT_PCI_OP(rw, size, type, op, mask)			 \
 static int								 \
 indirect_##rw##_config_##size(struct pci_controller *hose,		 \
@@ -135,4 +135,3 @@ void pci_setup_indirect(struct pci_controller* hose, u32 cfg_addr, u32 cfg_data)
 }
 
 #endif	/* !__I386__ && !CONFIG_IXDP425 */
-#endif	/* CONFIG_PCI */

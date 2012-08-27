@@ -3,7 +3,7 @@
  *
  *  Bad Block Table support for the OneNAND driver
  *
- *  Copyright(c) 2005-2007 Samsung Electronics
+ *  Copyright(c) 2005-2008 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  *
  *  TODO:
@@ -15,9 +15,6 @@
  */
 
 #include <common.h>
-
-#ifdef CONFIG_CMD_ONENAND
-
 #include <linux/mtd/compat.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/onenand.h>
@@ -51,6 +48,44 @@ static int check_short_pattern(uint8_t * buf, int len, int paglen,
 	return 0;
 }
 
+static int read_page_oob(struct mtd_info *mtd, loff_t from, u_char *buf)
+{
+	struct onenand_chip *this = mtd->priv;
+	struct bbm_info *bbm = this->bbm;
+	struct nand_bbt_descr *bd = bbm->badblock_pattern;
+	struct mtd_oob_ops ops;
+	int ret, scanlen, block, j, res;
+
+	scanlen = 0;
+
+	ops.mode = MTD_OOB_PLACE;
+	ops.ooblen = 32;
+	ops.oobbuf = buf;
+	ops.len = ops.ooboffs = ops.retlen = ops.oobretlen = 0;
+
+	/* Get block number * 2 */
+	block = (int)(from >> (bbm->bbt_erase_shift - 1));
+
+	/* Set as normal block */
+	res = 0x00;
+	bbm->bbt[block >> 3] &= ~(0x3 << (block & 0x6));
+	bbm->bbt[block >> 3] |= res << (block & 0x6);
+
+	for (j = 0; j < 2; j++) {
+		ret = onenand_bbt_read_oob(mtd, from + j * mtd->writesize + bd->offs, &ops);
+		if (ret || check_short_pattern(&buf[j * scanlen], scanlen, mtd->writesize, bd)) {
+			res = 0x03;
+			bbm->bbt[block >> 3] |= res << (block & 0x6);
+			printk(KERN_WARNING "Bad eraseblock %d at 0x%08x\n",
+					block >> 1, (unsigned int) from);
+			mtd->ecc_stats.badblocks++;
+			break;
+		}
+	}
+
+	return res;
+}
+
 /**
  * create_bbt - [GENERIC] Create a bad block table by scanning the device
  * @param mtd		MTD device structure
@@ -71,6 +106,8 @@ static int create_bbt(struct mtd_info *mtd, uint8_t * buf,
 	int startblock;
 	loff_t from;
 	size_t readlen, ooblen;
+	struct mtd_oob_ops ops;
+	int rgn;
 
 	printk(KERN_INFO "Scanning device for bad blocks\n");
 
@@ -84,30 +121,31 @@ static int create_bbt(struct mtd_info *mtd, uint8_t * buf,
 	/* Note that numblocks is 2 * (real numblocks) here;
 	 * see i += 2 below as it makses shifting and masking less painful
 	 */
-	numblocks = mtd->size >> (bbm->bbt_erase_shift - 1);
+	numblocks = this->chipsize >> (bbm->bbt_erase_shift - 1);
 	startblock = 0;
 	from = 0;
+
+	ops.mode = MTD_OOB_PLACE;
+	ops.ooblen = readlen;
+	ops.oobbuf = buf;
+	ops.len = ops.ooboffs = ops.retlen = ops.oobretlen = 0;
 
 	for (i = startblock; i < numblocks;) {
 		int ret;
 
 		for (j = 0; j < len; j++) {
-			size_t retlen;
-
 			/* No need to read pages fully,
 			 * just read required OOB bytes */
-			ret = onenand_read_oob(mtd,
-					     from + j * mtd->oobblock +
-					     bd->offs, readlen, &retlen,
-					     &buf[0]);
+			ret = onenand_bbt_read_oob(mtd,
+					     from + j * mtd->writesize +
+					     bd->offs, &ops);
 
-			if (ret && ret != -EAGAIN) {
-				printk("ret = %d\n", ret);
-				return ret;
-			}
+			/* If it is a initial bad block, just ignore it */
+			if (ret == ONENAND_BBT_READ_FATAL_ERROR)
+				return -EIO;
 
-			if (check_short_pattern
-			    (&buf[j * scanlen], scanlen, mtd->oobblock, bd)) {
+			if (ret || check_short_pattern
+			    (&buf[j * scanlen], scanlen, mtd->writesize, bd)) {
 				bbm->bbt[i >> 3] |= 0x03 << (i & 0x6);
 				printk(KERN_WARNING
 				       "Bad eraseblock %d at 0x%08x\n", i >> 1,
@@ -116,7 +154,12 @@ static int create_bbt(struct mtd_info *mtd, uint8_t * buf,
 			}
 		}
 		i += 2;
-		from += (1 << bbm->bbt_erase_shift);
+
+		if (FLEXONENAND(this)) {
+			rgn = flexonenand_region(mtd, from);
+			from += mtd->eraseregions[rgn].erasesize;
+		} else
+			from += (1 << bbm->bbt_erase_shift);
 	}
 
 	return 0;
@@ -133,10 +176,10 @@ static int create_bbt(struct mtd_info *mtd, uint8_t * buf,
 static inline int onenand_memory_bbt(struct mtd_info *mtd,
 				     struct nand_bbt_descr *bd)
 {
-	unsigned char data_buf[MAX_ONENAND_PAGESIZE];
+	struct onenand_chip *this = mtd->priv;
 
 	bd->options &= ~NAND_BBT_SCANEMPTY;
-	return create_bbt(mtd, data_buf, bd, -1);
+	return create_bbt(mtd, this->page_buf, bd, -1);
 }
 
 /**
@@ -153,12 +196,17 @@ static int onenand_isbad_bbt(struct mtd_info *mtd, loff_t offs, int allowbbt)
 	uint8_t res;
 
 	/* Get block number * 2 */
-	block = (int)(offs >> (bbm->bbt_erase_shift - 1));
+	block = (int) (onenand_block(this, offs) << 1);
 	res = (bbm->bbt[block >> 3] >> (block & 0x06)) & 0x03;
 
+	if (this->options & ONENAND_RUNTIME_BADBLOCK_CHECK) {
+		if (res == 0x02)
+			res = read_page_oob(mtd, offs, this->oob_buf);
+	}
+
 	MTDDEBUG (MTD_DEBUG_LEVEL2,
-	          "onenand_isbad_bbt: bbt info for offs 0x%08x: (block %d) 0x%02x\n",
-	          (unsigned int)offs, block >> 1, res);
+		"onenand_isbad_bbt: bbt info for offs 0x%08x: (block %d) 0x%02x\n",
+		(unsigned int)offs, block >> 1, res);
 
 	switch ((int)res) {
 	case 0x00:
@@ -192,7 +240,7 @@ int onenand_scan_bbt(struct mtd_info *mtd, struct nand_bbt_descr *bd)
 	struct bbm_info *bbm = this->bbm;
 	int len, ret = 0;
 
-	len = mtd->size >> (this->erase_shift + 2);
+	len = this->chipsize >> (this->erase_shift + 2);
 	/* Allocate memory (2bit per block) */
 	bbm->bbt = malloc(len);
 	if (!bbm->bbt) {
@@ -210,6 +258,12 @@ int onenand_scan_bbt(struct mtd_info *mtd, struct nand_bbt_descr *bd)
 
 	if (!bbm->isbad_bbt)
 		bbm->isbad_bbt = onenand_isbad_bbt;
+
+	if (this->options & ONENAND_RUNTIME_BADBLOCK_CHECK) {
+		printk(KERN_INFO "Scanning device for bad blocks (skipped)\n");
+		memset(bbm->bbt, 0xaa, len);
+		return 0;
+	}
 
 	/* Scan the device to build a memory based bad block table */
 	if ((ret = onenand_memory_bbt(mtd, bd))) {
@@ -261,5 +315,3 @@ int onenand_default_bbt(struct mtd_info *mtd)
 
 	return onenand_scan_bbt(mtd, bbm->badblock_pattern);
 }
-
-#endif /* CFG_CMD_ONENAND */

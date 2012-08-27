@@ -26,27 +26,19 @@
  */
 #include <common.h>
 #include <command.h>
-#include <devices.h>
+#include <stdio_dev.h>
+#include <serial.h>
 
-#if defined(CONFIG_CMD_TERMINAL)
-
-int do_terminal(cmd_tbl_t * cmd, int flag, int argc, char *argv[])
+int do_terminal(cmd_tbl_t * cmd, int flag, int argc, char * const argv[])
 {
-	int i, l;
 	int last_tilde = 0;
-	device_t *dev = NULL;
+	struct stdio_dev *dev = NULL;
 
 	if (argc < 1)
 		return -1;
 
 	/* Scan for selected output/input device */
-	for (i = 1; i <= ListNumItems (devlist); i++) {
-		device_t *tmp = ListGetPtrToItem (devlist, i);
-		if (!strcmp(tmp->name, argv[1])) {
-			dev = tmp;
-			break;
-		}
-	}
+	dev = stdio_get_by_name(argv[1]);
 	if (!dev)
 		return -1;
 
@@ -95,8 +87,6 @@ int do_terminal(cmd_tbl_t * cmd, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	terminal,	3,	1,	do_terminal,
-	"terminal - start terminal emulator\n",
+	"start terminal emulator",
 	""
 );
-
-#endif /* CONFIG_CMD_TERMINAL */

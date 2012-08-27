@@ -6,7 +6,7 @@
 #include <common.h>
 #include <df.h>
 
-static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	const char *cmd;
 
@@ -27,11 +27,10 @@ static int do_df(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	}
 
 usage:
-	printf("Usage:\n%s\n", cmdtp->usage);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	sf,	2,	1,	do_serial_flash,
-	"sf	- Serial flash sub-system\n",
-	"probe [bus:]cs		- init flash device on given SPI bus and CS\n")
+	"Serial flash sub-system",
+	"probe [bus:]cs		- init flash device on given SPI bus and CS")

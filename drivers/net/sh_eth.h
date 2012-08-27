@@ -1,5 +1,5 @@
 /*
- * sh_eth.h - Driver for Renesas SH7763's gigabit ethernet controler.
+ * sh_eth.h - Driver for Renesas SuperH ethernet controler.
  *
  * Copyright (C) 2008 Renesas Solutions Corp.
  * Copyright (c) 2008 Nobuhiro Iwamatsu
@@ -20,6 +20,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <netdev.h>
 #include <asm/types.h>
 
 #define SHETHER_NAME "sh_eth"
@@ -29,7 +30,11 @@
 #define ADDR_TO_P2(addr)	((((int)(addr) & ~0xe0000000) | 0xa0000000))
 
 /* The ethernet controller needs to use physical addresses */
+#if defined(CONFIG_SH_32BIT)
+#define ADDR_TO_PHY(addr)	((((int)(addr) & ~0xe0000000) | 0x40000000))
+#else
 #define ADDR_TO_PHY(addr)	((int)(addr) & ~0xe0000000)
+#endif
 
 /* Number of supported ports */
 #define MAX_PORT_NUM	2
@@ -48,7 +53,7 @@
 #define TX_DESC_PADDING		4
 #define TX_DESC_SIZE		(12 + TX_DESC_PADDING)
 
-/* Tx descriptor. We always use 4 bytes of padding */
+/* Tx descriptor. We always use 3 bytes of padding */
 struct tx_desc_s {
 	volatile u32 td0;
 	u32 td1;
@@ -72,7 +77,7 @@ struct rx_desc_s {
 	u32 padding;
 };
 
-struct port_info_s {
+struct sh_eth_info {
 	struct tx_desc_s *tx_desc_malloc;
 	struct tx_desc_s *tx_desc_base;
 	struct tx_desc_s *tx_desc_cur;
@@ -83,14 +88,16 @@ struct port_info_s {
 	u8 *rx_buf_base;
 	u8 mac_addr[6];
 	u8 phy_addr;
+	struct eth_device *dev;
 };
 
-struct dev_info_s {
+struct sh_eth_dev {
 	int port;
-	struct port_info_s port_info[MAX_PORT_NUM];
+	struct sh_eth_info port_info[MAX_PORT_NUM];
 };
 
 /* Register Address */
+#ifdef CONFIG_CPU_SH7763
 #define BASE_IO_ADDR	0xfee00000
 
 #define EDSR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0000)
@@ -128,6 +135,34 @@ struct dev_info_s {
 #define MALR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x05c8)
 #define MAHR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x05c0)
 
+#elif defined(CONFIG_CPU_SH7757)
+#define BASE_IO_ADDR	0xfef00000
+
+#define TDLAR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0018)
+#define RDLAR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0020)
+
+#define EDMR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0000)
+#define EDTRR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0008)
+#define EDRRR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0010)
+#define EESR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0028)
+#define EESIPR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0030)
+#define TRSCER(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0038)
+#define TFTR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0048)
+#define FDR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0050)
+#define RMCR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0058)
+#define FCFTR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0070)
+#define ECMR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0100)
+#define RFLR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0108)
+#define ECSIPR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0118)
+#define PIR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0120)
+#define APR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0154)
+#define MPR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0158)
+#define TPAUSER(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x0164)
+#define MAHR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01c0)
+#define MALR(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01c8)
+#define RTRATE(port)		(BASE_IO_ADDR + 0x800 * (port) + 0x01fc)
+#endif
+
 /*
  * Register's bits
  * Copy from Linux driver source code
@@ -145,6 +180,10 @@ enum DMAC_M_BIT {
 	EDMR_DL1 = 0x20, EDMR_DL0 = 0x10,
 #ifdef CONFIG_CPU_SH7763
 	EDMR_SRST	= 0x03,
+	EMDR_DESC_R	= 0x30, /* Descriptor reserve size */
+	EDMR_EL		= 0x40, /* Litte endian */
+#elif defined CONFIG_CPU_SH7757
+	EDMR_SRST	= 0x01,
 	EMDR_DESC_R	= 0x30, /* Descriptor reserve size */
 	EDMR_EL		= 0x40, /* Litte endian */
 #else /* CONFIG_CPU_SH7763 */
@@ -166,7 +205,7 @@ enum DMAC_T_BIT {
 
 /* GECMR */
 enum GECMR_BIT {
-	GECMR_1000B = 0x01, GECMR_100B = 0x40, GECMR_10B = 0x00,
+	GECMR_1000B = 0x01, GECMR_100B = 0x04, GECMR_10B = 0x00,
 };
 
 /* EDRRR*/
@@ -285,7 +324,7 @@ enum FCFTR_BIT {
 
 /* Transfer descriptor bit */
 enum TD_STS_BIT {
-#ifdef CONFIG_CPU_SH7763
+#if defined(CONFIG_CPU_SH7763) || defined(CONFIG_CPU_SH7757)
 	TD_TACT = 0x80000000,
 #else
 	TD_TACT = 0x7fffffff,
@@ -315,8 +354,10 @@ enum FELIC_MODE_BIT {
 #ifdef CONFIG_CPU_SH7763
 #define ECMR_CHG_DM	(ECMR_TRCCM | ECMR_RZPF | ECMR_ZPF | ECMR_PFR | ECMR_RXF | \
 						ECMR_TXF | ECMR_MCT)
+#elif CONFIG_CPU_SH7757
+#define ECMR_CHG_DM	(ECMR_ZPF)
 #else
-#define ECMR_CHG_DM	(ECMR_ZPF | ECMR_PFR ECMR_RXF | ECMR_TXF | ECMR_MCT)
+#define ECMR_CHG_DM	(ECMR_ZPF | ECMR_PFR | ECMR_RXF | ECMR_TXF | ECMR_MCT)
 #endif
 
 /* ECSR */
@@ -353,12 +394,20 @@ enum ECSIPR_STATUS_MASK_BIT {
 
 /* APR */
 enum APR_BIT {
+#ifdef CONFIG_CPU_SH7757
+	APR_AP = 0x00000001,
+#else
 	APR_AP = 0x00000004,
+#endif
 };
 
 /* MPR */
 enum MPR_BIT {
+#ifdef CONFIG_CPU_SH7757
+	MPR_MP = 0x00000001,
+#else
 	MPR_MP = 0x00000006,
+#endif
 };
 
 /* TRSCER */

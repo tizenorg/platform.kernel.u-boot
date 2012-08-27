@@ -99,9 +99,9 @@ int mv64460_eth_receive (struct eth_device *dev);
 
 int mv64460_eth_xmit (struct eth_device *, volatile void *packet, int length);
 
-int mv_miiphy_read(char *devname, unsigned char phy_addr,
+int mv_miiphy_read(const char *devname, unsigned char phy_addr,
 		   unsigned char phy_reg, unsigned short *value);
-int mv_miiphy_write(char *devname, unsigned char phy_addr,
+int mv_miiphy_write(const char *devname, unsigned char phy_addr,
 		    unsigned char phy_reg, unsigned short value);
 
 int phy_setup_aneg (char *devname, unsigned char addr);
@@ -298,7 +298,7 @@ void mv6446x_eth_initialize (bd_t * bis)
 			return;
 		}
 
-		temp = getenv_r (s, buf, sizeof (buf));
+		temp = getenv_f(s, buf, sizeof (buf));
 		s = (temp > 0) ? buf : NULL;
 
 #ifdef DEBUG
@@ -397,7 +397,7 @@ void mv6446x_eth_initialize (bd_t * bis)
 			return;
 		}
 
-		temp = getenv_r (s, buf, sizeof (buf));
+		temp = getenv_f(s, buf, sizeof (buf));
 		s = (temp > 0) ? buf : NULL;
 
 #ifdef DEBUG
@@ -586,16 +586,16 @@ static int mv64460_eth_real_open (struct eth_device *dev)
 	}
 #endif /* defined(CONFIG_PHY_RESET) */
 
-	miiphy_read (dev->name, reg, PHY_BMSR, &reg_short);
+	miiphy_read (dev->name, reg, MII_BMSR, &reg_short);
 
 	/*
 	 * Wait if PHY is capable of autonegotiation and autonegotiation is not complete
 	 */
-	if ((reg_short & PHY_BMSR_AUTN_ABLE)
-	    && !(reg_short & PHY_BMSR_AUTN_COMP)) {
+	if ((reg_short & BMSR_ANEGCAPABLE)
+	    && !(reg_short & BMSR_ANEGCOMPLETE)) {
 		puts ("Waiting for PHY auto negotiation to complete");
 		i = 0;
-		while (!(reg_short & PHY_BMSR_AUTN_COMP)) {
+		while (!(reg_short & BMSR_ANEGCOMPLETE)) {
 			/*
 			 * Timeout reached ?
 			 */
@@ -608,7 +608,7 @@ static int mv64460_eth_real_open (struct eth_device *dev)
 				putc ('.');
 			}
 			udelay (1000);	/* 1 ms */
-			miiphy_read (dev->name, reg, PHY_BMSR, &reg_short);
+			miiphy_read (dev->name, reg, MII_BMSR, &reg_short);
 
 		}
 		puts (" done\n");
@@ -1137,7 +1137,7 @@ bool db64460_eth_start (struct eth_device *dev)
 *************************************************************************/
 /*
  * based on Linux code
- * arch/ppc/galileo/EVB64460/mv64460_eth.c - Driver for MV64460X ethernet ports
+ * arch/powerpc/galileo/EVB64460/mv64460_eth.c - Driver for MV64460X ethernet ports
  * Copyright (C) 2002 rabeeh@galileo.co.il
 
  * This program is free software; you can redistribute it and/or
@@ -2241,20 +2241,20 @@ int phy_setup_aneg (char *devname, unsigned char addr)
 	unsigned short ctl, adv;
 
 	/* Setup standard advertise */
-	miiphy_read (devname, addr, PHY_ANAR, &adv);
-	adv |= (PHY_ANLPAR_ACK | PHY_ANLPAR_RF | PHY_ANLPAR_T4 |
-		PHY_ANLPAR_TXFD | PHY_ANLPAR_TX | PHY_ANLPAR_10FD |
-		PHY_ANLPAR_10);
-	miiphy_write (devname, addr, PHY_ANAR, adv);
+	miiphy_read (devname, addr, MII_ADVERTISE, &adv);
+	adv |= (LPA_LPACK | LPA_RFAULT | LPA_100BASE4 |
+		LPA_100FULL | LPA_100HALF | LPA_10FULL |
+		LPA_10HALF);
+	miiphy_write (devname, addr, MII_ADVERTISE, adv);
 
-	miiphy_read (devname, addr, PHY_1000BTCR, &adv);
+	miiphy_read (devname, addr, MII_CTRL1000, &adv);
 	adv |= (0x0300);
-	miiphy_write (devname, addr, PHY_1000BTCR, adv);
+	miiphy_write (devname, addr, MII_CTRL1000, adv);
 
 	/* Start/Restart aneg */
-	miiphy_read (devname, addr, PHY_BMCR, &ctl);
-	ctl |= (PHY_BMCR_AUTON | PHY_BMCR_RST_NEG);
-	miiphy_write (devname, addr, PHY_BMCR, ctl);
+	miiphy_read (devname, addr, MII_BMCR, &ctl);
+	ctl |= (BMCR_ANENABLE | BMCR_ANRESTART);
+	miiphy_write (devname, addr, MII_BMCR, ctl);
 
 	return 0;
 }
@@ -2544,7 +2544,7 @@ static bool eth_port_read_smi_reg (ETH_PORT eth_port_num,
 	return true;
 }
 
-int mv_miiphy_read(char *devname, unsigned char phy_addr,
+int mv_miiphy_read(const char *devname, unsigned char phy_addr,
 		   unsigned char phy_reg, unsigned short *value)
 {
 	unsigned int reg_value;
@@ -2629,7 +2629,7 @@ static bool eth_port_write_smi_reg (ETH_PORT eth_port_num,
 	return true;
 }
 
-int mv_miiphy_write(char *devname, unsigned char phy_addr,
+int mv_miiphy_write(const char *devname, unsigned char phy_addr,
 		    unsigned char phy_reg, unsigned short value)
 {
 	unsigned int reg_value;

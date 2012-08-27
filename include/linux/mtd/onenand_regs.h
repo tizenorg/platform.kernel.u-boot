@@ -67,12 +67,19 @@
 /*
  * Device ID Register F001h (R)
  */
+#define DEVICE_IS_FLEXONENAND		(1 << 9)
+#define FLEXONENAND_PI_MASK		(0x3ff)
+#define FLEXONENAND_PI_UNLOCK_SHIFT	(14)
+#define ONENAND_DEVICE_DENSITY_MASK	(0xf)
 #define ONENAND_DEVICE_DENSITY_SHIFT	(4)
 #define ONENAND_DEVICE_IS_DDP		(1 << 3)
 #define ONENAND_DEVICE_IS_DEMUX		(1 << 2)
 #define ONENAND_DEVICE_VCC_MASK		(0x3)
 
 #define ONENAND_DEVICE_DENSITY_512Mb	(0x002)
+#define ONENAND_DEVICE_DENSITY_1Gb	(0x003)
+#define ONENAND_DEVICE_DENSITY_2Gb	(0x004)
+#define ONENAND_DEVICE_DENSITY_4Gb	(0x005)
 
 /*
  * Version ID Register F002h (R)
@@ -80,14 +87,21 @@
 #define ONENAND_VERSION_PROCESS_SHIFT	(8)
 
 /*
+ * Technology Register F006h (R)
+ */
+#define ONENAND_TECHNOLOGY_IS_MLC	(1 << 0)
+
+/*
  * Start Address 1 F100h (R/W)
  */
 #define ONENAND_DDP_SHIFT		(15)
+#define ONENAND_DDP_CHIP0		(0)
+#define ONENAND_DDP_CHIP1		(1 << ONENAND_DDP_SHIFT)
 
 /*
  * Start Address 8 F107h (R/W)
  */
-#define ONENAND_FPA_MASK		(0x3f)
+#define ONENAND_FPA_MASK		(0x7f)
 #define ONENAND_FPA_SHIFT		(2)
 #define ONENAND_FSA_MASK		(0x03)
 
@@ -99,24 +113,35 @@
 #define ONENAND_BSA_BOOTRAM		(0 << 2)
 #define ONENAND_BSA_DATARAM0		(2 << 2)
 #define ONENAND_BSA_DATARAM1		(3 << 2)
-#define ONENAND_BSC_MASK		(0x03)
+#define ONENAND_BSC_MASK		(0x07)
 
 /*
  * Command Register F220h (R/W)
  */
 #define ONENAND_CMD_READ		(0x00)
+#define ONENAND_CMD_SUPERLOAD		(0x03)
 #define ONENAND_CMD_READOOB		(0x13)
 #define ONENAND_CMD_PROG		(0x80)
 #define ONENAND_CMD_PROGOOB		(0x1A)
+#define ONENAND_CMD_2X_PROG		(0x7D)
+#define ONENAND_CMD_2X_CACHE_PROG	(0x7F)
 #define ONENAND_CMD_UNLOCK		(0x23)
 #define ONENAND_CMD_LOCK		(0x2A)
 #define ONENAND_CMD_LOCK_TIGHT		(0x2C)
+#define ONENAND_CMD_UNLOCK_ALL		(0x27)
 #define ONENAND_CMD_ERASE		(0x94)
+#define ONENAND_CMD_MULTIBLOCK_ERASE	(0x95)
+#define ONENAND_CMD_ERASE_VERIFY	(0x71)
 #define ONENAND_CMD_RESET		(0xF0)
 #define ONENAND_CMD_READID		(0x90)
+#define FLEXONENAND_CMD_RESET		(0xF3)
+#define FLEXONENAND_CMD_PI_UPDATE	(0x05)
+#define FLEXONENAND_CMD_PI_ACCESS	(0x66)
+#define FLEXONENAND_CMD_RECOVER_LSB	(0x05)
 
 /* NOTE: Those are not *REAL* commands */
 #define ONENAND_CMD_BUFFERRAM		(0x1978)
+#define FLEXONENAND_CMD_READ_PI		(0x1985)
 
 /*
  * System Configuration 1 Register F221h (R, R/W)
@@ -142,6 +167,10 @@
 #define ONENAND_SYS_CFG1_INT		(1 << 6)
 #define ONENAND_SYS_CFG1_IOBE		(1 << 5)
 #define ONENAND_SYS_CFG1_RDY_CONF	(1 << 4)
+#define ONENAND_SYS_CFG1_VHF		(1 << 3)
+#define ONENAND_SYS_CFG1_HF		(1 << 2)
+#define ONENAND_SYS_CFG1_WM		(1 << 1)
+#define ONENAND_SYS_CFG1_BWPS		(1 << 0)
 
 /*
  * Controller Status Register F240h (R)
@@ -175,7 +204,10 @@
  * ECC Status Reigser FF00h (R)
  */
 #define ONENAND_ECC_1BIT		(1 << 0)
+#define ONENAND_ECC_1BIT_ALL		(0x5555)
 #define ONENAND_ECC_2BIT		(1 << 1)
 #define ONENAND_ECC_2BIT_ALL		(0xAAAA)
+#define ONENAND_ECC_4BIT_UNCORRECTABLE	(0x1010)
+#define FLEXONENAND_UNCORRECTABLE_ERROR (0x1010)
 
 #endif				/* __ONENAND_REG_H */

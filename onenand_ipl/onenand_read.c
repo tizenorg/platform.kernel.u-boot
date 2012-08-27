@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2005-2008 Samsung Electronis
+ * (C) Copyright 2005-2009 Samsung Electronics
  * Kyungmin Park <kyungmin.park@samsung.com>
  *
  * See file CREDITS for list of people who contributed to this
@@ -37,8 +37,15 @@
 extern void *memcpy32(void *dest, void *src, int size);
 #endif
 
+#ifdef CONFIG_ONENAND_XIP_IPL
+#define ONENAND_READ_PAGE(a,b,c,d)	generic_onenand_read_page(a,b,c,d)
+#else
+int (*onenand_read_page)(ulong block, ulong page, u_char *buf, int pagesize);
+#define ONENAND_READ_PAGE(a,b,c,d)	onenand_read_page(a,b,c,d)
+#endif
+
 /* read a page with ECC */
-static inline int onenand_read_page(ulong block, ulong page,
+static int generic_onenand_read_page(ulong block, ulong page,
 				u_char * buf, int pagesize)
 {
 	unsigned long *base;
@@ -49,28 +56,32 @@ static inline int onenand_read_page(ulong block, ulong page,
 #endif
 
 	onenand_writew(onenand_block_address(block),
-		THIS_ONENAND(ONENAND_REG_START_ADDRESS1));
+			ONENAND_REG_START_ADDRESS1);
 
 	onenand_writew(onenand_bufferram_address(block),
-		THIS_ONENAND(ONENAND_REG_START_ADDRESS2));
+			ONENAND_REG_START_ADDRESS2);
 
 	onenand_writew(onenand_sector_address(page),
-		THIS_ONENAND(ONENAND_REG_START_ADDRESS8));
+			ONENAND_REG_START_ADDRESS8);
 
 	onenand_writew(onenand_buffer_address(),
-		THIS_ONENAND(ONENAND_REG_START_BUFFER));
+			ONENAND_REG_START_BUFFER);
 
-	onenand_writew(ONENAND_INT_CLEAR, THIS_ONENAND(ONENAND_REG_INTERRUPT));
+	onenand_writew(ONENAND_INT_CLEAR, ONENAND_REG_INTERRUPT);
 
-	onenand_writew(ONENAND_CMD_READ, THIS_ONENAND(ONENAND_REG_COMMAND));
+	onenand_writew(ONENAND_CMD_READ, ONENAND_REG_COMMAND);
 
 #ifndef __HAVE_ARCH_MEMCPY32
 	p = (unsigned long *) buf;
 #endif
-	base = (unsigned long *) (CFG_ONENAND_BASE + ONENAND_DATARAM);
+	base = (unsigned long *) (CONFIG_SYS_ONENAND_BASE + ONENAND_DATARAM);
 
 	while (!(READ_INTERRUPT() & ONENAND_INT_READ))
 		continue;
+
+	/* Check for invalid block mark */
+	if (page < 2 && (onenand_readw(ONENAND_SPARERAM) != 0xffff))
+		return 1;
 
 #ifdef __HAVE_ARCH_MEMCPY32
 	/* 32 bytes boundary memory copy */
@@ -85,29 +96,81 @@ static inline int onenand_read_page(ulong block, ulong page,
 	return 0;
 }
 
-#define ONENAND_START_PAGE		1
+#ifndef CONFIG_ONENAND_START_PAGE
+#define CONFIG_ONENAND_START_PAGE	1
+#endif
 #define ONENAND_PAGES_PER_BLOCK		64
 
+#ifndef CONFIG_SKIP_ONENAND_BOARD_INIT
+static int onenand_generic_init(int *page_is_4KiB, int *page)
+{
+	int dev_id, density;
+
+	if (onenand_readw(ONENAND_REG_TECHNOLOGY))
+		*page_is_4KiB = 1;
+	dev_id = onenand_readw(ONENAND_REG_DEVICE_ID);
+	density = dev_id >> ONENAND_DEVICE_DENSITY_SHIFT;
+	density &= ONENAND_DEVICE_DENSITY_MASK;
+	if (density >= ONENAND_DEVICE_DENSITY_4Gb &&
+	    !(dev_id & ONENAND_DEVICE_IS_DDP))
+		*page_is_4KiB = 1;
+
+	return ONENAND_USE_DEFAULT;
+}
+
+int onenand_board_init(int *page_is_4KiB, int *page)
+	__attribute__((weak, alias("onenand_generic_init")));
+#endif
+
 /**
- * onenand_read_block - Read a block data to buf
+ * onenand_read_block - Read CONFIG_SYS_MONITOR_LEN from begining
+ *                      of OneNAND, skipping bad blocks
  * @return 0 on success
  */
-int onenand_read_block0(unsigned char *buf)
+int onenand_read_block(unsigned char *buf)
 {
-	int page, offset = 0;
-	int pagesize = ONENAND_PAGE_SIZE;
+	int block, nblocks;
+	int page = CONFIG_ONENAND_START_PAGE, offset = 0;
+	int pagesize, erase_shift;
 
-	/* MLC OneNAND has 4KiB page size */
-	if (onenand_readw(THIS_ONENAND(ONENAND_REG_TECHNOLOGY)))
-		pagesize <<= 1;
+	pagesize = 2048; /* OneNAND has 2KiB pagesize */
+	erase_shift = 17;
+#ifndef CONFIG_ONENAND_XIP_IPL
+	onenand_read_page = generic_onenand_read_page;
+#endif
+
+#ifndef CONFIG_SKIP_ONENAND_BOARD_INIT
+	do {
+		int page_is_4KiB = 0, ret;
+
+		ret = onenand_board_init(&page_is_4KiB, &page);
+		if (ret == ONENAND_USE_GENERIC)
+			onenand_generic_init(&page_is_4KiB, &page);
+
+		if (page_is_4KiB) {
+			pagesize = 4096; /* OneNAND has 4KiB pagesize */
+			erase_shift = 18;
+		}
+	} while (0);
+#endif
+
+	nblocks = (CONFIG_SYS_MONITOR_LEN + (1 << erase_shift) - 1) >> erase_shift;
 
 	/* NOTE: you must read page from page 1 of block 0 */
-	/* read the block page by page*/
-	for (page = ONENAND_START_PAGE;
-	    page < ONENAND_PAGES_PER_BLOCK; page++) {
-
-		onenand_read_page(0, page, buf + offset, pagesize);
-		offset += pagesize;
+	/* read the block page by page */
+	for (block = 0; block < nblocks; block++) {
+		for (; page < ONENAND_PAGES_PER_BLOCK; page++) {
+			if (ONENAND_READ_PAGE(block, page, buf + offset,
+						pagesize)) {
+				/* This block is bad. Skip it
+				 * and read next block */
+				offset -= page * pagesize;
+				nblocks++;
+				break;
+			}
+			offset += pagesize;
+		}
+		page = 0;
 	}
 
 	return 0;

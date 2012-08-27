@@ -34,6 +34,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <asm/cache.h>
 
 #ifdef DEBUG
@@ -53,7 +54,7 @@ printf ("%s %d: " fmt, __FUNCTION__, __LINE__, ##args)
 #define RX_PRINT_ERRORS
 #define TX_PRINT_ERRORS
 
-#define ETH_BASE	(CFG_TSI108_CSR_BASE + 0x6000)
+#define ETH_BASE	(CONFIG_SYS_TSI108_CSR_BASE + 0x6000)
 
 #define ETH_PORT_OFFSET	0x400
 
@@ -730,7 +731,11 @@ int tsi108_eth_initialize (bd_t * bis)
 
 	for (index = 0; index < CONFIG_TSI108_ETH_NUM_PORTS; index++) {
 		dev = (struct eth_device *)malloc(sizeof(struct eth_device));
-
+		if (!dev) {
+			printf("tsi108: Can not allocate memory\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 		sprintf (dev->name, "TSI108_eth%d", index);
 
 		dev->iobase = ETH_BASE + (index * ETH_PORT_OFFSET);

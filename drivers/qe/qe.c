@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Freescale Semiconductor, Inc.
+ * Copyright (C) 2006-2009 Freescale Semiconductor, Inc.
  *
  * Dave Liu <daveliu@freescale.com>
  * based on source code of Shlomi Gridish
@@ -27,7 +27,6 @@
 #include "asm/immap_qe.h"
 #include "qe.h"
 
-#if defined(CONFIG_QE)
 qe_map_t		*qe_immr = NULL;
 static qe_snum_t	snums[QE_NUM_OF_SNUM];
 
@@ -109,14 +108,23 @@ static void qe_sdma_init(void)
 	out_be32(&p->sdmr, QE_SDMR_GLB_1_MSK | (0x3 << QE_SDMR_CEN_SHIFT));
 }
 
-static u8 thread_snum[QE_NUM_OF_SNUM] = {
+/* This table is a list of the serial numbers of the Threads, taken from the
+ * "SNUM Table" chart in the QE Reference Manual. The order is not important,
+ * we just need to know what the SNUMs are for the threads.
+ */
+static u8 thread_snum[] = {
 	0x04, 0x05, 0x0c, 0x0d,
 	0x14, 0x15, 0x1c, 0x1d,
 	0x24, 0x25, 0x2c, 0x2d,
 	0x34, 0x35, 0x88, 0x89,
 	0x98, 0x99, 0xa8, 0xa9,
 	0xb8, 0xb9, 0xc8, 0xc9,
-	0xd8, 0xd9, 0xe8, 0xe9
+	0xd8, 0xd9, 0xe8, 0xe9,
+	0x08, 0x09, 0x18, 0x19,
+	0x28, 0x29, 0x38, 0x39,
+	0x48, 0x49, 0x58, 0x59,
+	0x68, 0x69, 0x78, 0x79,
+	0x80, 0x81
 };
 
 static void qe_snums_init(void)
@@ -161,6 +169,16 @@ void qe_init(uint qe_base)
 {
 	/* Init the QE IMMR base */
 	qe_immr = (qe_map_t *)qe_base;
+
+#ifdef CONFIG_SYS_QE_FW_ADDR
+	/*
+	 * Upload microcode to IRAM for those SOCs which do not have ROM in QE.
+	 */
+	qe_upload_firmware((const struct qe_firmware *) CONFIG_SYS_QE_FW_ADDR);
+
+	/* enable the microcode in IRAM */
+	out_be32(&qe_immr->iram.iready,QE_IRAM_READY);
+#endif
 
 	gd->mp_alloc_base = QE_DATAONLY_BASE;
 	gd->mp_alloc_top = gd->mp_alloc_base + QE_DATAONLY_SIZE;
@@ -248,9 +266,6 @@ int qe_set_mii_clk_src(int ucc_num)
 
 	return 0;
 }
-
-/* The maximum number of RISCs we support */
-#define MAX_QE_RISC     2
 
 /* Firmware information stored here for qe_get_firmware_info() */
 static struct qe_firmware_info qe_firmware_info;
@@ -421,14 +436,12 @@ struct qe_firmware_info *qe_get_firmware_info(void)
 	return qe_firmware_uploaded ? &qe_firmware_info : NULL;
 }
 
-static int qe_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int qe_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong addr;
 
-	if (argc < 3) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 3)
+		return cmd_usage(cmdtp);
 
 	if (strcmp(argv[1], "fw") == 0) {
 		addr = simple_strtoul(argv[2], NULL, 16);
@@ -456,15 +469,13 @@ static int qe_cmd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return qe_upload_firmware((const struct qe_firmware *) addr);
 	}
 
-	printf ("Usage:\n%s\n", cmdtp->usage);
-	return 1;
+	return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	qe, 4, 0, qe_cmd,
-	"qe      - QUICC Engine commands\n",
+	"QUICC Engine commands",
 	"fw <addr> [<length>] - Upload firmware binary at address <addr> to "
-		"the QE,\n\twith optional length <length> verification.\n"
-	);
-
-#endif /* CONFIG_QE */
+		"the QE,\n"
+	"\twith optional length <length> verification."
+);

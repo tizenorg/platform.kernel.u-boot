@@ -30,28 +30,26 @@
 /*
  * hardware specific access to control-lines
  */
-static void esd405ep_nand_hwcontrol(struct mtd_info *mtdinfo, int cmd)
+static void esd405ep_nand_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 {
-	switch(cmd) {
-	case NAND_CTL_SETCLE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CFG_NAND_CLE);
-		break;
-	case NAND_CTL_CLRCLE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CFG_NAND_CLE);
-		break;
-	case NAND_CTL_SETALE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CFG_NAND_ALE);
-		break;
-	case NAND_CTL_CLRALE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CFG_NAND_ALE);
-		break;
-	case NAND_CTL_SETNCE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CFG_NAND_CE);
-		break;
-	case NAND_CTL_CLRNCE:
-		out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CFG_NAND_CE);
-		break;
+	struct nand_chip *this = mtd->priv;
+	if (ctrl & NAND_CTRL_CHANGE) {
+		if ( ctrl & NAND_CLE )
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CONFIG_SYS_NAND_CLE);
+		else
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CONFIG_SYS_NAND_CLE);
+		if ( ctrl & NAND_ALE )
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CONFIG_SYS_NAND_ALE);
+		else
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CONFIG_SYS_NAND_ALE);
+		if ( ctrl & NAND_NCE )
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~CONFIG_SYS_NAND_CE);
+		else
+			out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CONFIG_SYS_NAND_CE);
 	}
+
+	if (cmd != NAND_CMD_NONE)
+		writeb(cmd, this->IO_ADDR_W);
 }
 
 
@@ -60,7 +58,7 @@ static void esd405ep_nand_hwcontrol(struct mtd_info *mtdinfo, int cmd)
  */
 static int esd405ep_nand_device_ready(struct mtd_info *mtdinfo)
 {
-	if (in_be32((void *)GPIO0_IR) & CFG_NAND_RDY)
+	if (in_be32((void *)GPIO0_IR) & CONFIG_SYS_NAND_RDY)
 		return 1;
 	return 0;
 }
@@ -71,15 +69,15 @@ int board_nand_init(struct nand_chip *nand)
 	/*
 	 * Set NAND-FLASH GPIO signals to defaults
 	 */
-	out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~(CFG_NAND_CLE | CFG_NAND_ALE));
-	out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CFG_NAND_CE);
+	out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) & ~(CONFIG_SYS_NAND_CLE | CONFIG_SYS_NAND_ALE));
+	out_be32((void *)GPIO0_OR, in_be32((void *)GPIO0_OR) | CONFIG_SYS_NAND_CE);
 
 	/*
 	 * Initialize nand_chip structure
 	 */
-	nand->hwcontrol = esd405ep_nand_hwcontrol;
+	nand->cmd_ctrl = esd405ep_nand_hwcontrol;
 	nand->dev_ready = esd405ep_nand_device_ready;
-	nand->eccmode = NAND_ECC_SOFT;
+	nand->ecc.mode = NAND_ECC_SOFT;
 	nand->chip_delay = NAND_BIG_DELAY_US;
 	nand->options = NAND_SAMSUNG_LP_OPTIONS;
 	return 0;

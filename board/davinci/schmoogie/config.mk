@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2002
-# Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+# Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
 # David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
 #
 # (C) Copyright 2003
@@ -36,4 +36,4 @@
 #
 
 #Provide at least 16MB spacing between us and the Linux Kernel image
-TEXT_BASE = 0x81080000
+CONFIG_SYS_TEXT_BASE = 0x81080000

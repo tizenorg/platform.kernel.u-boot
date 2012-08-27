@@ -5,7 +5,7 @@
 *
 *  ========================================================================
 *
-*   Copyright (C) 2007 Freescale Semiconductor, Inc. All rights reserved.
+*   Copyright (C) 2007 Freescale Semiconductor, Inc.
 *   Jason Jin<Jason.jin@freescale.com>
 *
 *   Copyright (C) 1991-2004 SciTech Software, Inc. All rights reserved.
@@ -48,9 +48,6 @@
 ****************************************************************************/
 
 #include <common.h>
-
-#if defined(CONFIG_BIOSEMU)
-
 #include "biosemui.h"
 
 /*------------------------- Global Variables ------------------------------*/
@@ -721,4 +718,3 @@ void X86API BE_outl(X86EMU_pioAddr port, u32 val)
 #endif
 		LOG_outpd(port, val);
 }
-#endif

@@ -45,14 +45,12 @@ extern int transfer_pic(unsigned char, unsigned char *, int, int);
 
 int trab_vfd (ulong bitmap);
 
-int do_vfd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_vfd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	ulong bitmap;
 
-	if (argc != 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc != 2)
+		return cmd_usage(cmdtp);
 
 	if (argv[1][0] == '/') {	/* select bitmap by number */
 		bitmap = simple_strtoul(argv[1]+1, NULL, 10);
@@ -67,15 +65,14 @@ int do_vfd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	vfd,	2,	0,	do_vfd,
-	"vfd     - load a bitmap to the VFDs on TRAB\n",
+	"load a bitmap to the VFDs on TRAB",
 	"/N\n"
 	"    - load bitmap N to the VFDs (N is _decimal_ !!!)\n"
 	"vfd ADDR\n"
-	"    - load bitmap at address ADDR\n"
+	"    - load bitmap at address ADDR"
 );
 #endif
 
-#ifdef CONFIG_VFD
 int trab_vfd (ulong bitmap)
 {
 	uchar *addr;
@@ -103,4 +100,3 @@ int trab_vfd (ulong bitmap)
 	transfer_pic(3, addr, VFD_LOGO_HEIGHT, VFD_LOGO_WIDTH);
 	return 0;
 }
-#endif	/* CONFIG_VFD */

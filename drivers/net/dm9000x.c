@@ -53,23 +53,20 @@ v1.2   03/18/2003       Weilun Huang <weilun_huang@davicom.com.tw>:
 			  notes (i.e. double reset)
 			- some minor code cleanups
 			These changes are tested with DM9000{A,EP,E} together
-			with a 200MHz Atmel AT91SAM92161 core
+			with a 200MHz Atmel AT91SAM9261 core
 
-TODO: Homerun NIC and longrun NIC are not functional, only internal at the
-      moment.
+TODO: external MII is not functional, only internal at the moment.
 */
 
 #include <common.h>
 #include <command.h>
 #include <net.h>
 #include <asm/io.h>
+#include <dm9000.h>
 
 #include "dm9000x.h"
 
 /* Board/System/Debug information/definition ---------------- */
-
-#define DM9801_NOISE_FLOOR	0x08
-#define DM9802_NOISE_FLOOR	0x05
 
 /* #define CONFIG_DM9000_DEBUG */
 
@@ -78,7 +75,7 @@ TODO: Homerun NIC and longrun NIC are not functional, only internal at the
 #define DM9000_DMP_PACKET(func,packet,length)  \
 	do { \
 		int i; 							\
-		printf(func ": length: %d\n", length);			\
+		printf("%s: length: %d\n", func, length);		\
 		for (i = 0; i < length; i++) {				\
 			if (i % 8 == 0)					\
 				printf("\n%s: %02x: ", func, i);	\
@@ -89,13 +86,6 @@ TODO: Homerun NIC and longrun NIC are not functional, only internal at the
 #define DM9000_DBG(fmt,args...)
 #define DM9000_DMP_PACKET(func,packet,length)
 #endif
-
-enum DM9000_PHY_mode { DM9000_10MHD = 0, DM9000_100MHD =
-	    1, DM9000_10MFD = 4, DM9000_100MFD = 5, DM9000_AUTO =
-	    8, DM9000_1M_HPNA = 0x10
-};
-enum DM9000_NIC_TYPE { FASTETHER_NIC = 0, HOMERUN_NIC = 1, LONGRUN_NIC = 2
-};
 
 /* Structure/enum declaration ------------------------------- */
 typedef struct board_info {
@@ -109,38 +99,30 @@ typedef struct board_info {
 	u16 dbug_cnt;
 	u8 phy_addr;
 	u8 device_wait_reset;	/* device state */
-	u8 nic_type;		/* NIC type */
 	unsigned char srom[128];
 	void (*outblk)(volatile void *data_ptr, int count);
 	void (*inblk)(void *data_ptr, int count);
 	void (*rx_status)(u16 *RxStatus, u16 *RxLen);
+	struct eth_device netdev;
 } board_info_t;
 static board_info_t dm9000_info;
 
-/* For module input parameter */
-static int media_mode = DM9000_AUTO;
-static u8 nfloor = 0;
 
 /* function declaration ------------------------------------- */
-int eth_init(bd_t * bd);
-int eth_send(volatile void *, int);
-int eth_rx(void);
-void eth_halt(void);
 static int dm9000_probe(void);
 static u16 phy_read(int);
 static void phy_write(int, u16);
-u16 read_srom_word(int);
 static u8 DM9000_ior(int);
 static void DM9000_iow(int reg, u8 value);
 
 /* DM9000 network board routine ---------------------------- */
 
-#define DM9000_outb(d,r) ( *(volatile u8 *)r = d )
-#define DM9000_outw(d,r) ( *(volatile u16 *)r = d )
-#define DM9000_outl(d,r) ( *(volatile u32 *)r = d )
-#define DM9000_inb(r) (*(volatile u8 *)r)
-#define DM9000_inw(r) (*(volatile u16 *)r)
-#define DM9000_inl(r) (*(volatile u32 *)r)
+#define DM9000_outb(d,r) writeb(d, (volatile u8 *)(r))
+#define DM9000_outw(d,r) writew(d, (volatile u16 *)(r))
+#define DM9000_outl(d,r) writel(d, (volatile u32 *)(r))
+#define DM9000_inb(r) readb((volatile u8 *)(r))
+#define DM9000_inw(r) readw((volatile u16 *)(r))
+#define DM9000_inl(r) readl((volatile u32 *)(r))
 
 #ifdef CONFIG_DM9000_DEBUG
 static void
@@ -214,24 +196,28 @@ static void dm9000_rx_status_32bit(u16 *RxStatus, u16 *RxLen)
 	DM9000_outb(DM9000_MRCMD, DM9000_IO);
 
 	tmpdata = DM9000_inl(DM9000_DATA);
-	*RxStatus = tmpdata;
-	*RxLen = tmpdata >> 16;
+	*RxStatus = __le16_to_cpu(tmpdata);
+	*RxLen = __le16_to_cpu(tmpdata >> 16);
 }
 
 static void dm9000_rx_status_16bit(u16 *RxStatus, u16 *RxLen)
 {
 	DM9000_outb(DM9000_MRCMD, DM9000_IO);
 
-	*RxStatus = DM9000_inw(DM9000_DATA);
-	*RxLen = DM9000_inw(DM9000_DATA);
+	*RxStatus = __le16_to_cpu(DM9000_inw(DM9000_DATA));
+	*RxLen = __le16_to_cpu(DM9000_inw(DM9000_DATA));
 }
 
 static void dm9000_rx_status_8bit(u16 *RxStatus, u16 *RxLen)
 {
 	DM9000_outb(DM9000_MRCMD, DM9000_IO);
 
-	*RxStatus = DM9000_inb(DM9000_DATA) + (DM9000_inb(DM9000_DATA) << 8);
-	*RxLen = DM9000_inb(DM9000_DATA) + (DM9000_inb(DM9000_DATA) << 8);
+	*RxStatus =
+	    __le16_to_cpu(DM9000_inb(DM9000_DATA) +
+			  (DM9000_inb(DM9000_DATA) << 8));
+	*RxLen =
+	    __le16_to_cpu(DM9000_inb(DM9000_DATA) +
+			  (DM9000_inb(DM9000_DATA) << 8));
 }
 
 /*
@@ -256,114 +242,6 @@ dm9000_probe(void)
 	}
 }
 
-/* Set PHY operationg mode
-*/
-static void
-set_PHY_mode(void)
-{
-	u16 phy_reg4 = 0x01e1, phy_reg0 = 0x1000;
-	if (!(media_mode & DM9000_AUTO)) {
-		switch (media_mode) {
-		case DM9000_10MHD:
-			phy_reg4 = 0x21;
-			phy_reg0 = 0x0000;
-			break;
-		case DM9000_10MFD:
-			phy_reg4 = 0x41;
-			phy_reg0 = 0x1100;
-			break;
-		case DM9000_100MHD:
-			phy_reg4 = 0x81;
-			phy_reg0 = 0x2000;
-			break;
-		case DM9000_100MFD:
-			phy_reg4 = 0x101;
-			phy_reg0 = 0x3100;
-			break;
-		}
-		phy_write(4, phy_reg4);	/* Set PHY media mode */
-		phy_write(0, phy_reg0);	/*  Tmp */
-	}
-	DM9000_iow(DM9000_GPCR, 0x01);	/* Let GPIO0 output */
-	DM9000_iow(DM9000_GPR, 0x00);	/* Enable PHY */
-}
-
-/*
-	Init HomeRun DM9801
-*/
-static void
-program_dm9801(u16 HPNA_rev)
-{
-	__u16 reg16, reg17, reg24, reg25;
-	if (!nfloor)
-		nfloor = DM9801_NOISE_FLOOR;
-	reg16 = phy_read(16);
-	reg17 = phy_read(17);
-	reg24 = phy_read(24);
-	reg25 = phy_read(25);
-	switch (HPNA_rev) {
-	case 0xb900:		/* DM9801 E3 */
-		reg16 |= 0x1000;
-		reg25 = ((reg24 + nfloor) & 0x00ff) | 0xf000;
-		break;
-	case 0xb901:		/* DM9801 E4 */
-		reg25 = ((reg24 + nfloor) & 0x00ff) | 0xc200;
-		reg17 = (reg17 & 0xfff0) + nfloor + 3;
-		break;
-	case 0xb902:		/* DM9801 E5 */
-	case 0xb903:		/* DM9801 E6 */
-	default:
-		reg16 |= 0x1000;
-		reg25 = ((reg24 + nfloor - 3) & 0x00ff) | 0xc200;
-		reg17 = (reg17 & 0xfff0) + nfloor;
-	}
-	phy_write(16, reg16);
-	phy_write(17, reg17);
-	phy_write(25, reg25);
-}
-
-/*
-	Init LongRun DM9802
-*/
-static void
-program_dm9802(void)
-{
-	__u16 reg25;
-	if (!nfloor)
-		nfloor = DM9802_NOISE_FLOOR;
-	reg25 = phy_read(25);
-	reg25 = (reg25 & 0xff00) + nfloor;
-	phy_write(25, reg25);
-}
-
-/* Identify NIC type
-*/
-static void
-identify_nic(void)
-{
-	struct board_info *db = &dm9000_info;
-	u16 phy_reg3;
-	DM9000_iow(DM9000_NCR, NCR_EXT_PHY);
-	phy_reg3 = phy_read(3);
-	switch (phy_reg3 & 0xfff0) {
-	case 0xb900:
-		if (phy_read(31) == 0x4404) {
-			db->nic_type = HOMERUN_NIC;
-			program_dm9801(phy_reg3);
-			DM9000_DBG("found homerun NIC\n");
-		} else {
-			db->nic_type = LONGRUN_NIC;
-			DM9000_DBG("found longrun NIC\n");
-			program_dm9802();
-		}
-		break;
-	default:
-		db->nic_type = FASTETHER_NIC;
-		break;
-	}
-	DM9000_iow(DM9000_NCR, 0);
-}
-
 /* General Purpose dm9000 reset routine */
 static void
 dm9000_reset(void)
@@ -373,12 +251,12 @@ dm9000_reset(void)
 	/* Reset DM9000,
 	   see DM9000 Application Notes V1.22 Jun 11, 2004 page 29 */
 
-	/* DEBUG: Make all GPIO pins outputs */
-	DM9000_iow(DM9000_GPCR, 0x0F);
+	/* DEBUG: Make all GPIO0 outputs, all others inputs */
+	DM9000_iow(DM9000_GPCR, GPCR_GPIO0_OUT);
 	/* Step 1: Power internal PHY by writing 0 to GPIO0 pin */
 	DM9000_iow(DM9000_GPR, 0);
 	/* Step 2: Software reset */
-	DM9000_iow(DM9000_NCR, 3);
+	DM9000_iow(DM9000_NCR, (NCR_LBK_INT_MAC | NCR_RST));
 
 	do {
 		DM9000_DBG("resetting the DM9000, 1st reset\n");
@@ -386,7 +264,7 @@ dm9000_reset(void)
 	} while (DM9000_ior(DM9000_NCR) & 1);
 
 	DM9000_iow(DM9000_NCR, 0);
-	DM9000_iow(DM9000_NCR, 3); /* Issue a second reset */
+	DM9000_iow(DM9000_NCR, (NCR_LBK_INT_MAC | NCR_RST)); /* Issue a second reset */
 
 	do {
 		DM9000_DBG("resetting the DM9000, 2nd reset\n");
@@ -399,20 +277,21 @@ dm9000_reset(void)
 		printf("ERROR: resetting DM9000 -> not responding\n");
 }
 
-/* Initilize dm9000 board
+/* Initialize dm9000 board
 */
-int
-eth_init(bd_t * bd)
+static int dm9000_init(struct eth_device *dev, bd_t *bd)
 {
 	int i, oft, lnk;
 	u8 io_mode;
 	struct board_info *db = &dm9000_info;
 
-	DM9000_DBG("eth_init()\n");
+	DM9000_DBG("%s\n", __func__);
 
 	/* RESET device */
 	dm9000_reset();
-	dm9000_probe();
+
+	if (dm9000_probe() < 0)
+		return -1;
 
 	/* Auto-detect 8/16/32 bit mode, ISR Bit 6+7 indicate bus width */
 	io_mode = DM9000_ior(DM9000_ISR) >> 6;
@@ -445,21 +324,12 @@ eth_init(bd_t * bd)
 		break;
 	}
 
-	/* NIC Type: FASTETHER, HOMERUN, LONGRUN */
-	identify_nic();
-
-	/* GPIO0 on pre-activate PHY */
-	DM9000_iow(DM9000_GPR, 0x00);	/*REG_1F bit0 activate phyxcer */
-
-	/* Set PHY */
-	set_PHY_mode();
-
-	/* Program operating register, only intern phy supported by now */
+	/* Program operating register, only internal phy supported */
 	DM9000_iow(DM9000_NCR, 0x0);
 	/* TX Polling clear */
 	DM9000_iow(DM9000_TCR, 0);
 	/* Less 3Kb, 200us */
-	DM9000_iow(DM9000_BPTR, 0x3f);
+	DM9000_iow(DM9000_BPTR, BPTR_BPHW(3) | BPTR_JPT_600US);
 	/* Flow Control : High/Low Water */
 	DM9000_iow(DM9000_FCTR, FCTR_HWOT(3) | FCTR_LWOT(8));
 	/* SH FIXME: This looks strange! Flow Control */
@@ -469,33 +339,13 @@ eth_init(bd_t * bd)
 	/* clear TX status */
 	DM9000_iow(DM9000_NSR, NSR_WAKEST | NSR_TX2END | NSR_TX1END);
 	/* Clear interrupt status */
-	DM9000_iow(DM9000_ISR, 0x0f);
+	DM9000_iow(DM9000_ISR, ISR_ROOS | ISR_ROS | ISR_PTS | ISR_PRS);
 
-	/* Set Node address */
-#ifndef CONFIG_AT91SAM9261EK
-	for (i = 0; i < 6; i++)
-		((u16 *) bd->bi_enetaddr)[i] = read_srom_word(i);
-#endif
+	printf("MAC: %pM\n", dev->enetaddr);
 
-	if (is_zero_ether_addr(bd->bi_enetaddr) ||
-	    is_multicast_ether_addr(bd->bi_enetaddr)) {
-		/* try reading from environment */
-		u8 i;
-		char *s, *e;
-		s = getenv ("ethaddr");
-		for (i = 0; i < 6; ++i) {
-			bd->bi_enetaddr[i] = s ?
-				simple_strtoul (s, &e, 16) : 0;
-			if (s)
-				s = (*e) ? e + 1 : e;
-		}
-	}
-
-	printf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", bd->bi_enetaddr[0],
-	       bd->bi_enetaddr[1], bd->bi_enetaddr[2], bd->bi_enetaddr[3],
-	       bd->bi_enetaddr[4], bd->bi_enetaddr[5]);
-	for (i = 0, oft = 0x10; i < 6; i++, oft++)
-		DM9000_iow(oft, bd->bi_enetaddr[i]);
+	/* fill device MAC address registers */
+	for (i = 0, oft = DM9000_PAR; i < 6; i++, oft++)
+		DM9000_iow(oft, dev->enetaddr[i]);
 	for (i = 0, oft = 0x16; i < 8; i++, oft++)
 		DM9000_iow(oft, 0xff);
 
@@ -548,13 +398,13 @@ eth_init(bd_t * bd)
   Hardware start transmission.
   Send a packet to media from the upper layer.
 */
-int
-eth_send(volatile void *packet, int length)
+static int dm9000_send(struct eth_device *netdev, volatile void *packet,
+		     int length)
 {
 	int tmo;
 	struct board_info *db = &dm9000_info;
 
-	DM9000_DMP_PACKET("eth_send", packet, length);
+	DM9000_DMP_PACKET(__func__ , packet, length);
 
 	DM9000_iow(DM9000_ISR, IMR_PTM); /* Clear Tx bit in ISR */
 
@@ -572,7 +422,7 @@ eth_send(volatile void *packet, int length)
 	DM9000_iow(DM9000_TCR, TCR_TXREQ); /* Cleared after TX complete */
 
 	/* wait for end of transmission */
-	tmo = get_timer(0) + 5 * CFG_HZ;
+	tmo = get_timer(0) + 5 * CONFIG_SYS_HZ;
 	while ( !(DM9000_ior(DM9000_NSR) & (NSR_TX1END | NSR_TX2END)) ||
 		!(DM9000_ior(DM9000_ISR) & IMR_PTM) ) {
 		if (get_timer(0) >= tmo) {
@@ -590,10 +440,9 @@ eth_send(volatile void *packet, int length)
   Stop the interface.
   The interface is stopped when it is brought.
 */
-void
-eth_halt(void)
+static void dm9000_halt(struct eth_device *netdev)
 {
-	DM9000_DBG("eth_halt\n");
+	DM9000_DBG("%s\n", __func__);
 
 	/* RESET devie */
 	phy_write(0, 0x8000);	/* PHY RESET */
@@ -605,8 +454,7 @@ eth_halt(void)
 /*
   Received a packet and pass to upper layer
 */
-int
-eth_rx(void)
+static int dm9000_rx(struct eth_device *netdev)
 {
 	u8 rxbyte, *rdptr = (u8 *) NetRxPackets[0];
 	u16 RxStatus, RxLen = 0;
@@ -666,7 +514,7 @@ eth_rx(void)
 				dm9000_reset();
 			}
 		} else {
-			DM9000_DMP_PACKET("eth_rx", rdptr, RxLen);
+			DM9000_DMP_PACKET(__func__ , rdptr, RxLen);
 
 			DM9000_DBG("passing packet to upper layer\n");
 			NetReceive(NetRxPackets[0], RxLen);
@@ -678,18 +526,18 @@ eth_rx(void)
 /*
   Read a word data from SROM
 */
-u16
-read_srom_word(int offset)
+#if !defined(CONFIG_DM9000_NO_SROM)
+void dm9000_read_srom_word(int offset, u8 *to)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPCR, 0x4);
 	udelay(8000);
 	DM9000_iow(DM9000_EPCR, 0x0);
-	return (DM9000_ior(DM9000_EPDRL) + (DM9000_ior(DM9000_EPDRH) << 8));
+	to[0] = DM9000_ior(DM9000_EPDRL);
+	to[1] = DM9000_ior(DM9000_EPDRH);
 }
 
-void
-write_srom_word(int offset, u16 val)
+void dm9000_write_srom_word(int offset, u16 val)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPDRH, ((val >> 8) & 0xff));
@@ -698,7 +546,16 @@ write_srom_word(int offset, u16 val)
 	udelay(8000);
 	DM9000_iow(DM9000_EPCR, 0);
 }
+#endif
 
+static void dm9000_get_enetaddr(struct eth_device *dev)
+{
+#if !defined(CONFIG_DM9000_NO_SROM)
+	int i;
+	for (i = 0; i < 3; i++)
+		dm9000_read_srom_word(i, dev->enetaddr + (2 * i));
+#endif
+}
 
 /*
    Read a byte from I/O port
@@ -757,4 +614,22 @@ phy_write(int reg, u16 value)
 	udelay(500);			/* Wait write complete */
 	DM9000_iow(DM9000_EPCR, 0x0);	/* Clear phyxcer write command */
 	DM9000_DBG("phy_write(reg:0x%x, value:0x%x)\n", reg, value);
+}
+
+int dm9000_initialize(bd_t *bis)
+{
+	struct eth_device *dev = &(dm9000_info.netdev);
+
+	/* Load MAC address from EEPROM */
+	dm9000_get_enetaddr(dev);
+
+	dev->init = dm9000_init;
+	dev->halt = dm9000_halt;
+	dev->send = dm9000_send;
+	dev->recv = dm9000_rx;
+	sprintf(dev->name, "dm9000");
+
+	eth_register(dev);
+
+	return 0;
 }

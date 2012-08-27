@@ -165,9 +165,9 @@ static void i2s_init(void)
 	psc->command = (PSC_RX_DISABLE | PSC_TX_DISABLE);
 	psc->sicr = 0x22E00000;		/* 16 bit data; I2S */
 
-	*(vu_long *)(CFG_MBAR + 0x22C) = 0x805d; /* PSC2 CDM MCLK config; MCLK
+	*(vu_long *)(CONFIG_SYS_MBAR + 0x22C) = 0x805d; /* PSC2 CDM MCLK config; MCLK
 						  * 5.617 MHz */
-	*(vu_long *)(CFG_MBAR + 0x214) |= 0x00000040; /* CDM clock enable
+	*(vu_long *)(CONFIG_SYS_MBAR + 0x214) |= 0x00000040; /* CDM clock enable
 						       * register */
 	psc->ccr = 0x1F03;	/* 16 bit data width; 5.617MHz MCLK */
 	psc->ctur = 0x0F;	/* 16 bit frame width */
@@ -301,7 +301,7 @@ static int i2s_squarewave(unsigned long duration, unsigned int freq,
 	return 0;
 }
 
-static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long reg, val, duration;
 	char *tmp;
@@ -327,8 +327,7 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	switch (argc) {
 	case 0:
 	case 1:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	case 2:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			printf ("Play sawtooth\n");
@@ -342,8 +341,7 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			return rcode;
 		}
 
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	case 3:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -358,8 +356,7 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 						LEFT_RIGHT);
 			return rcode;
 		}
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	case 4:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -382,8 +379,7 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			pcm1772_write_reg((uchar)reg, (uchar)val);
 			return 0;
 		}
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	case 5:
 		if (strncmp(argv[1],"saw",3) == 0) {
 			duration = simple_strtoul(argv[2], NULL, 10);
@@ -412,14 +408,13 @@ static int cmd_sound(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 						channel);
 			return rcode;
 		}
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 	printf ("Usage:\nsound cmd [arg1] [arg2] ...\n");
 	return 1;
 }
 
-static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned long length, addr;
 	unsigned char volume;
@@ -484,7 +479,7 @@ static int cmd_wav(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return rcode;
 }
 
-static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned char volume;
 	unsigned int channel;
@@ -513,8 +508,7 @@ static int cmd_beep(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			channel = LEFT_RIGHT;
 		break;
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 
 	if ((tmp = getenv ("volume")) != NULL) {
@@ -581,7 +575,7 @@ void led_init(void)
  * return 1 if led number unknown
  * return 0 else
  */
-int do_led(char *argv[])
+int do_led(char * const argv[])
 {
 	struct mpc5xxx_gpio *gpio = (struct mpc5xxx_gpio *)MPC5XXX_GPIO;
 	struct mpc5xxx_gpt_0_7 *gpt = (struct mpc5xxx_gpt_0_7 *)MPC5XXX_GPT;
@@ -751,9 +745,9 @@ int can_init(void)
 	static int init_done = 0;
 	int i;
 	struct mpc5xxx_mscan *can1 =
-		(struct mpc5xxx_mscan *)(CFG_MBAR + 0x0900);
+		(struct mpc5xxx_mscan *)(CONFIG_SYS_MBAR + 0x0900);
 	struct mpc5xxx_mscan *can2 =
-		(struct mpc5xxx_mscan *)(CFG_MBAR + 0x0980);
+		(struct mpc5xxx_mscan *)(CONFIG_SYS_MBAR + 0x0980);
 
 	/* GPIO configuration of the CAN pins is done in TQM5200.h */
 
@@ -892,13 +886,13 @@ int can_init(void)
  * return 1 on CAN failure
  * return 0 if no failure
  */
-int do_can(char *argv[])
+int do_can(char * const argv[])
 {
 	int i;
 	struct mpc5xxx_mscan *can1 =
-		(struct mpc5xxx_mscan *)(CFG_MBAR + 0x0900);
+		(struct mpc5xxx_mscan *)(CONFIG_SYS_MBAR + 0x0900);
 	struct mpc5xxx_mscan *can2 =
-		(struct mpc5xxx_mscan *)(CFG_MBAR + 0x0980);
+		(struct mpc5xxx_mscan *)(CONFIG_SYS_MBAR + 0x0980);
 
 	/* send a message on CAN1 */
 	can1->cantbsel = 0x01;
@@ -994,7 +988,7 @@ int do_can(char *argv[])
  * return 3 on rts/cts failure
  * return 0 if no failure
  */
-int do_rs232(char *argv[])
+int do_rs232(char * const argv[])
 {
 	int error_status = 0;
 	struct mpc5xxx_gpio *gpio = (struct mpc5xxx_gpio *)MPC5XXX_GPIO;
@@ -1123,7 +1117,7 @@ static void sm501_backlight (unsigned int state)
 }
 #endif /* !CONFIG_FO300 & !CONFIG_TQM5200S */
 
-int cmd_fkt(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int cmd_fkt(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int rcode;
 
@@ -1194,54 +1188,55 @@ int cmd_fkt(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(
 	sound ,    5,    1,     cmd_sound,
-	"sound   - Sound sub-system\n",
+	"Sound sub-system",
 	"saw [duration] [freq] [channel]\n"
 	"    - generate sawtooth for 'duration' ms with frequency 'freq'\n"
 	"      on left \"l\" or right \"r\" channel\n"
 	"sound square [duration] [freq] [channel]\n"
 	"    - generate squarewave for 'duration' ms with frequency 'freq'\n"
 	"      on left \"l\" or right \"r\" channel\n"
-	"pcm1772 reg val\n"
+	"pcm1772 reg val"
 );
 
 U_BOOT_CMD(
 	wav ,    3,    1,     cmd_wav,
-	"wav     - play wav file\n",
+	"play wav file",
 	"[addr] [bytes]\n"
-	"    - play wav file at address 'addr' with length 'bytes'\n"
+	"    - play wav file at address 'addr' with length 'bytes'"
 );
 
 U_BOOT_CMD(
 	beep ,    2,    1,     cmd_beep,
-	"beep    - play short beep\n",
+	"play short beep",
 	"[channel]\n"
-	"    - play short beep on \"l\"eft or \"r\"ight channel\n"
+	"    - play short beep on \"l\"eft or \"r\"ight channel"
 );
 #endif /* CONFIG_STK52XX  || CONFIG_FO300 */
 
 #if defined(CONFIG_STK52XX)
 U_BOOT_CMD(
 	fkt ,	4,	1,	cmd_fkt,
-	"fkt     - Function test routines\n",
+	"Function test routines",
 	"led number on/off\n"
 	"     - 'number's like printed on STK52XX board\n"
 	"fkt can\n"
 	"     - loopback plug for X83 required\n"
 	"fkt rs232 number\n"
-	"     - loopback plug(s) for X2 required\n"
+	"     - loopback plug(s) for X2 required"
 #ifndef CONFIG_TQM5200S
+	"\n"
 	"fkt backlight on/off\n"
-	"     - switch backlight on or off\n"
+	"     - switch backlight on or off"
 #endif /* !CONFIG_TQM5200S */
 );
 #elif defined(CONFIG_FO300)
 U_BOOT_CMD(
 	fkt ,	3,	1,	cmd_fkt,
-	"fkt     - Function test routines\n",
+	"Function test routines",
 	"fkt can\n"
 	"     - loopback plug for X16/X29 required\n"
 	"fkt rs232 number\n"
-	"     - loopback plug(s) for X21/X22 required\n"
+	"     - loopback plug(s) for X21/X22 required"
 );
 #endif
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 Freescale Semiconductor, Inc.
+ * Copyright (C) 2006-2010 Freescale Semiconductor, Inc.
  *
  * Dave Liu <daveliu@freescale.com>
  *
@@ -31,102 +31,39 @@
 #include "uec_phy.h"
 #include "miiphy.h"
 
-#if defined(CONFIG_QE)
-
-#ifdef CONFIG_UEC_ETH1
-static uec_info_t eth1_uec_info = {
-	.uf_info		= {
-		.ucc_num	= CFG_UEC1_UCC_NUM,
-		.rx_clock	= CFG_UEC1_RX_CLK,
-		.tx_clock	= CFG_UEC1_TX_CLK,
-		.eth_type	= CFG_UEC1_ETH_TYPE,
-	},
-#if (CFG_UEC1_ETH_TYPE == FAST_ETH)
-	.num_threads_tx		= UEC_NUM_OF_THREADS_1,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_1,
-#else
-	.num_threads_tx		= UEC_NUM_OF_THREADS_4,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_4,
+/* Default UTBIPAR SMI address */
+#ifndef CONFIG_UTBIPAR_INIT_TBIPA
+#define CONFIG_UTBIPAR_INIT_TBIPA 0x1F
 #endif
-	.riscTx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.riscRx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.tx_bd_ring_len		= 16,
-	.rx_bd_ring_len		= 16,
-	.phy_address		= CFG_UEC1_PHY_ADDR,
-	.enet_interface		= CFG_UEC1_INTERFACE_MODE,
-};
+
+static uec_info_t uec_info[] = {
+#ifdef CONFIG_UEC_ETH1
+	STD_UEC_INFO(1),	/* UEC1 */
 #endif
 #ifdef CONFIG_UEC_ETH2
-static uec_info_t eth2_uec_info = {
-	.uf_info		= {
-		.ucc_num	= CFG_UEC2_UCC_NUM,
-		.rx_clock	= CFG_UEC2_RX_CLK,
-		.tx_clock	= CFG_UEC2_TX_CLK,
-		.eth_type	= CFG_UEC2_ETH_TYPE,
-	},
-#if (CFG_UEC2_ETH_TYPE == FAST_ETH)
-	.num_threads_tx		= UEC_NUM_OF_THREADS_1,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_1,
-#else
-	.num_threads_tx		= UEC_NUM_OF_THREADS_4,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_4,
-#endif
-	.riscTx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.riscRx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.tx_bd_ring_len		= 16,
-	.rx_bd_ring_len		= 16,
-	.phy_address		= CFG_UEC2_PHY_ADDR,
-	.enet_interface		= CFG_UEC2_INTERFACE_MODE,
-};
+	STD_UEC_INFO(2),	/* UEC2 */
 #endif
 #ifdef CONFIG_UEC_ETH3
-static uec_info_t eth3_uec_info = {
-	.uf_info		= {
-		.ucc_num	= CFG_UEC3_UCC_NUM,
-		.rx_clock	= CFG_UEC3_RX_CLK,
-		.tx_clock	= CFG_UEC3_TX_CLK,
-		.eth_type	= CFG_UEC3_ETH_TYPE,
-	},
-#if (CFG_UEC3_ETH_TYPE == FAST_ETH)
-	.num_threads_tx		= UEC_NUM_OF_THREADS_1,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_1,
-#else
-	.num_threads_tx		= UEC_NUM_OF_THREADS_4,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_4,
-#endif
-	.riscTx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.riscRx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.tx_bd_ring_len		= 16,
-	.rx_bd_ring_len		= 16,
-	.phy_address		= CFG_UEC3_PHY_ADDR,
-	.enet_interface		= CFG_UEC3_INTERFACE_MODE,
-};
+	STD_UEC_INFO(3),	/* UEC3 */
 #endif
 #ifdef CONFIG_UEC_ETH4
-static uec_info_t eth4_uec_info = {
-	.uf_info		= {
-		.ucc_num	= CFG_UEC4_UCC_NUM,
-		.rx_clock	= CFG_UEC4_RX_CLK,
-		.tx_clock	= CFG_UEC4_TX_CLK,
-		.eth_type	= CFG_UEC4_ETH_TYPE,
-	},
-#if (CFG_UEC4_ETH_TYPE == FAST_ETH)
-	.num_threads_tx		= UEC_NUM_OF_THREADS_1,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_1,
-#else
-	.num_threads_tx		= UEC_NUM_OF_THREADS_4,
-	.num_threads_rx		= UEC_NUM_OF_THREADS_4,
+	STD_UEC_INFO(4),	/* UEC4 */
 #endif
-	.riscTx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.riscRx			= QE_RISC_ALLOCATION_RISC1_AND_RISC2,
-	.tx_bd_ring_len		= 16,
-	.rx_bd_ring_len		= 16,
-	.phy_address		= CFG_UEC4_PHY_ADDR,
-	.enet_interface		= CFG_UEC4_INTERFACE_MODE,
+#ifdef CONFIG_UEC_ETH5
+	STD_UEC_INFO(5),	/* UEC5 */
+#endif
+#ifdef CONFIG_UEC_ETH6
+	STD_UEC_INFO(6),	/* UEC6 */
+#endif
+#ifdef CONFIG_UEC_ETH7
+	STD_UEC_INFO(7),	/* UEC7 */
+#endif
+#ifdef CONFIG_UEC_ETH8
+	STD_UEC_INFO(8),	/* UEC8 */
+#endif
 };
-#endif
 
-#define MAXCONTROLLERS	(4)
+#define MAXCONTROLLERS	(8)
 
 static struct eth_device *devlist[MAXCONTROLLERS];
 
@@ -386,9 +323,10 @@ static int uec_set_mac_duplex(uec_private_t *uec, int duplex)
 	return 0;
 }
 
-static int uec_set_mac_if_mode(uec_private_t *uec, enet_interface_e if_mode)
+static int uec_set_mac_if_mode(uec_private_t *uec,
+		enum fsl_phy_enet_if if_mode, int speed)
 {
-	enet_interface_e	enet_if_mode;
+	enum fsl_phy_enet_if	enet_if_mode;
 	uec_info_t		*uec_info;
 	uec_t			*uec_regs;
 	u32			upsmr;
@@ -409,47 +347,68 @@ static int uec_set_mac_if_mode(uec_private_t *uec, enet_interface_e if_mode)
 	upsmr = in_be32(&uec->uccf->uf_regs->upsmr);
 	upsmr &= ~(UPSMR_RPM | UPSMR_TBIM | UPSMR_R10M | UPSMR_RMM);
 
-	switch (enet_if_mode) {
-		case ENET_100_MII:
-		case ENET_10_MII:
+	switch (speed) {
+		case 10:
 			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
+			switch (enet_if_mode) {
+				case MII:
+					break;
+				case RGMII:
+					upsmr |= (UPSMR_RPM | UPSMR_R10M);
+					break;
+				case RMII:
+					upsmr |= (UPSMR_R10M | UPSMR_RMM);
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
 			break;
-		case ENET_1000_GMII:
+		case 100:
+			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
+			switch (enet_if_mode) {
+				case MII:
+					break;
+				case RGMII:
+					upsmr |= UPSMR_RPM;
+					break;
+				case RMII:
+					upsmr |= UPSMR_RMM;
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
+			break;
+		case 1000:
 			maccfg2 |= MACCFG2_INTERFACE_MODE_BYTE;
-			break;
-		case ENET_1000_TBI:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_BYTE;
-			upsmr |= UPSMR_TBIM;
-			break;
-		case ENET_1000_RTBI:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_BYTE;
-			upsmr |= (UPSMR_RPM | UPSMR_TBIM);
-			break;
-		case ENET_1000_RGMII_RXID:
-		case ENET_1000_RGMII:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_BYTE;
-			upsmr |= UPSMR_RPM;
-			break;
-		case ENET_100_RGMII:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
-			upsmr |= UPSMR_RPM;
-			break;
-		case ENET_10_RGMII:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
-			upsmr |= (UPSMR_RPM | UPSMR_R10M);
-			break;
-		case ENET_100_RMII:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
-			upsmr |= UPSMR_RMM;
-			break;
-		case ENET_10_RMII:
-			maccfg2 |= MACCFG2_INTERFACE_MODE_NIBBLE;
-			upsmr |= (UPSMR_R10M | UPSMR_RMM);
+			switch (enet_if_mode) {
+				case GMII:
+					break;
+				case TBI:
+					upsmr |= UPSMR_TBIM;
+					break;
+				case RTBI:
+					upsmr |= (UPSMR_RPM | UPSMR_TBIM);
+					break;
+				case RGMII_RXID:
+				case RGMII_ID:
+				case RGMII:
+					upsmr |= UPSMR_RPM;
+					break;
+				case SGMII:
+					upsmr |= UPSMR_SGMM;
+					break;
+				default:
+					return -EINVAL;
+					break;
+			}
 			break;
 		default:
 			return -EINVAL;
 			break;
 	}
+
 	out_be32(&uec_regs->maccfg2, maccfg2);
 	out_be32(&uec->uccf->uf_regs->upsmr, upsmr);
 
@@ -562,7 +521,7 @@ static void adjust_link(struct eth_device *dev)
 	struct uec_mii_info	*mii_info = uec->mii_info;
 
 	extern void change_phy_interface_mode(struct eth_device *dev,
-					 enet_interface_e mode);
+				 enum fsl_phy_enet_if mode, int speed);
 	uec_regs = uec->uec_regs;
 
 	if (mii_info->link) {
@@ -580,25 +539,19 @@ static void adjust_link(struct eth_device *dev)
 		}
 
 		if (mii_info->speed != uec->oldspeed) {
+			enum fsl_phy_enet_if	mode = \
+				uec->uec_info->enet_interface_type;
 			if (uec->uec_info->uf_info.eth_type == GIGA_ETH) {
 				switch (mii_info->speed) {
 				case 1000:
 					break;
 				case 100:
 					printf ("switching to rgmii 100\n");
-					/* change phy to rgmii 100 */
-					change_phy_interface_mode(dev,
-								ENET_100_RGMII);
-					/* change the MAC interface mode */
-					uec_set_mac_if_mode(uec,ENET_100_RGMII);
+					mode = RGMII;
 					break;
 				case 10:
 					printf ("switching to rgmii 10\n");
-					/* change phy to rgmii 10 */
-					change_phy_interface_mode(dev,
-								ENET_10_RGMII);
-					/* change the MAC interface mode */
-					uec_set_mac_if_mode(uec,ENET_10_RGMII);
+					mode = RGMII;
 					break;
 				default:
 					printf("%s: Ack,Speed(%d)is illegal\n",
@@ -606,6 +559,11 @@ static void adjust_link(struct eth_device *dev)
 					break;
 				}
 			}
+
+			/* change phy */
+			change_phy_interface_mode(dev, mode, mii_info->speed);
+			/* change the MAC interface mode */
+			uec_set_mac_if_mode(uec, mode, mii_info->speed);
 
 			printf("%s: Speed %dBT\n", dev->name, mii_info->speed);
 			uec->oldspeed = mii_info->speed;
@@ -637,8 +595,32 @@ static void phy_change(struct eth_device *dev)
 	adjust_link(dev);
 }
 
-#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII) \
-	&& !defined(BITBANGMII)
+#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
+
+/*
+ * Find a device index from the devlist by name
+ *
+ * Returns:
+ *  The index where the device is located, -1 on error
+ */
+static int uec_miiphy_find_dev_by_name(const char *devname)
+{
+	int i;
+
+	for (i = 0; i < MAXCONTROLLERS; i++) {
+		if (strncmp(devname, devlist[i]->name, strlen(devname)) == 0) {
+			break;
+		}
+	}
+
+	/* If device cannot be found, returns -1 */
+	if (i == MAXCONTROLLERS) {
+		debug ("%s: device %s not found in devlist\n", __FUNCTION__, devname);
+		i = -1;
+	}
+
+	return i;
+}
 
 /*
  * Read a MII PHY register.
@@ -646,11 +628,19 @@ static void phy_change(struct eth_device *dev)
  * Returns:
  *  0 on success
  */
-static int uec_miiphy_read(char *devname, unsigned char addr,
+static int uec_miiphy_read(const char *devname, unsigned char addr,
 			    unsigned char reg, unsigned short *value)
 {
-	*value = uec_read_phy_reg(devlist[0], addr, reg);
+	int devindex = 0;
 
+	if (devname == NULL || value == NULL) {
+		debug("%s: NULL pointer given\n", __FUNCTION__);
+	} else {
+		devindex = uec_miiphy_find_dev_by_name(devname);
+		if (devindex >= 0) {
+			*value = uec_read_phy_reg(devlist[devindex], addr, reg);
+		}
+	}
 	return 0;
 }
 
@@ -660,14 +650,21 @@ static int uec_miiphy_read(char *devname, unsigned char addr,
  * Returns:
  *  0 on success
  */
-static int uec_miiphy_write(char *devname, unsigned char addr,
+static int uec_miiphy_write(const char *devname, unsigned char addr,
 			     unsigned char reg, unsigned short value)
 {
-	uec_write_phy_reg(devlist[0], addr, reg, value);
+	int devindex = 0;
 
+	if (devname == NULL) {
+		debug("%s: NULL pointer given\n", __FUNCTION__);
+	} else {
+		devindex = uec_miiphy_find_dev_by_name(devname);
+		if (devindex >= 0) {
+			uec_write_phy_reg(devlist[devindex], addr, reg, value);
+		}
+	}
 	return 0;
 }
-
 #endif
 
 static int uec_set_mac_address(uec_private_t *uec, u8 *mac_addr)
@@ -935,7 +932,7 @@ static int uec_issue_init_enet_rxtx_cmd(uec_private_t *uec,
 
 	/* Init Rx global parameter pointer */
 	p_init_enet_param->rgftgfrxglobal |= uec->rx_glbl_pram_offset |
-						 (u32)uec_info->riscRx;
+						 (u32)uec_info->risc_rx;
 
 	/* Init Rx threads */
 	for (i = 0; i < (thread_rx + 1); i++) {
@@ -953,13 +950,13 @@ static int uec_issue_init_enet_rxtx_cmd(uec_private_t *uec,
 		}
 
 		entry_val = ((u32)snum << ENET_INIT_PARAM_SNUM_SHIFT) |
-				 init_enet_offset | (u32)uec_info->riscRx;
+				 init_enet_offset | (u32)uec_info->risc_rx;
 		p_init_enet_param->rxthread[i] = entry_val;
 	}
 
 	/* Init Tx global parameter pointer */
 	p_init_enet_param->txglobal = uec->tx_glbl_pram_offset |
-					 (u32)uec_info->riscTx;
+					 (u32)uec_info->risc_tx;
 
 	/* Init Tx threads */
 	for (i = 0; i < thread_tx; i++) {
@@ -972,7 +969,7 @@ static int uec_issue_init_enet_rxtx_cmd(uec_private_t *uec,
 						 UEC_THREAD_TX_PRAM_ALIGNMENT);
 
 		entry_val = ((u32)snum << ENET_INIT_PARAM_SNUM_SHIFT) |
-				 init_enet_offset | (u32)uec_info->riscTx;
+				 init_enet_offset | (u32)uec_info->risc_tx;
 		p_init_enet_param->txthread[i] = entry_val;
 	}
 
@@ -998,7 +995,6 @@ static int uec_startup(uec_private_t *uec)
 	int				num_threads_tx;
 	int				num_threads_rx;
 	u32				utbipar;
-	enet_interface_e		enet_interface;
 	u32				length;
 	u32				align;
 	qe_bd_t				*bd;
@@ -1078,7 +1074,7 @@ static int uec_startup(uec_private_t *uec)
 	out_be32(&uec_regs->maccfg2, MACCFG2_INIT_VALUE);
 
 	/* Setup MAC interface mode */
-	uec_set_mac_if_mode(uec, uec_info->enet_interface);
+	uec_set_mac_if_mode(uec, uec_info->enet_interface_type, uec_info->speed);
 
 	/* Setup MII management base */
 #ifndef CONFIG_eTSEC_MDIO_BUS
@@ -1093,17 +1089,25 @@ static int uec_startup(uec_private_t *uec)
 	/* Setup UTBIPAR */
 	utbipar = in_be32(&uec_regs->utbipar);
 	utbipar &= ~UTBIPAR_PHY_ADDRESS_MASK;
-	enet_interface = uec->uec_info->enet_interface;
-	if (enet_interface == ENET_1000_TBI ||
-		 enet_interface == ENET_1000_RTBI) {
-		utbipar |=  (uec_info->phy_address + uec_info->uf_info.ucc_num)
-						 << UTBIPAR_PHY_ADDRESS_SHIFT;
-	} else {
-		utbipar |=  (0x10 + uec_info->uf_info.ucc_num)
-						 << UTBIPAR_PHY_ADDRESS_SHIFT;
-	}
 
+	/* Initialize UTBIPAR address to CONFIG_UTBIPAR_INIT_TBIPA for ALL UEC.
+	 * This frees up the remaining SMI addresses for use.
+	 */
+	utbipar |= CONFIG_UTBIPAR_INIT_TBIPA << UTBIPAR_PHY_ADDRESS_SHIFT;
 	out_be32(&uec_regs->utbipar, utbipar);
+
+	/* Configure the TBI for SGMII operation */
+	if ((uec->uec_info->enet_interface_type == SGMII) &&
+	   (uec->uec_info->speed == 1000)) {
+		uec_write_phy_reg(uec->dev, uec_regs->utbipar,
+			ENET_TBI_MII_ANA, TBIANA_SETTINGS);
+
+		uec_write_phy_reg(uec->dev, uec_regs->utbipar,
+			ENET_TBI_MII_TBICON, TBICON_CLK_SELECT);
+
+		uec_write_phy_reg(uec->dev, uec_regs->utbipar,
+			ENET_TBI_MII_CR, TBICR_SETTINGS);
+	}
 
 	/* Allocate Tx BDs */
 	length = ((uec_info->tx_bd_ring_len * SIZEOFBD) /
@@ -1219,12 +1223,15 @@ static int uec_init(struct eth_device* dev, bd_t *bd)
 		i = 50;
 		do {
 			err = curphy->read_status(uec->mii_info);
+			if (!(((i-- > 0) && !uec->mii_info->link) || err))
+				break;
 			udelay(100000);
-		} while (((i-- > 0) && !uec->mii_info->link) || err);
+		} while (1);
 
 		if (err || i <= 0)
 			printf("warning: %s: timeout on PHY link\n", dev->name);
 
+		adjust_link(dev);
 		uec->the_first_run = 1;
 	}
 
@@ -1332,12 +1339,11 @@ static int uec_recv(struct eth_device* dev)
 	return 1;
 }
 
-int uec_initialize(int index)
+int uec_initialize(bd_t *bis, uec_info_t *uec_info)
 {
 	struct eth_device	*dev;
 	int			i;
 	uec_private_t		*uec;
-	uec_info_t		*uec_info;
 	int			err;
 
 	dev = (struct eth_device *)malloc(sizeof(struct eth_device));
@@ -1352,34 +1358,18 @@ int uec_initialize(int index)
 	}
 	memset(uec, 0, sizeof(uec_private_t));
 
-	/* Init UEC private struct, they come from board.h */
-	uec_info = NULL;
-	if (index == 0) {
-#ifdef CONFIG_UEC_ETH1
-		uec_info = &eth1_uec_info;
+	/* Adjust uec_info */
+#if (MAX_QE_RISC == 4)
+	uec_info->risc_tx = QE_RISC_ALLOCATION_FOUR_RISCS;
+	uec_info->risc_rx = QE_RISC_ALLOCATION_FOUR_RISCS;
 #endif
-	} else if (index == 1) {
-#ifdef CONFIG_UEC_ETH2
-		uec_info = &eth2_uec_info;
-#endif
-	} else if (index == 2) {
-#ifdef CONFIG_UEC_ETH3
-		uec_info = &eth3_uec_info;
-#endif
-	} else if (index == 3) {
-#ifdef CONFIG_UEC_ETH4
-		uec_info = &eth4_uec_info;
-#endif
-	} else {
-		printf("%s: index is illegal.\n", __FUNCTION__);
-		return -EINVAL;
-	}
 
-	devlist[index] = dev;
+	devlist[uec_info->uf_info.ucc_num] = dev;
 
 	uec->uec_info = uec_info;
+	uec->dev = dev;
 
-	sprintf(dev->name, "FSL UEC%d", index);
+	sprintf(dev->name, "UEC%d", uec_info->uf_info.ucc_num);
 	dev->iobase = 0;
 	dev->priv = (void *)uec;
 	dev->init = uec_init;
@@ -1399,13 +1389,24 @@ int uec_initialize(int index)
 		return err;
 	}
 
-#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII) \
-	&& !defined(BITBANGMII)
+#if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
 	miiphy_register(dev->name, uec_miiphy_read, uec_miiphy_write);
 #endif
 
 	return 1;
 }
 
+int uec_eth_init(bd_t *bis, uec_info_t *uecs, int num)
+{
+	int i;
 
-#endif /* CONFIG_QE */
+	for (i = 0; i < num; i++)
+		uec_initialize(bis, &uecs[i]);
+
+	return 0;
+}
+
+int uec_standard_init(bd_t *bis)
+{
+	return uec_eth_init(bis, uec_info, ARRAY_SIZE(uec_info));
+}

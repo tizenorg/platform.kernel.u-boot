@@ -31,12 +31,6 @@
  */
 
 #include <common.h>
-
-#if !defined(CFG_EEPROM_PAGE_WRITE_ENABLE) || \
-	(CFG_EEPROM_PAGE_WRITE_BITS < 1)
-# error "CFG_EEPROM_PAGE_WRITE_ENABLE must be defined and CFG_EEPROM_PAGE_WRITE_BITS must be greater than  1 to use CONFIG_DTT_LM81"
-#endif
-
 #include <i2c.h>
 #include <dtt.h>
 
@@ -115,7 +109,7 @@ static int _dtt_init(int sensor)
 	if (adr < 0)
 		return 1;
 
-	printf ("DTT:   Found LM81@%x Rev: %d\n", adr, rev);
+	debug ("DTT:   Found LM81@%x Rev: %d\n", adr, rev);
 	return 0;
 } /* _dtt_init() */
 

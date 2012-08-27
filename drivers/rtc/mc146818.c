@@ -31,14 +31,18 @@
 #include <command.h>
 #include <rtc.h>
 
-#if defined(CONFIG_RTC_MC146818) && defined(CONFIG_CMD_DATE)
+#ifdef __I386__
+#include <asm/io.h>
+#define in8(p) inb(p)
+#define out8(p, v) outb(v, p)
+#endif
+
+#if defined(CONFIG_CMD_DATE)
 
 static uchar rtc_read  (uchar reg);
 static void  rtc_write (uchar reg, uchar val);
-static uchar bin2bcd   (unsigned int n);
-static unsigned bcd2bin(uchar c);
 
-#define RTC_PORT_MC146818	CFG_ISA_IO_BASE_ADDRESS +  0x70
+#define RTC_PORT_MC146818	CONFIG_SYS_ISA_IO_BASE_ADDRESS +  0x70
 #define RTC_SECONDS		0x00
 #define RTC_SECONDS_ALARM	0x01
 #define RTC_MINUTES		0x02
@@ -69,9 +73,6 @@ int rtc_get (struct rtc_time *tmp)
 	wday	= rtc_read (RTC_DAY_OF_WEEK);
 	mon	= rtc_read (RTC_MONTH);
 	year	= rtc_read (RTC_YEAR);
-#ifdef CONFIG_AMIGAONEG3SE
-	wday -= 1; /* VIA 686 stores Sunday = 1, Monday = 2, ... */
-#endif
 #ifdef RTC_DEBUG
 	printf ( "Get RTC year: %02x mon/cent: %02x mday: %02x wday: %02x "
 		"hr: %02x min: %02x sec: %02x\n",
@@ -105,7 +106,7 @@ int rtc_get (struct rtc_time *tmp)
 	return 0;
 }
 
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 #ifdef RTC_DEBUG
 	printf ( "Set DATE: %4d-%02d-%02d (wday=%d)  TIME: %2d:%02d:%02d\n",
@@ -116,17 +117,14 @@ void rtc_set (struct rtc_time *tmp)
 
 	rtc_write (RTC_YEAR, bin2bcd(tmp->tm_year % 100));
 	rtc_write (RTC_MONTH, bin2bcd(tmp->tm_mon));
-#ifdef CONFIG_AMIGAONEG3SE
-	rtc_write (RTC_DAY_OF_WEEK, bin2bcd(tmp->tm_wday)+1);
-#else
 	rtc_write (RTC_DAY_OF_WEEK, bin2bcd(tmp->tm_wday));
-#endif
 	rtc_write (RTC_DATE_OF_MONTH, bin2bcd(tmp->tm_mday));
 	rtc_write (RTC_HOURS, bin2bcd(tmp->tm_hour));
 	rtc_write (RTC_MINUTES, bin2bcd(tmp->tm_min ));
 	rtc_write (RTC_SECONDS, bin2bcd(tmp->tm_sec ));
 	rtc_write(RTC_CONFIG_B,0x02); /* enables the RTC to update the regs */
 
+	return 0;
 }
 
 void rtc_reset (void)
@@ -140,18 +138,18 @@ void rtc_reset (void)
 
 /* ------------------------------------------------------------------------- */
 
-#ifdef CFG_RTC_REG_BASE_ADDR
+#ifdef CONFIG_SYS_RTC_REG_BASE_ADDR
 /*
  * use direct memory access
  */
 static uchar rtc_read (uchar reg)
 {
-	return(in8(CFG_RTC_REG_BASE_ADDR+reg));
+	return(in8(CONFIG_SYS_RTC_REG_BASE_ADDR+reg));
 }
 
 static void rtc_write (uchar reg, uchar val)
 {
-	out8(CFG_RTC_REG_BASE_ADDR+reg, val);
+	out8(CONFIG_SYS_RTC_REG_BASE_ADDR+reg, val);
 }
 #else
 static uchar rtc_read (uchar reg)
@@ -166,15 +164,5 @@ static void rtc_write (uchar reg, uchar val)
 	out8(RTC_PORT_MC146818+1,val);
 }
 #endif
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
-}
 
 #endif

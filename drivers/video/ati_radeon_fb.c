@@ -35,8 +35,6 @@
 
 #include <common.h>
 
-#ifdef CONFIG_ATI_RADEON_FB
-
 #include <command.h>
 #include <pci.h>
 #include <asm/processor.h>
@@ -212,7 +210,7 @@ static void radeon_identify_vram(struct radeonfb_info *rinfo)
 	 * ToDo: identify these cases
 	 */
 
-	DPRINT("radeonfb: Found %ldk of %s %d bits wide videoram\n",
+	DPRINT("radeonfb: Found %dk of %s %d bits wide videoram\n",
 	       rinfo->video_ram / 1024,
 	       rinfo->vram_ddr ? "DDR" : "SDRAM",
 	       rinfo->vram_width);
@@ -588,18 +586,21 @@ int radeon_probe(struct radeonfb_info *rinfo)
 		rinfo->pdev.device = did;
 		rinfo->family = get_radeon_id_family(rinfo->pdev.device);
 		pci_read_config_dword(pdev, PCI_BASE_ADDRESS_0,
-				&rinfo->fb_base_phys);
+				&rinfo->fb_base_bus);
 		pci_read_config_dword(pdev, PCI_BASE_ADDRESS_2,
-				&rinfo->mmio_base_phys);
-		rinfo->fb_base_phys &= 0xfffff000;
-		rinfo->mmio_base_phys &= ~0x04;
+				&rinfo->mmio_base_bus);
+		rinfo->fb_base_bus &= 0xfffff000;
+		rinfo->mmio_base_bus &= ~0x04;
 
-		rinfo->mmio_base = (void *)rinfo->mmio_base_phys;
-		DPRINT("rinfo->mmio_base = 0x%x\n",rinfo->mmio_base);
+		rinfo->mmio_base = pci_bus_to_virt(pdev, rinfo->mmio_base_bus,
+					PCI_REGION_MEM, 0, MAP_NOCACHE);
+		DPRINT("rinfo->mmio_base = 0x%p bus=0x%x\n",
+		       rinfo->mmio_base, rinfo->mmio_base_bus);
 		rinfo->fb_local_base = INREG(MC_FB_LOCATION) << 16;
 		DPRINT("rinfo->fb_local_base = 0x%x\n",rinfo->fb_local_base);
 		/* PostBIOS with x86 emulater */
-		BootVideoCardBIOS(pdev, NULL, 0);
+		if (!BootVideoCardBIOS(pdev, NULL, 0))
+			return -1;
 
 		/*
 		 * Check for errata
@@ -612,14 +613,15 @@ int radeon_probe(struct radeonfb_info *rinfo)
 
 		rinfo->mapped_vram = min_t(unsigned long, MAX_MAPPED_VRAM,
 				rinfo->video_ram);
-		rinfo->fb_base = (void *)rinfo->fb_base_phys;
-
-		DPRINT("Radeon: framebuffer base phy address 0x%08x," \
-		      "MMIO base phy address 0x%08x," \
-		      "framebuffer local base 0x%08x.\n ",
-		      rinfo->fb_base_phys, rinfo->mmio_base_phys,
-		      rinfo->fb_local_base);
-
+		rinfo->fb_base = pci_bus_to_virt(pdev, rinfo->fb_base_bus,
+					PCI_REGION_MEM, 0, MAP_NOCACHE);
+		DPRINT("Radeon: framebuffer base address 0x%08x, "
+		       "bus address 0x%08x\n"
+		       "MMIO base address 0x%08x, bus address 0x%08x, "
+		       "framebuffer local base 0x%08x.\n ",
+		       (u32)rinfo->fb_base, rinfo->fb_base_bus,
+		       (u32)rinfo->mmio_base, rinfo->mmio_base_bus,
+		       rinfo->fb_local_base);
 		return 0;
 	}
 	return -1;
@@ -655,7 +657,7 @@ void *video_hw_init(void)
 
 	tmp = 0;
 
-	videomode = CFG_DEFAULT_VIDEO_MODE;
+	videomode = CONFIG_SYS_DEFAULT_VIDEO_MODE;
 	/* get video mode via environment */
 	if ((penv = getenv ("videomode")) != NULL) {
 		/* deceide if it is a string */
@@ -674,7 +676,7 @@ void *video_hw_init(void)
 				break;
 		}
 		if (i == VESA_MODES_COUNT) {
-			printf ("no VESA Mode found, switching to mode 0x%x ", CFG_DEFAULT_VIDEO_MODE);
+			printf ("no VESA Mode found, switching to mode 0x%x ", CONFIG_SYS_DEFAULT_VIDEO_MODE);
 			i = 0;
 		}
 		res_mode = (struct ctfb_res_modes *) &res_mode_init[vesa_modes[i].resindex];
@@ -734,14 +736,14 @@ void *video_hw_init(void)
 		break;
 	}
 
-	pGD->isaBase = CFG_ISA_IO_BASE_ADDRESS;
-	pGD->pciBase = rinfo->fb_base_phys;
-	pGD->frameAdrs = rinfo->fb_base_phys;
+	pGD->isaBase = CONFIG_SYS_ISA_IO_BASE_ADDRESS;
+	pGD->pciBase = (unsigned int)rinfo->fb_base;
+	pGD->frameAdrs = (unsigned int)rinfo->fb_base;
 	pGD->memSize = 64 * 1024 * 1024;
 
 	/* Cursor Start Address */
-	pGD->dprBase =
-	    (pGD->winSizeX * pGD->winSizeY * pGD->gdfBytesPP) + rinfo->fb_base_phys;
+	pGD->dprBase = (pGD->winSizeX * pGD->winSizeY * pGD->gdfBytesPP) +
+		(unsigned int)rinfo->fb_base;
 	if ((pGD->dprBase & 0x0fff) != 0) {
 		/* allign it */
 		pGD->dprBase &= 0xfffff000;
@@ -749,8 +751,8 @@ void *video_hw_init(void)
 	}
 	DPRINT ("Cursor Start %x Pattern Start %x\n", pGD->dprBase,
 		PATTERN_ADR);
-	pGD->vprBase = rinfo->fb_base_phys;	/* Dummy */
-	pGD->cprBase = rinfo->fb_base_phys;	/* Dummy */
+	pGD->vprBase = (unsigned int)rinfo->fb_base;	/* Dummy */
+	pGD->cprBase = (unsigned int)rinfo->fb_base;	/* Dummy */
 	/* set up Hardware */
 
 	/* Clear video memory (only visible screen area) */
@@ -777,4 +779,3 @@ void video_set_lut (unsigned int index,	/* color number */
 	OUTREG(PALETTE_INDEX, index);
 	OUTREG(PALETTE_DATA, (r << 16) | (g << 8) | b);
 }
-#endif

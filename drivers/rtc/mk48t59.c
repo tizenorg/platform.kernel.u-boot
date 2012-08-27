@@ -33,8 +33,6 @@
 #include <rtc.h>
 #include <mk48t59.h>
 
-#if defined(CONFIG_RTC_MK48T59)
-
 #if defined(CONFIG_BAB7xx)
 
 static uchar rtc_read (short reg)
@@ -65,24 +63,6 @@ static void rtc_write (short reg, uchar val)
 	out8(RTC(reg),val);
 }
 
-#elif defined(CONFIG_AMIGAONEG3SE)
-
-#include "../board/MAI/AmigaOneG3SE/via686.h"
-#include "../board/MAI/AmigaOneG3SE/memio.h"
-
-
-static uchar rtc_read (short reg)
-{
-    out_byte(CMOS_ADDR, (uint8)reg);
-    return in_byte(CMOS_DATA);
-}
-
-static void rtc_write (short reg, uchar val)
-{
-    out_byte(CMOS_ADDR, (uint8)reg);
-    out_byte(CMOS_DATA, (uint8)val);
-}
-
 #elif defined(CONFIG_EVAL5200)
 
 static uchar rtc_read (short reg)
@@ -98,16 +78,6 @@ static void rtc_write (short reg, uchar val)
 #else
 # error Board specific rtc access functions should be supplied
 #endif
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
-}
 
 /* ------------------------------------------------------------------------- */
 
@@ -187,7 +157,7 @@ int rtc_get (struct rtc_time *tmp)
 	return 0;
 }
 
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	uchar save_ctrl_a;
 
@@ -212,6 +182,8 @@ void rtc_set (struct rtc_time *tmp)
 
 	save_ctrl_a &= ~RTC_CA_WRITE;
 	rtc_write(RTC_CONTROLA, save_ctrl_a); /* enables the RTC to update the regs */
+
+	return 0;
 }
 
 void rtc_reset (void)
@@ -236,4 +208,3 @@ void rtc_set_watchdog(short multi, short res)
 }
 
 #endif
-#endif	/* CONFIG_RTC_MK48T59 */

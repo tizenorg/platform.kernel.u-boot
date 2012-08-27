@@ -33,12 +33,10 @@
 #include <rtc.h>
 #include <config.h>
 
-#if defined(CONFIG_RTC_M48T35A) && defined(CONFIG_CMD_DATE)
+#if defined(CONFIG_CMD_DATE)
 
 static uchar rtc_read  (uchar reg);
 static void  rtc_write (uchar reg, uchar val);
-static uchar bin2bcd   (unsigned int n);
-static unsigned bcd2bin(uchar c);
 
 /* ------------------------------------------------------------------------- */
 
@@ -87,7 +85,7 @@ int rtc_get (struct rtc_time *tmp)
 	return 0;
 }
 
-void rtc_set (struct rtc_time *tmp)
+int rtc_set (struct rtc_time *tmp)
 {
 	uchar ccr;			/* Clock control register */
 	uchar century;
@@ -116,6 +114,8 @@ void rtc_set (struct rtc_time *tmp)
 	ccr = rtc_read(0);
 	ccr = ccr & 0x7F;
 	rtc_write(0, ccr);
+
+	return 0;
 }
 
 void rtc_reset (void)
@@ -145,24 +145,14 @@ static uchar rtc_read (uchar reg)
 {
 	uchar val;
 	val = *(unsigned char *)
-		((CFG_NVRAM_BASE_ADDR + CFG_NVRAM_SIZE - 8) + reg);
+		((CONFIG_SYS_NVRAM_BASE_ADDR + CONFIG_SYS_NVRAM_SIZE - 8) + reg);
 	return val;
 }
 
 static void rtc_write (uchar reg, uchar val)
 {
 	*(unsigned char *)
-		((CFG_NVRAM_BASE_ADDR + CFG_NVRAM_SIZE - 8) + reg) = val;
-}
-
-static unsigned bcd2bin (uchar n)
-{
-	return ((((n >> 4) & 0x0F) * 10) + (n & 0x0F));
-}
-
-static unsigned char bin2bcd (unsigned int n)
-{
-	return (((n / 10) << 4) | (n % 10));
+		((CONFIG_SYS_NVRAM_BASE_ADDR + CONFIG_SYS_NVRAM_SIZE - 8) + reg) = val;
 }
 
 #endif

@@ -14,13 +14,13 @@ Changed files:
 - board/freescale/m52277evb/config.mk	config make
 - board/freescale/m52277evb/u-boot.lds	Linker description
 
-- cpu/mcf5227x/cpu.c		cpu specific code
-- cpu/mcf5227x/cpu_init.c	FBCS, Mux pins, icache and RTC extra regs
-- cpu/mcf5227x/interrupts.c	cpu specific interrupt support
-- cpu/mcf5227x/speed.c		system, flexbus, and cpu clock
-- cpu/mcf5227x/Makefile		Makefile
-- cpu/mcf5227x/config.mk	config make
-- cpu/mcf5227x/start.S		start up assembly code
+- arch/m68k/cpu/mcf5227x/cpu.c		cpu specific code
+- arch/m68k/cpu/mcf5227x/cpu_init.c	FBCS, Mux pins, icache and RTC extra regs
+- arch/m68k/cpu/mcf5227x/interrupts.c	cpu specific interrupt support
+- arch/m68k/cpu/mcf5227x/speed.c		system, flexbus, and cpu clock
+- arch/m68k/cpu/mcf5227x/Makefile		Makefile
+- arch/m68k/cpu/mcf5227x/config.mk	config make
+- arch/m68k/cpu/mcf5227x/start.S		start up assembly code
 
 - doc/README.m52277evb		This readme file
 
@@ -53,12 +53,12 @@ Changed files:
 
 - include/configs/M52277EVB.h		Board specific configuration file
 
-- lib_m68k/board.c			board init function
-- lib_m68k/cache.c
-- lib_m68k/interrupts			Coldfire common interrupt functions
-- lib_m68k/m68k_linux.c
-- lib_m68k/time.c			Timer functions (Dma timer and PIT)
-- lib_m68k/traps.c			Exception init code
+- arch/m68k/lib/board.c			board init function
+- arch/m68k/lib/cache.c
+- arch/m68k/lib/interrupts			Coldfire common interrupt functions
+- arch/m68k/lib/m68k_linux.c
+- arch/m68k/lib/time.c			Timer functions (Dma timer and PIT)
+- arch/m68k/lib/traps.c			Exception init code
 
 1 MCF52277 specific Options/Settings
 ====================================
@@ -70,12 +70,12 @@ CONFIG_M52277		-- define for all Freescale MCF52277 CPUs
 CONFIG_M52277EVB	-- define for M52277EVB board
 
 CONFIG_MCFUART		-- define to use common CF Uart driver
-CFG_UART_PORT		-- define UART port number, start with 0, 1 and 2
+CONFIG_SYS_UART_PORT		-- define UART port number, start with 0, 1 and 2
 CONFIG_BAUDRATE		-- define UART baudrate
 
 CONFIG_MCFRTC		-- define to use common CF RTC driver
-CFG_MCFRTC_BASE		-- provide base address for RTC in immap.h
-CFG_RTC_OSCILLATOR	-- define RTC clock frequency
+CONFIG_SYS_MCFRTC_BASE		-- provide base address for RTC in immap.h
+CONFIG_SYS_RTC_OSCILLATOR	-- define RTC clock frequency
 RTC_DEBUG		-- define to show RTC debug message
 CONFIG_CMD_DATE		-- enable to use date feature in u-boot
 
@@ -85,22 +85,22 @@ CONFIG_MCFPIT		-- define to use PIT timer
 CONFIG_FSL_I2C		-- define to use FSL common I2C driver
 CONFIG_HARD_I2C		-- define for I2C hardware support
 CONFIG_SOFT_I2C		-- define for I2C bit-banged
-CFG_I2C_SPEED		-- define for I2C speed
-CFG_I2C_SLAVE		-- define for I2C slave address
-CFG_I2C_OFFSET		-- define for I2C base address offset
-CFG_IMMR		-- define for MBAR offset
+CONFIG_SYS_I2C_SPEED		-- define for I2C speed
+CONFIG_SYS_I2C_SLAVE		-- define for I2C slave address
+CONFIG_SYS_I2C_OFFSET		-- define for I2C base address offset
+CONFIG_SYS_IMMR		-- define for MBAR offset
 
-CFG_MBAR		-- define MBAR offset
+CONFIG_SYS_MBAR		-- define MBAR offset
 
 CONFIG_MONITOR_IS_IN_RAM -- Not support
 
-CFG_INIT_RAM_ADDR	-- defines the base address of the MCF52277 internal SRAM
+CONFIG_SYS_INIT_RAM_ADDR	-- defines the base address of the MCF52277 internal SRAM
 
-CFG_CSn_BASE	-- defines the Chip Select Base register
-CFG_CSn_MASK	-- defines the Chip Select Mask register
-CFG_CSn_CTRL	-- defines the Chip Select Control register
+CONFIG_SYS_CSn_BASE	-- defines the Chip Select Base register
+CONFIG_SYS_CSn_MASK	-- defines the Chip Select Mask register
+CONFIG_SYS_CSn_CTRL	-- defines the Chip Select Control register
 
-CFG_SDRAM_BASE	-- defines the DRAM Base
+CONFIG_SYS_SDRAM_BASE	-- defines the DRAM Base
 
 CONFIG_LCD and CONFIG_CMD_USB are not supported in this current u-boot,
 update will be provided at later time
@@ -184,7 +184,6 @@ baudrate    = 115200 bps
 ->
 -> help
 ?       - alias for 'help'
-autoscr - run script from memory
 base    - print or set address offset
 bdinfo  - print Board Info structure
 boot    - boot default, i.e., run 'bootcmd'
@@ -204,16 +203,10 @@ erase   - erase FLASH memory
 flinfo  - print FLASH memory information
 go      - start application at address 'addr'
 help    - print online help
+i2c     - I2C sub-system
 icache  - enable or disable instruction cache
-icrc32  - checksum calculation
-iloop   - infinite loop on address range
-imd     - i2c memory display
 iminfo  - print header information for application image
 imls    - list all images found in flash
-imm     - i2c memory modify (auto-incrementing)
-imw     - memory write (fill)
-inm     - memory modify (constant address)
-iprobe  - probe to discover valid I2C chip addresses
 itest	- return true/false on integer compare
 loadb   - load binary file over serial line (kermit mode)
 loads   - load S-Record file over serial line
@@ -233,5 +226,6 @@ run     - run commands in an environment variable
 saveenv - save environment variables to persistent storage
 setenv  - set environment variables
 sleep   - delay execution for some time
+source  - run script from memory
 version - print monitor version
 ->

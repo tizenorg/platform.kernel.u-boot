@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= trab.o flash.o vfd.o cmd_trab.o memory.o tsc2000.o auto_update.o
 SOBJS	:= lowlevel_init.o
@@ -36,8 +36,6 @@ SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 OBJS_FKT := $(addprefix $(obj),$(COBJS_FKT))
 
-gcclibdir := $(shell dirname `$(CC) -print-libgcc-file-name`)
-
 LOAD_ADDR = 0xc100000
 
 #########################################################################
@@ -45,12 +43,13 @@ LOAD_ADDR = 0xc100000
 all:	$(LIB) $(obj)trab_fkt.srec $(obj)trab_fkt.bin
 
 $(LIB):	$(obj).depend $(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS) $(SOBJS)
+	$(call cmd_link_o_target, $(OBJS) $(SOBJS))
 
 $(obj)trab_fkt.srec:	$(OBJS_FKT) $(LIB)
 	$(LD) -g -Ttext $(LOAD_ADDR) -o $(<:.o=) -e trab_fkt $^ $(LIB) \
-		-L$(obj)../../examples -lstubs \
-		-L$(gcclibdir) -lgcc
+		-L$(obj)../../examples/standalone -lstubs \
+		-L$(obj)../../lib -lgeneric \
+		$(PLATFORM_LIBS)
 	$(OBJCOPY) -O srec $(<:.o=) $@
 
 $(obj)trab_fkt.bin:	$(obj)trab_fkt.srec

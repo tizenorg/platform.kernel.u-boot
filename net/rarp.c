@@ -29,9 +29,7 @@
 #include "rarp.h"
 #include "tftp.h"
 
-#if defined(CONFIG_CMD_NET)
-
-#define TIMEOUT		5UL		/* Seconds before trying BOOTP again */
+#define TIMEOUT		5000UL	/* Milliseconds before trying BOOTP again */
 #ifndef	CONFIG_NET_RETRY_COUNT
 # define TIMEOUT_COUNT	5		/* # of timeouts before giving up  */
 #else
@@ -48,9 +46,7 @@ static void
 RarpHandler(uchar * dummi0, unsigned dummi1, unsigned dummi2, unsigned dummi3)
 {
 	char *s;
-#ifdef	DEBUG
-	puts ("Got good RARP\n");
-#endif
+	debug("Got good RARP\n");
 	if ((s = getenv("autoload")) != NULL) {
 		if (*s == 'n') {
 			/*
@@ -80,7 +76,7 @@ RarpTimeout(void)
 		puts ("\nRetry count exceeded; starting again\n");
 		NetStartAgain ();
 	} else {
-		NetSetTimeout (TIMEOUT * CFG_HZ, RarpTimeout);
+		NetSetTimeout (TIMEOUT, RarpTimeout);
 		RarpRequest ();
 	}
 }
@@ -115,8 +111,6 @@ RarpRequest (void)
 
 	NetSendPacket(NetTxPacket, (pkt - NetTxPacket) + ARP_HDR_SIZE);
 
-	NetSetTimeout(TIMEOUT * CFG_HZ, RarpTimeout);
+	NetSetTimeout(TIMEOUT, RarpTimeout);
 	NetSetHandler(RarpHandler);
 }
-
-#endif

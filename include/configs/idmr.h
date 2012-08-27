@@ -45,9 +45,9 @@
 #define CONFIG_BOOTCOMMAND	"run net_nfs"
 #define CONFIG_BOOTDELAY	5
 #define CONFIG_MCFUART
-#define CFG_UART_PORT		(0)
+#define CONFIG_SYS_UART_PORT		(0)
 #define CONFIG_BAUDRATE		19200
-#define CFG_BAUDRATE_TABLE	{ 9600 , 19200 , 38400 , 57600, 115200 }
+#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600 , 19200 , 38400 , 57600, 115200 }
 #define CONFIG_ETHADDR		00:06:3b:01:41:55
 #define CONFIG_ETHPRIME
 #define CONFIG_IPADDR		192.168.30.1
@@ -74,7 +74,7 @@
 	"net_nfs=tftp 200000 $(bootfile);run nfsargs addip;bootm\0"	\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
 		"nfsroot=$(serverip):$(rootpath)\0"			\
-	"ethact=FEC ETHERNET\0"						\
+	"ethact=FEC\0	"						\
 	"update=prot off ff800000 ff81ffff; era ff800000 ff81ffff; "	\
 		"cp.b 200000 ff800000 $(filesize);"			\
 		"prot on ff800000 ff81ffff\0"				\
@@ -115,40 +115,40 @@
  * Configuration for environment, which occupies third sector in flash.
  */
 #ifndef CONFIG_MONITOR_IS_IN_RAM
-#define CFG_ENV_ADDR		0xff820000
-#define CFG_ENV_SECT_SIZE	0x10000
-#define CFG_ENV_SIZE		0x2000
-#define CFG_ENV_IS_IN_FLASH
+#define CONFIG_ENV_ADDR		0xff820000
+#define CONFIG_ENV_SECT_SIZE	0x10000
+#define CONFIG_ENV_SIZE		0x2000
+#define CONFIG_ENV_IS_IN_FLASH
 #else /* CONFIG_MONITOR_IS_IN_RAM */
-#define CFG_ENV_OFFSET		0x4000
-#define CFG_ENV_SECT_SIZE	0x2000
-#define CFG_ENV_IS_IN_FLASH
+#define CONFIG_ENV_OFFSET		0x4000
+#define CONFIG_ENV_SECT_SIZE	0x2000
+#define CONFIG_ENV_IS_IN_FLASH
 #endif /* !CONFIG_MONITOR_IS_IN_RAM */
 
-#define	CFG_USE_PPCENV			/* Environment embedded in sect .ppcenv */
+#define	CONFIG_SYS_USE_PPCENV			/* Environment embedded in sect .ppcenv */
 
-#define CFG_PROMPT		"=> "
-#define CFG_LONGHELP				/* undef to save memory */
+#define CONFIG_SYS_PROMPT		"=> "
+#define CONFIG_SYS_LONGHELP				/* undef to save memory */
 
 #if defined(CONFIG_CMD_KGDB)
-#define CFG_CBSIZE		1024		/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		1024		/* Console I/O Buffer Size */
 #else
-#define CFG_CBSIZE		256		/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size */
 #endif
 
-#define CFG_PBSIZE (CFG_CBSIZE+sizeof(CFG_PROMPT)+16) /* Print Buffer Size */
-#define CFG_MAXARGS		16		/* max number of command args */
-#define CFG_BARGSIZE		CFG_CBSIZE	/* Boot Argument Buffer Size */
+#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
+#define CONFIG_SYS_MAXARGS		16		/* max number of command args */
+#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 
-#define CFG_LOAD_ADDR		0x00100000
+#define CONFIG_SYS_LOAD_ADDR		0x00100000
 
-#define CFG_MEMTEST_START	0x400
-#define CFG_MEMTEST_END		0x380000
+#define CONFIG_SYS_MEMTEST_START	0x400
+#define CONFIG_SYS_MEMTEST_END		0x380000
 
-#define CFG_HZ			(50000000 / 64)
-#define CFG_CLK			100000000
+#define CONFIG_SYS_HZ			(50000000 / 64)
+#define CONFIG_SYS_CLK			100000000
 
-#define CFG_MBAR		0x40000000	/* Register Base Addrs */
+#define CONFIG_SYS_MBAR		0x40000000	/* Register Base Addrs */
 
 /*
  * Ethernet
@@ -158,78 +158,92 @@
 #	define CONFIG_NET_MULTI		1
 #	define CONFIG_MII		1
 #	define CONFIG_MII_INIT		1
-#	define CFG_DISCOVER_PHY
-#	define CFG_RX_ETH_BUFFER	8
-#	define CFG_FAULT_ECHO_LINK_DOWN
+#	define CONFIG_SYS_DISCOVER_PHY
+#	define CONFIG_SYS_RX_ETH_BUFFER	8
+#	define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 
-#	define CFG_FEC0_PINMUX		0
-#	define CFG_FEC0_MIIBASE		CFG_FEC0_IOBASE
+#	define CONFIG_SYS_FEC0_PINMUX		0
+#	define CONFIG_SYS_FEC0_MIIBASE		CONFIG_SYS_FEC0_IOBASE
 #	define MCFFEC_TOUT_LOOP		50000
-/* If CFG_DISCOVER_PHY is not defined - hardcoded */
-#	ifndef CFG_DISCOVER_PHY
+/* If CONFIG_SYS_DISCOVER_PHY is not defined - hardcoded */
+#	ifndef CONFIG_SYS_DISCOVER_PHY
 #		define FECDUPLEX	FULL
 #		define FECSPEED		_100BASET
 #	else
-#		ifndef CFG_FAULT_ECHO_LINK_DOWN
-#			define CFG_FAULT_ECHO_LINK_DOWN
+#		ifndef CONFIG_SYS_FAULT_ECHO_LINK_DOWN
+#			define CONFIG_SYS_FAULT_ECHO_LINK_DOWN
 #		endif
-#	endif			/* CFG_DISCOVER_PHY */
+#	endif			/* CONFIG_SYS_DISCOVER_PHY */
 #endif
 
 /*
  * Definitions for initial stack pointer and data area (in DPRAM)
  */
-#define CFG_INIT_RAM_ADDR	0x20000000
-#define CFG_INIT_RAM_END	0x1000	/* End of used area in internal SRAM */
-#define CFG_GBL_DATA_SIZE	64	/* size in bytes reserved for initial data */
-#define CFG_GBL_DATA_OFFSET	(CFG_INIT_RAM_END - CFG_GBL_DATA_SIZE)
-#define CFG_INIT_SP_OFFSET	CFG_GBL_DATA_OFFSET
+#define CONFIG_SYS_INIT_RAM_ADDR	0x20000000
+#define CONFIG_SYS_INIT_RAM_SIZE	0x1000	/* Size of used area in internal SRAM */
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 /*
  * Start addresses for the final memory configuration
  * (Set up by the startup code)
- * Please note that CFG_SDRAM_BASE _must_ start at 0
+ * Please note that CONFIG_SYS_SDRAM_BASE _must_ start at 0
  */
-#define CFG_SDRAM_BASE		0x00000000
-#define CFG_SDRAM_SIZE		16		/* SDRAM size in MB */
-#define CFG_FLASH_BASE		0xff800000
+#define CONFIG_SYS_SDRAM_BASE		0x00000000
+#define CONFIG_SYS_SDRAM_SIZE		16		/* SDRAM size in MB */
+#define CONFIG_SYS_FLASH_BASE		0xff800000
 
 #ifdef CONFIG_MONITOR_IS_IN_RAM
-#define CFG_MONITOR_BASE	0x20000
+#define CONFIG_SYS_MONITOR_BASE	0x20000
 #else /* !CONFIG_MONITOR_IS_IN_RAM */
-#define CFG_MONITOR_BASE	(CFG_FLASH_BASE + 0x400)
+#define CONFIG_SYS_MONITOR_BASE	(CONFIG_SYS_FLASH_BASE + 0x400)
 #endif /* CONFIG_MONITOR_IS_IN_RAM */
 
-#define CFG_MONITOR_LEN		0x20000
-#define CFG_MALLOC_LEN		(256 << 10)
-#define CFG_BOOTPARAMS_LEN	(64*1024)
+#define CONFIG_SYS_MONITOR_LEN		0x20000
+#define CONFIG_SYS_MALLOC_LEN		(256 << 10)
+#define CONFIG_SYS_BOOTPARAMS_LEN	(64*1024)
 
 /*
  * For booting Linux, the board info and command line data
  * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization ??
  */
-#define CFG_BOOTMAPSZ		(CFG_SDRAM_BASE + (CFG_SDRAM_SIZE << 20))
+#define CONFIG_SYS_BOOTMAPSZ		(CONFIG_SYS_SDRAM_BASE + (CONFIG_SYS_SDRAM_SIZE << 20))
 
 /* FLASH organization */
-#define CFG_MAX_FLASH_BANKS	1	/* max number of memory banks */
-#define CFG_MAX_FLASH_SECT	128	/* max number of sectors on one chip */
-#define CFG_FLASH_ERASE_TOUT	1000
+#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max number of memory banks */
+#define CONFIG_SYS_MAX_FLASH_SECT	128	/* max number of sectors on one chip */
+#define CONFIG_SYS_FLASH_ERASE_TOUT	1000
 
-#define CFG_FLASH_SIZE		0x800000
+#define CONFIG_SYS_FLASH_SIZE		0x800000
 /*
- * #define CFG_FLASH_USE_BUFFER_WRITE	1
+ * #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE	1
  */
 
 /* Cache Configuration */
-#define CFG_CACHELINE_SIZE	16
+#define CONFIG_SYS_CACHELINE_SIZE	16
+
+#define ICACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \
+					 CONFIG_SYS_INIT_RAM_SIZE - 8)
+#define DCACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \
+					 CONFIG_SYS_INIT_RAM_SIZE - 4)
+#define CONFIG_SYS_ICACHE_INV		(CF_CACR_CINV | CF_CACR_INVI)
+#define CONFIG_SYS_CACHE_ACR0		(CONFIG_SYS_SDRAM_BASE | \
+					 CF_ADDRMASK(CONFIG_SYS_SDRAM_SIZE) | \
+					 CF_ACR_EN | CF_ACR_SM_ALL)
+#define CONFIG_SYS_CACHE_ICACR		(CF_CACR_CENB | CF_CACR_CINV | \
+					 CF_CACR_DISD | CF_CACR_INVI | \
+					 CF_CACR_CEIB | CF_CACR_DCM | \
+					 CF_CACR_EUSP)
 
 /* Port configuration */
-#define CFG_FECI2C		0xF0
+#define CONFIG_SYS_FECI2C		0xF0
 
 
 /* Dynamic MTD partition support */
-#define CONFIG_JFFS2_CMDLINE
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_DEVICE		/* needed for mtdparts commands */
+#define CONFIG_FLASH_CFI_MTD
 #define MTDIDS_DEFAULT		"nor0=idmr-0"
 
 #define MTDPARTS_DEFAULT	"mtdparts=idmr-0:128k(u-boot),"	\

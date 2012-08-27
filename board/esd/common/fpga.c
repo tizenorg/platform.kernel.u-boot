@@ -24,6 +24,7 @@
 
 #include <common.h>
 #include <asm/processor.h>
+#include <asm/io.h>
 #include <command.h>
 
 /* ------------------------------------------------------------------------- */
@@ -36,12 +37,12 @@
 
 #define MAX_ONES               226
 
-#ifdef CFG_FPGA_PRG
-# define FPGA_PRG              CFG_FPGA_PRG	/* FPGA program pin (ppc output) */
-# define FPGA_CLK              CFG_FPGA_CLK	/* FPGA clk pin (ppc output)    */
-# define FPGA_DATA             CFG_FPGA_DATA	/* FPGA data pin (ppc output)  */
-# define FPGA_DONE             CFG_FPGA_DONE	/* FPGA done pin (ppc input)   */
-# define FPGA_INIT             CFG_FPGA_INIT	/* FPGA init pin (ppc input)   */
+#ifdef CONFIG_SYS_FPGA_PRG
+# define FPGA_PRG              CONFIG_SYS_FPGA_PRG	/* FPGA program pin (ppc output) */
+# define FPGA_CLK              CONFIG_SYS_FPGA_CLK	/* FPGA clk pin (ppc output)    */
+# define FPGA_DATA             CONFIG_SYS_FPGA_DATA	/* FPGA data pin (ppc output)  */
+# define FPGA_DONE             CONFIG_SYS_FPGA_DONE	/* FPGA done pin (ppc input)   */
+# define FPGA_INIT             CONFIG_SYS_FPGA_INIT	/* FPGA init pin (ppc input)   */
 #else
 # define FPGA_PRG              0x04000000	/* FPGA program pin (ppc output) */
 # define FPGA_CLK              0x02000000	/* FPGA clk pin (ppc output)     */
@@ -55,7 +56,7 @@
 #define ERROR_FPGA_PRG_DONE      -3	/* Timeout after programming     */
 
 #ifndef SET_FPGA
-# define SET_FPGA(data)         out32(GPIO0_OR, data)
+# define SET_FPGA(data)         out_be32((void *)GPIO0_OR, data)
 #endif
 
 #ifdef FPGA_PROG_ACTIVE_HIGH
@@ -85,10 +86,10 @@
 	SET_FPGA(FPGA_PRG_HIGH | FPGA_CLK_HIGH | FPGA_DATA_HIGH);}	/* set data to 1  */
 
 #ifndef FPGA_DONE_STATE
-# define FPGA_DONE_STATE (in32(GPIO0_IR) & FPGA_DONE)
+# define FPGA_DONE_STATE (in_be32((void *)GPIO0_IR) & FPGA_DONE)
 #endif
 #ifndef FPGA_INIT_STATE
-# define FPGA_INIT_STATE (in32(GPIO0_IR) & FPGA_INIT)
+# define FPGA_INIT_STATE (in_be32((void *)GPIO0_IR) & FPGA_INIT)
 #endif
 
 
@@ -98,7 +99,7 @@ static int fpga_boot (const unsigned char *fpgadata, int size)
 	int count;
 	unsigned char b;
 
-#ifdef CFG_FPGA_SPARTAN2
+#ifdef CONFIG_SYS_FPGA_SPARTAN2
 	int j;
 #else
 	int bit;
@@ -112,7 +113,7 @@ static int fpga_boot (const unsigned char *fpgadata, int size)
 		index += len + 3;
 	}
 
-#ifdef CFG_FPGA_SPARTAN2
+#ifdef CONFIG_SYS_FPGA_SPARTAN2
 	/* search for preamble 0xFFFFFFFF */
 	while (1) {
 		if ((fpgadata[index] == 0xff) && (fpgadata[index + 1] == 0xff)
@@ -139,8 +140,11 @@ static int fpga_boot (const unsigned char *fpgadata, int size)
 	 * Setup port pins for fpga programming
 	 */
 #ifndef CONFIG_M5249
-	out32 (GPIO0_ODR, 0x00000000);	/* no open drain pins */
-	out32 (GPIO0_TCR, in32 (GPIO0_TCR) | FPGA_PRG | FPGA_CLK | FPGA_DATA);	/* setup for output */
+	out_be32 ((void *)GPIO0_ODR, 0x00000000); /* no open drain pins */
+	/* setup for output */
+	out_be32 ((void *)GPIO0_TCR,
+		  in_be32 ((void *)GPIO0_TCR) |
+		  FPGA_PRG | FPGA_CLK | FPGA_DATA);
 #endif
 	SET_FPGA (FPGA_PRG_HIGH | FPGA_CLK_HIGH | FPGA_DATA_HIGH);	/* set pins to high */
 
@@ -186,7 +190,7 @@ static int fpga_boot (const unsigned char *fpgadata, int size)
 	DBG ("write configuration data into fpga\n");
 	/* write configuration-data into fpga... */
 
-#ifdef CFG_FPGA_SPARTAN2
+#ifdef CONFIG_SYS_FPGA_SPARTAN2
 	/*
 	 * Load uncompressed image into fpga
 	 */

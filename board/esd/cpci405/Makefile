@@ -26,16 +26,17 @@ ifneq ($(OBJTREE),$(SRCTREE))
 $(shell mkdir -p $(obj)../common)
 endif
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
 COBJS	= $(BOARD).o flash.o ../common/misc.o ../common/auto_update.o
+COBJS	+= ../common/cmd_loadpci.o
 
 SRCS	:= $(SOBJS:.o=.S) $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 SOBJS	:= $(addprefix $(obj),$(SOBJS))
 
 $(LIB):	$(OBJS) $(SOBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(SOBJS) $(OBJS)

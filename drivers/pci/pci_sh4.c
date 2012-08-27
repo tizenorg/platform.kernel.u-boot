@@ -4,7 +4,7 @@
  * (C) 2007,2008 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  * (C) 2008 Yusuke Goda <goda.yusuke@renesas.com>
  *
- * u-boot/cpu/sh4/pci-sh4.c
+ * u-boot/arch/sh/cpu/sh4/pci-sh4.c
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -53,6 +53,16 @@ int pci_sh4_init(struct pci_controller *hose)
 		CONFIG_PCI_IO_SIZE,
 		PCI_REGION_IO);
 	hose->region_count++;
+
+#if defined(CONFIG_PCI_SYS_BUS)
+	/* PCI System Memory space */
+	pci_set_region(hose->regions + 2,
+		CONFIG_PCI_SYS_BUS,
+		CONFIG_PCI_SYS_PHYS,
+		CONFIG_PCI_SYS_SIZE,
+		PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
+	hose->region_count++;
+#endif
 
 	udelay(1000);
 

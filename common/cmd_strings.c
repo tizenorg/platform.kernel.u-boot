@@ -10,16 +10,12 @@
 #include <common.h>
 #include <command.h>
 
-#ifdef CONFIG_CFG_STRINGS
-
 static char *start_addr, *last_addr;
 
-int do_strings(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_strings(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	if (argc == 1) {
-		printf("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc == 1)
+		return cmd_usage(cmdtp);
 
 	if ((flag & CMD_FLAG_REPEAT) == 0) {
 		start_addr = (char *)simple_strtoul(argv[1], NULL, 16);
@@ -31,7 +27,8 @@ int do_strings(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 	char *addr = start_addr;
 	do {
-		printf("%s\n", addr);
+		puts(addr);
+		puts("\n");
 		addr += strlen(addr) + 1;
 	} while (addr[0] && addr < last_addr);
 
@@ -41,9 +38,9 @@ int do_strings(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
-U_BOOT_CMD(strings, 3, 1, do_strings,
-	"strings - display strings\n",
+U_BOOT_CMD(
+	strings, 3, 1, do_strings,
+	"display strings",
 	"<addr> [byte count]\n"
-	"    - display strings at <addr> for at least [byte count] or first double NUL\n");
-
-#endif
+	"    - display strings at <addr> for at least [byte count] or first double NUL"
+);

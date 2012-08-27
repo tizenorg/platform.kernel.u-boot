@@ -22,6 +22,7 @@
  */
 
 #include <common.h>
+#include <netdev.h>
 #include "adciop.h"
 
 /* ------------------------------------------------------------------------- */
@@ -61,7 +62,7 @@ int board_early_init_f (void)
 int checkboard (void)
 {
 	char str[64];
-	int i = getenv_r ("serial#", str, sizeof (str));
+	int i = getenv_f("serial#", str, sizeof (str));
 
 	puts ("Board: ");
 
@@ -95,3 +96,8 @@ int testdram (void)
 }
 
 /* ------------------------------------------------------------------------- */
+
+int board_eth_init(bd_t *bis)
+{
+	return pci_eth_init(bis);
+}

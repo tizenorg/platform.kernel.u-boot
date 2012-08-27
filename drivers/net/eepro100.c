@@ -24,6 +24,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <net.h>
+#include <netdev.h>
 #include <asm/io.h>
 #include <pci.h>
 #include <miiphy.h>
@@ -193,14 +194,14 @@ struct descriptor {			/* A generic descriptor. */
 	unsigned char params[0];
 };
 
-#define CFG_CMD_EL		0x8000
-#define CFG_CMD_SUSPEND		0x4000
-#define CFG_CMD_INT		0x2000
-#define CFG_CMD_IAS		0x0001	/* individual address setup */
-#define CFG_CMD_CONFIGURE	0x0002	/* configure */
+#define CONFIG_SYS_CMD_EL		0x8000
+#define CONFIG_SYS_CMD_SUSPEND		0x4000
+#define CONFIG_SYS_CMD_INT		0x2000
+#define CONFIG_SYS_CMD_IAS		0x0001	/* individual address setup */
+#define CONFIG_SYS_CMD_CONFIGURE	0x0002	/* configure */
 
-#define CFG_STATUS_C		0x8000
-#define CFG_STATUS_OK		0x2000
+#define CONFIG_SYS_STATUS_C		0x8000
+#define CONFIG_SYS_STATUS_OK		0x2000
 
 	/* Misc.
 	 */
@@ -320,7 +321,8 @@ static int set_phyreg (struct eth_device *dev, unsigned char addr,
 /* Check if given phyaddr is valid, i.e. there is a PHY connected.
  * Do this by checking model value field from ID2 register.
  */
-static struct eth_device* verify_phyaddr (char *devname, unsigned char addr)
+static struct eth_device* verify_phyaddr (const char *devname,
+						unsigned char addr)
 {
 	struct eth_device *dev;
 	unsigned short value;
@@ -333,7 +335,7 @@ static struct eth_device* verify_phyaddr (char *devname, unsigned char addr)
 	}
 
 	/* read id2 register */
-	if (get_phyreg(dev, addr, PHY_PHYIDR2, &value) != 0) {
+	if (get_phyreg(dev, addr, MII_PHYSID2, &value) != 0) {
 		printf("%s: mii read timeout!\n", devname);
 		return NULL;
 	}
@@ -349,7 +351,7 @@ static struct eth_device* verify_phyaddr (char *devname, unsigned char addr)
 	return dev;
 }
 
-static int eepro100_miiphy_read (char *devname, unsigned char addr,
+static int eepro100_miiphy_read(const char *devname, unsigned char addr,
 		unsigned char reg, unsigned short *value)
 {
 	struct eth_device *dev;
@@ -366,7 +368,7 @@ static int eepro100_miiphy_read (char *devname, unsigned char addr,
 	return 0;
 }
 
-static int eepro100_miiphy_write (char *devname, unsigned char addr,
+static int eepro100_miiphy_write(const char *devname, unsigned char addr,
 		unsigned char reg, unsigned short value)
 {
 	struct eth_device *dev;
@@ -448,6 +450,11 @@ int eepro100_initialize (bd_t * bis)
 		}
 
 		dev = (struct eth_device *) malloc (sizeof *dev);
+		if (!dev) {
+			printf("eepro100: Can not allocate memory\n");
+			break;
+		}
+		memset(dev, 0, sizeof(*dev));
 
 		sprintf (dev->name, "i82559#%d", card_number);
 		dev->priv = (void *) devno; /* this have to come before bus_to_phys() */
@@ -528,7 +535,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 	tx_next = ((tx_next + 1) % NUM_TX_DESC);
 
 	cfg_cmd = (struct descriptor *) &tx_ring[tx_cur];
-	cfg_cmd->command = cpu_to_le16 ((CFG_CMD_SUSPEND | CFG_CMD_CONFIGURE));
+	cfg_cmd->command = cpu_to_le16 ((CONFIG_SYS_CMD_SUSPEND | CONFIG_SYS_CMD_CONFIGURE));
 	cfg_cmd->status = 0;
 	cfg_cmd->link = cpu_to_le32 (phys_to_bus ((u32) & tx_ring[tx_next]));
 
@@ -536,7 +543,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 			sizeof (i82558_config_cmd));
 
 	if (!wait_for_eepro100 (dev)) {
-		printf ("Error---CFG_CMD_CONFIGURE: Can not reset ethernet controller.\n");
+		printf ("Error---CONFIG_SYS_CMD_CONFIGURE: Can not reset ethernet controller.\n");
 		goto Done;
 	}
 
@@ -544,7 +551,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 	OUTW (dev, SCB_M | CU_START, SCBCmd);
 
 	for (i = 0;
-	     !(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_C);
+	     !(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_C);
 	     i++) {
 		if (i >= TOUT_LOOP) {
 			printf ("%s: Tx error buffer not ready\n", dev->name);
@@ -552,7 +559,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 		}
 	}
 
-	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_OK)) {
+	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_OK)) {
 		printf ("TX error status = 0x%08X\n",
 			le16_to_cpu (tx_ring[tx_cur].status));
 		goto Done;
@@ -564,7 +571,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 	tx_next = ((tx_next + 1) % NUM_TX_DESC);
 
 	ias_cmd = (struct descriptor *) &tx_ring[tx_cur];
-	ias_cmd->command = cpu_to_le16 ((CFG_CMD_SUSPEND | CFG_CMD_IAS));
+	ias_cmd->command = cpu_to_le16 ((CONFIG_SYS_CMD_SUSPEND | CONFIG_SYS_CMD_IAS));
 	ias_cmd->status = 0;
 	ias_cmd->link = cpu_to_le32 (phys_to_bus ((u32) & tx_ring[tx_next]));
 
@@ -580,7 +587,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 	OUTL (dev, phys_to_bus ((u32) & tx_ring[tx_cur]), SCBPointer);
 	OUTW (dev, SCB_M | CU_START, SCBCmd);
 
-	for (i = 0; !(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_C);
+	for (i = 0; !(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_C);
 		 i++) {
 		if (i >= TOUT_LOOP) {
 			printf ("%s: Tx error buffer not ready\n",
@@ -589,7 +596,7 @@ static int eepro100_init (struct eth_device *dev, bd_t * bis)
 		}
 	}
 
-	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_OK)) {
+	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_OK)) {
 		printf ("TX error status = 0x%08X\n",
 			le16_to_cpu (tx_ring[tx_cur].status));
 		goto Done;
@@ -639,7 +646,7 @@ static int eepro100_send (struct eth_device *dev, volatile void *packet, int len
 	OUTL (dev, phys_to_bus ((u32) & tx_ring[tx_cur]), SCBPointer);
 	OUTW (dev, SCB_M | CU_START, SCBCmd);
 
-	for (i = 0; !(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_C);
+	for (i = 0; !(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_C);
 		 i++) {
 		if (i >= TOUT_LOOP) {
 			printf ("%s: Tx error buffer not ready\n", dev->name);
@@ -647,7 +654,7 @@ static int eepro100_send (struct eth_device *dev, volatile void *packet, int len
 		}
 	}
 
-	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CFG_STATUS_OK)) {
+	if (!(le16_to_cpu (tx_ring[tx_cur].status) & CONFIG_SYS_STATUS_OK)) {
 		printf ("TX error status = 0x%08X\n",
 			le16_to_cpu (tx_ring[tx_cur].status));
 		goto Done;

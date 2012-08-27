@@ -27,19 +27,13 @@
 #include <common.h>
 #include <command.h>
 
-#if defined(CONFIG_CMD_CACHE)
-
 static int on_off (const char *);
 
-int do_icache ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_icache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:			/* on / off	*/
 		switch (on_off(argv[1])) {
-#if 0	/* prevented by varargs handling; FALLTROUGH is harmless, too */
-		default: printf ("Usage:\n%s\n", cmdtp->usage);
-			return;
-#endif
 		case 0:	icache_disable();
 			break;
 		case 1:	icache_enable ();
@@ -51,21 +45,16 @@ int do_icache ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			icache_status() ? "ON" : "OFF");
 		return 0;
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 	return 0;
 }
 
-int do_dcache ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_dcache ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	switch (argc) {
 	case 2:			/* on / off	*/
 		switch (on_off(argv[1])) {
-#if 0	/* prevented by varargs handling; FALLTROUGH is harmless, too */
-		default: printf ("Usage:\n%s\n", cmdtp->usage);
-			return;
-#endif
 		case 0:	dcache_disable();
 			break;
 		case 1:	dcache_enable ();
@@ -77,8 +66,7 @@ int do_dcache ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 			dcache_status() ? "ON" : "OFF");
 		return 0;
 	default:
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 	return 0;
 
@@ -97,16 +85,14 @@ static int on_off (const char *s)
 
 U_BOOT_CMD(
 	icache,   2,   1,     do_icache,
-	"icache  - enable or disable instruction cache\n",
+	"enable or disable instruction cache",
 	"[on, off]\n"
-	"    - enable or disable instruction cache\n"
+	"    - enable or disable instruction cache"
 );
 
 U_BOOT_CMD(
 	dcache,   2,   1,     do_dcache,
-	"dcache  - enable or disable data cache\n",
+	"enable or disable data cache",
 	"[on, off]\n"
-	"    - enable or disable data (writethrough) cache\n"
+	"    - enable or disable data (writethrough) cache"
 );
-
-#endif

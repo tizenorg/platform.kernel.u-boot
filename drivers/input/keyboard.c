@@ -3,7 +3,6 @@
  * (C) Copyright 2004
  * DENX Software Engineering
  * Wolfgang Denk, wd@denx.de
- * All rights reserved.
  *
  * Keyboard driver
  *
@@ -11,9 +10,7 @@
 
 #include <common.h>
 
-#ifdef CONFIG_PS2KBD
-
-#include <devices.h>
+#include <stdio_dev.h>
 #include <keyboard.h>
 
 #undef KBG_DEBUG
@@ -260,17 +257,17 @@ void handle_scancode(unsigned char scancode)
  * Init
  ******************************************************************/
 
-#ifdef CFG_CONSOLE_OVERWRITE_ROUTINE
+#ifdef CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
 extern int overwrite_console (void);
 #define OVERWRITE_CONSOLE overwrite_console ()
 #else
 #define OVERWRITE_CONSOLE 0
-#endif /* CFG_CONSOLE_OVERWRITE_ROUTINE */
+#endif /* CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE */
 
 int kbd_init (void)
 {
 	int error;
-	device_t kbddev ;
+	struct stdio_dev kbddev ;
 	char *stdinname  = getenv ("stdin");
 
 	if(kbd_init_hw()==-1)
@@ -283,7 +280,7 @@ int kbd_init (void)
 	kbddev.getc = kbd_getc ;
 	kbddev.tstc = kbd_testc ;
 
-	error = device_register (&kbddev);
+	error = stdio_register (&kbddev);
 	if(error==0) {
 		/* check if this is the standard input device */
 		if(strcmp(stdinname,DEVNAME)==0) {
@@ -301,5 +298,3 @@ int kbd_init (void)
 	}
 	return error;
 }
-
-#endif /* CONFIG_PS2KBD */

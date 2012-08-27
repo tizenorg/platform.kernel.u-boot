@@ -27,8 +27,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_TSI108_PCI
-
 #include <common.h>
 #include <pci.h>
 #include <asm/io.h>
@@ -49,32 +47,32 @@ void tsi108_clear_pci_error (void)
 	 * requests.
 	 */
 	/* Read PB Error Log Registers */
-	err_stat = *(volatile u32 *)(CFG_TSI108_CSR_BASE +
+	err_stat = *(volatile u32 *)(CONFIG_SYS_TSI108_CSR_BASE +
 				     TSI108_PB_REG_OFFSET + PB_ERRCS);
-	err_addr = *(volatile u32 *)(CFG_TSI108_CSR_BASE +
+	err_addr = *(volatile u32 *)(CONFIG_SYS_TSI108_CSR_BASE +
 				     TSI108_PB_REG_OFFSET + PB_AERR);
 	if (err_stat & PB_ERRCS_ES) {
 		/* Clear PCI/X bus errors if applicable */
-		if ((err_addr & 0xFF000000) == CFG_PCI_CFG_BASE) {
+		if ((err_addr & 0xFF000000) == CONFIG_SYS_PCI_CFG_BASE) {
 			/* Clear error flag */
-			*(u32 *) (CFG_TSI108_CSR_BASE +
+			*(u32 *) (CONFIG_SYS_TSI108_CSR_BASE +
 				  TSI108_PB_REG_OFFSET + PB_ERRCS) =
 			    PB_ERRCS_ES;
 
 			/* Clear read error reported in PB_ISR */
-			*(u32 *) (CFG_TSI108_CSR_BASE +
+			*(u32 *) (CONFIG_SYS_TSI108_CSR_BASE +
 				  TSI108_PB_REG_OFFSET + PB_ISR) =
 			    PB_ISR_PBS_RD_ERR;
 
 		/* Clear errors reported by PCI CSR (Normally Master Abort) */
-			pci_stat = *(volatile u32 *)(CFG_TSI108_CSR_BASE +
+			pci_stat = *(volatile u32 *)(CONFIG_SYS_TSI108_CSR_BASE +
 						     TSI108_PCI_REG_OFFSET +
 						     PCI_CSR);
-			*(volatile u32 *)(CFG_TSI108_CSR_BASE +
+			*(volatile u32 *)(CONFIG_SYS_TSI108_CSR_BASE +
 					  TSI108_PCI_REG_OFFSET + PCI_CSR) =
 			    pci_stat;
 
-			*(volatile u32 *)(CFG_TSI108_CSR_BASE +
+			*(volatile u32 *)(CONFIG_SYS_TSI108_CSR_BASE +
 					  TSI108_PCI_REG_OFFSET +
 					  PCI_IRP_STAT) = PCI_IRP_STAT_P_CSR;
 		}
@@ -96,7 +94,8 @@ unsigned int __get_pci_config_dword (u32 addr)
 			     ".section __ex_table,\"a\"\n"
 			     "       .align 2\n"
 			     "       .long 1b,3b\n"
-			     ".text":"=r"(retval):"r"(addr));
+			     ".section .text.__get_pci_config_dword"
+				: "=r"(retval) : "r"(addr));
 
 	return (retval);
 }
@@ -104,8 +103,8 @@ unsigned int __get_pci_config_dword (u32 addr)
 static int tsi108_read_config_dword (struct pci_controller *hose,
 				    pci_dev_t dev, int offset, u32 * value)
 {
-	dev &= (CFG_PCI_CFG_SIZE - 1);
-	dev |= (CFG_PCI_CFG_BASE | (offset & 0xfc));
+	dev &= (CONFIG_SYS_PCI_CFG_SIZE - 1);
+	dev |= (CONFIG_SYS_PCI_CFG_BASE | (offset & 0xfc));
 	*value = __get_pci_config_dword(dev);
 	if (0xFFFFFFFF == *value)
 		tsi108_clear_pci_error ();
@@ -115,8 +114,8 @@ static int tsi108_read_config_dword (struct pci_controller *hose,
 static int tsi108_write_config_dword (struct pci_controller *hose,
 				     pci_dev_t dev, int offset, u32 value)
 {
-	dev &= (CFG_PCI_CFG_SIZE - 1);
-	dev |= (CFG_PCI_CFG_BASE | (offset & 0xfc));
+	dev &= (CONFIG_SYS_PCI_CFG_SIZE - 1);
+	dev |= (CONFIG_SYS_PCI_CFG_BASE | (offset & 0xfc));
 
 	out_le32 ((volatile unsigned *)dev, value);
 
@@ -131,19 +130,19 @@ void pci_init_board (void)
 	hose->last_busno = 0xff;
 
 	pci_set_region (hose->regions + 0,
-		       CFG_PCI_MEMORY_BUS,
-		       CFG_PCI_MEMORY_PHYS,
-		       CFG_PCI_MEMORY_SIZE, PCI_REGION_MEM | PCI_REGION_MEMORY);
+		       CONFIG_SYS_PCI_MEMORY_BUS,
+		       CONFIG_SYS_PCI_MEMORY_PHYS,
+		       CONFIG_SYS_PCI_MEMORY_SIZE, PCI_REGION_MEM | PCI_REGION_SYS_MEMORY);
 
 	/* PCI memory space */
 	pci_set_region (hose->regions + 1,
-		       CFG_PCI_MEM_BUS,
-		       CFG_PCI_MEM_PHYS, CFG_PCI_MEM_SIZE, PCI_REGION_MEM);
+		       CONFIG_SYS_PCI_MEM_BUS,
+		       CONFIG_SYS_PCI_MEM_PHYS, CONFIG_SYS_PCI_MEM_SIZE, PCI_REGION_MEM);
 
 	/* PCI I/O space */
 	pci_set_region (hose->regions + 2,
-		       CFG_PCI_IO_BUS,
-		       CFG_PCI_IO_PHYS, CFG_PCI_IO_SIZE, PCI_REGION_IO);
+		       CONFIG_SYS_PCI_IO_BUS,
+		       CONFIG_SYS_PCI_IO_PHYS, CONFIG_SYS_PCI_IO_SIZE, PCI_REGION_IO);
 
 	hose->region_count = 3;
 
@@ -182,5 +181,3 @@ void ft_pci_setup(void *blob, bd_t *bd)
 	}
 }
 #endif /* CONFIG_OF_LIBFDT */
-
-#endif	/* CONFIG_TSI108_PCI */

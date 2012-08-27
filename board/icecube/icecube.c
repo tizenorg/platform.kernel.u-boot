@@ -29,6 +29,7 @@
 #include <pci.h>
 #include <asm/processor.h>
 #include <libfdt.h>
+#include <netdev.h>
 
 #if defined(CONFIG_LITE5200B)
 #include "mt46v32m16.h"
@@ -79,14 +80,14 @@ void lite5200b_wakeup(void)
 	/* jump back to linux kernel code */
 	linux_wakeup = SAVED_ADDR;
 	printf("\n\nLooks like we just woke, transferring control to 0x%08lx\n",
-			linux_wakeup);
+			(unsigned long)linux_wakeup);
 	linux_wakeup();
 }
 #else
 #define lite5200b_wakeup()
 #endif
 
-#ifndef CFG_RAMBOOT
+#ifndef CONFIG_SYS_RAMBOOT
 static void sdram_start (int hi_addr)
 {
 	long hi_addr_bit = hi_addr ? 0x01000000 : 0;
@@ -129,18 +130,17 @@ static void sdram_start (int hi_addr)
 
 /*
  * ATTENTION: Although partially referenced initdram does NOT make real use
- *            use of CFG_SDRAM_BASE. The code does not work if CFG_SDRAM_BASE
+ *            use of CONFIG_SYS_SDRAM_BASE. The code does not work if CONFIG_SYS_SDRAM_BASE
  *            is something else than 0x00000000.
  */
 
-#if defined(CONFIG_MPC5200)
 phys_size_t initdram (int board_type)
 {
 	ulong dramsize = 0;
 	ulong dramsize2 = 0;
 	uint svr, pvr;
 
-#ifndef CFG_RAMBOOT
+#ifndef CONFIG_SYS_RAMBOOT
 	ulong test1, test2;
 
 	/* setup SDRAM chip selects */
@@ -161,9 +161,9 @@ phys_size_t initdram (int board_type)
 
 	/* find RAM size using SDRAM CS0 only */
 	sdram_start(0);
-	test1 = get_ram_size((long *)CFG_SDRAM_BASE, 0x80000000);
+	test1 = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE, 0x80000000);
 	sdram_start(1);
-	test2 = get_ram_size((long *)CFG_SDRAM_BASE, 0x80000000);
+	test2 = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE, 0x80000000);
 	if (test1 > test2) {
 		sdram_start(0);
 		dramsize = test1;
@@ -189,10 +189,10 @@ phys_size_t initdram (int board_type)
 	/* find RAM size using SDRAM CS1 only */
 	if (!dramsize)
 		sdram_start(0);
-	test2 = test1 = get_ram_size((long *)(CFG_SDRAM_BASE + dramsize), 0x80000000);
+	test2 = test1 = get_ram_size((long *)(CONFIG_SYS_SDRAM_BASE + dramsize), 0x80000000);
 	if (!dramsize) {
 		sdram_start(1);
-		test2 = get_ram_size((long *)(CFG_SDRAM_BASE + dramsize), 0x80000000);
+		test2 = get_ram_size((long *)(CONFIG_SYS_SDRAM_BASE + dramsize), 0x80000000);
 	}
 	if (test1 > test2) {
 		sdram_start(0);
@@ -214,7 +214,7 @@ phys_size_t initdram (int board_type)
 		*(vu_long *)MPC5XXX_SDRAM_CS1CFG = dramsize; /* disabled */
 	}
 
-#else /* CFG_RAMBOOT */
+#else /* CONFIG_SYS_RAMBOOT */
 
 	/* retrieve size of memory connected to SDRAM CS0 */
 	dramsize = *(vu_long *)MPC5XXX_SDRAM_CS0CFG & 0xFF;
@@ -232,7 +232,7 @@ phys_size_t initdram (int board_type)
 		dramsize2 = 0;
 	}
 
-#endif /* CFG_RAMBOOT */
+#endif /* CONFIG_SYS_RAMBOOT */
 
 	/*
 	 * On MPC5200B we need to set the special configuration delay in the
@@ -257,65 +257,12 @@ phys_size_t initdram (int board_type)
 	return dramsize + dramsize2;
 }
 
-#elif defined(CONFIG_MGT5100)
-
-phys_size_t initdram (int board_type)
-{
-	ulong dramsize = 0;
-#ifndef CFG_RAMBOOT
-	ulong test1, test2;
-
-	/* setup and enable SDRAM chip selects */
-	*(vu_long *)MPC5XXX_SDRAM_START = 0x00000000;
-	*(vu_long *)MPC5XXX_SDRAM_STOP = 0x0000ffff;/* 2G */
-	*(vu_long *)MPC5XXX_ADDECR |= (1 << 22); /* Enable SDRAM */
-	__asm__ volatile ("sync");
-
-	/* setup config registers */
-	*(vu_long *)MPC5XXX_SDRAM_CONFIG1 = SDRAM_CONFIG1;
-	*(vu_long *)MPC5XXX_SDRAM_CONFIG2 = SDRAM_CONFIG2;
-
-	/* address select register */
-	*(vu_long *)MPC5XXX_SDRAM_XLBSEL = SDRAM_ADDRSEL;
-	__asm__ volatile ("sync");
-
-	/* find RAM size */
-	sdram_start(0);
-	test1 = get_ram_size((long *)CFG_SDRAM_BASE, 0x80000000);
-	sdram_start(1);
-	test2 = get_ram_size((long *)CFG_SDRAM_BASE, 0x80000000);
-	if (test1 > test2) {
-		sdram_start(0);
-		dramsize = test1;
-	} else {
-		dramsize = test2;
-	}
-
-	/* set SDRAM end address according to size */
-	*(vu_long *)MPC5XXX_SDRAM_STOP = ((dramsize - 1) >> 15);
-
-#else /* CFG_RAMBOOT */
-
-	/* Retrieve amount of SDRAM available */
-	dramsize = ((*(vu_long *)MPC5XXX_SDRAM_STOP + 1) << 15);
-
-#endif /* CFG_RAMBOOT */
-
-	return dramsize;
-}
-
-#else
-#error Neither CONFIG_MPC5200 or CONFIG_MGT5100 defined
-#endif
-
 int checkboard (void)
 {
 #if defined (CONFIG_LITE5200B)
 	puts ("Board: Freescale Lite5200B\n");
-#elif defined(CONFIG_MPC5200)
+#else
 	puts ("Board: Motorola MPC5200 (IceCube)\n");
-#elif defined(CONFIG_MGT5100)
-	puts ("Board: Motorola MGT5100 (IceCube)\n");
 #endif
 	return 0;
 }
@@ -328,10 +275,6 @@ void flash_preinit(void)
 	 * Note that CS_BOOT cannot be cleared when
 	 * executing in flash.
 	 */
-#if defined(CONFIG_MGT5100)
-	*(vu_long *)MPC5XXX_ADDECR &= ~(1 << 25); /* disable CS_BOOT */
-	*(vu_long *)MPC5XXX_ADDECR |= (1 << 16); /* enable CS0 */
-#endif
 	*(vu_long *)MPC5XXX_BOOTCS_CFG &= ~0x1; /* clear RO */
 }
 
@@ -339,9 +282,9 @@ void flash_afterinit(ulong size)
 {
 	if (size == 0x800000) { /* adjust mapping */
 		*(vu_long *)MPC5XXX_BOOTCS_START = *(vu_long *)MPC5XXX_CS0_START =
-			START_REG(CFG_BOOTCS_START | size);
+			START_REG(CONFIG_SYS_BOOTCS_START | size);
 		*(vu_long *)MPC5XXX_BOOTCS_STOP = *(vu_long *)MPC5XXX_CS0_STOP =
-			STOP_REG(CFG_BOOTCS_START | size, size);
+			STOP_REG(CONFIG_SYS_BOOTCS_START | size, size);
 	}
 }
 
@@ -390,3 +333,9 @@ ft_board_setup(void *blob, bd_t *bd)
 	ft_cpu_setup(blob, bd);
 }
 #endif
+
+int board_eth_init(bd_t *bis)
+{
+	cpu_eth_init(bis); /* Built in FEC comes first */
+	return pci_eth_init(bis);
+}

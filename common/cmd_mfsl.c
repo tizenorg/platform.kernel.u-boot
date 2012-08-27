@@ -31,23 +31,20 @@
 #include <command.h>
 #include <asm/asm.h>
 
-int do_frd (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_frd (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned int fslnum;
 	unsigned int num;
 	unsigned int blocking;
 
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	fslnum = (unsigned int)simple_strtoul (argv[1], NULL, 16);
 	blocking = (unsigned int)simple_strtoul (argv[2], NULL, 16);
 	if (fslnum < 0 || fslnum >= XILINX_FSL_NUMBER) {
 		puts ("Bad number of FSL\n");
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 
 	switch (fslnum) {
@@ -189,24 +186,20 @@ int do_frd (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	return 0;
 }
 
-int do_fwr (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_fwr (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned int fslnum;
 	unsigned int num;
 	unsigned int blocking;
 
-	if (argc < 3) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 3)
+		return cmd_usage(cmdtp);
 
 	fslnum = (unsigned int)simple_strtoul (argv[1], NULL, 16);
 	num = (unsigned int)simple_strtoul (argv[2], NULL, 16);
 	blocking = (unsigned int)simple_strtoul (argv[3], NULL, 16);
-	if (fslnum < 0 || fslnum >= XILINX_FSL_NUMBER) {
-		printf ("Bad number of FSL\nUsage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (fslnum < 0 || fslnum >= XILINX_FSL_NUMBER)
+		return cmd_usage(cmdtp);
 
 	switch (fslnum) {
 #if (XILINX_FSL_NUMBER > 0)
@@ -348,15 +341,14 @@ int do_fwr (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 }
 
-int do_rspr (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_rspr (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	unsigned int reg = 0;
 	unsigned int val = 0;
 
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
+
 	reg = (unsigned int)simple_strtoul (argv[1], NULL, 16);
 	val = (unsigned int)simple_strtoul (argv[2], NULL, 16);
 	switch (reg) {
@@ -389,25 +381,24 @@ int do_rspr (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 /***************************************************/
 
 U_BOOT_CMD (frd, 3, 1, do_frd,
-		"frd     - read data from FSL\n",
+		"read data from FSL",
 		"- [fslnum [0|1|2|3]]\n"
 		" 0 - non blocking data read\n"
 		" 1 - non blocking control read\n"
 		" 2 - blocking data read\n"
-		" 3 - blocking control read\n");
-
+		" 3 - blocking control read");
 
 U_BOOT_CMD (fwr, 4, 1, do_fwr,
-		"fwr     - write data to FSL\n",
+		"write data to FSL",
 		"- [fslnum [0|1|2|3]]\n"
 		" 0 - non blocking data write\n"
 		" 1 - non blocking control write\n"
 		" 2 - blocking data write\n"
-		" 3 - blocking control write\n");
+		" 3 - blocking control write");
 
 U_BOOT_CMD (rspr, 3, 1, do_rspr,
-		"rspr    - read/write special purpose register\n",
+		"read/write special purpose register",
 		"- reg_num [write value] read/write special purpose register\n"
 		" 1 - MSR - Machine status register\n"
 		" 3 - EAR - Exception address register\n"
-		" 5 - ESR - Exception status register\n");
+		" 5 - ESR - Exception status register");

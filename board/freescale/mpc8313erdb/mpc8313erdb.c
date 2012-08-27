@@ -29,13 +29,15 @@
 #include <pci.h>
 #include <mpc83xx.h>
 #include <vsc7385.h>
+#include <ns16550.h>
+#include <nand.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 int board_early_init_f(void)
 {
-#ifndef CFG_8313ERDB_BROKEN_PMC
-	volatile immap_t *im = (immap_t *)CFG_IMMR;
+#ifndef CONFIG_SYS_8313ERDB_BROKEN_PMC
+	volatile immap_t *im = (immap_t *)CONFIG_SYS_IMMR;
 
 	if (im->pmc.pmccr1 & PMCCR1_POWER_OFF)
 		gd->flags |= GD_FLG_SILENT;
@@ -50,34 +52,34 @@ int checkboard(void)
 	return 0;
 }
 
+#ifndef CONFIG_NAND_SPL
 static struct pci_region pci_regions[] = {
 	{
-		bus_start: CFG_PCI1_MEM_BASE,
-		phys_start: CFG_PCI1_MEM_PHYS,
-		size: CFG_PCI1_MEM_SIZE,
+		bus_start: CONFIG_SYS_PCI1_MEM_BASE,
+		phys_start: CONFIG_SYS_PCI1_MEM_PHYS,
+		size: CONFIG_SYS_PCI1_MEM_SIZE,
 		flags: PCI_REGION_MEM | PCI_REGION_PREFETCH
 	},
 	{
-		bus_start: CFG_PCI1_MMIO_BASE,
-		phys_start: CFG_PCI1_MMIO_PHYS,
-		size: CFG_PCI1_MMIO_SIZE,
+		bus_start: CONFIG_SYS_PCI1_MMIO_BASE,
+		phys_start: CONFIG_SYS_PCI1_MMIO_PHYS,
+		size: CONFIG_SYS_PCI1_MMIO_SIZE,
 		flags: PCI_REGION_MEM
 	},
 	{
-		bus_start: CFG_PCI1_IO_BASE,
-		phys_start: CFG_PCI1_IO_PHYS,
-		size: CFG_PCI1_IO_SIZE,
+		bus_start: CONFIG_SYS_PCI1_IO_BASE,
+		phys_start: CONFIG_SYS_PCI1_IO_PHYS,
+		size: CONFIG_SYS_PCI1_IO_SIZE,
 		flags: PCI_REGION_IO
 	}
 };
 
 void pci_init_board(void)
 {
-	volatile immap_t *immr = (volatile immap_t *)CFG_IMMR;
+	volatile immap_t *immr = (volatile immap_t *)CONFIG_SYS_IMMR;
 	volatile clk83xx_t *clk = (volatile clk83xx_t *)&immr->clk;
 	volatile law83xx_t *pci_law = immr->sysconf.pcilaw;
 	struct pci_region *reg[] = { pci_regions };
-	int warmboot;
 
 	/* Enable all 3 PCI_CLK_OUTPUTs. */
 	clk->occr |= 0xe0000000;
@@ -85,18 +87,13 @@ void pci_init_board(void)
 	/*
 	 * Configure PCI Local Access Windows
 	 */
-	pci_law[0].bar = CFG_PCI1_MEM_PHYS & LAWBAR_BAR;
+	pci_law[0].bar = CONFIG_SYS_PCI1_MEM_PHYS & LAWBAR_BAR;
 	pci_law[0].ar = LBLAWAR_EN | LBLAWAR_512MB;
 
-	pci_law[1].bar = CFG_PCI1_IO_PHYS & LAWBAR_BAR;
+	pci_law[1].bar = CONFIG_SYS_PCI1_IO_PHYS & LAWBAR_BAR;
 	pci_law[1].ar = LBLAWAR_EN | LBLAWAR_1MB;
 
-	warmboot = gd->bd->bi_bootflags & BOOTFLAG_WARM;
-#ifndef CFG_8313ERDB_BROKEN_PMC
-	warmboot |= immr->pmc.pmccr1 & PMCCR1_POWER_OFF;
-#endif
-
-	mpc83xx_pci_init(1, reg, warmboot);
+	mpc83xx_pci_init(1, reg);
 }
 
 /*
@@ -126,5 +123,34 @@ void ft_board_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_PCI
 	ft_pci_setup(blob, bd);
 #endif
+}
+#endif
+#else /* CONFIG_NAND_SPL */
+void board_init_f(ulong bootflag)
+{
+	board_early_init_f();
+	NS16550_init((NS16550_t)(CONFIG_SYS_IMMR + 0x4500),
+	             CONFIG_SYS_NS16550_CLK / 16 / CONFIG_BAUDRATE);
+	puts("NAND boot... ");
+	init_timebase();
+	initdram(0);
+	relocate_code(CONFIG_SYS_NAND_U_BOOT_RELOC_SP, (gd_t *)gd,
+	              CONFIG_SYS_NAND_U_BOOT_RELOC);
+}
+
+void board_init_r(gd_t *gd, ulong dest_addr)
+{
+	nand_boot();
+}
+
+void putc(char c)
+{
+	if (gd->flags & GD_FLG_SILENT)
+		return;
+
+	if (c == '\n')
+		NS16550_putc((NS16550_t)(CONFIG_SYS_IMMR + 0x4500), '\r');
+
+	NS16550_putc((NS16550_t)(CONFIG_SYS_IMMR + 0x4500), c);
 }
 #endif

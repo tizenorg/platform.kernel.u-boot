@@ -220,8 +220,9 @@ int fpga_post_config_fn(int cookie)
 
 	FPGA_OUT32(&fpga->status, (gd->board_type << STATUS_HWREV_SHIFT) & STATUS_HWREV_MASK);
 
-	/* NGCC only: enable ledlink */
-	if ((s = getenv("bd_type")) && !strcmp(s, "ngcc"))
+	/* NGCC/CANDES only: enable ledlink */
+	if ((s = getenv("bd_type")) &&
+	    ((!strcmp(s, "ngcc")) || (!strcmp(s, "candes"))))
 		FPGA_SETBITS(&fpga->ctrla, 0x29f8c000);
 
 	return rc;
@@ -441,9 +442,9 @@ int pmc440_init_fpga(void)
 {
 	char *s;
 
-	debug("%s:%d: Initialize FPGA interface (relocation offset = 0x%.8lx)\n",
-	      __FUNCTION__, __LINE__, gd->reloc_off);
-	fpga_init(gd->reloc_off);
+	debug("%s:%d: Initialize FPGA interface\n",
+	      __FUNCTION__, __LINE__);
+	fpga_init();
 
 	fpga_serialslave_init ();
 	debug("%s:%d: Adding fpga 0\n", __FUNCTION__, __LINE__);

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2006
+ * (C) Copyright 2006-2010
  * Stefan Roese, DENX Software Engineering, sr@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -26,7 +26,7 @@ SECTIONS
 {
   .resetvec 0xE0013FFC :
   {
-    *(.resetvec)
+    KEEP(*(.resetvec))
   } = 0xffff
 
   .text      :
@@ -44,7 +44,7 @@ SECTIONS
 
   .data    :
   {
-    *(.rodata*)
+    *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
     *(.data*)
     *(.sdata*)
     __got2_start = .;
@@ -59,7 +59,8 @@ SECTIONS
   {
    *(.sbss)
    *(.bss)
+   . = ALIGN(4);
   }
 
-  _end = . ;
+  __bss_end__ = . ;
 }

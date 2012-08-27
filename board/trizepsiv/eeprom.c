@@ -23,62 +23,56 @@
 
 #include <common.h>
 #include <command.h>
+#include <dm9000.h>
 
-extern u16 read_srom_word(int);
-extern void write_srom_word(int offset, u16 val);
-
-static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
-	int i;
+static int do_read_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+	unsigned int i;
+	u8 data[2];
 
 	for (i=0; i < 0x40; i++) {
 		if (!(i % 0x10))
-			printf("\n%08lx:", i);
-		printf(" %04x", read_srom_word(i));
+			printf("\n%08x:", i);
+		dm9000_read_srom_word(i, data);
+		printf(" %02x%02x", data[1], data[0]);
 	}
 	printf ("\n");
 	return (0);
 }
 
-static int do_write_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
+static int do_write_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
 	int offset,value;
 
-	if (argc < 4) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	if (argc < 4)
+		return cmd_usage(cmdtp);
 
 	offset=simple_strtoul(argv[2],NULL,16);
 	value=simple_strtoul(argv[3],NULL,16);
 	if (offset > 0x40) {
 		printf("Wrong offset : 0x%x\n",offset);
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
-	write_srom_word(offset, value);
+	dm9000_write_srom_word(offset, value);
 	return (0);
 }
 
-int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]) {
-	if (argc < 2) {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+int do_dm9000_eeprom ( cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]) {
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
-	if (strcmp (argv[1],"read") == 0) {
+	if (strcmp (argv[1],"read") == 0)
 		return (do_read_dm9000_eeprom(cmdtp,flag,argc,argv));
-	} else if (strcmp (argv[1],"write") == 0) {
+	else if (strcmp (argv[1],"write") == 0)
 		return (do_write_dm9000_eeprom(cmdtp,flag,argc,argv));
-	} else {
-		printf ("Usage:\n%s\n", cmdtp->usage);
-		return 1;
-	}
+	else
+		return cmd_usage(cmdtp);
 }
 
 U_BOOT_CMD(
 	dm9000ee,4,1,do_dm9000_eeprom,
-	"dm9000ee- Read/Write eeprom connected to Ethernet Controller\n",
+	"Read/Write eeprom connected to Ethernet Controller",
 	"\ndm9000ee write <word offset> <value> \n"
 	"\tdm9000ee read \n"
 	"\tword:\t\t00-02 : MAC Address\n"
 	"\t\t\t03-07 : DM9000 Configuration\n"
-	"\t\t\t08-63 : User data\n");
+	"\t\t\t08-63 : User data"
+);

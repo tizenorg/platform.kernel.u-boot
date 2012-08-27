@@ -10,9 +10,17 @@
 
 typedef struct
 {
-  unsigned long freqProcessor;
+  unsigned long freqProcessor[CONFIG_MAX_CPUS];
   unsigned long freqSystemBus;
   unsigned long freqDDRBus;
+  unsigned long freqLocalBus;
+  unsigned long freqQE;
+#ifdef CONFIG_SYS_DPAA_FMAN
+  unsigned long freqFMan[CONFIG_SYS_NUM_FMAN];
+#endif
+#ifdef CONFIG_SYS_DPAA_PME
+  unsigned long freqPME;
+#endif
 } MPC85xx_SYS_INFO;
 
 #endif  /* _ASMLANGUAGE */

@@ -34,12 +34,13 @@
 #include <ide.h>
 #include "part_mac.h"
 
-#if (defined(CONFIG_CMD_IDE) || \
-     defined(CONFIG_CMD_SCSI) || \
-     defined(CONFIG_CMD_SATA) || \
-     defined(CONFIG_CMD_USB) || \
-     defined(CONFIG_MMC) || \
-     defined(CONFIG_SYSTEMACE) ) && defined(CONFIG_MAC_PARTITION)
+#if defined(CONFIG_CMD_IDE) || \
+    defined(CONFIG_CMD_MG_DISK) || \
+    defined(CONFIG_CMD_SCSI) || \
+    defined(CONFIG_CMD_SATA) || \
+    defined(CONFIG_CMD_USB) || \
+    defined(CONFIG_MMC) || \
+    defined(CONFIG_SYSTEMACE)
 
 /* stdlib.h causes some compatibility problems; should fixe these! -- wd */
 #ifndef __ldiv_t_defined

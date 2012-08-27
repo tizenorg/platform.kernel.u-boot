@@ -28,7 +28,8 @@
 #include <asm/processor.h>
 #include <asm/io.h>
 #include <spi.h>
-#include <asm/gpio.h>
+#include <netdev.h>
+#include <asm/ppc4xx-gpio.h>
 
 extern int lcd_init(void);
 
@@ -39,22 +40,22 @@ int board_early_init_f(void)
 {
 	lcd_init();
 
-	mtdcr(uicsr, 0xFFFFFFFF);	/* clear all ints */
-	mtdcr(uicer, 0x00000000);	/* disable all ints */
-	mtdcr(uiccr, 0x00000000);
-	mtdcr(uicpr, 0xFFFF7F00);	/* set int polarities */
-	mtdcr(uictr, 0x00000000);	/* set int trigger levels */
-	mtdcr(uicsr, 0xFFFFFFFF);	/* clear all ints */
-	mtdcr(uicvcr, 0x00000001);	/* set vect base=0,INT0 highest priority */
+	mtdcr(UIC0SR, 0xFFFFFFFF);	/* clear all ints */
+	mtdcr(UIC0ER, 0x00000000);	/* disable all ints */
+	mtdcr(UIC0CR, 0x00000000);
+	mtdcr(UIC0PR, 0xFFFF7F00);	/* set int polarities */
+	mtdcr(UIC0TR, 0x00000000);	/* set int trigger levels */
+	mtdcr(UIC0SR, 0xFFFFFFFF);	/* clear all ints */
+	mtdcr(UIC0VCR, 0x00000001);	/* set vect base=0,INT0 highest priority */
 
-	mtebc(pb3ap, CFG_EBC_PB3AP);	/* memory bank 3 (CPLD_LCM) initialization */
-	mtebc(pb3cr, CFG_EBC_PB3CR);
+	mtebc(PB3AP, CONFIG_SYS_EBC_PB3AP);	/* memory bank 3 (CPLD_LCM) initialization */
+	mtebc(PB3CR, CONFIG_SYS_EBC_PB3CR);
 
 	/*
 	 * Configure CPC0_PCI to enable PerWE as output
 	 * and enable the internal PCI arbiter
 	 */
-	mtdcr(cpc0_pci, CPC0_PCI_SPE | CPC0_PCI_HOST_CFG_EN | CPC0_PCI_ARBIT_EN);
+	mtdcr(CPC0_PCI, CPC0_PCI_SPE | CPC0_PCI_HOST_CFG_EN | CPC0_PCI_ARBIT_EN);
 
 	return 0;
 }
@@ -77,16 +78,7 @@ int checkboard(void)
 	return 0;
 }
 
-/*************************************************************************
- *  phys_size_t initdram
- *
- ************************************************************************/
-phys_size_t initdram(int board)
-{
-	return CFG_SDRAM_SIZE_PER_BANK * CFG_SDRAM_BANKS; /* 128Mbytes */
-}
-
-static int do_sw_stat(cmd_tbl_t* cmd_tp, int flags, int argc, char *argv[])
+static int do_sw_stat(cmd_tbl_t* cmd_tp, int flags, int argc, char * const argv[])
 {
 	char stat;
 	int i;
@@ -101,24 +93,20 @@ static int do_sw_stat(cmd_tbl_t* cmd_tp, int flags, int argc, char *argv[])
 
 U_BOOT_CMD (
 	sw2_stat, 1, 1, do_sw_stat,
-	"sw2_stat - show status of switch 2\n",
-	NULL
-	);
+	"show status of switch 2",
+	""
+);
 
-static int do_led_ctl(cmd_tbl_t* cmd_tp, int flags, int argc, char *argv[])
+static int do_led_ctl(cmd_tbl_t* cmd_tp, int flags, int argc, char * const argv[])
 {
 	int led_no;
 
-	if (argc != 3) {
-		printf("%s", cmd_tp->usage);
-		return -1;
-	}
+	if (argc != 3)
+		return cmd_usage(cmd_tp);
 
 	led_no = simple_strtoul(argv[1], NULL, 16);
-	if (led_no != 1 && led_no != 2) {
-		printf("%s", cmd_tp->usage);
-		return -1;
-	}
+	if (led_no != 1 && led_no != 2)
+		return cmd_usage(cmd_tp);
 
 	if (strcmp(argv[2],"off") == 0x0) {
 		if (led_no == 1)
@@ -131,8 +119,7 @@ static int do_led_ctl(cmd_tbl_t* cmd_tp, int flags, int argc, char *argv[])
 		else
 			gpio_write_bit(31, 0);
 	} else {
-		printf("%s", cmd_tp->usage);
-		return -1;
+		return cmd_usage(cmd_tp);
 	}
 
 	return 0;
@@ -140,10 +127,10 @@ static int do_led_ctl(cmd_tbl_t* cmd_tp, int flags, int argc, char *argv[])
 
 U_BOOT_CMD (
 	led_ctl, 3, 1, do_led_ctl,
-	"led_ctl	- make led 1 or 2  on or off\n",
+	"make led 1 or 2  on or off",
 	"<led_no> <on/off>	-  make led <led_no> on/off,\n"
-	"\tled_no is 1 or 2\t"
-	);
+	"\tled_no is 1 or 2"
+);
 
 #define SPI_CS_GPIO0	0
 #define SPI_SCLK_GPIO14	14
@@ -200,3 +187,9 @@ int pci_pre_init(struct pci_controller *hose)
 	return 1;
 }
 #endif /* CONFIG_PCI */
+
+int board_eth_init(bd_t *bis)
+{
+	cpu_eth_init(bis);
+	return pci_eth_init(bis);
+}

@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2002
-# Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
+# Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
 # David Mueller, ELSOFT AG, <d.mueller@elsoft.ch>
 #
 # Copyright (C) 2008 Lyrtech <www.lyrtech.com>
@@ -20,4 +20,4 @@
 #
 # we load ourself to 8400'0000 to provide at least 32MB spacing
 # between us and the Integrity kernel image
-TEXT_BASE = 0x84000000
+CONFIG_SYS_TEXT_BASE = 0x84000000

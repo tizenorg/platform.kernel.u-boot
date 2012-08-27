@@ -23,21 +23,20 @@
 
 #include <linux/mtd/onenand_regs.h>
 
-#define ONENAND_BLOCK_SIZE              2048
+#define THIS_ONENAND(a)         (CONFIG_SYS_ONENAND_BASE + (a))
 
-#ifndef CFG_PRINTF
-#define printf(format, args...)
-#endif
+#define onenand_readw(a)        readw(THIS_ONENAND(a))
+#define onenand_writew(v, a)    writew(v, THIS_ONENAND(a))
 
-#define onenand_readw(a)        readw(a)
-#define onenand_writew(v, a)    writew(v, a)
+#define READ_INTERRUPT()	onenand_readw(ONENAND_REG_INTERRUPT)
 
-#define THIS_ONENAND(a)         (CFG_ONENAND_BASE + (a))
+enum {
+	ONENAND_USE_DEFAULT,
+	ONENAND_USE_GENERIC,
+	ONENAND_USE_BOARD,
+};
 
-#define READ_INTERRUPT()                                                \
-	onenand_readw(THIS_ONENAND(ONENAND_REG_INTERRUPT))
-
-#define ONENAND_PAGE_SIZE                       2048
-
-extern int onenand_read_block0(unsigned char *buf);
+extern int (*onenand_read_page)(ulong block, ulong page,
+				u_char *buf, int pagesize);
+extern int onenand_read_block(unsigned char *buf);
 #endif
