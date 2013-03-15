@@ -22,47 +22,15 @@
 
 #include <common.h>
 #include <i2c.h>
+#include <asm/arch/gpio.h>
 #include <max77686.h>
 
-/*
- * MAX77686 PMIC Registers
- */
-#define MAX77686_DEVICE_ID	0x00
-#define MAX77686_INTSRC		0x01
-#define MAX77686_INT1		0x02
-#define MAX77686_INT2		0x03
-#define MAX77686_INT1MSK	0x04
-#define MAX77686_INT2MSK	0x05
-#define MAX77686_STATUS1	0x06
-#define MAX77686_STATUS2	0x07
-#define MAX77686_PWRON		0x08
-#define MAX77686_ONOFF_DELAY	0x09
-#define MAX77686_MRSTB		0x0A
 
-/* INT1 Bit Map */
-#define MAX77686_INT1_MRSTB	(1 << 7)
-#define MAX77686_INT1_ONKEY1S	(1 << 6)
-#define MAX77686_INT1_ACOKBR	(1 << 5)
-#define MAX77686_INT1_ACOKBF	(1 << 4)
-#define MAX77686_INT1_PWRONR	(1 << 1)
-#define MAX77686_INT1_PWRONF	(1 << 0)
-/* PWRON Bit Map */
-#define MAX77686_PWRON_WTSRON	(1 << 7)
-#define MAX77686_PWRON_SMPLON	(1 << 6)
-#define MAX77686_PWRON_RTCA2	(1 << 5)
-#define MAX77686_PWRON_RTCA1	(1 << 4)
-#define MAX77686_PWRON_MRSTB	(1 << 3)
-#define MAX77686_PWRON_ACOKB	(1 << 2)
-#define MAX77686_PWRON_JIGONB	(1 << 1)
-#define MAX77686_PWRON_PWRON	(1 << 0)
+#define MAX77686_RTC_INT	(0 << 0)
 
-
-/*
- * MAX77686 RTC Registers
- */
-#define MAX77686_RTC_INT	0x00
-#define MAX77686_RTC_UPDATE0	0x04
-#define MAX77686_RTC_WTSR_SMPL	0x06
+enum {
+	PMIC_UART_SEL
+};
 
 struct pmic_opmode {
 	/* not supported mode has '0xff' */
@@ -137,10 +105,9 @@ static const char * pwron_source[] = {
 	"WTSRON"
 };
 
-static unsigned int pmic_bus = -1;
+static struct max77686_platform_data *pmic_pd;
 
-static unsigned char reg_int1 = -1;
-static unsigned char reg_pwron = -1;
+static unsigned int pmic_bus = 5;
 
 static ulong max77686_hex_to_voltage(int buck, int ldo, int hex);
 
@@ -165,130 +132,6 @@ void show_pwron_source(char *buf)
 	}
 }
 
-/*
- * RTC
- */
-static int max77686_rtc_probe(void)
-{
-	unsigned char addr = MAX77686_RTC_ADDR;
-
-	i2c_set_bus_num(pmic_bus);
-
-	if (i2c_probe(addr)) {
-		puts("Can't found max77686-rtc\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-static void max77686_rtc_read_update()
-{
-	unsigned char addr = MAX77686_RTC_ADDR;
-	unsigned char val;
-
-	if (max77686_rtc_probe())
-		return;
-
-	val = 0x10;
-	i2c_write(addr, MAX77686_RTC_UPDATE0, 1, &val, 1);
-	udelay(16000);
-}
-
-static void max77686_rtc_write_update()
-{
-	unsigned char addr = MAX77686_RTC_ADDR;
-	unsigned char val;
-
-	if (max77686_rtc_probe())
-		return;
-
-	val = 0x01;
-	i2c_write(addr, MAX77686_RTC_UPDATE0, 1, &val, 1);
-	udelay(16000);
-}
-
-void max77686_rtc_disable_wtsr_smpl(void)
-{
-	unsigned char addr = MAX77686_RTC_ADDR;
-	unsigned char val;
-
-	if (max77686_rtc_probe())
-		return;
-
-	val = 0;
-	i2c_write(addr, MAX77686_RTC_WTSR_SMPL, 1, &val, 1);
-	max77686_rtc_write_update();
-}
-
-int max77686_rtc_init(void)
-{
-	unsigned char addr = MAX77686_RTC_ADDR;
-	unsigned char val;
-
-	if (max77686_rtc_probe())
-		return -1;
-
-	/* clear int flag */
-	i2c_read(addr, MAX77686_RTC_INT, 1, &val, 1);
-
-	return 0;
-}
-
-/*
- * PMIC
- */
-static int max77686_probe(void)
-{
-	unsigned char addr = MAX77686_PMIC_ADDR;
-
-	i2c_set_bus_num(pmic_bus);
-
-	if (i2c_probe(addr)) {
-		puts("Can't found max77686\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-int max77686_init(void)
-{
-	unsigned char addr = MAX77686_PMIC_ADDR;
-
-	reg_int1 = 0;
-	reg_pwron = 0;
-
-	if (max77686_probe())
-		return -1;
-
-	i2c_read(addr, MAX77686_INT1, 1, &reg_int1, 1);
-	i2c_read(addr, MAX77686_PWRON, 1, &reg_pwron, 1);
-
-	return 0;
-}
-
-int max77686_check_pwron_pwrkey(void)
-{
-	/* check int1, not pwron */
-	return !!(reg_int1 & MAX77686_INT1_PWRONR);
-}
-
-int max77686_check_pwron_wtsr(void)
-{
-	return !!(reg_pwron & MAX77686_PWRON_WTSRON);
-}
-
-int max77686_check_pwron_smpl(void)
-{
-	return !!(reg_pwron & MAX77686_PWRON_SMPLON);
-}
-
-unsigned char max77686_get_reg_pwron(void)
-{
-	return reg_pwron;
-}
-
 int max77686_check_acokb_pwron(void)
 {
 	unsigned char addr = MAX77686_PMIC_ADDR;
@@ -302,30 +145,115 @@ int max77686_check_acokb_pwron(void)
 	return !!(val & MAX77686_PWRON_ACOKB);
 }
 
-int max77686_check_pwrkey(void)
+int max77686_rtc_init(void)
 {
-	unsigned char addr = MAX77686_PMIC_ADDR;
+	unsigned char addr = MAX77686_RTC_ADDR;
 	unsigned char val;
 
-	if (max77686_probe())
+	i2c_set_bus_num(pmic_bus);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max77686\n");
 		return -1;
+	}
 
-	i2c_read(addr, MAX77686_INT1, 1, &val, 1);
+	i2c_read(addr, MAX77686_RTC_INT, 1, &val, 1);
 
-	return !!(val & MAX77686_INT1_PWRONR);
+	return 0;
 }
 
-int max77686_clear_irq(void)
+int max77686_probe(void)
+{
+	unsigned char addr = MAX77686_PMIC_ADDR;
+
+	i2c_set_bus_num(pmic_bus);
+
+	if (i2c_probe(addr)) {
+		puts("Can't found max77686\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_SOFT_I2C_READ_REPEATED_START
+#define i2c_read(addr, reg, alen, val, len)	\
+			i2c_read_r(addr, reg, alen, val, len)
+#endif
+
+int max77686_get_irq(int irq)
 {
 	unsigned char addr = MAX77686_PMIC_ADDR;
 	unsigned char val[2];
+	unsigned int ret;
+	unsigned int reg;
+	unsigned int shift;
 
 	if (max77686_probe())
-		return -1;
+		return 0;
 
-	i2c_read(addr, MAX77686_INT1, 1, val, 2);
+	switch (irq) {
+	case PWRONR:
+		reg = 0;
+		shift = 1;
+		break;
+	case PWRONF:
+		reg = 0;
+		shift = 0;
+		break;
+	case PWRON1S:
+		reg = 0;
+		shift = 6;
+		break;
+	default:
+		return 0;
+	}
 
-	return 0;
+	i2c_read(addr, 0x2, 1, val, 2);
+
+	ret = val[reg] & (1 << shift);
+
+	return !!ret;
+}
+
+/* get irq value at power on */
+int max77686_get_irq_booton(int irq)
+{
+	unsigned char addr = MAX77686_PMIC_ADDR;
+	unsigned char val[2];
+	unsigned int ret;
+	unsigned int reg;
+	unsigned int shift;
+	static int first = 1;
+
+	if (max77686_probe())
+		return 0;
+
+	switch (irq) {
+	case PWRONR:
+		reg = 0;
+		shift = 1;
+		break;
+	case PWRONF:
+		reg = 0;
+		shift = 0;
+		break;
+	case PWRON1S:
+		reg = 0;
+		shift = 6;
+		break;
+	default:
+		return 0;
+	}
+
+	if (first) {
+		i2c_read(addr, 0x2, 1, val, 2);
+		first = 0;
+	}
+
+	ret = val[reg] & (1 << shift);
+
+	return !!ret;
 }
 
 static int max77686_status(void)
@@ -622,6 +550,33 @@ int max77686_set_32khz(unsigned char mode)
 	return 0;
 }
 
+static int max77686_gpio_control(int port, int value)
+{
+	if (pmic_pd == NULL)
+		return 1;
+
+	switch (port) {
+	case PMIC_UART_SEL:
+		gpio_cfg_pin(pmic_pd->bank, pmic_pd->uart_sel, 1);
+		gpio_set_value(pmic_pd->bank, pmic_pd->uart_sel, value);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+void max77686_set_platform_data(struct max77686_platform_data *pd)
+{
+	if (pd == NULL) {
+		puts("pd is NULL.\n");
+		return;
+	}
+
+	pmic_pd = pd;
+}
+
 static int do_max77686(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int buck = 0, ldo = 0, on = -1;
@@ -632,6 +587,24 @@ static int do_max77686(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 		if (strncmp(argv[1], "status", 6) == 0)
 			return max77686_status();
 		break;
+	case 3:
+		if (strncmp(argv[1], "uart", 4) != 0)
+			break;
+
+		if (strncmp(argv[2], "ap", 2) == 0)
+			on = 1;
+		else if (strncmp(argv[2], "cp", 2) == 0)
+			on = 0;
+		else
+			break;
+
+		ret = max77686_gpio_control(PMIC_UART_SEL, on);
+
+		if (!ret)
+			printf("pmic: %s %s\n", argv[1], argv[2]);
+		else
+			printf("pmic_pd is not valid\n");
+
 		return ret;
 	case 4:
 		if (argv[1][0] == 'l')
@@ -677,6 +650,7 @@ U_BOOT_CMD(
 	max77686, 4, 1, do_max77686,
 	"PMIC LDO & BUCK control for MAX77686",
 	"status - Display PMIC LDO & BUCK status\n"
+	"max77686 uart ap/cp - Change uart path\n"
 	"max77686 ldo num volt - Set LDO voltage\n"
 	"max77686 ldo num on/lpm/standby/off - Set LDO output mode\n"
 	"max77686 buck num volt - Set BUCK voltage\n"

@@ -505,7 +505,7 @@ static void check_battery(void)
 static void init_rtc_max8997(void)
 {
 	unsigned char addr = MAX8997_RTC_ADDR;
-	unsigned char val[2] = {0,};
+	unsigned char val[2];
 
 	i2c_set_bus_num(I2C_5);
 
@@ -515,9 +515,8 @@ static void init_rtc_max8997(void)
 	}
 
 	/* Disable SMPL & WTSR */
-	i2c_write(addr, 0x6, 1, val, 1);
-	val[0] = 1;
-	i2c_write(addr, 0x4, 1, val, 1);
+	i2c_write(addr, 0x4, 1, 0x1, 1);
+	i2c_write(addr, 0x6, 1, 0x0, 1);
 }
 
 #if defined(CONFIG_EXTERNAL_CHARGER)
@@ -837,23 +836,6 @@ static void check_keypad(void)
 
 	if (auto_download)
 		setenv("bootcmd", "usbdown");
-}
-
-static void check_ta_usb(void)
-{
-	unsigned char addr = MAX8997_MUIC_ADDR;
-	unsigned char int2;
-
-	if (ta_usb_connected)
-		return;
-
-	i2c_read(addr, 0x2, 1, &int2, 1);
-
-	/* check whether ta or usb cable have been attached */
-	if ((int2 & 0x10)) {
-		init_rtc_max8997();
-		power_off();
-	}
 }
 
 #ifdef CONFIG_LCD
@@ -1365,7 +1347,6 @@ int misc_init_r(void)
 	check_auto_burn();
 
 	ta_usb_connected = muic_check_type();
-	check_ta_usb();
 #ifdef CONFIG_CMD_PIT
 	check_pit();
 #endif
