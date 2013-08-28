@@ -120,8 +120,11 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 	unsigned int timeout, start_addr = 0;
 	unsigned int retry = 10000;
 
-	/* Wait max 10 ms */
-	timeout = 10;
+	/* Wait max 200ms for ready status after transfer. (data == NULL) */
+	if (!data)
+		timeout = 200;
+	else
+		timeout = 10;
 
 	sdhci_writel(host, SDHCI_INT_ALL_MASK, SDHCI_INT_STATUS);
 	mask = SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT;
