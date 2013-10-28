@@ -25,6 +25,7 @@
 #include <linux/usb/cdc.h>
 #include <g_dnl.h>
 #include <dfu.h>
+#include <samsung/sighdr.h>
 #include <libtizen.h>
 #include <samsung/misc.h>
 #include <linux/input.h>
@@ -231,6 +232,16 @@ static int download_tail(long long int left, int cnt)
 		error("Transfer buffer not allocated!");
 		return -ENXIO;
 	}
+
+#ifdef CONFIG_SIG
+	/* check board signature when download u-boot-mmc.bin */
+	ret = check_board_signature(f_name, (phys_addr_t)transfer_buffer,
+				    (phys_size_t)thor_file_size);
+	if (ret) {
+		printf("Wrong board signature in file: %s.\n", f_name);
+		return ret;
+	}
+#endif
 
 	if (left) {
 		ret = dfu_write(dfu_entity, transfer_buffer, left, cnt++);
