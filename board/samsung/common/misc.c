@@ -15,7 +15,6 @@
 #include <linux/sizes.h>
 #include <asm/arch/cpu.h>
 #include <asm/gpio.h>
-#include <linux/input.h>
 #include <power/pmic.h>
 #include <mmc.h>
 
@@ -120,7 +119,7 @@ static int power_key_pressed(u32 reg)
 	return !!(status & mask);
 }
 
-static int key_pressed(int key)
+int key_pressed(int key)
 {
 	int value;
 
@@ -142,7 +141,7 @@ static int key_pressed(int key)
 	return value;
 }
 
-static int check_keys(void)
+int check_keys(void)
 {
 	int keys = 0;
 
