@@ -17,6 +17,7 @@
 
 
 #define CONFIG_TIZEN			/* TIZEN lib */
+#define CONFIG_SIG			/* make signature header */
 
 #define CONFIG_SYS_L2CACHE_OFF
 #ifndef CONFIG_SYS_L2CACHE_OFF
