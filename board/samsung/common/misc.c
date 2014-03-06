@@ -105,6 +105,10 @@ static int check_keys(void)
 	if (key_pressed(KEY_VOLUMEDOWN))
 		keys += KEY_VOLUMEDOWN;
 
+	/* Avoids gpio keys debouncing */
+	if (keys)
+		mdelay(50);
+
 	return keys;
 }
 
