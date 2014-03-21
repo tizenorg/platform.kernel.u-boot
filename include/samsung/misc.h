@@ -11,6 +11,13 @@ u32 get_board_rev(void);
 void set_board_info(void);
 #endif
 
+#if defined(CONFIG_LCD_MENU) || defined(CONFIG_INTERACTIVE_CHARGER)
+void keys_init(void);
+int check_keys(void);
+int key_pressed(int key);
+void check_boot_mode(void);
+#endif /* CONFIG_LCD_MENU || CONFIG_INTERACTIVE_CHARGER */
+
 #ifdef CONFIG_LCD_MENU
 enum {
 	BOOT_MODE_INFO,
@@ -21,12 +28,31 @@ enum {
 	BOOT_MODE_ENV,
 	BOOT_MODE_EXIT,
 };
-
-void keys_init(void);
-int check_keys(void);
-int key_pressed(int key);
-void check_boot_mode(void);
 #endif /* CONFIG_LCD_MENU */
+
+#ifdef CONFIG_INTERACTIVE_CHARGER
+enum {
+	CMD_BATTERY_BOOT_CHECK,
+	CMD_BATTERY_STATE,
+	CMD_BATTERY_CHARGE,
+};
+
+#define CHARGE_TRESHOLD_BOOT			20
+#define CHARGE_DISPLAY_TIMEOUT_SEC		10
+#define NO_CHARGER_ANIM_TIMEOUT_SEC		10
+#define NO_CHARGER_TIMEOUT_SEC			30
+#define CHARGE_PWR_KEY_RESET_TIMEOUT		3
+#define CHARGE_KEYS_EXIT_TIMEOUT		3
+
+#define CHARGE_KEYS_EXIT		(KEY_VOLUMEDOWN + KEY_VOLUMEUP)
+
+/* Should be implemented by board */
+int charger_enable(void);
+int charger_type(void);
+int battery_present(void);
+int battery_state(unsigned int *soc);
+void board_low_power_mode(void);
+#endif /* CONFIG_INTERACTIVE_CHARGER */
 
 #ifdef CONFIG_CMD_BMP
 void draw_logo(void);

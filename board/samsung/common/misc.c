@@ -92,7 +92,7 @@ void set_board_info(void)
 }
 #endif /* CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG */
 
-#ifdef CONFIG_LCD_MENU
+#if defined(CONFIG_LCD_MENU) || defined(CONFIG_INTERACTIVE_CHARGER)
 static int power_key_pressed(u32 reg)
 {
 	struct pmic *pmic;
@@ -154,7 +154,9 @@ int check_keys(void)
 
 	return keys;
 }
+#endif /* CONFIG_LCD_MENU || CONFIG_INTERACTIVE_CHARGER */
 
+#ifdef CONFIG_LCD_MENU
 /*
  * 0 BOOT_MODE_INFO
  * 1 BOOT_MODE_THOR
@@ -390,10 +392,265 @@ static void download_menu(void)
 	lcd_clear();
 }
 
+#ifdef CONFIG_INTERACTIVE_CHARGER
+static int interactive_charger(int command)
+{
+	int display_timeout_ms = 1000 * CHARGE_DISPLAY_TIMEOUT_SEC;
+	int display_time_ms = 0;
+	int animation_step_ms = 500;
+	int no_charger_anim_timeout_ms = NO_CHARGER_ANIM_TIMEOUT_SEC * 1000;
+	int power_key_timeout_ms = CHARGE_PWR_KEY_RESET_TIMEOUT * 1000;
+	int power_key_time_ms = 0;
+	int keys_exit_timeout_ms = CHARGE_KEYS_EXIT_TIMEOUT * 1000;
+	int keys_exit_time_ms = 0;
+	unsigned int soc_boot = CHARGE_TRESHOLD_BOOT;
+	unsigned int soc = 0;
+	int clear_screen = 0;
+	int chrg = 0;
+	int keys;
+	int i;
+
+	/* Enable charger */
+	if (charger_enable()) {
+		puts("Can't enable charger");
+		return CMD_RET_FAILURE;
+	}
+
+	draw_charge_screen();
+
+	/* Clear PWR button Rising edge interrupt status flag */
+	power_key_pressed(KEY_PWR_INTERRUPT_REG);
+
+	puts("Starting interactive charger (Ctrl+C to break).\n");
+	puts("This mode can be also finished by keys: VOLUP + VOLDOWN.\n");
+
+	while (1) {
+		/* Check state of charge */
+		if (battery_state(&soc)) {
+			puts("Fuel Gauge Error\n");
+			lcd_clear();
+			return CMD_RET_FAILURE;
+		}
+
+		if (display_time_ms <= display_timeout_ms) {
+			draw_battery_state(soc);
+			draw_charge_animation();
+
+			mdelay(animation_step_ms);
+			display_time_ms += animation_step_ms;
+			clear_screen = 1;
+		} else {
+			/* Clear screen only once */
+			if (clear_screen) {
+				lcd_clear();
+				clear_screen = 0;
+			}
+
+			/* Check key if lcd is clear */
+			keys = check_keys();
+			if (keys) {
+				display_time_ms = 0;
+				draw_battery_screen();
+				draw_battery_state(soc);
+				draw_charge_screen();
+				printf("Key pressed. Battery SOC: %.2d %%.\n",
+				       soc);
+			}
+		}
+
+		/* Check exit conditions */
+		while (check_keys() == CHARGE_KEYS_EXIT) {
+			/* 50 ms delay in check_keys() */
+			keys_exit_time_ms += 50;
+			if (keys_exit_time_ms >= keys_exit_timeout_ms)
+				break;
+		}
+
+		if (ctrlc() || keys_exit_time_ms >= keys_exit_timeout_ms) {
+			puts("Charge mode: aborted by user.\n");
+			lcd_clear();
+			return CMD_RET_SUCCESS;
+		}
+
+		keys_exit_time_ms = 0;
+
+		/* Turn off if no charger */
+		chrg = charger_type();
+		if (!chrg) {
+			puts("Charger disconnected\n");
+			draw_battery_screen();
+			draw_battery_state(soc);
+
+			for (i = 0; i < no_charger_anim_timeout_ms; i += 600) {
+				mdelay(700);
+				draw_connect_charger_animation();
+
+				if (ctrlc())
+					return CMD_RET_SUCCESS;
+
+				chrg = charger_type();
+				if (chrg) {
+					display_time_ms = 0;
+					draw_battery_screen();
+					draw_battery_state(soc);
+					draw_charge_screen();
+					puts("Charger connected\n");
+					break;
+				}
+			}
+
+			if (!chrg) {
+				if (command == CMD_BATTERY_BOOT_CHECK) {
+					puts("Power OFF.");
+					board_poweroff();
+				} else {
+					puts("Please connect charger.\n");
+					return CMD_RET_SUCCESS;
+				}
+			}
+		}
+
+		/* Check boot ability with 5% of reserve */
+		if (soc >= soc_boot) {
+			while (power_key_pressed(KEY_PWR_STATUS_REG)) {
+				mdelay(100);
+				power_key_time_ms += 100;
+				/* Check for pwr key press */
+				if (power_key_time_ms >= power_key_timeout_ms)
+					run_command("reset", 0);
+			}
+		}
+
+		power_key_time_ms = 0;
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
+static int battery(int command)
+{
+	unsigned soc;
+	unsigned soc_boot = CHARGE_TRESHOLD_BOOT;
+	int no_charger_timeout = NO_CHARGER_TIMEOUT_SEC;
+	int no_charger_anim_timeout = NO_CHARGER_ANIM_TIMEOUT_SEC;
+	int chrg = 0;
+	int keys = 0;
+	char *pwr_mode_info = "Warning!\n"
+			      "Battery charge level was too low and\n"
+			      "device is now in LOW POWER mode.\n"
+			      "This mode is not recommended for boot system!\n";
+
+	if (!battery_present()) {
+		puts("Battery not present.\n");
+		return CMD_RET_FAILURE;
+	}
+
+	if (battery_state(&soc)) {
+		puts("Fuel Gauge Error\n");
+		return CMD_RET_FAILURE;
+	}
+
+	printf("Battery SOC: %.2d %%.\n", soc);
+
+	switch (command) {
+	case CMD_BATTERY_BOOT_CHECK:
+		/*
+		 * If (soc > soc_boot) then don't waste
+		 * a time for draw battery screen.
+		*/
+		if (soc >= soc_boot)
+			return CMD_RET_SUCCESS;
+
+		/* Set low power mode only if do boot check */
+		board_low_power_mode();
+		puts("Battery SOC (< 20%) is too low for boot.\n");
+		break;
+	case CMD_BATTERY_STATE:
+		lcd_clear();
+		draw_battery_screen();
+		draw_battery_state(soc);
+
+		/* Wait some time before clear battery screen */
+		mdelay(2000);
+		lcd_clear();
+		return CMD_RET_SUCCESS;
+	case CMD_BATTERY_CHARGE:
+		lcd_clear();
+		break;
+	default:
+		return CMD_RET_SUCCESS;
+	}
+
+	draw_battery_screen();
+	draw_battery_state(soc);
+
+	do {
+		/* Check charger */
+		chrg = charger_type();
+		if (chrg) {
+			printf("CHARGER TYPE: %d\n", chrg);
+			draw_battery_screen();
+			draw_battery_state(soc);
+			break;
+		}
+
+		if (no_charger_anim_timeout > 0)
+			draw_connect_charger_animation();
+
+		mdelay(800);
+
+		/* Check exit conditions */
+		keys = check_keys();
+		if (keys) {
+			no_charger_anim_timeout = NO_CHARGER_ANIM_TIMEOUT_SEC;
+			draw_battery_screen();
+			draw_battery_state(soc);
+		}
+
+		if (keys == CHARGE_KEYS_EXIT || ctrlc()) {
+			puts("Charge mode aborted by user.\n");
+			goto warning;
+		}
+
+		no_charger_anim_timeout--;
+		if (!no_charger_anim_timeout)
+			lcd_clear();
+
+	} while (no_charger_timeout--);
+
+	/* there is no charger and soc (%) is too low - POWER OFF */
+	if (!chrg) {
+		puts("No charger connected!\n");
+
+		if (command == CMD_BATTERY_BOOT_CHECK) {
+			puts("Power OFF.");
+			board_poweroff();
+		} else {
+			puts("Please connect charger.\n");
+			return CMD_RET_SUCCESS;
+		}
+	}
+
+	/* Charger connected - enable charge mode */
+	if (interactive_charger(command))
+		printf("Charge failed\n");
+
+warning:
+	/* Charge mode aborted or failed */
+	if (command == CMD_BATTERY_BOOT_CHECK)
+		puts(pwr_mode_info);
+
+	return CMD_RET_SUCCESS;
+}
+#endif
+
 void check_boot_mode(void)
 {
 	int pwr_key;
 
+#ifdef CONFIG_INTERACTIVE_CHARGER
+	battery(CMD_BATTERY_BOOT_CHECK);
+#endif
 	pwr_key = power_key_pressed(KEY_PWR_STATUS_REG);
 	if (!pwr_key)
 		return;
@@ -444,6 +701,8 @@ void draw_logo(void)
 		y = 0;
 		printf("Warning: image height is bigger than display height\n");
 	}
+
+	lcd_clear();
 
 	bmp_display(addr, x, y);
 }
