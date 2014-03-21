@@ -431,3 +431,20 @@ void exynos_lcd_misc_init(vidinfo_t *vid)
 #endif
 }
 #endif /* LCD */
+
+#ifdef CONFIG_CMD_POWEROFF
+void board_poweroff(void)
+{
+	unsigned int val;
+	struct exynos4x12_power *power =
+		(struct exynos4x12_power *)samsung_get_base_power();
+
+	val = readl(&power->ps_hold_control);
+	val |= EXYNOS_PS_HOLD_CONTROL_EN_OUTPUT; /* set to output */
+	val &= ~EXYNOS_PS_HOLD_CONTROL_DATA_HIGH; /* set state to low */
+	writel(val, &power->ps_hold_control);
+
+	while (1);
+	/* Should not reach here */
+}
+#endif
