@@ -198,6 +198,7 @@ int get_soft_i2c_sda_pin(void);
 #define CONFIG_POWER_MUIC_MAX77693
 #define CONFIG_POWER_FG_MAX77693
 #define CONFIG_POWER_BATTERY_TRATS2
+#define CONFIG_CMD_POWEROFF
 
 /* Security subsystem - enable hw_rand() */
 #define CONFIG_EXYNOS_ACE_SHA
