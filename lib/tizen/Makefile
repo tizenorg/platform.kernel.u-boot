@@ -6,3 +6,4 @@
 #
 
 obj-$(CONFIG_TIZEN) += tizen.o
+obj-$(CONFIG_INTERACTIVE_CHARGER) += interactive_charger.o
