@@ -11,6 +11,7 @@
 #include <asm/gpio.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/mipi_dsim.h>
 #include <power/pmic.h>
 #include <power/max77686_pmic.h>
@@ -19,15 +20,21 @@
 #include <power/max77693_muic.h>
 #include <power/max77693_fg.h>
 #include <libtizen.h>
+#include <samsung/misc.h>
 #include <errno.h>
 #include <usb.h>
 #include <usb/s3c_udc.h>
 #include <usb_mass_storage.h>
+#include "setup.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static unsigned int board_rev = -1;
+/* For global battery and charger functions */
+static struct power_battery *pbat;
+static struct pmic *p_chrg, *p_muic, *p_fg, *p_bat;
+static int power_init_done;
 
+static unsigned int board_rev = -1;
 static inline u32 get_model_rev(void);
 
 static void check_hw_revision(void)
@@ -176,10 +183,6 @@ int exynos_init(void)
 
 int exynos_power_init(void)
 {
-	int chrg;
-	struct power_battery *pb;
-	struct pmic *p_chrg, *p_muic, *p_fg, *p_bat;
-
 #ifdef CONFIG_SYS_I2C_INIT_BOARD
 	board_init_i2c();
 #endif
@@ -221,21 +224,13 @@ int exynos_power_init(void)
 	p_chrg->parent = p_bat;
 	p_muic->parent = p_bat;
 
+#ifdef CONFIG_INTERACTIVE_CHARGER
+	p_bat->low_power_mode = board_low_power_mode;
+#endif
 	p_bat->pbat->battery_init(p_bat, p_fg, p_chrg, p_muic);
 
-	pb = p_bat->pbat;
-	chrg = p_muic->chrg->chrg_type(p_muic);
-	debug("CHARGER TYPE: %d\n", chrg);
-
-	if (!p_chrg->chrg->chrg_bat_present(p_chrg)) {
-		puts("No battery detected\n");
-		return 0;
-	}
-
-	p_fg->fg->fg_battery_check(p_fg, p_bat);
-
-	if (pb->bat->state == CHARGE && chrg == CHARGER_USB)
-		puts("CHARGE Battery !\n");
+	pbat = p_bat->pbat;
+	power_init_done = 1;
 
 	return 0;
 }
@@ -432,6 +427,131 @@ void exynos_lcd_misc_init(vidinfo_t *vid)
 }
 #endif /* LCD */
 
+void low_clock_mode(void)
+{
+	struct exynos4x12_clock *clk = (struct exynos4x12_clock *)
+					samsung_get_base_clock();
+
+	unsigned int cfg_apll_con0;
+	unsigned int cfg_src_cpu;
+	unsigned int cfg_div_cpu0;
+	unsigned int cfg_div_cpu1;
+	unsigned int clk_gate_cfg;
+
+	/* Turn off unnecessary clocks */
+	clk_gate_cfg = 0x0;
+	writel(clk_gate_cfg, &clk->gate_ip_image);		/* IMAGE */
+	writel(clk_gate_cfg, &clk->gate_ip_cam);		/* CAM */
+	writel(clk_gate_cfg, &clk->gate_ip_tv);			/* TV */
+	writel(clk_gate_cfg, &clk->gate_ip_mfc);		/* MFC */
+	writel(clk_gate_cfg, &clk->gate_ip_g3d);		/* G3D */
+	writel(clk_gate_cfg, &clk->gate_ip_gps);		/* GPS */
+	writel(clk_gate_cfg, &clk->gate_ip_isp1);		/* ISP1 */
+
+	/*
+	 * Set CMU_CPU clocks src to MPLL
+	 * Bit values:                 0 ; 1
+	 * MUX_APLL_SEL:        FIN_PLL;   FOUT_APLL
+	 * MUX_CORE_SEL:        MOUT_APLL; SCLK_MPLL
+	 * MUX_HPM_SEL:         MOUT_APLL; SCLK_MPLL_USER_C
+	 * MUX_MPLL_USER_SEL_C: FIN_PLL;   SCLK_MPLL
+	*/
+	cfg_src_cpu = MUX_APLL_SEL(1) | MUX_CORE_SEL(1) | MUX_HPM_SEL(1) |
+		      MUX_MPLL_USER_SEL_C(1);
+	writel(cfg_src_cpu, &clk->src_cpu);
+
+	/* Disable APLL */
+	cfg_apll_con0 = readl(&clk->apll_con0);
+	writel(cfg_apll_con0 & ~PLL_ENABLE(1), &clk->apll_con0);
+
+	/* Set APLL to 200MHz */
+	cfg_apll_con0 = SDIV(2) | PDIV(3) | MDIV(100) | FSEL(1) | PLL_ENABLE(1);
+	writel(cfg_apll_con0, &clk->apll_con0);
+
+	/* Wait for PLL to be locked */
+	while (!(readl(&clk->apll_con0) & PLL_LOCKED_BIT))
+		continue;
+
+	/* Set CMU_CPU clock src to APLL */
+	cfg_src_cpu = MUX_APLL_SEL(1) | MUX_CORE_SEL(0) | MUX_HPM_SEL(0) |
+		      MUX_MPLL_USER_SEL_C(0);
+	writel(cfg_src_cpu, &clk->src_cpu);
+
+	/* Wait for MUX ready status */
+	while (readl(&clk->src_cpu) & MUX_STAT_CPU_CHANGING)
+		continue;
+
+	/*
+	 * Set dividers for MOUTcore = 200 MHz
+	 * coreout =      MOUT / (ratio + 1) = 200 MHz
+	 * corem0 =     armclk / (ratio + 1) = 200 MHz
+	 * corem1 =     armclk / (ratio + 1) = 200 MHz
+	 * periph =     armclk / (ratio + 1) = 200 MHz
+	 * atbout =       MOUT / (ratio + 1) = 200 MHz
+	 * pclkdbgout = atbout / (ratio + 1) = 200 MHz
+	 * sclkapll = MOUTapll / (ratio + 1) = 50 MHz
+	 * armclk =   core_out / (ratio + 1) = 200 MHz
+	*/
+	cfg_div_cpu0 = CORE_RATIO(0) | COREM0_RATIO(0) | COREM1_RATIO(0) |
+		       PERIPH_RATIO(0) | ATB_RATIO(0) | PCLK_DBG_RATIO(1) |
+		       APLL_RATIO(3) | CORE2_RATIO(0);
+	writel(cfg_div_cpu0, &clk->div_cpu0);
+
+	/* Wait for divider ready status */
+	while (readl(&clk->div_stat_cpu0) & DIV_STAT_CPU0_CHANGING)
+		continue;
+
+	/*
+	 * For MOUThpm = 200 MHz (MOUTapll)
+	 * doutcopy = MOUThpm / (ratio + 1) = 100
+	 * sclkhpm = doutcopy / (ratio + 1) = 100
+	 * cores_out = armclk / (ratio + 1) = 200
+	 */
+	cfg_div_cpu1 = COPY_RATIO(1) | HPM_RATIO(0) | CORES_RATIO(0);
+	writel(cfg_div_cpu1, &clk->div_cpu1);	/* DIV_CPU1 */
+
+	/* Wait for divider ready status */
+	while (readl(&clk->div_stat_cpu1) & DIV_STAT_CPU1_CHANGING)
+		continue;
+}
+
+#ifdef CONFIG_INTERACTIVE_CHARGER
+static int low_power_mode_set;
+
+void board_low_power_mode(void)
+{
+	struct exynos4x12_power *pwr = (struct exynos4x12_power *)
+					samsung_get_base_power();
+
+	unsigned int pwr_core_cfg = 0x0;
+	unsigned int pwr_cfg = 0x0;
+
+	/* Set low power mode only once */
+	if (low_power_mode_set)
+		return;
+
+	/* Power down CORES: 1, 2, 3 */
+	/* LOCAL_PWR_CFG [1:0] 0x3 EN, 0x0 DIS */
+	writel(pwr_core_cfg, &pwr->arm_core1_configuration);
+	writel(pwr_core_cfg, &pwr->arm_core2_configuration);
+	writel(pwr_core_cfg, &pwr->arm_core3_configuration);
+
+	/* Turn off unnecessary power domains */
+	writel(pwr_cfg, &pwr->xxti_configuration);		/* XXTI */
+	writel(pwr_cfg, &pwr->cam_configuration);		/* CAM */
+	writel(pwr_cfg, &pwr->tv_configuration);		/* TV */
+	writel(pwr_cfg, &pwr->mfc_configuration);		/* MFC */
+	writel(pwr_cfg, &pwr->g3d_configuration);		/* G3D */
+	writel(pwr_cfg, &pwr->gps_configuration);		/* GPS */
+	writel(pwr_cfg, &pwr->gps_alive_configuration);		/* GPS_ALIVE */
+
+	/* Set CPU clock to 200MHz */
+	low_clock_mode();
+
+	low_power_mode_set = 1;
+}
+#endif
+
 #ifdef CONFIG_CMD_POWEROFF
 void board_poweroff(void)
 {
@@ -446,5 +566,101 @@ void board_poweroff(void)
 
 	while (1);
 	/* Should not reach here */
+}
+#endif
+
+/* Functions for interactive charger in board/samsung/common/misc.c */
+#ifdef CONFIG_INTERACTIVE_CHARGER
+int charger_enable(void)
+{
+	if (!power_init_done) {
+		if (exynos_power_init()) {
+			puts("Can't init board power subsystem");
+			return -1;
+		}
+	}
+
+	if (!pbat->battery_charge) {
+		puts("Can't enable charger\n");
+		return -1;
+	}
+
+	/* Enable charger */
+	if (pbat->battery_charge(p_bat)) {
+		puts("Charger enable error\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int charger_type(void)
+{
+	if (!power_init_done) {
+		if (exynos_power_init()) {
+			puts("Can't init board power subsystem");
+			return -1;
+		}
+	}
+
+	if (!p_muic->chrg->chrg_type) {
+		puts("Can't get charger type\n");
+		return -1;
+	}
+
+	return p_muic->chrg->chrg_type(p_muic);
+}
+
+int battery_present(void)
+{
+	if (!power_init_done) {
+		if (exynos_power_init()) {
+			puts("Can't init board power subsystem");
+			return -1;
+		}
+	}
+
+	if (!p_chrg->chrg->chrg_bat_present) {
+		puts("Can't get battery state\n");
+		return -1;
+	}
+
+	if (!p_chrg->chrg->chrg_bat_present(p_chrg)) {
+		puts("Battery not present.\n");
+		return 0;
+	}
+
+	return 1;
+}
+
+int battery_state(unsigned int *soc)
+{
+	struct battery *bat = pbat->bat;
+
+	if (!power_init_done) {
+		if (exynos_power_init()) {
+			printf("Can't init board power subsystem");
+			return -1;
+		}
+	}
+
+	if (!p_fg->fg->fg_battery_update) {
+		puts("Can't update battery state\n");
+		return -1;
+	}
+
+	/* Check battery state */
+	if (p_fg->fg->fg_battery_update(p_fg, p_bat)) {
+		puts("Battery update error\n");
+		return -1;
+	}
+
+	debug("[BAT]:\n#state:%u\n#soc:%3.1u\n#vcell:%u\n", bat->state,
+							    bat->state_of_chrg,
+							    bat->voltage_uV);
+
+	*soc = bat->state_of_chrg;
+
+	return 0;
 }
 #endif
