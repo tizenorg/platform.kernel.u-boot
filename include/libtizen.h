@@ -19,4 +19,12 @@ void draw_thor_connected(void);
 void draw_thor_fail_screen(void);
 void draw_thor_cable_info(void);
 
+/* Interactive charger */
+void draw_battery_screen(void);
+void draw_charge_screen(void);
+void clean_charge_screen(void);
+void draw_charge_animation(void);
+void draw_battery_state(unsigned int soc);
+void draw_connect_charger_animation(void);
+
 #endif	/* _LIBTIZEN_H_ */
