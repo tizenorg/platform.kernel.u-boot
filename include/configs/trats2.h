@@ -209,6 +209,9 @@ int get_soft_i2c_sda_pin(void);
 
 #define CONFIG_MISC_INIT_R
 
+/* Charge battery with interactive LCD animation */
+#define CONFIG_INTERACTIVE_CHARGER
+
 /* Download menu - Samsung common */
 #define CONFIG_LCD_MENU
 #define CONFIG_LCD_MENU_BOARD
