@@ -642,6 +642,34 @@ warning:
 
 	return CMD_RET_SUCCESS;
 }
+
+#ifdef CONFIG_CMD_BATTERY
+int do_battery(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int cmd;
+
+	if (argc != 2)
+		return CMD_RET_USAGE;
+
+	if (!strcmp("charge", argv[1]))
+		cmd = CMD_BATTERY_CHARGE;
+	else if (!strcmp("state", argv[1]))
+		cmd = CMD_BATTERY_STATE;
+	else
+		return CMD_RET_USAGE;
+
+	if (battery(cmd))
+		return CMD_RET_FAILURE;
+
+	return CMD_RET_SUCCESS;
+}
+
+U_BOOT_CMD(battery, CONFIG_SYS_MAXARGS, 1, do_battery,
+	   "Battery interactive charger",
+	   "<charge> or <state>\n"
+	   "Enable interactive charger or display battery state screen"
+);
+#endif /* CONFIG_CMD_BATTERY */
 #endif
 
 void check_boot_mode(void)
