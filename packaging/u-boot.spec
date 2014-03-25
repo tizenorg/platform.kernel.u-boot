@@ -10,6 +10,8 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: u_boot.manifest
 
 BuildRequires: gcc >= 4.8
+BuildRequires: flex
+BuildRequires: bison
 
 %description
 u-boot - Tizen bootloader for Embedded boards based on ARM processor
@@ -48,6 +50,9 @@ cp %{SOURCE1001} .
 
 make mrproper
 
+# Build dtc
+make HOSTCC="gcc $RPM_OPT_FLAGS" -C tools/dtc
+
 # Set configuration
 make trats2_config
 
@@ -61,7 +66,9 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 %endif
 
 # Build u-boot
+export PATH="$PATH:tools/dtc/"
 make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
+cp u-boot-dtb.bin u-boot-mmc.bin
 
 %install
 rm -rf %{buildroot}
