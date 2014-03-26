@@ -9,6 +9,8 @@ URL: https://review.tizen.org/git/?p=kernel/u-boot.git
 Source0: %{name}-%{version}.tar.bz2
 Source1001: u_boot.manifest
 
+BuildRequires: gcc >= 4.8
+
 %description
 u-boot - Tizen bootloader for Embedded boards based on ARM processor
 
