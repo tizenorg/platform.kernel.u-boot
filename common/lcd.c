@@ -1166,10 +1166,16 @@ static int on_splashimage(const char *name, const char *value, enum env_op op,
 U_BOOT_ENV_CALLBACK(splashimage, on_splashimage);
 #endif
 
-void lcd_position_cursor(unsigned col, unsigned row)
+void lcd_set_position_cursor(unsigned col, unsigned row)
 {
 	console_col = min(col, CONSOLE_COLS - 1);
 	console_row = min(row, CONSOLE_ROWS - 1);
+}
+
+void lcd_get_position_cursor(unsigned *col, unsigned *row)
+{
+	*col = console_col;
+	*row = console_row;
 }
 
 int lcd_get_pixel_width(void)

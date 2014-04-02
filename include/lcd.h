@@ -296,7 +296,15 @@ int lcd_get_screen_columns(void);
  * @param col	Column to place cursor (0 = left side)
  * @param row	Row to place cursor (0 = top line)
  */
-void lcd_position_cursor(unsigned col, unsigned row);
+void lcd_set_position_cursor(unsigned col, unsigned row);
+
+/**
+ * Get the position of the text cursor
+ *
+ * @param *col	Pointer to store cursor placement column (0 = left side)
+ * @param *row	Pointer to store cursor placement row (0 = top line)
+ */
+void lcd_get_position_cursor(unsigned *col, unsigned *row);
 
 /* Allow boards to customize the information displayed */
 void lcd_show_board_info(void);
