@@ -711,7 +711,7 @@ int thor_init(void)
 	int power_key_cnt = 0;
 
 #ifdef CONFIG_TIZEN
-	draw_thor_init_screen();
+	draw_thor_screen();
 #endif
 	/* Wait for a device enumeration and configuration settings */
 	debug("THOR enumeration/configuration setting....\n");
@@ -728,7 +728,7 @@ int thor_init(void)
 		}
 	}
 #ifdef CONFIG_TIZEN
-	draw_thor_screen();
+	draw_thor_connected();
 #endif
 	thor_set_dma(thor_rx_data_buf, strlen("THOR"));
 	/* detect the download request from Host PC */
