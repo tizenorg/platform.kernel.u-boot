@@ -158,7 +158,7 @@ static void display_board_info(void)
 #endif
 	vidinfo_t *vid = &panel_info;
 
-	lcd_position_cursor(4, 4);
+	lcd_set_position_cursor(4, 4);
 
 	lcd_printf("%s\n\t", U_BOOT_VERSION);
 	lcd_puts("\n\t\tBoard Info:\n");
@@ -320,7 +320,7 @@ static void download_menu(void)
 
 static void display_mode_info(void)
 {
-	lcd_position_cursor(4, 4);
+	lcd_set_position_cursor(4, 4);
 	lcd_printf("%s\n", U_BOOT_VERSION);
 	lcd_puts("\nDownload Mode Menu\n");
 #ifdef CONFIG_SYS_BOARD
