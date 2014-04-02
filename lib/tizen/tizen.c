@@ -62,11 +62,25 @@ void draw_thor_fail_screen(void)
 	bmp_display((unsigned long)download_fail_text, x, y);
 }
 
-void draw_thor_init_screen(void)
+static unsigned int tmp_msg_x, tmp_msg_y;
+
+void draw_thor_connected(void)
 {
-	lcd_clear();
-	lcd_printf("\n\n\tConnect USB cable for start THOR.");
-	lcd_printf("\n\n\tFor EXIT press POWERKEY 3 times.\n");
+	unsigned int prev_console_x, prev_console_y;
+
+	/* Get curent lcd xy */
+	lcd_get_position_cursor(&prev_console_x, &prev_console_y);
+
+	/* Set proper lcd xy position for clean unneeded messages */
+	lcd_set_position_cursor(tmp_msg_x, tmp_msg_y);
+	lcd_puts("\n\n                                          ");
+	lcd_puts("\n\n                                          ");
+
+	lcd_set_position_cursor(tmp_msg_x, tmp_msg_y);
+	lcd_printf("\n\n\tConnection established.");
+
+	/* Restore last lcd x y position */
+	lcd_set_position_cursor(prev_console_x, prev_console_y);
 }
 
 void draw_thor_screen(void)
@@ -74,6 +88,22 @@ void draw_thor_screen(void)
 	int x, y;
 
 	lcd_clear();
+	lcd_printf("\n\n\tTHOR Tizen Downloader");
+
+	lcd_printf("\n\n\tU-BOOT bootloader info:");
+	lcd_printf("\n\tCompilation date: %s\n\tBinary version: %s\n",
+		   U_BOOT_DATE, PLAIN_VERSION);
+
+	char *pit_compatible = getenv("dfu_alt_pit_compatible");
+	if (pit_compatible) {
+		lcd_printf("\tPlatform compatible with PIT Version: %s\n",
+			   pit_compatible);
+	};
+
+	lcd_get_position_cursor(&tmp_msg_x, &tmp_msg_y);
+
+	lcd_printf("\n\n\tPlease connect USB cable.");
+	lcd_printf("\n\n\tFor EXIT press POWERKEY 3 times.\n");
 
 	x = 199 + LOGO_X_OFS;
 	y = 272 + LOGO_Y_OFS;
@@ -90,15 +120,6 @@ void draw_thor_screen(void)
 
 	bmp_display((unsigned long)prog_base, x, y);
 
-	lcd_printf("%s (%s)\n", U_BOOT_VERSION, U_BOOT_DATE);
-
-	lcd_printf("\nConnection established\n");
-
-	char *pit_compatible = getenv("dfu_alt_pit_compatible");
-	if (pit_compatible) {
-		lcd_printf("Platform compatible with PIT Version: %s\n",
-			   pit_compatible);
-	};
 }
 
 void draw_thor_progress(unsigned long long int total_file_size,
