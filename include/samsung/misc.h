@@ -21,6 +21,7 @@ void check_boot_mode(void);
 #ifdef CONFIG_LCD_MENU
 enum {
 	BOOT_MODE_INFO,
+	BOOT_MODE_BATT,
 	BOOT_MODE_THOR,
 	BOOT_MODE_UMS,
 	BOOT_MODE_DFU,
