@@ -167,6 +167,7 @@ int check_keys(void)
 static char *
 mode_name[BOOT_MODE_EXIT + 1][2] = {
 	{"DEVICE", ""},
+	{"BATTERY", "battery"},
 	{"THOR", "thor"},
 	{"UMS", "ums"},
 	{"DFU", "dfu"},
@@ -178,6 +179,7 @@ mode_name[BOOT_MODE_EXIT + 1][2] = {
 static char *
 mode_info[BOOT_MODE_EXIT + 1] = {
 	"info",
+	"charge level",
 	"downloader",
 	"mass storage",
 	"firmware update",
@@ -189,6 +191,7 @@ mode_info[BOOT_MODE_EXIT + 1] = {
 static char *
 mode_cmd[BOOT_MODE_EXIT + 1] = {
 	"",
+	"battery state",
 	"thor 0 mmc 0",
 	"ums 0 mmc 0",
 	"dfu 0 mmc 0",
