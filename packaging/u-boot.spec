@@ -48,13 +48,15 @@ and modify U-Boot's environment.
 %build
 cp %{SOURCE1001} .
 
+CONFIG=trats2_config
+
 make mrproper
 
 # Build dtc
 make HOSTCC="gcc $RPM_OPT_FLAGS" -C tools/dtc
 
 # Set configuration
-make trats2_config
+make $CONFIG
 
 # Build tools
 make HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
@@ -66,9 +68,11 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 %endif
 
 # Build u-boot
-export PATH="$PATH:tools/dtc/"
+export PATH="$PATH:tools:tools/dtc/"
 make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
-cp u-boot-dtb.bin u-boot-mmc.bin
+# Sign u-boot-dtb.bin - output is: u-boot-mmc.bin
+chmod 755 tools/mkimage_signed.sh
+mkimage_signed.sh u-boot-dtb.bin $CONFIG
 
 %install
 rm -rf %{buildroot}
