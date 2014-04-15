@@ -74,6 +74,13 @@ make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'
 chmod 755 tools/mkimage_signed.sh
 mkimage_signed.sh u-boot-dtb.bin $CONFIG
 
+# Generate params.bin
+cp `find . -name "env_common.o"` copy_env_common.o
+objcopy -O binary --only-section=.rodata.default_environment `find . -name "copy_env_common.o"`
+tr '\0' '\n' < copy_env_common.o > default_envs.txt
+mkenvimage -s 4096 -o params.bin default_envs.txt
+rm copy_env_common.o default_envs.txt
+
 %install
 rm -rf %{buildroot}
 
@@ -88,6 +95,7 @@ mkdir -p %{buildroot}/var/tmp/u-boot
 install -d %{buildroot}/var/tmp/u-boot
 install -m 755 u-boot.bin %{buildroot}/var/tmp/u-boot
 install -m 755 u-boot-mmc.bin %{buildroot}/var/tmp/u-boot
+install -m 755 params.bin %{buildroot}/var/tmp/u-boot
 
 %clean
 
