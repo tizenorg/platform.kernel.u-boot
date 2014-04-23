@@ -1945,6 +1945,7 @@ void set_dp_phy_ctrl(unsigned int enable);
 
 #define EXYNOS_DP_PHY_ENABLE		(1 << 0)
 
+#define EXYNOS_PS_HOLD_CONTROL_EN_OUTPUT	(1 << 9)
 #define EXYNOS_PS_HOLD_CONTROL_DATA_HIGH	(1 << 8)
 #define POWER_ENABLE_HW_TRIP			(1UL << 31)
 
