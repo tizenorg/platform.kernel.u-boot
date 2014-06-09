@@ -102,6 +102,7 @@ obj-$(CONFIG_CMD_PCI) += pci.o
 endif
 obj-y += pcmcia.o
 obj-$(CONFIG_CMD_PORTIO) += portio.o
+obj-$(CONFIG_CMD_POWEROFF) += poweroff.o
 obj-$(CONFIG_CMD_PXE) += pxe.o
 obj-$(CONFIG_CMD_READ) += read.o
 obj-$(CONFIG_CMD_REGINFO) += reginfo.o
