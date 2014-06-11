@@ -159,6 +159,9 @@
 	"partitions=" TIZEN_PARTITIONS_V8 \
 	"dfu_alt_info=" TIZEN_DFU_ALT_INFO_V8 \
 	"dfu_alt_pit_compatible=" TIZEN_DFU_ALT_VERSION \
+	"dfu_usb_con=0\0" \
+	"dfu_interface=mmc\0" \
+	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
 	"spladdr=0x40000100\0" \
 	"splsize=0x200\0" \
 	"splfile=falcon.bin\0" \

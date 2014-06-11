@@ -136,6 +136,9 @@
 	"partitions=" TIZEN_PARTITIONS_V8 \
 	"dfu_alt_info=" TIZEN_DFU_ALT_INFO_V8 \
 	"dfu_alt_pit_compatible=" TIZEN_DFU_ALT_VERSION \
+	"dfu_usb_con=0\0" \
+	"dfu_interface=mmc\0" \
+	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
 	"uartpath=ap\0" \
 	"usbpath=ap\0" \
 	"consoleon=set console console=ttySAC2,115200n8; save; reset\0" \
