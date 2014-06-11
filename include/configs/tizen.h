@@ -137,6 +137,9 @@
 	"mmcrootdev=0\0" \
 	"bootdelay=0\0" \
 	"dfu_alt_info=Please reset the board.\0" \
+	"dfu_usb_con=0\0" \
+	"dfu_interface=mmc\0" \
+	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
 	"consoleon=set console console=ttySAC1,115200n8; save; reset\0" \
 	"consoleoff=set console console=ram; save; reset\0" \
 	"initrdname=uInitrd\0" \
