@@ -729,9 +729,9 @@ int thor_init(void)
 	debug("THOR enumeration/configuration setting....\n");
 	while (!dev->configuration_done) {
 		usb_gadget_handle_interrupts();
-
+#ifdef CONFIG_LCD_MENU
 		power_key_cnt += key_pressed(KEY_POWER);
-
+#endif
 		if (ctrlc() || power_key_cnt >= 3) {
 #ifdef CONFIG_BOOT_INFORM
 			boot_inform_clear();
