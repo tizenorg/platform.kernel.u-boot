@@ -1,0 +1,6 @@
+ODROID BOARD
+M:	Przemyslaw Marczak <p.marczak@samsung.com>
+S:	Maintained
+F:	board/samsung/common/
+F:	include/configs/tizen.h
+F:	configs/tizen_defconfig
