@@ -9,6 +9,7 @@ obj-$(CONFIG_SOFT_I2C_MULTI_BUS) += multi_i2c.o
 obj-$(CONFIG_USBDOWNLOAD_GADGET) += gadget.o
 obj-$(CONFIG_MISC_COMMON) += misc.o
 obj-$(CONFIG_SIG) += sig_header.o
+obj-$(CONFIG_OF_MULTI)	+= exynos4-dt.o
 
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_BOARD_COMMON)	+= board.o
