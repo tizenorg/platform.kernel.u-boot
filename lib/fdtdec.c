@@ -1037,6 +1037,10 @@ int fdtdec_decode_memory_region(const void *blob, int config_node,
 	return 0;
 }
 
+#if defined CONFIG_OF_MULTI
+unsigned long *get_board_fdt(void);
+#endif
+
 int fdtdec_setup(void)
 {
 #ifdef CONFIG_OF_CONTROL
@@ -1047,6 +1051,8 @@ int fdtdec_setup(void)
 #  ifdef CONFIG_SPL_BUILD
 	/* FDT is at end of BSS */
 	gd->fdt_blob = (ulong *)&__bss_end;
+#  elif defined CONFIG_OF_MULTI
+	gd->fdt_blob = get_board_fdt();
 #  else
 	/* FDT is at end of image */
 	gd->fdt_blob = (ulong *)&_end;
