@@ -1173,6 +1173,10 @@ int fdtdec_decode_display_timing(const void *blob, int parent, int index,
 	return 0;
 }
 
+#if defined CONFIG_OF_MULTI
+unsigned long *get_board_fdt(void);
+#endif
+
 int fdtdec_setup(void)
 {
 #if CONFIG_IS_ENABLED(OF_CONTROL)
@@ -1186,6 +1190,8 @@ int fdtdec_setup(void)
 		gd->fdt_blob = (ulong *)&_image_binary_end;
 	else
 		gd->fdt_blob = (ulong *)&__bss_end;
+#  elif defined CONFIG_OF_MULTI
+	gd->fdt_blob = get_board_fdt();
 #  else
 	/* FDT is at end of image */
 	gd->fdt_blob = (ulong *)&_end;
