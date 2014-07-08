@@ -335,6 +335,9 @@ static int setup_ram_buf(void)
 }
 #endif
 
+#if defined CONFIG_OF_MULTI
+unsigned long *get_board_fdt(void);
+#endif
 static int setup_fdt(void)
 {
 #ifdef CONFIG_OF_CONTROL
@@ -342,8 +345,12 @@ static int setup_fdt(void)
 	/* Get a pointer to the FDT */
 	gd->fdt_blob = __dtb_dt_begin;
 # elif defined CONFIG_OF_SEPARATE
+#if defined CONFIG_OF_MULTI
+	gd->fdt_blob = get_board_fdt();
+#else
 	/* FDT is at end of image */
 	gd->fdt_blob = (ulong *)&_end;
+#endif /* CONFIG_OF_MULTI */
 # elif defined(CONFIG_OF_HOSTFILE)
 	if (read_fdt_from_file()) {
 		puts("Failed to read control FDT\n");
