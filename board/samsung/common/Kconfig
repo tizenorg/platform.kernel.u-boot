@@ -1,0 +1,12 @@
+if TARGET_TIZEN
+
+config SYS_BOARD
+	default "common"
+
+config SYS_VENDOR
+	default "samsung"
+
+config SYS_CONFIG_NAME
+	default "tizen"
+
+endif
