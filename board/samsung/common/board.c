@@ -74,7 +74,7 @@ static void boot_temp_check(void)
 
 int board_init(void)
 {
-	gd->bd->bi_boot_params = (PHYS_SDRAM_1 + 0x100UL);
+	gd->bd->bi_boot_params = (CONFIG_SYS_SDRAM_BASE + 0x100UL);
 #if defined CONFIG_EXYNOS_TMU
 	if (tmu_init(gd->fdt_blob) != TMU_STATUS_NORMAL) {
 		debug("%s: Failed to init TMU\n", __func__);
