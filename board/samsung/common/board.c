@@ -89,18 +89,45 @@ int board_init(void)
 int dram_init(void)
 {
 	int i;
+#ifdef CONFIG_FDTDEC_MEMORY
+	int dram_banks;
+
+	uint64_t mem_size[CONFIG_NR_DRAM_BANKS];
+
+	dram_banks = fdtdec_decode_memory(gd->fdt_blob, NULL, mem_size,
+					  CONFIG_NR_DRAM_BANKS);
+
+	for (i = 0; i < dram_banks; i++)
+		gd->ram_size += (uint32_t)mem_size[i];
+
+#else
 	u32 addr;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
 		addr = CONFIG_SYS_SDRAM_BASE + (i * SDRAM_BANK_SIZE);
 		gd->ram_size += get_ram_size((long *)addr, SDRAM_BANK_SIZE);
 	}
+#endif
 	return 0;
 }
 
 void dram_init_banksize(void)
 {
 	int i;
+#ifdef CONFIG_FDTDEC_MEMORY
+	int dram_banks;
+
+	uint64_t mem_addr[CONFIG_NR_DRAM_BANKS];
+	uint64_t mem_size[CONFIG_NR_DRAM_BANKS];
+
+	dram_banks = fdtdec_decode_memory(gd->fdt_blob, mem_addr, mem_size,
+					  CONFIG_NR_DRAM_BANKS);
+
+	for (i = 0; i < dram_banks; i++) {
+		gd->bd->bi_dram[i].start = (uint32_t)mem_addr[i];
+		gd->bd->bi_dram[i].size = (uint32_t)mem_size[i];
+	}
+#else
 	u32 addr, size;
 
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
@@ -110,6 +137,7 @@ void dram_init_banksize(void)
 		gd->bd->bi_dram[i].start = addr;
 		gd->bd->bi_dram[i].size = size;
 	}
+#endif
 }
 
 static int board_uart_init(void)
