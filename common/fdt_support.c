@@ -1408,7 +1408,7 @@ u64 fdt_get_base_address(void *fdt, int node)
 /*
  * Read a property of size <prop_len>. Currently only supports 1 or 2 cells.
  */
-static int fdt_read_prop(const fdt32_t *prop, int prop_len, int cell_off,
+int fdt_read_prop(const fdt32_t *prop, int prop_len, int cell_off,
 			 uint64_t *val, int cells)
 {
 	const fdt32_t *prop32 = &prop[cell_off];
