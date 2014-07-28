@@ -721,6 +721,34 @@ enum fmap_hash_t {
 	FMAP_HASH_SHA256,
 };
 
+/**
+ * fdt_decode_memory: Find a memory node, fill start, size arrays,
+ *                    and return filled banks number.
+ *
+ * @blob: ptr to device tree
+ * @start: ptr to banks start address array
+ * @size: ptr to banks size array
+ * @max_banks: max number of banks to fill
+ *
+ * @Returns number of filled banks or 0 on error.
+ *
+ * To get the size of each memory bank only, the @start pointer can be NULL.
+ * The same with bank start address if the @size pointer is NULL.
+ *
+ * Currently supports a single memory node with multiple ranges
+ * specified by the reg property with address and size cells size
+ * specified in a root node.
+ *      memory {
+ *              device_type = "memory";
+ *              reg = <0x40000000 0x10000000 ...
+ *                     0x50000000 0x10000000 ...
+ *                     ...        ...      >;
+ *      };
+ *
+*/
+int fdtdec_decode_memory(const void *blob, uint64_t start[], uint64_t size[],
+			 int max_banks);
+
 /* A flash map entry, containing an offset and length */
 struct fmap_entry {
 	uint32_t offset;

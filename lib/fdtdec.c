@@ -11,6 +11,7 @@
 #include <fdtdec.h>
 #include <asm/sections.h>
 #include <linux/ctype.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -885,6 +886,112 @@ int fdtdec_decode_region(const void *blob, int node, const char *prop_name,
 	      (ulong)*sizep);
 
 	return 0;
+}
+
+int fdtdec_decode_memory(const void *blob, uint64_t start[],
+			     uint64_t size[], int max_banks)
+{
+	const fdt32_t *reg;
+	const fdt32_t *cell;
+	uint64_t val;
+	int node_off;
+	int reg_len, reg_cells;
+	int addr_len, addr_cells, size_len, size_cells;
+	int bank_len, bank_cells, bank_count, reg_banks;
+	int cell_off;
+	int err, i;
+
+	debug("# DBG: start: %s\n", __func__);
+
+	if (!start && !size)
+		return 0;
+
+	/* Get parent address bytes len */
+	cell = fdt_getprop(blob, 0, "#address-cells", NULL);
+	if (cell)
+		addr_cells = fdt32_to_cpu(*cell);
+	else
+		addr_cells = 1;
+
+	cell = fdt_getprop(blob, 0, "#size-cells", NULL);
+	if (cell)
+		size_cells = fdt32_to_cpu(*cell);
+	else
+		size_cells = 1;
+
+	bank_cells = addr_cells + size_cells;
+
+	/* Get len in bytes */
+	addr_len = addr_cells << 2;
+	size_len = size_cells << 2;
+	bank_len = addr_len + size_len;
+
+	debug("# DBG: parent: addr_cells: %x size_cells: %x\n", addr_cells,
+								size_cells);
+	debug("# DBG: parent: addr_len:%x [B] size_len:%x [B]\n", addr_len,
+								  size_len);
+	debug("# DBG: bank: len: %x [B] cells: %x\n", bank_len, bank_cells);
+
+	/* Check if memory node exists */
+	node_off = fdt_path_offset(blob, "/memory");
+	debug("# DBG: fdt path offset: %d\n", node_off);
+
+	if (node_off < 0) {
+		debug("# DBG: fdt path not found: error: %x\n", node_off);
+		return 0;
+	}
+
+	reg = (uint32_t *)fdt_getprop(blob, node_off, "reg", &reg_len);
+	if (!reg) {
+		debug("# DBG: fdt prop: reg - not found.\n");
+		return 0;
+	}
+	reg_banks = reg_len / bank_len;
+	reg_cells = reg_banks * bank_cells;
+	debug("# DBG: Reg: len: %d [B]; cells: %d; banks:%d\n", reg_len,
+								 reg_cells,
+								 reg_banks);
+
+	if (reg_banks > max_banks) {
+		bank_count = max_banks;
+		debug("# DBG: Warning! Can init only:%d banks!", bank_count);
+	} else {
+		bank_count = reg_banks;
+		debug("# DBG: Warning! Found:%d banks!", bank_count);
+	}
+
+	debug("\n# DBG: setting banks info:\n");
+
+	cell_off = 0;
+	for (i = 0; i < bank_count; i++) {
+		if (start) {
+			err = fdt_read_prop(reg, reg_cells, cell_off, &val,
+					    addr_cells);
+			if (err)
+				return 0;
+
+			start[i] = val;
+			debug("# DBG: start: %#llx\n", val);
+		}
+
+		cell_off += addr_cells;
+
+		if (size) {
+			err = fdt_read_prop(reg, reg_cells, cell_off, &val,
+				    size_cells);
+			if (err)
+				return 0;
+
+			size[i] = val;
+			debug("# DBG: size: %#llx\n", val);
+		}
+
+		cell_off += size_cells;
+	}
+
+	debug("# DBG: %s: finished\n", __func__);
+
+	return i;
 }
 
 /**
