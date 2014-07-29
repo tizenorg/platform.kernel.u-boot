@@ -71,5 +71,10 @@ const char *get_board_type(void);
 const char *get_board_name(void);
 #endif
 #endif
+#ifdef CONFIG_OF_MULTI
+int board_is_trats2(void);
+int board_is_odroid_x2(void);
+int board_is_odroid_u3(void);
+#endif
 
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
