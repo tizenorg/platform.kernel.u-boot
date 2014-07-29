@@ -55,6 +55,9 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+/* FS common */
+#define CONFIG_CMD_FS_GENERIC
+
 /* PWM */
 #define CONFIG_PWM
 
