@@ -20,6 +20,7 @@
 #include <asm/arch/dp_info.h>
 #include <asm/arch/system.h>
 #include <asm-generic/errno.h>
+#include <samsung/misc.h>
 
 #include "exynos_fb.h"
 
@@ -282,6 +283,10 @@ int exynos_fimd_parse_dt(const void *blob)
 
 void lcd_ctrl_init(void *lcdbase)
 {
+#ifdef CONFIG_OF_MULTI
+	if (!board_is_trats2())
+		return;
+#endif
 	set_system_display_ctrl();
 	set_lcd_clk();
 
