@@ -80,6 +80,9 @@
 #define CONFIG_BOOTDELAY 1
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 
+/* FS common */
+#define CONFIG_CMD_FS_GENERIC
+
 /* FAT */
 #define CONFIG_CMD_FAT
 #define CONFIG_FAT_WRITE
