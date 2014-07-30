@@ -67,6 +67,9 @@ void set_dfu_alt_info(void);
 #ifdef CONFIG_BOARD_TYPES
 void set_board_type(void);
 const char *get_board_type(void);
+#ifdef CONFIG_OF_MULTI
+const char *get_board_name(void);
+#endif
 #endif
 
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
