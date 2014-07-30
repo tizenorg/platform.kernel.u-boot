@@ -88,6 +88,9 @@ void set_board_info(void)
 	if (!bdtype)
 		bdtype = "";
 
+#ifdef CONFIG_OF_MULTI
+	bdname = get_board_name();
+#endif
 	sprintf(info, "%s%s", bdname, bdtype);
 	setenv("boardname", info);
 #endif
