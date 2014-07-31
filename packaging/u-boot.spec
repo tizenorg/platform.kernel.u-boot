@@ -48,7 +48,7 @@ and modify U-Boot's environment.
 %build
 cp %{SOURCE1001} .
 
-CONFIG=trats2_config
+CONFIG=tizen_defconfig
 
 make mrproper
 
@@ -70,9 +70,14 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 # Build u-boot
 export PATH="$PATH:tools:tools/dtc/"
 make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
-# Sign u-boot-dtb.bin - output is: u-boot-mmc.bin
+
+# Prepare proper dtb image: cat u-boot.bin multi.dtb > u-boot-multi.bin
+chmod 755 tools/mkimage_multidtb.sh
+mkimage_multidtb.sh u-boot.bin
+
+# Sign u-boot-multi.bin - output is: u-boot-mmc.bin
 chmod 755 tools/mkimage_signed.sh
-mkimage_signed.sh u-boot-dtb.bin $CONFIG
+mkimage_signed.sh u-boot-multi.bin $CONFIG
 
 # Generate params.bin
 cp `find . -name "env_common.o"` copy_env_common.o
