@@ -33,7 +33,7 @@ if [ $# != $INPUT_ARGS ]; then
 	echo "Usage:"
 	echo "./mksigimage.sh input.bin config"
 	echo "e.g.:"
-	echo "./mksigimage.sh u-boot-dtb.bin trats2_config"
+	echo "./mksigimage.sh u-boot-multi.bin tizen_config"
 	exit
 fi
 
@@ -63,10 +63,10 @@ echo -n "BoOt" > sig-magic
 echo -n `date +%Y%m%d%H` > sig-date
 echo -n "none" > sig-product
 
-if [ $CONFIG == "trats_config" ]; then
-	echo -n "slp_u1" > sig-board
-else
+if [ $CONFIG == "tizen_defconfig" ]; then
 	echo -n "slp_midasq" > sig-board
+else
+	echo -n "slp_u1" > sig-board
 fi
 
 cat sig-magic /dev/zero | head -c 12 > sig-tmp
