@@ -1,5 +1,5 @@
 Name: u-boot
-Version: 2014.04
+Version: 2015.04
 Release: 1%{?dist}
 Summary: Das U-Boot - Tizen bootloader
 Group: System/Kernel
@@ -48,7 +48,7 @@ and modify U-Boot's environment.
 %build
 cp %{SOURCE1001} .
 
-CONFIG=trats2_config
+CONFIG=tizen_defconfig
 
 make mrproper
 
@@ -59,7 +59,7 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" -C tools/dtc
 make $CONFIG
 
 # Build tools
-make HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
+make %{?_smp_mflags} HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
 
 %if 1%{?use_mmc_storage}
 make HOSTCC="gcc $RPM_OPT_FLAGS" CONFIG_ENV_IS_IN_MMC=y env
@@ -69,16 +69,21 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 
 # Build u-boot
 export PATH="$PATH:tools:tools/dtc/"
-make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
-# Sign u-boot-dtb.bin - output is: u-boot-mmc.bin
+make %{?_smp_mflags} EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
+
+# Prepare proper dtb image: cat u-boot.bin multi.dtb > u-boot-multi.bin
+chmod 755 tools/mkimage_multidtb.sh
+mkimage_multidtb.sh u-boot.bin
+
+# Sign u-boot-multi.bin - output is: u-boot-mmc.bin
 chmod 755 tools/mkimage_signed.sh
-mkimage_signed.sh u-boot-dtb.bin $CONFIG
+mkimage_signed.sh u-boot-multi.bin $CONFIG
 
 # Generate params.bin
 cp `find . -name "env_common.o"` copy_env_common.o
 objcopy -O binary --only-section=.rodata.default_environment `find . -name "copy_env_common.o"`
 tr '\0' '\n' < copy_env_common.o > default_envs.txt
-mkenvimage -s 4096 -o params.bin default_envs.txt
+mkenvimage -s 16384 -o params.bin default_envs.txt
 rm copy_env_common.o default_envs.txt
 
 %install
