@@ -263,6 +263,24 @@ int dfu_read_medium_mmc(struct dfu_entity *dfu, u64 offset, void *buf,
 	return ret;
 }
 
+static int dfu_get_partition_info_by_name(block_dev_desc_t *dev_desc,
+					  const char *name,
+					  disk_partition_t *info)
+{
+	switch (dev_desc->part_type) {
+#ifdef CONFIG_EFI_PARTITION
+	case PART_TYPE_EFI:
+		if (get_partition_info_efi_by_name(dev_desc, name, info) == 0)
+			return 0;
+		break;
+#endif
+	default:
+		break;
+	}
+
+	return -EPERM;
+}
+
 /*
  * @param s Parameter string containing space-separated arguments:
  *	1st:
@@ -339,12 +357,17 @@ int dfu_fill_entity_mmc(struct dfu_entity *dfu, char *devstr, char *s)
 		int mmcdev = second_arg;
 		int mmcpart = third_arg;
 
+		if (dfu_get_partition_info_by_name(blk_dev, dfu->name,
+					&partinfo) == 0)
+			goto skip;
+
 		if (get_partition_info(blk_dev, mmcpart, &partinfo) != 0) {
 			error("Couldn't find part #%d on mmc device #%d\n",
 			      mmcpart, mmcdev);
 			return -ENODEV;
 		}
 
+skip:
 		dfu->layout			= DFU_RAW_ADDR;
 		dfu->data.mmc.lba_start		= partinfo.start;
 		dfu->data.mmc.lba_size		= partinfo.size;
