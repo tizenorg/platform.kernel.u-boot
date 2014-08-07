@@ -16,23 +16,43 @@
 
 static int do_dfu(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
+	char *usb_controller;
+	char *interface;
+	char *devstring;
+	int argv_list = 0;
+	int ret, i = 0;
 	bool dfu_reset = false;
 
-	if (argc < 4)
+	switch (argc) {
+	case 2:
+		argv_list = 1;
+	case 1:
+		usb_controller = strdup(getenv("dfu_usb_con"));
+		interface = strdup(getenv("dfu_interface"));
+		devstring = strdup(getenv("dfu_device"));
+
+		if (!usb_controller || !interface || !devstring) {
+			puts("DFU: default device environment is not set.\n");
+			ret = CMD_RET_USAGE;
+			goto bad_args;
+		}
+		break;
+	case 5:
+		argv_list = 4;
+	case 4:
+		usb_controller = argv[1];
+		interface = argv[2];
+		devstring = argv[3];
+		break;
+	default:
 		return CMD_RET_USAGE;
-
-	char *usb_controller = argv[1];
-	char *interface = argv[2];
-	char *devstring = argv[3];
-
-	int ret, i = 0;
+	}
 
 	ret = dfu_init_env_entities(interface, devstring);
 	if (ret)
 		goto done;
 
-	ret = CMD_RET_SUCCESS;
-	if (argc > 4 && strcmp(argv[4], "list") == 0) {
+	if (argv_list && !strcmp(argv[argv_list], "list")) {
 		dfu_show_entities();
 		goto done;
 	}
@@ -78,7 +98,12 @@ done:
 		run_command("reset", 0);
 
 	g_dnl_clear_detach();
-
+bad_args:
+	if (argc == 1) {
+		free(usb_controller);
+		free(interface);
+		free(devstring);
+	}
 	return ret;
 }
 
