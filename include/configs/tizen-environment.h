@@ -27,7 +27,10 @@
 #define PARTS_DATA		"data"
 #define PARTS_UMS		"ums"
 
-#define PARTS_TIZEN \
+#define PARTS_ODROID \
+	"This board uses MSDOS partition table."
+
+#define PARTS_TRATS2 \
 	"uuid_disk=${uuid_gpt_disk};" \
 	"name="PARTS_CSA",start=5MiB,size=8MiB,uuid=${uuid_gpt_"PARTS_CSA"};" \
 	"name="PARTS_BOOT",size=60MiB,uuid=${uuid_gpt_"PARTS_BOOT"};" \
