@@ -108,6 +108,9 @@ typedef struct global_data {
 	struct membuff console_out;	/* console output */
 	struct membuff console_in;	/* console input */
 #endif
+#ifdef CONFIG_OF_MULTI
+	void *priv;
+#endif
 } gd_t;
 #endif
 
