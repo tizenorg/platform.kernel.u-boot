@@ -66,9 +66,14 @@ done:
 	dfu_free_entities();
 
 #ifdef CONFIG_TIZEN
-	if (ret != CMD_RET_SUCCESS)
+	if (ret != CMD_RET_SUCCESS) {
+#ifdef CONFIG_OF_MULTI
+		if (board_is_trats2())
+			draw_thor_fail_screen();
+#else
 		draw_thor_fail_screen();
-	else
+#endif
+	} else
 		lcd_clear();
 #endif
 	return ret;
