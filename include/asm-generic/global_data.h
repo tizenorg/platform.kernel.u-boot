@@ -122,6 +122,9 @@ typedef struct global_data {
 	ulong video_top;		/* Top of video frame buffer area */
 	ulong video_bottom;		/* Bottom of video frame buffer area */
 #endif
+#ifdef CONFIG_OF_MULTI
+	void *priv;
+#endif
 } gd_t;
 #endif
 
