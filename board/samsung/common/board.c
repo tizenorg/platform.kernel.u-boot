@@ -21,10 +21,12 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
 #include <asm/arch/system.h>
+#include <malloc.h>
 #include <power/pmic.h>
 #include <asm/arch/sromc.h>
 #include <lcd.h>
 #include <samsung/misc.h>
+#include <samsung/multi-plat.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -90,16 +92,19 @@ int dram_init(void)
 {
 	int i;
 #ifdef CONFIG_FDTDEC_MEMORY
-	int dram_banks;
+	struct memory_info *mem;
 
-	uint64_t mem_size[CONFIG_NR_DRAM_BANKS];
+	mem = malloc(sizeof(struct memory_info));
 
-	dram_banks = fdtdec_decode_memory(gd->fdt_blob, NULL, mem_size,
+	mem->banks = fdtdec_decode_memory(gd->fdt_blob, &mem->addr[0],
+					  &mem->size[0],
 					  CONFIG_NR_DRAM_BANKS);
 
-	for (i = 0; i < dram_banks; i++)
-		gd->ram_size += (uint32_t)mem_size[i];
+	for (i = 0; i < mem->banks; i++)
+		gd->ram_size += (uint32_t)mem->size[i];
 
+	/* Save the mem_info for dram_init_banksize() */
+	gd->priv = mem;
 #else
 	u32 addr;
 
@@ -115,17 +120,11 @@ void dram_init_banksize(void)
 {
 	int i;
 #ifdef CONFIG_FDTDEC_MEMORY
-	int dram_banks;
+	struct memory_info *mem = gd->priv;
 
-	uint64_t mem_addr[CONFIG_NR_DRAM_BANKS];
-	uint64_t mem_size[CONFIG_NR_DRAM_BANKS];
-
-	dram_banks = fdtdec_decode_memory(gd->fdt_blob, mem_addr, mem_size,
-					  CONFIG_NR_DRAM_BANKS);
-
-	for (i = 0; i < dram_banks; i++) {
-		gd->bd->bi_dram[i].start = (uint32_t)mem_addr[i];
-		gd->bd->bi_dram[i].size = (uint32_t)mem_size[i];
+	for (i = 0; i < mem->banks ; i++) {
+		gd->bd->bi_dram[i].start = (uint32_t)mem->addr[i];
+		gd->bd->bi_dram[i].size = (uint32_t)mem->size[i];
 	}
 #else
 	u32 addr, size;
