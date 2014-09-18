@@ -9,6 +9,7 @@
 #define _LIBTIZEN_H_
 
 #include <lcd.h>
+#include <samsung/misc.h>
 
 #define HD_RESOLUTION	0
 
