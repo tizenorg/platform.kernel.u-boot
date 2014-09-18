@@ -165,8 +165,10 @@ static int board_uart_init(void)
 int board_early_init_f(void)
 {
 	int err;
+#ifndef CONFIG_OF_MULTI
 #ifdef CONFIG_BOARD_TYPES
 	set_board_type();
+#endif
 #endif
 	err = board_uart_init();
 	if (err) {
