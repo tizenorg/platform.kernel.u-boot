@@ -574,7 +574,13 @@ static int thor_rx_data(void)
 		data_to_rx -= dev->out_req->actual;
 #ifdef CONFIG_TIZEN
 		downloaded_file_size += dev->out_req->actual;
+#ifdef CONFIG_OF_MULTI
+		if (board_is_trats2())
+			draw_thor_progress(total_file_size,
+					   downloaded_file_size);
+#else
 		draw_thor_progress(total_file_size, downloaded_file_size);
+#endif
 #endif
 	} while (data_to_rx);
 
@@ -720,7 +726,12 @@ int thor_init(void)
 	int power_key_cnt = 0;
 
 #ifdef CONFIG_TIZEN
+#ifdef CONFIG_OF_MULTI
+	if (board_is_trats2())
+		draw_thor_screen();
+#else
 	draw_thor_screen();
+#endif
 #endif
 	/* Wait for a device enumeration and configuration settings */
 	debug("THOR enumeration/configuration setting....\n");
@@ -737,7 +748,12 @@ int thor_init(void)
 		}
 	}
 #ifdef CONFIG_TIZEN
+#ifdef CONFIG_OF_MULTI
+	if (board_is_trats2())
+		draw_thor_connected();
+#else
 	draw_thor_connected();
+#endif
 #endif
 	thor_set_dma(thor_rx_data_buf, strlen("THOR"));
 	/* detect the download request from Host PC */
