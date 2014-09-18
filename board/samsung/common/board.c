@@ -181,13 +181,19 @@ int board_early_init_f(void)
  * FB memory at a very early stage. So, we need to fill panel_info.vl_col,
  * panel_info.vl_row and panel_info.vl_bpix before lcd_setmem() is called.
  */
+#ifdef CONFIG_OF_MULTI
+	if (board_is_trats2())
+		err = exynos_lcd_early_init(gd->fdt_blob);
+	else
+		err = 0;
+#else
 	err = exynos_lcd_early_init(gd->fdt_blob);
+#endif
 	if (err) {
 		debug("LCD early init failed\n");
 		return err;
 	}
 #endif
-
 	return exynos_early_init_f();
 }
 #endif
