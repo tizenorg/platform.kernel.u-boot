@@ -93,6 +93,9 @@ typedef struct global_data {
 #endif
 	struct udevice *cur_serial_dev;	/* current serial device */
 	struct arch_global_data arch;	/* architecture-specific data */
+#ifdef CONFIG_OF_MULTI
+	void *priv;
+#endif
 } gd_t;
 #endif
 
