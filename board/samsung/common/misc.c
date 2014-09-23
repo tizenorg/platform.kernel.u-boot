@@ -92,6 +92,10 @@ void set_board_info(void)
 		 CONFIG_SYS_SOC, s5p_cpu_id, bdname, bdtype);
 	setenv("fdtfile", info);
 #endif
+	/* Set GPT layout for Trats2 */
+#ifdef CONFIG_OF_MULTI
+	setenv("partitions", board_is_trats2() ? PARTS_TRATS2 : PARTS_ODROID);
+#endif
 }
 #endif /* CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG */
 
