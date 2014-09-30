@@ -137,6 +137,8 @@
 	"mmcrootdev=0\0" \
 	"bootdelay=0\0" \
 	"dfu_alt_info=Please reset the board.\0" \
+	"dfu_alt_system_trats2="DFU_ALT_SYSTEM_TRATS2 \
+	"dfu_alt_system_odroid="DFU_ALT_SYSTEM_ODROID \
 	"dfu_usb_con=0\0" \
 	"dfu_interface=mmc\0" \
 	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
