@@ -94,12 +94,12 @@
 		" rootwait ${console} ${opts}\0" \
 	"checkboard=" \
 		"if test ${boardname} = trats2; then " \
-			"setenv mmcbootpart 2;" \
-			"setenv mmcrootpart 5;" \
+			"setenv mmcbootpart $bootpart_trats2;" \
+			"setenv mmcrootpart $rootpart_trats2;" \
 			"setenv console" CONFIG_CONSOLE_TTY2";" \
 		"else " \
-			"setenv mmcbootpart 1;" \
-			"setenv mmcrootpart 2;" \
+			"setenv mmcbootpart $bootpart_odroid;" \
+			"setenv mmcrootpart $rootpart_odroid;" \
 			"setenv console" CONFIG_CONSOLE_TTY1";" \
 		"fi;\0" \
 	"boot_fit=" \
@@ -135,6 +135,10 @@
 		"fi;\0" \
 	"mmcbootdev=0\0" \
 	"mmcrootdev=0\0" \
+	"bootpart_trats2=2\0" \
+	"bootpart_odroid=1\0" \
+	"rootpart_trats2=5\0" \
+	"rootpart_odroid=2\0" \
 	"bootdelay=0\0" \
 	"dfu_alt_info=Please reset the board.\0" \
 	"dfu_alt_system_trats2="DFU_ALT_SYSTEM_TRATS2 \
