@@ -3,7 +3,7 @@
 
 #include <common.h>
 
-#ifdef CONFIG_OF_MULTI
+#ifdef CONFIG_FDTDEC_MEMORY
 struct memory_info {
 	uint64_t addr[CONFIG_NR_DRAM_BANKS];
 	uint64_t size[CONFIG_NR_DRAM_BANKS];

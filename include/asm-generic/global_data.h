@@ -92,7 +92,7 @@ typedef struct global_data {
 	unsigned long malloc_ptr;	/* current address */
 #endif
 	struct arch_global_data arch;	/* architecture-specific data */
-#ifdef CONFIG_OF_MULTI
+#ifdef CONFIG_FDTDEC_MEMORY
 	void *priv;
 #endif
 } gd_t;
