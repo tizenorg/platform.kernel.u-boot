@@ -1,0 +1,4 @@
+ODROID-XU3 BOARD
+F:	board/samsung/odroid-xu3/
+F:	include/configs/odroid_xu3.h
+F:	configs/odroid-xu3_defconfig
