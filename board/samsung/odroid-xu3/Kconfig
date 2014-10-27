@@ -1,0 +1,12 @@
+if TARGET_ODROID_XU3
+
+config SYS_BOARD
+	default "odroid-xu3"
+
+config SYS_VENDOR
+	default "samsung"
+
+config SYS_CONFIG_NAME
+	default "odroid_xu3"
+
+endif
