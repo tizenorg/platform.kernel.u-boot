@@ -62,6 +62,8 @@ static inline int s5p_name_to_gpio(const char *name)
 			irregular_bank_name = 'y';
 			irregular_set_number = '7';
 			irregular_bank_base = EXYNOS5420_GPIO_Y70;
+		} else if (proid_is_exynos5422()) {
+			tabp = exynos5422_gpio_table;
 		} else {
 			tabp = exynos5_gpio_table;
 			irregular_bank_name = 'c';

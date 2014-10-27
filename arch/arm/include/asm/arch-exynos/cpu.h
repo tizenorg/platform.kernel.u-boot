@@ -217,6 +217,10 @@ static inline void s5p_set_cpu_id(void)
 		/* Exynos5420 */
 		s5p_cpu_id = 0x5420;
 		break;
+	case 0x422:
+		/* Exynos5422 */
+		s5p_cpu_id = 0x5422;
+		break;
 	}
 }
 
@@ -245,6 +249,7 @@ IS_EXYNOS_TYPE(exynos4210, 0x4210)
 IS_EXYNOS_TYPE(exynos4412, 0x4412)
 IS_EXYNOS_TYPE(exynos5250, 0x5250)
 IS_EXYNOS_TYPE(exynos5420, 0x5420)
+IS_EXYNOS_TYPE(exynos5422, 0x5422)
 
 #define SAMSUNG_BASE(device, base)				\
 static inline unsigned int __attribute__((no_instrument_function)) \
@@ -255,7 +260,7 @@ static inline unsigned int __attribute__((no_instrument_function)) \
 			return EXYNOS4X12_##base;		\
 		return EXYNOS4_##base;				\
 	} else if (cpu_is_exynos5()) {				\
-		if (proid_is_exynos5420())			\
+		if (proid_is_exynos5420() || proid_is_exynos5422())	\
 			return EXYNOS5420_##base;		\
 		return EXYNOS5_##base;				\
 	}							\

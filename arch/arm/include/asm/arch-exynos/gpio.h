@@ -1368,11 +1368,21 @@ static struct gpio_info exynos5420_gpio_data[EXYNOS5420_GPIO_NUM_PARTS] = {
 	{ EXYNOS5420_GPIO_PART5_BASE, EXYNOS5420_GPIO_MAX_PORT },
 };
 
+#define EXYNOS5422_GPIO_NUM_PARTS	4
+static struct gpio_info exynos5422_gpio_data[EXYNOS5422_GPIO_NUM_PARTS] = {
+	{ EXYNOS5420_GPIO_PART1_BASE, EXYNOS5420_GPIO_MAX_PORT_PART_1 },
+	{ EXYNOS5420_GPIO_PART2_BASE, EXYNOS5420_GPIO_MAX_PORT_PART_2 },
+	{ EXYNOS5420_GPIO_PART3_BASE, EXYNOS5420_GPIO_MAX_PORT_PART_3 },
+	{ EXYNOS5420_GPIO_PART4_BASE, EXYNOS5420_GPIO_MAX_PORT_PART_4 },
+};
+
 static inline struct gpio_info *get_gpio_data(void)
 {
 	if (cpu_is_exynos5()) {
 		if (proid_is_exynos5420())
 			return exynos5420_gpio_data;
+		else if (proid_is_exynos5422())
+			return exynos5422_gpio_data;
 		else
 			return exynos5_gpio_data;
 	} else if (cpu_is_exynos4()) {
@@ -1390,6 +1400,8 @@ static inline unsigned int get_bank_num(void)
 	if (cpu_is_exynos5()) {
 		if (proid_is_exynos5420())
 			return EXYNOS5420_GPIO_NUM_PARTS;
+	else if (proid_is_exynos5422())
+			return EXYNOS5422_GPIO_NUM_PARTS;
 		else
 			return EXYNOS5_GPIO_NUM_PARTS;
 	} else if (cpu_is_exynos4()) {
@@ -1490,6 +1502,21 @@ static const struct gpio_name_num_table exynos5420_gpio_table[] = {
 	GPIO_ENTRY('b', EXYNOS5420_GPIO_B00, EXYNOS5420_GPIO_H00, 0),
 	GPIO_ENTRY('h', EXYNOS5420_GPIO_H00, EXYNOS5420_GPIO_Z0, 0),
 	GPIO_ENTRY('z', EXYNOS5420_GPIO_Z0, EXYNOS5420_GPIO_MAX_PORT, 0),
+	{ 0 }
+};
+
+static const struct gpio_name_num_table exynos5422_gpio_table[] = {
+	GPIO_ENTRY('x', EXYNOS5420_GPIO_X00, EXYNOS5420_GPIO_C00, 0),
+	GPIO_ENTRY('c', EXYNOS5420_GPIO_C00, EXYNOS5420_GPIO_D10, 0),
+	GPIO_ENTRY('d', EXYNOS5420_GPIO_D10, EXYNOS5420_GPIO_Y00, 0),
+	GPIO_ENTRY('y', EXYNOS5420_GPIO_Y00, EXYNOS5420_GPIO_E00, 0),
+	GPIO_ENTRY('e', EXYNOS5420_GPIO_E00, EXYNOS5420_GPIO_F00, 0),
+	GPIO_ENTRY('f', EXYNOS5420_GPIO_F00, EXYNOS5420_GPIO_G00, 0),
+	GPIO_ENTRY('g', EXYNOS5420_GPIO_G00, EXYNOS5420_GPIO_J40, 0),
+	GPIO_ENTRY('j', EXYNOS5420_GPIO_J40, EXYNOS5420_GPIO_A00, 0),
+	GPIO_ENTRY('a', EXYNOS5420_GPIO_A00, EXYNOS5420_GPIO_B00, 0),
+	GPIO_ENTRY('b', EXYNOS5420_GPIO_B00, EXYNOS5420_GPIO_H00, 0),
+	GPIO_ENTRY('h', EXYNOS5420_GPIO_H00, EXYNOS5420_GPIO_Z0, 0),
 	{ 0 }
 };
 
