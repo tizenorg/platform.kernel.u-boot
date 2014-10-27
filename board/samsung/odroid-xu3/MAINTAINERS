@@ -1,0 +1,6 @@
+ODROID-XU3 BOARD
+M:	Hyungwon Hwang <human.hwang@samsung.com>
+S:	Maintained
+F:	board/samsung/odroid-xu3/
+F:	include/configs/odroid_xu3.h
+F:	configs/odroid-xu3_defconfig

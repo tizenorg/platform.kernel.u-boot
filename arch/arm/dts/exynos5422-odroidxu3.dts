@@ -1,0 +1,72 @@
+/*
+ * Odroid XU3 device tree source
+ *
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/dts-v1/;
+/include/ "exynos54xx.dtsi"
+
+/ {
+	model = "Odroid XU3 based on EXYNOS5422";
+	compatible = "samsung,odroidxu3", "samsung,exynos5";
+
+	config {
+		hwid = "smdk5420 TEST A-A 9382";
+	};
+
+	aliases {
+		serial0 = "/serial@12C00000";
+		console = "/serial@12C20000";
+	};
+
+	memory {
+		device_type = "memory";
+		reg =  <0x40000000 0x10000000
+			0x50000000 0x10000000
+			0x60000000 0x10000000
+			0x70000000 0x10000000
+			0x80000000 0x10000000
+			0x90000000 0x10000000
+			0xa0000000 0x10000000
+			0xb0000000 0xfa00000>;
+	};
+
+	serial@12C20000 {
+		status="okay";
+	};
+
+	/* s2mps11 is on i2c bus 4 */
+	i2c@12ca0000 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		pmic@66 {
+			reg = <0x66>;
+			compatible = "samsung,s2mps11-pmic";
+		};
+	};
+
+	mmc@12200000 {
+		samsung,bus-width = <8>;
+		samsung,timing = <1 3 3>;
+		samsung,removable = <0>;
+		samsung,pre-init;
+	};
+
+	mmc@12210000 {
+		status = "disabled";
+	};
+
+	mmc@12220000 {
+		samsung,bus-width = <4>;
+		samsung,timing = <1 2 3>;
+		samsung,removable = <1>;
+	};
+
+	mmc@12230000 {
+		status = "disabled";
+	};
+};
