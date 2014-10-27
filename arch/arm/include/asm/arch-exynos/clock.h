@@ -1363,14 +1363,16 @@ struct set_epll_con_val {
 };
 #endif
 
-#ifdef CONFIG_EXYNOS4
-/* A/M PLL_CON0 */
 #define SDIV(x)			((x) & 0x7)
 #define PDIV(x)			((x & 0x3f) << 8)
 #define MDIV(x)			((x & 0x3ff) << 16)
 #define FSEL(x)			((x & 0x1) << 27)
 #define PLL_LOCKED_BIT		(0x1 << 29)
 #define PLL_ENABLE(x)		((x & 0x1) << 31)
+
+#define DIV_STAT_CHANGING	0x1
+
+#ifdef CONFIG_EXYNOS4
 
 /* CLK_SRC_CPU */
 #define MUX_APLL_SEL(x)		((x) & 0x1)
@@ -1409,7 +1411,6 @@ struct set_epll_con_val {
 #define DIV_APLL(x)		((x & 0x1) << 24)
 #define DIV_CORE2(x)		((x & 0x1) << 28)
 
-#define DIV_STAT_CHANGING	0x1
 #define DIV_STAT_CPU0_CHANGING	(DIV_CORE(DIV_STAT_CHANGING) | \
 				DIV_COREM0(DIV_STAT_CHANGING) | \
 				DIV_COREM1(DIV_STAT_CHANGING) | \
@@ -1432,6 +1433,85 @@ struct set_epll_con_val {
 #define DIV_STAT_CPU1_CHANGING	(DIV_COPY(DIV_STAT_CHANGING) | \
 				DIV_HPM(DIV_STAT_CHANGING) | \
 				DIV_CORES(DIV_STAT_CHANGING))
+#endif
+
+#ifdef CONFIG_EXYNOS5
+
+/* CLK_SRC_CPU */
+#define MUX_APLL_SEL(x)         ((x) & 0x1)
+#define MUX_CORE_SEL(x)         (((x) & 0x1) << 16)
+
+/* CLK_MUX_STAT_CPU */
+#define APLL_SEL(x)             ((x) & 0x7)
+#define CORE_SEL(x)             (((x) & 0x7) << 16)
+#define MUX_STAT_CPU_CHANGING(x)	!(((x) & APLL_SEL(0)) ||	\
+					   (x) & APLL_SEL(1) ||		\
+					   (x) & CORE_SEL(0) ||		\
+					   (x) & CORE_SEL(1))
+
+/* CLK_DIV_CPU0 */
+#define ARM_RATIO(x)           ((x) & 0x7)
+#define CPUD_RATIO(x)         (((x) & 0x7) << 4)
+#define ATB_RATIO(x)         (((x) & 0x7) << 16)
+#define PCLK_DBG_RATIO(x)       (((x) & 0x7) << 20)
+#define APLL_RATIO(x)           (((x) & 0x7) << 24)
+#define ARM2_RATIO(x)         (((x) & 0x7) << 28)
+
+/* CLK_DIV_STAT_CPU0 */
+#define DIV_CPUD(x)           (((x) & 0x1) << 4)
+#define DIV_ATB(x)              (((x) & 0x1) << 16)
+#define DIV_PCLK_DBG(x)         (((x) & 0x1) << 20)
+#define DIV_APLL(x)             (((x) & 0x1) << 24)
+#define DIV_ARM2(x)            (((x) & 0x1) << 28)
+
+#define DIV_STAT_CPU0_CHANGING  (DIV_CPUD(DIV_STAT_CHANGING) | \
+				 DIV_ATB(DIV_STAT_CHANGING) | \
+				 DIV_PCLK_DBG(DIV_STAT_CHANGING) | \
+				 DIV_APLL(DIV_STAT_CHANGING) | \
+				 DIV_ARM2(DIV_STAT_CHANGING))
+
+/* Set CLK_SRC_PERIC0 */
+#define UART0_SEL(x)		(((x) & 0xf) << 4)
+#define UART1_SEL(x)		(((x) & 0xf) << 8)
+#define UART2_SEL(x)		(((x) & 0xf) << 12)
+#define UART3_SEL(x)		(((x) & 0xf) << 16)
+
+/* Set CLK_DIV_PERIL0 */
+#define UART0_RATIO(x)		(((x) & 0xf) << 8)
+#define UART1_RATIO(x)		(((x) & 0xf) << 12)
+#define UART2_RATIO(x)		(((x) & 0xf) << 16)
+#define UART3_RATIO(x)		(((x) & 0xf) << 20)
+
+/* Set CLK_DIV_STAT_PERIL0 */
+#define DIV_UART0(x)		((x) & 0x1)
+#define DIV_UART1(x)		(((x) & 0x1) << 4)
+#define DIV_UART2(x)		(((x) & 0x1) << 8)
+#define DIV_UART3(x)		(((x) & 0x1) << 12)
+#define DIV_UART4(x)		(((x) & 0x1) << 16)
+
+#define DIV_STAT_PERIC0_CHANGING (DIV_UART4(DIV_STAT_CHANGING) | \
+				  DIV_UART3(DIV_STAT_CHANGING) | \
+				  DIV_UART2(DIV_STAT_CHANGING) | \
+				  DIV_UART1(DIV_STAT_CHANGING) | \
+				  DIV_UART0(DIV_STAT_CHANGING))
+
+/* CLK_SRC_FSYS */
+#define MUX_MMC0_SEL(x)		(((x) & 0x7) << 8)
+#define MUX_MMC1_SEL(x)		(((x) & 0x7) << 12)
+#define MUX_MMC2_SEL(x)		(((x) & 0x7) << 16)
+
+/* CLK_DIV_FSYS1 */
+#define MMC0_RATIO(x)		((x) & 0x3ff)
+#define MMC1_RATIO(x)		(((x) & 0x3ff) << 10)
+#define MMC2_RATIO(x)		(((x) & 0x3ff) << 20)
+
+#define DIV_MMC0(x)		(((x) & 1) << 20)
+#define DIV_MMC1(x)		(((x) & 1) << 24)
+#define DIV_MMC2(x)		(((x) & 1) << 28)
+
+#define DIV_STAT_FSYS1_CHANGING	(DIV_MMC0(DIV_STAT_CHANGING) | \
+				 DIV_MMC1(DIV_STAT_CHANGING) | \
+				 DIV_MMC2(DIV_STAT_CHANGING))
 #endif
 
 #define MPLL_FOUT_SEL_SHIFT	4
