@@ -1,5 +1,5 @@
 Name: u-boot
-Version: 2014.04
+Version: 2014.10
 Release: 1%{?dist}
 Summary: Das U-Boot - Tizen bootloader
 Group: System/Kernel
