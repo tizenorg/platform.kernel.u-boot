@@ -291,11 +291,18 @@ static long long int process_rqt_download(const struct rqt_box *rqt)
 		rsp->int_data[0] = THOR_PACKET_SIZE;
 
 		alt_setting_num = dfu_get_alt(f_name);
+		/* support the file name that contains the absolute path */
 		if (alt_setting_num < 0) {
-			error("Alt setting [%d] to write not found!",
-			      alt_setting_num);
-			rsp->ack = -ENODEV;
-			ret = rsp->ack;
+			char buf[F_NAME_BUF_SIZE];
+
+			sprintf(buf,"/%s\n", f_name);
+			alt_setting_num = dfu_get_alt(buf);
+			if (alt_setting_num < 0) {
+				error("Alt setting [%d] to write not found!",
+					alt_setting_num);
+				rsp->ack = -ENODEV;
+				ret = rsp->ack;
+			}
 		}
 		break;
 	case RQT_DL_FILE_START:
