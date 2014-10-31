@@ -26,34 +26,62 @@
 #define PARTS_ROOT		"platform"
 #define PARTS_DATA		"data"
 #define PARTS_UMS		"ums"
+#define PARTS_EFS		"EFS"
+#define PARTS_RECOVERY		"recovery"
+#define PARTS_MODEM		"modem"
+#define PARTS_RESERVED3		"reserved3"
+#define PARTS_RAMDISK1		"ramdisk1"
+#define PARTS_RAMDISK2		"ramdisk2"
+#define PARTS_MODULE		"module"
+#define PARTS_FOTA		"fota"
+#define PARTS_ROOTFS		"rootfs"
+#define PARTS_SYSDATA		"system-data"
+#define PARTS_USER		"user"
 
 #define PARTS_ODROID \
 	"This board uses MSDOS partition table."
 
 #define PARTS_TRATS2 \
 	"uuid_disk=${uuid_gpt_disk};" \
-	"name="PARTS_CSA",start=5MiB,size=8MiB,uuid=${uuid_gpt_"PARTS_CSA"};" \
-	"name="PARTS_BOOT",size=60MiB,uuid=${uuid_gpt_"PARTS_BOOT"};" \
-	"name="PARTS_QBOOT",size=100MiB,uuid=${uuid_gpt_"PARTS_QBOOT"};" \
+	"name="PARTS_EFS",size=20MiB,uuid=${uuid_gpt_"PARTS_EFS"};" \
+	"name="PARTS_BOOT",size=14MiB,uuid=${uuid_gpt_"PARTS_BOOT"};" \
+	"name="PARTS_RECOVERY",size=37MiB,uuid=${uuid_gpt_"PARTS_RECOVERY"};" \
+	"name=csa,size=14MiB,uuid=${uuid_gpt_csa};" \
+	"name="PARTS_MODEM",size=86MiB,uuid=${uuid_gpt_"PARTS_MODEM"};" \
+	"name="PARTS_RESERVED3",size=14MiB,uuid=${uuid_gpt_"PARTS_RESERVED3"};" \
+	"name="PARTS_RAMDISK1",size=20MiB,uuid=${uuid_gpt_"PARTS_RAMDISK1"};" \
+	"name="PARTS_RAMDISK2",size=20MiB,uuid=${uuid_gpt_"PARTS_RAMDISK2"};" \
+	"name="PARTS_MODULE",size=20MiB,uuid=${uuid_gpt_"PARTS_MODULE"};" \
+	"name="PARTS_FOTA",size=10MiB,uuid=${uuid_gpt_"PARTS_FOTA"};" \
+	"name="PARTS_ROOTFS",size=3000MiB,uuid=${uuid_gpt_"PARTS_ROOTFS"};" \
+	"name="PARTS_SYSDATA",size=512MiB,uuid=${uuid_gpt_"PARTS_SYSDATA"};" \
 	"name="PARTS_CSC",size=150MiB,uuid=${uuid_gpt_"PARTS_CSC"};" \
-	"name="PARTS_ROOT",size=1536MiB,uuid=${uuid_gpt_"PARTS_ROOT"};" \
-	"name="PARTS_DATA",size=3000MiB,uuid=${uuid_gpt_"PARTS_DATA"};" \
-	"name="PARTS_UMS",size=-,uuid=${uuid_gpt_"PARTS_UMS"}\0" \
+	"name="PARTS_USER",size=-,uuid=${uuid_gpt_"PARTS_USER"}\0" \
 
 #define DFU_ALT_SYSTEM_TRATS2 \
+	"s-boot-mmc.bin raw 0x0 0x400 mmcpart 1;" \
+	"u-boot-mmc.bin raw 0x80 0x800;" \
 	"/uImage ext4 0 2;" \
 	"/zImage ext4 0 2;" \
 	"/Image.itb ext4 0 2;" \
-	"/modem.bin ext4 0 2;" \
 	"/exynos4412-trats2.dtb ext4 0 2;" \
-	""PARTS_CSA" part 0 1;" \
+	"/modem.bin ext4 0 5" \
+	"/modem_cdma.bin ext4 0 5" \
+	""PARTS_EFS" part 0 1;" \
 	""PARTS_BOOT" part 0 2;" \
-	""PARTS_QBOOT" part 0 3;" \
-	""PARTS_CSC" part 0 4;" \
-	""PARTS_ROOT" part 0 5;" \
-	""PARTS_DATA" part 0 6;" \
-	""PARTS_UMS" part 0 7;" \
-	"params.bin raw 2560 8\0"
+	""PARTS_RECOVERY" part 0 3;" \
+	""PARTS_CSA" part 0 4;" \
+	""PARTS_MODEM" part 0 5;" \
+	""PARTS_RESERVED3" part 0 6;" \
+	""PARTS_RAMDISK1" part 0 7;" \
+	"ramdisk-recovery part 0 8;" \
+	""PARTS_MODULE" part 0 9;" \
+	""PARTS_FOTA" part 0 10;" \
+	""PARTS_ROOTFS" part 0 11;" \
+	""PARTS_SYSDATA" part 0 12;" \
+	""PARTS_CSC" part 0 13;" \
+	""PARTS_USER" part 0 14;" \
+	"params.bin raw 0x1880 0x200\0"
 
 #define DFU_ALT_SYSTEM_ODROID \
 	"uImage fat 0 1;" \
