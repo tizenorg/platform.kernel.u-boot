@@ -77,4 +77,5 @@ int board_is_odroid_x2(void);
 int board_is_odroid_u3(void);
 #endif
 
+void check_update_gpt(void);
 #endif /* __SAMSUNG_MISC_COMMON_H__ */

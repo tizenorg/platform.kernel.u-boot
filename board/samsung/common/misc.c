@@ -746,3 +746,16 @@ void draw_logo(void)
 	bmp_display(addr, x, y);
 }
 #endif /* CONFIG_CMD_BMP */
+
+void check_update_gpt(void)
+{
+	unsigned char *str = getenv("gpt");
+
+	if (str) {
+		run_command("env delete gpt; saveenv", 0);
+		/* Update GPT using GPT layout */
+		run_command(mode_cmd[BOOT_MODE_GPT], 0);
+		/* Run thor download */
+		run_command(mode_cmd[BOOT_MODE_THOR], 0);
+	}
+}
