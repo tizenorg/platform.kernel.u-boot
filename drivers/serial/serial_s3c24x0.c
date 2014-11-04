@@ -73,7 +73,7 @@ void _serial_setbrg(const int dev_index)
 {
 	struct s3c24x0_uart *uart = s3c24x0_get_base_uart(dev_index);
 	unsigned int reg = 0;
-	int i;
+	volatile int i;
 
 	/* value is calculated so : (int)(PCLK/16./baudrate) -1 */
 	reg = get_PCLK() / (16 * gd->baudrate) - 1;
