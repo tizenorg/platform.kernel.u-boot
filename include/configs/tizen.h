@@ -137,7 +137,7 @@
 	"mmcrootdev=0\0" \
 	"bootpart_trats2=2\0" \
 	"bootpart_odroid=1\0" \
-	"rootpart_trats2=5\0" \
+	"rootpart_trats2=11\0" \
 	"rootpart_odroid=2\0" \
 	"bootdelay=0\0" \
 	"dfu_alt_info=Please reset the board.\0" \
