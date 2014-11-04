@@ -390,6 +390,7 @@ int misc_init_r(void)
 	if (!board_is_trats2())
 		return 0;
 #endif
+	check_update_gpt();
 #ifdef CONFIG_LCD_MENU
 	keys_init();
 	check_boot_mode();
