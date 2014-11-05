@@ -10,8 +10,7 @@
 #define __CONFIG_TIZEN_H
 
 #include <configs/exynos4-common.h>
-#include <samsung/gpt_v08.h>
-#include <samsung/gpt_v13.h>
+#include <samsung/platform_setup.h>
 
 #define CONFIG_SYS_PROMPT	"Exynos4412 # "	/* Monitor Command Prompt */
 
@@ -141,7 +140,8 @@
 	"consoleoff=set console console=ram; save; reset\0" \
 	"initrdname=uInitrd\0" \
 	"initrdaddr=42000000\0" \
-	"fdtaddr=40800000\0"
+	"fdtaddr=40800000\0" \
+	PLATFORM_SETUP_INFO
 
 /* I2C */
 #include <asm/arch/gpio.h>
@@ -178,6 +178,15 @@ int get_soft_i2c_sda_pin(void);
 #define CONFIG_POWER_FG_MAX77693
 #define CONFIG_POWER_BATTERY_TRATS2
 #define CONFIG_CMD_POWEROFF
+
+/**
+ * Platform setup command (GPT and DFU)
+ * Define setup and part num for some static data
+ * should be changed to linked list in the future.
+ */
+#define CONFIG_PLATFORM_SETUP
+#define CONFIG_PLATFORM_MAX_PART_NUM	32
+#define CONFIG_PLATFORM_MAX_SETUP_NUM	6
 
 /* GPT */
 #define CONFIG_RANDOM_UUID
