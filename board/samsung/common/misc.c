@@ -9,6 +9,7 @@
 #include <lcd.h>
 #include <libtizen.h>
 #include <samsung/misc.h>
+#include <samsung/platform_setup.h>
 #include <errno.h>
 #include <version.h>
 #include <malloc.h>
@@ -18,8 +19,210 @@
 #include <asm/gpio.h>
 #include <power/pmic.h>
 #include <mmc.h>
+#include <part.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#ifdef CONFIG_PLATFORM_SETUP
+#define PLATFORM_SETUP_BUF_LEN	64
+#define BLOCK_SIZE	512
+
+#if 0
+#define DBG(fmt, args...)	printf(fmt, ##args)
+#else
+#define DBG(fmt, args...) { }
+#endif
+
+int platform_write(char *save_env)
+{
+	int buf_len = PLATFORM_SETUP_BUF_LEN;
+	int ret = 0;
+	char buf[buf_len];
+	char *env_setup_active;
+	char *platname;
+	char *partitions;
+
+	platname = getenv("platname");
+	if (!platname) {
+		error("Undefined platname!\n");
+		return CMD_RET_FAILURE;
+	}
+
+	/* Get active setup number */
+	memset(buf, 0x0, buf_len);
+	snprintf(buf, buf_len, "%s_setup_active", platname);
+	DBG("DBG: getenv(%s)\n", buf);
+
+	env_setup_active = getenv(buf);
+	if (!env_setup_active) {
+		printf("Platform active configuration not found\n");
+		printf("Check your setup and set: ${%s} number\n", buf);
+		printf("Then run: \"platform setup; platform write env\"\n");
+		return CMD_RET_FAILURE;
+	}
+
+	if (save_env && run_command("save", 0)) {
+		error("Environment save failed");
+		return CMD_RET_FAILURE;
+	}
+
+	partitions = getenv("partitions");
+	if (!partitions) {
+		printf("Partition table not changed.\n");
+		return CMD_RET_SUCCESS;
+	}
+
+	ret = run_command("gpt write mmc 0 $partitions", 0);
+	if (ret) {
+		error("gpt write failed");
+		return ret;
+	}
+
+	return CMD_RET_SUCCESS;
+}
+
+int platform_setup(void)
+{
+	int setup_cnt, setup_chosen, setup_done = 0;
+	int buf_len = PLATFORM_SETUP_BUF_LEN;
+	int buf_num_len = 8;
+	char buf[buf_len];
+	char buf_num[buf_num_len];
+	char *env_setup_cnt;
+	char *env_setup_active;
+	char *env_setup_chosen;
+	char *env_setup_name;
+	char *env_setup;
+	const char *platname;
+	int i;
+
+	platname = getenv("platname");
+	if (!platname) {
+		error("Undefined platname!\n");
+		return CMD_RET_FAILURE;
+	}
+
+	/* Get chosen setup number */
+	memset(buf, 0x0, buf_len);
+	snprintf(buf, buf_len, "%s_setup_chosen", platname);
+	DBG("DBG: getenv(%s)\n", buf);
+	env_setup_chosen = getenv(buf);
+	if (!env_setup_chosen) {
+		printf("Platform chosen setup not found!\n");
+		return CMD_RET_FAILURE;
+	}
+	setup_chosen = simple_strtoul(env_setup_chosen, NULL, 0);
+	DBG("DBG: Board: %s %s: %s\n", platname, buf, env_setup_chosen);
+
+	/* Get chosen setup name */
+	memset(buf, 0x0, buf_len);
+	snprintf(buf, buf_len, "%s_setup_%d_name", platname, setup_chosen);
+	DBG("DBG: getenv(%s)\n", buf);
+	env_setup_name = getenv(buf);
+
+	printf("Setup:[%d] %s for %s", setup_chosen, env_setup_name, platname);
+
+	/* Get active setup number */
+	memset(buf, 0x0, buf_len);
+	snprintf(buf, buf_len, "%s_setup_active", platname);
+	DBG("DBG: getenv(%s)\n", buf);
+	env_setup_active = getenv(buf);
+
+	/* Check if setup_chosen == setup_active */
+	if (env_setup_active && !strcmp(env_setup_chosen, env_setup_active)) {
+		printf(" (active)\n");
+		return CMD_RET_SUCCESS;
+	}
+
+	printf(" (not active)\n");
+
+	DBG("DBG: Setting chosen platform configuration.\n");
+
+	/* Get setup count for ${platname} */
+	memset(buf, 0x0, buf_len);
+	snprintf(buf, buf_len, "%s_setup_cnt", platname);
+	DBG("DBG: getenv(%s)\n", buf);
+	env_setup_cnt = getenv(buf);
+	if (!env_setup_cnt) {
+		error("Platform setup count not found!\n");
+		return CMD_RET_FAILURE;
+	}
+	setup_cnt = simple_strtoul(env_setup_cnt, NULL, 0);
+
+	DBG("DBG: Board: %s available setup_cnt: %s\n", platname, env_setup_cnt);
+
+	for (i = 1; i <= setup_cnt; i++) {
+		if (i != setup_chosen)
+			continue;
+
+		/* Get ${platname}_setup_N_alt_system */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "%s_setup_%d_alt_system", platname, i);
+		DBG("DBG: getenv(%s)\n", buf);
+		env_setup = getenv(buf);
+		if (!env_setup) {
+			printf("%s - not found!\n", buf);
+			return CMD_RET_FAILURE;
+		}
+
+		/* Get dfu_alt_system_${board} */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "dfu_alt_system_%s", platname);
+
+		/* Set dfu_alt_system */
+		DBG("DBG: setenv(%s, ...)\n", buf);
+		setenv(buf, env_setup);
+
+		/* Get ${platname}_setup_N_partitions */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "%s_setup_%d_partitions", platname, i);
+		DBG("DBG: getenv(%s)\n", buf);
+		env_setup = getenv(buf);
+		/* Set ${partitions} */
+		DBG("DBG: setenv(partitions, ...)\n");
+		/* NULL - if not GPT */
+		setenv("partitions", env_setup);
+
+		/* Set ${mmcbootpart} */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "%s_setup_%d_bootpart", platname, i);
+		DBG("DBG: getenv(%s)\n", buf);
+		env_setup = getenv(buf);
+		DBG("DBG: setenv(mmcbootpart, %s)\n", env_setup);
+		setenv("mmcbootpart", env_setup);
+
+		/* Set ${mmcrootpart} */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "%s_setup_%d_rootpart", platname, i);
+		DBG("DBG: getenv(%s)\n", buf);
+		env_setup = getenv(buf);
+		DBG("DBG: setenv(mmcrootpart, %s)\n", env_setup);
+		setenv("mmcrootpart", env_setup);
+
+		printf("Setup:[%d] activated!\n", i);
+
+		/* Set active setup */
+		memset(buf, 0x0, buf_len);
+		snprintf(buf, buf_len, "%s_setup_active", platname);
+		snprintf(buf_num, buf_num_len, "%d", i);
+		DBG("DBG: setenv(%s): %s\n", buf, buf_num);
+		setenv(buf, buf_num);
+
+		setup_done = 1;
+	}
+
+	if (!setup_done) {
+		printf("Chosen setup not found!\n");
+//		lcd_display_bitmap(configuration fail logo with instructions!);
+		return CMD_RET_FAILURE;
+	}
+
+	/* Save the setup to env */
+	platform_write("env");
+
+	return CMD_RET_SUCCESS;
+}
+#endif /* CONFIG_PLATFORM_SETUP */
 
 #ifdef CONFIG_SET_DFU_ALT_INFO
 void set_dfu_alt_info(void)
@@ -79,9 +282,10 @@ void set_board_info(void)
 #endif
 #ifdef CONFIG_OF_LIBFDT
 	const char *bdname = CONFIG_SYS_BOARD;
-
 #ifdef CONFIG_BOARD_TYPES
 #ifdef CONFIG_OF_MULTI
+	const char *platname;
+
 	bdname = get_board_name();
 	platname = get_plat_name();
 
@@ -94,7 +298,7 @@ void set_board_info(void)
 	setenv("fdtfile", info);
 #endif
 	/* Set GPT layout for Trats2 */
-#ifdef CONFIG_OF_MULTI
+#if defined(CONFIG_OF_MULTI) && !defined(CONFIG_PLATFORM_SETUP)
 	setenv("partitions", board_is_trats2() ? PARTS_TRATS2 : PARTS_ODROID);
 #endif
 }
@@ -746,3 +950,4 @@ void draw_logo(void)
 	bmp_display(addr, x, y);
 }
 #endif /* CONFIG_CMD_BMP */
+
