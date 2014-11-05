@@ -96,6 +96,8 @@ void set_board_info(void)
 	/* Set GPT layout for Trats2 */
 #ifdef CONFIG_OF_MULTI
 	setenv("partitions", get_gpt_environment(GPT_ENV_PARTS));
+	setenv("mmcbootpart", get_gpt_environment(GPT_ENV_BOOT_PART));
+	setenv("mmcrootpart", get_gpt_environment(GPT_ENV_ROOT_PART));
 #endif
 }
 #endif /* CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG */
