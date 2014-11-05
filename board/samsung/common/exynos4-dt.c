@@ -206,14 +206,7 @@ unsigned long *get_board_fdt(void)
 #ifdef CONFIG_SET_DFU_ALT_INFO
 char *get_dfu_alt_system(void)
 {
-	char *alt_system;
-
-	if (board_is_trats2())
-		alt_system = getenv("dfu_alt_system_trats2");
-	else
-		alt_system = getenv("dfu_alt_system_odroid");
-
-	return alt_system;
+	return get_gpt_environment(GPT_ENV_SYSTEM);
 }
 
 char *get_dfu_alt_boot(void)
@@ -222,17 +215,11 @@ char *get_dfu_alt_boot(void)
 
 	switch (get_boot_mode()) {
 	case BOOT_MODE_SD:
-		if (board_is_trats2())
-			alt_boot = DFU_ALT_BOOT_SD_TRATS2;
-		else
-			alt_boot = DFU_ALT_BOOT_SD_ODROID;
+		alt_boot = get_gpt_environment(GPT_ENV_BOOT_SD);
 		break;
 	case BOOT_MODE_EMMC:
 	case BOOT_MODE_EMMC_SD:
-		if (board_is_trats2())
-			alt_boot = DFU_ALT_BOOT_EMMC_TRATS2;
-		else
-			alt_boot = DFU_ALT_BOOT_EMMC_ODROID;
+		alt_boot = get_gpt_environment(GPT_ENV_BOOT_EMMC);
 		break;
 	default:
 		alt_boot = NULL;
