@@ -77,5 +77,7 @@ int board_is_trats2(void);
 int board_is_odroid_x2(void);
 int board_is_odroid_u3(void);
 #endif
-
+#ifdef CONFIG_PLATFORM_SETUP
+int platform_setup(void);
+#endif
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
