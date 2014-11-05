@@ -71,5 +71,7 @@ const char *get_plat_name(void);
 const char *get_board_name(void);
 #endif
 #endif
-
+#ifdef CONFIG_PLATFORM_SETUP
+int platform_setup(void);
+#endif
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
