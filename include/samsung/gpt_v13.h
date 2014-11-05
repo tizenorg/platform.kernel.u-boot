@@ -1,6 +1,12 @@
 #ifndef _TIZEN_GPT_V13_H_
 #define _TIZEN_GPT_V13_H_
 
+/**
+ * Platform: trats
+ * Boards: trats/trats2
+ * version: Pit v13
+*/
+
 /* Tizen - partitions definitions */
 #define PARTS_V13_CSA		"csa"
 #define PARTS_V13_BOOT		"boot"
@@ -39,8 +45,6 @@
 	"name="PARTS_V13_USER",size=-,uuid=${uuid_gpt_"PARTS_V13_USER"}\0" \
 
 #define DFU_ALT_SYSTEM_TRATS2_GPT_V13 \
-	"s-boot-mmc.bin raw 0x0 0x400 mmcpart 1;" \
-	"u-boot-mmc.bin raw 0x80 0x800;" \
 	"/uImage ext4 0 2;" \
 	"/zImage ext4 0 2;" \
 	"/Image.itb ext4 0 2;" \
@@ -60,13 +64,6 @@
 	""PARTS_V13_ROOTFS" part 0 11;" \
 	""PARTS_V13_SYSDATA" part 0 12;" \
 	""PARTS_V13_CSC" part 0 13;" \
-	""PARTS_V13_USER" part 0 14;" \
-	"params.bin raw 0x1880 0x200\0"
-
-#define DFU_ALT_BOOT_SD_TRATS2_GPT_V13 \
-	"This boot mode is not used\0"
-
-#define DFU_ALT_BOOT_EMMC_TRATS2_GPT_V13 \
-	"u-boot raw 0x80 0x800\0"
+	""PARTS_V13_USER" part 0 14\0"
 
 #endif /* _TIZEN_GPT_V13_H_ */
