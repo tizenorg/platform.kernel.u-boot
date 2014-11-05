@@ -2,6 +2,10 @@
 #define _TIZEN_GPT_V08_H_
 
 /*
+ * Platform: trats
+ * Boards: trats/trats2
+ * version: Pit v8
+ *
  * Bootable media layout:
  * dev:    SD   eMMC(part boot)
  * BL1      1    0
@@ -49,40 +53,6 @@
 	""PARTS_V8_CSC" part 0 4;" \
 	""PARTS_V8_ROOT" part 0 5;" \
 	""PARTS_V8_DATA" part 0 6;" \
-	""PARTS_V8_UMS" part 0 7;" \
-	"params.bin raw 2560 8\0"
-
-#define DFU_ALT_SYSTEM_ODROID \
-	"uImage fat 0 1;" \
-	"zImage fat 0 1;" \
-	"Image.itb fat 0 1;" \
-	"exynos4412-odroidu3.dtb fat 0 1;" \
-	"exynos4412-odroidx2.dtb fat 0 1;" \
-	""PARTS_V8_BOOT" part 0 1;" \
-	""PARTS_V8_ROOT" part 0 2;" \
-	""PARTS_V8_DATA" part 0 3;" \
-	""PARTS_V8_UMS" part 0 4;" \
-	"params.bin raw 2560 8\0"
-
-#define DFU_ALT_BOOT_SD_TRATS2_GPT_V08 \
-	"This boot mode is not used\0"
-
-#define DFU_ALT_BOOT_EMMC_TRATS2_GPT_V08 \
-	"u-boot raw 0x80 0x800\0"
-
-#define PARTS_ODROID \
-	"This board uses MSDOS partition table."
-
-#define DFU_ALT_BOOT_EMMC_ODROID \
-	"u-boot raw 0x3e 0x800 mmcpart 1;" \
-	"bl1 raw 0x0 0x1e mmcpart 1;" \
-	"bl2 raw 0x1e 0x1d mmcpart 1;" \
-	"tzsw raw 0x83e 0x138 mmcpart 1\0"
-
-#define DFU_ALT_BOOT_SD_ODROID \
-	"u-boot raw 0x3f 0x800;" \
-	"bl1 raw 0x1 0x1e;" \
-	"bl2 raw 0x1f 0x1d;" \
-	"tzsw raw 0x83f 0x138\0"
+	""PARTS_V8_UMS" part 0 7\0"
 
 #endif /* _TIZEN_GPT_V08_H_ */
