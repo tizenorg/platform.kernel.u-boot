@@ -746,3 +746,71 @@ void draw_logo(void)
 	bmp_display(addr, x, y);
 }
 #endif /* CONFIG_CMD_BMP */
+
+/*
+ * 0. GPT_ENV_PARTITONS,
+ * 1. GPT_ENV_BOOT_EMMC,
+ * 2. GPT_ENV_BOOT_SD,
+ * 3. GPT_ENV_SYSTEM,
+ * 4. GPT_ENV_BOOT_PART,
+ * 5. GPT_ENV_ROOT_PART,
+ */
+
+static char *gpt_env_trats2[GPT_ENV_EXIT * GPT_VERSION_EXIT] = {
+	/* GPT_ENV_PARTITONS */
+	PARTS_TRATS2_GPT_V08,
+	PARTS_TRATS2_GPT_V13,
+	/* GPT_ENV_DFU_BOOT_EMMC */
+	DFU_ALT_BOOT_EMMC_TRATS2_GPT_V08,
+	DFU_ALT_BOOT_EMMC_TRATS2_GPT_V13,
+	/* GPT_ENV_DFU_BOOT_SD */
+	DFU_ALT_BOOT_SD_TRATS2_GPT_V08,
+	DFU_ALT_BOOT_SD_TRATS2_GPT_V13,
+	/* GPT_ENV_DFU_SYSTEM */
+	DFU_ALT_SYSTEM_TRATS2_GPT_V08,
+	DFU_ALT_SYSTEM_TRATS2_GPT_V13,
+	/* GPT_ENV_BOOT_PART */
+	"2", "2",
+	/* GPT_ENV_ROOT_PART */
+	"5", "11",
+};
+
+static char *gpt_env_odroid[GPT_ENV_EXIT * GPT_VERSION_EXIT] = {
+	/* GPT_ENV_PARTITONS */
+	PARTS_ODROID,
+	PARTS_ODROID,
+	/* GPT_ENV_DFU_BOOT_EMMC */
+	DFU_ALT_BOOT_EMMC_ODROID,
+	DFU_ALT_BOOT_EMMC_ODROID,
+	/* GPT_ENV_DFU_BOOT_SD */
+	DFU_ALT_BOOT_SD_ODROID,
+	DFU_ALT_BOOT_SD_ODROID,
+	/* GPT_ENV_DFU_SYSTEM */
+	DFU_ALT_SYSTEM_ODROID,
+	DFU_ALT_SYSTEM_ODROID,
+	/* GPT_ENV_BOOT_PART */
+	"1", "1",
+	/* GPT_ENV_ROOT_PART */
+	"2", "2",
+};
+
+char *get_gpt_environment(int id)
+{
+	unsigned int gpt_ver = getenv_ulong("gpt_version", 10, 0);
+	char **env_val;
+
+	if (board_is_trats2())
+		env_val = gpt_env_trats2;
+	else
+		env_val = gpt_env_odroid;
+
+	switch (gpt_ver) {
+	case 13:
+		return env_val[id * GPT_VERSION_EXIT + GPT_VERSION_V13];
+	case 8:
+	default:
+		return env_val[id * GPT_VERSION_EXIT + GPT_VERSION_V08];
+	}
+
+	return NULL;
+}

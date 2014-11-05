@@ -77,4 +77,21 @@ int board_is_odroid_x2(void);
 int board_is_odroid_u3(void);
 #endif
 
+enum {
+	GPT_ENV_PARTS,
+	GPT_ENV_BOOT_EMMC,
+	GPT_ENV_BOOT_SD,
+	GPT_ENV_SYSTEM,
+	GPT_ENV_BOOT_PART,
+	GPT_ENV_ROOT_PART,
+	GPT_ENV_EXIT,
+};
+
+enum {
+	GPT_VERSION_V08,
+	GPT_VERSION_V13,
+	GPT_VERSION_EXIT,
+};
+
+char *get_gpt_environment(int id);
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
