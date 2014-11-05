@@ -95,7 +95,7 @@ void set_board_info(void)
 #endif
 	/* Set GPT layout for Trats2 */
 #ifdef CONFIG_OF_MULTI
-	setenv("partitions", board_is_trats2() ? PARTS_TRATS2 : PARTS_ODROID);
+	setenv("partitions", get_gpt_environment(GPT_ENV_PARTS));
 #endif
 }
 #endif /* CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG */
