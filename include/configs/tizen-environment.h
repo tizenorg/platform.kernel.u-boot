@@ -11,11 +11,13 @@
  * ENV   2560 2560(part user)
  *
  * MBR Primary partiions:
- * Num Name   Size  Offset
- * 1.  BOOT:  100MiB 2MiB
- * 2.  ROOT:  3GiB
- * 3.  DATA:  3GiB
- * 4.  UMS:   -
+ * Num Name    Size  Offset
+ * 1.  BOOT:   32MiB 12MiB
+ * 2.  ROOT:   3GiB
+ * 3.  DATA:   512MiB
+ * 4.  Extd:
+ * 5.  USER:   -
+ * 6.  MODULE: 20MiB
 */
 
 /* Tizen - partitions definitions */
@@ -62,9 +64,10 @@
 	"exynos4412-odroidu3.dtb fat 0 1;" \
 	"exynos4412-odroidx2.dtb fat 0 1;" \
 	""PARTS_BOOT" part 0 1;" \
-	""PARTS_ROOT" part 0 2;" \
-	""PARTS_DATA" part 0 3;" \
-	""PARTS_UMS" part 0 4;" \
+	"rootfs part 0 2;" \
+	"system-data part 0 3;" \
+	"user part 0 5;" \
+	"modules part 0 6;" \
 	"params.bin raw 2560 8\0"
 
 #define DFU_ALT_BOOT_EMMC_TRATS2 \
