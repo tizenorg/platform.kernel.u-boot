@@ -220,7 +220,7 @@ char *get_dfu_alt_system(void)
 	char *alt_system;
 
 	if (board_is_trats2())
-		alt_system = getenv("dfu_alt_system_trats2");
+		alt_system = getenv("dfu_alt_system_trats");
 	else
 		alt_system = getenv("dfu_alt_system_odroid");
 
