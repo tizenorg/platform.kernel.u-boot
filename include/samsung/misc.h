@@ -65,8 +65,9 @@ char *get_dfu_alt_boot(char *interface, char *devstr);
 #endif
 #ifdef CONFIG_BOARD_TYPES
 void set_board_type(void);
-const char *get_board_type(void);
+const char *get_board_model(void);
 #ifdef CONFIG_OF_MULTI
+const char *get_plat_name(void);
 const char *get_board_name(void);
 #endif
 #endif

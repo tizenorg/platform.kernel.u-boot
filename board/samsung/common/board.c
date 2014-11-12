@@ -337,7 +337,7 @@ int checkboard(void)
 	board_info = fdt_getprop(gd->fdt_blob, 0, "model", NULL);
 	printf("Board: %s\n", board_info ? board_info : "unknown");
 #ifdef CONFIG_BOARD_TYPES
-	board_info = get_board_type();
+	board_info = get_board_model();
 
 	printf("Model: %s\n", board_info ? board_info : "unknown");
 #endif
