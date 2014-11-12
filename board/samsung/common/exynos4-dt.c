@@ -71,7 +71,7 @@ static const char *board_compat[] = {
 	"samsung,odroid",
 };
 
-static const char *board_name[] = {
+static const char *plat_name[] = {
 	"trats",
 	"odroid",
 	"odroid",
@@ -81,6 +81,12 @@ static const char *board_model[] = {
 	"2",
 	"u3",
 	"x2",
+};
+
+static const char *board_name[] = {
+	"trats2",
+	"odroidu3",
+	"odroidx2",
 };
 
 extern void sdelay(unsigned long);
@@ -164,12 +170,17 @@ int board_is_odroid_u3(void)
 	return 0;
 }
 
+const char *get_plat_name(void)
+{
+	return plat_name[gd->board_type];
+}
+
 const char *get_board_name(void)
 {
 	return board_name[gd->board_type];
 }
 
-const char *get_board_type(void)
+const char *get_board_model(void)
 {
 	return board_model[gd->board_type];
 }
