@@ -82,6 +82,9 @@ void set_board_info(void)
 #ifdef CONFIG_BOARD_TYPES
 #ifdef CONFIG_OF_MULTI
 	bdname = get_board_name();
+	platname = get_plat_name();
+
+	setenv("platname", platname);
 #endif
 	setenv("boardname", bdname);
 #endif
