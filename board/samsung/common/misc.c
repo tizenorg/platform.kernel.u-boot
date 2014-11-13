@@ -279,6 +279,9 @@ void set_board_info(void)
 
 #ifdef CONFIG_OF_MULTI
 	bdname = get_board_name();
+#ifdef CONFIG_PLATFORM_SETUP
+	setenv("platname", bdname);
+#endif
 #endif
 	sprintf(info, "%s%s", bdname, bdtype);
 	setenv("boardname", info);
