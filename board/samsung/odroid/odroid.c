@@ -52,11 +52,11 @@ void set_board_type(void)
 		gd->board_type = ODROID_TYPE_U3;
 }
 
-const char *get_board_type(void)
+const char *get_board_model(void)
 {
-	const char *board_type[] = {"u3", "x2"};
+	const char *board_model[] = {"u3", "x2"};
 
-	return board_type[gd->board_type];
+	return board_model[gd->board_type];
 }
 #endif
 
