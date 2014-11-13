@@ -8,6 +8,7 @@
 #ifndef __ODROIDU3_SETUP__
 #define __ODROIDU3_SETUP__
 
+#if 0
 /* A/M PLL_CON0 */
 #define SDIV(x)                 ((x) & 0x7)
 #define PDIV(x)                 (((x) & 0x3f) << 8)
@@ -77,7 +78,7 @@
 #define DIV_STAT_CPU1_CHANGING	(DIV_COPY(DIV_STAT_CHANGING) | \
 				DIV_HPM(DIV_STAT_CHANGING) | \
 				DIV_CORES(DIV_STAT_CHANGING))
-
+#endif
 /* CLK_SRC_DMC */
 #define MUX_C2C_SEL(x)		((x) & 0x1)
 #define MUX_DMC_BUS_SEL(x)	(((x) & 0x1) << 4)
