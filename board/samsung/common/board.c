@@ -371,6 +371,9 @@ int misc_init_r(void)
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 	set_board_info();
 #endif
+#ifdef CONFIG_PLATFORM_SETUP
+	platform_setup();
+#endif
 #ifdef CONFIG_OF_MULTI
 	if (!board_is_trats2())
 		return 0;
