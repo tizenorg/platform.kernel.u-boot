@@ -59,7 +59,7 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" -C tools/dtc
 make $CONFIG
 
 # Build tools
-make HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
+make %{?_smp_mflags} HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
 
 %if 1%{?use_mmc_storage}
 make HOSTCC="gcc $RPM_OPT_FLAGS" CONFIG_ENV_IS_IN_MMC=y env
@@ -69,7 +69,7 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 
 # Build u-boot
 export PATH="$PATH:tools:tools/dtc/"
-make EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
+make %{?_smp_mflags} EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
 
 # Prepare proper dtb image: cat u-boot.bin multi.dtb > u-boot-multi.bin
 chmod 755 tools/mkimage_multidtb.sh
