@@ -1,3 +1,11 @@
+Code-Review+2: Chanho Park <chanho61.park@samsung.com>
+Verified+1: Chanho Park <chanho61.park@samsung.com>
+Submitted-by: Chanho Park <chanho61.park@samsung.com>
+Submitted-at: Sun, 16 Nov 2014 23:07:29 -0800
+Reviewed-on: https://review.tizen.org/gerrit/30240
+Project: platform/kernel/u-boot
+Branch: refs/heads/tizen
+
 Reviewed-on: https://review.tizen.org/gerrit/30240
 Project: platform/kernel/u-boot
 Branch: refs/heads/tizen
