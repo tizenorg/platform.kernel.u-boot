@@ -96,6 +96,9 @@ int dram_init(void)
 
 	mem = malloc(sizeof(struct memory_info));
 
+	if (!mem)
+		return -ENOMEM;
+
 	mem->banks = fdtdec_decode_memory(gd->fdt_blob, &mem->addr[0],
 					  &mem->size[0],
 					  CONFIG_NR_DRAM_BANKS);
