@@ -56,9 +56,7 @@ static char *getenv_by_args(const char *fmt, ...)
 
 static int platform_write(bool save_env)
 {
-	int buf_len = PLATFORM_SETUP_STR_BUF_LEN;
 	int ret = 0;
-	char buf[buf_len];
 	char *env_setup_active;
 	char *platname;
 	char *partitions;
@@ -73,7 +71,8 @@ static int platform_write(bool save_env)
 	env_setup_active = getenv_by_args("%s_setup_active", platname);
 	if (!env_setup_active) {
 		printf("Platform active configuration not found\n");
-		printf("Check your setup and set: ${%s} number\n", buf);
+		printf("Check your setup and set: ${%s_setup_active} number\n",
+		       platname);
 		printf("Then run: \"platform setup; platform write env\"\n");
 		return CMD_RET_FAILURE;
 	}
@@ -162,7 +161,8 @@ int platform_setup(void)
 		/* Get ${platname}_setup_N_alt_system */
 		value = getenv_by_args("%s_setup_%d_alt_system", platname, i);
 		if (!value) {
-			printf("%s - not found!\n", buf);
+			printf("%s_setup_%d_alt_system - not found!\n",
+			       platname, i);
 			return CMD_RET_FAILURE;
 		}
 
