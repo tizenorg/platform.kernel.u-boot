@@ -215,11 +215,24 @@ static long long int download_head(unsigned long long total,
 
 static int download_tail(long long int left, int cnt)
 {
-	struct dfu_entity *dfu_entity = dfu_get_entity(alt_setting_num);
-	void *transfer_buffer = dfu_get_buf(dfu_entity);
+	struct dfu_entity *dfu_entity;
+	void *transfer_buffer;
 	int ret;
 
 	debug("%s: left: %llu cnt: %d\n", __func__, left, cnt);
+
+	dfu_entity = dfu_get_entity(alt_setting_num);
+	if (!dfu_entity) {
+		printf("Alt setting: %d entity not found!\n", alt_setting_num);
+		return -ENOENT;
+	}
+
+	transfer_buffer = dfu_get_buf(dfu_entity);
+	if (!transfer_buffer) {
+		printf("Alt setting: %d transfer buffer is NULL!\n",
+		       alt_setting_num);
+		return -ENXIO;
+	}
 
 #ifdef CONFIG_SIG
 	/* check board signature when download u-boot-mmc.bin */
