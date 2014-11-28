@@ -31,7 +31,8 @@ int do_thor_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 		if (!usb_controller || !interface || !devstring) {
 			puts("DFU: default device environment is not set.\n");
-			return CMD_RET_USAGE;
+			ret = CMD_RET_USAGE;
+			goto bad_args;
 		}
 		break;
 	case 4:
@@ -91,6 +92,11 @@ done:
 	} else
 		lcd_clear();
 #endif
+bad_args:
+	free(usb_controller);
+	free(interface);
+	free(devstring);
+
 	return ret;
 }
 
