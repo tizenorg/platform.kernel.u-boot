@@ -578,6 +578,9 @@ static int pmic_init_max77686(void)
 {
 	struct pmic *p = pmic_get("MAX77686_PMIC");
 
+	if (!p)
+		return -ENODEV;
+
 	if (pmic_probe(p))
 		return -ENODEV;
 
@@ -820,6 +823,8 @@ int mipi_power(void)
 		return 0;
 
 	p = pmic_get("MAX77686_PMIC");
+	if (!p)
+		return -ENODEV;
 
 	/* LDO8 VMIPI_1.0V_AP */
 	max77686_set_ldo_mode(p, 8, OPMODE_ON);
@@ -837,6 +842,8 @@ void exynos_lcd_power_on(void)
 		return;
 
 	p = pmic_get("MAX77686_PMIC");
+	if (!p)
+		return;
 
 	/* LCD_2.2V_EN: GPC0[1] */
 	gpio_set_pull(EXYNOS4X12_GPIO_C01, S5P_GPIO_PULL_UP);
