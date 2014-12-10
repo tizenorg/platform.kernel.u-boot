@@ -826,6 +826,7 @@ do_fat_read_at(const char *filename, unsigned long pos, void *buffer,
 	__u32 root_cluster = 0;
 	int rootdir_size = 0;
 	int j, k;
+	int do_read;
 	__u8 *dir_ptr;
 
 	if (read_bootsectandvi(&bs, &volinfo, &mydata->fatsize)) {
@@ -915,26 +916,33 @@ do_fat_read_at(const char *filename, unsigned long pos, void *buffer,
 	k = 0;
 	while (1) {
 		int i;
-		debug("FAT read sect=%d, clust_size=%d, DIRENTSPERBLOCK=%zd\n",
-			cursect, mydata->clust_size, DIRENTSPERBLOCK);
 
-		if (!k) {
+		if (mydata->fatsize == 32 || !k) {
 			dir_ptr = do_fat_read_at_block;
-			k++;
+			k = 1;
 		} else {
 			dir_ptr = (do_fat_read_at_block + mydata->sect_size);
 			memcpy(do_fat_read_at_block, dir_ptr, mydata->sect_size);
 		}
 
-		if (disk_read(cursect,
-			(mydata->fatsize == 32) ?
-				(mydata->clust_size) :
-				PREFETCH_BLOCKS,
-				dir_ptr) < 0) {
-			debug("Error: reading rootdir block\n");
-			goto exit;
+		do_read = 1;
+
+		if (mydata->fatsize == 32 && j)
+			do_read = 0;
+
+		if (do_read) {
+			debug("FAT read sect=%d, clust_size=%d, DIRENTSPERBLOCK=%zd\n",
+				cursect, mydata->clust_size, DIRENTSPERBLOCK);
+
+			if (disk_read(cursect,
+				(mydata->fatsize == 32) ?
+				(mydata->clust_size) : PREFETCH_BLOCKS,dir_ptr) < 0) {
+				debug("Error: reading rootdir block\n");
+				goto exit;
+			}
+
+			dentptr = (dir_entry *) dir_ptr;
 		}
-		dentptr = (dir_entry *) dir_ptr;
 
 		for (i = 0; i < DIRENTSPERBLOCK; i++) {
 			char s_name[14], l_name[VFAT_MAXLEN_BYTES];
