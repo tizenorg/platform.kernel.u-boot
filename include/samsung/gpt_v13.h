@@ -29,7 +29,7 @@
 
 #define PARTS_TRATS2_GPT_V13 \
 	"uuid_disk=${uuid_gpt_disk};" \
-	"name="PARTS_V13_EFS",start=12MiB,size=20MiB,uuid=${uuid_gpt_"PARTS_V13_EFS"};" \
+	"name="PARTS_V13_CSA",start=12MiB,size=20MiB,uuid=${uuid_gpt_"PARTS_V13_CSA"};" \
 	"name="PARTS_V13_BOOT",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_BOOT"};" \
 	"name="PARTS_V13_RECOVERY",size=37MiB,uuid=${uuid_gpt_"PARTS_V13_RECOVERY"};" \
 	"name="PARTS_V13_CSC",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_CSC"};" \
@@ -51,7 +51,7 @@
 	"/exynos4412-trats2.dtb ext4 0 2;" \
 	"/modem.bin ext4 0 5;" \
 	"/modem_cdma.bin ext4 0 5;" \
-	""PARTS_V13_EFS" part 0 1;" \
+	""PARTS_V13_CSA" part 0 1;" \
 	""PARTS_V13_BOOT" part 0 2;" \
 	""PARTS_V13_RECOVERY" part 0 3;" \
 	"csa-mmc part 0 4;" \
