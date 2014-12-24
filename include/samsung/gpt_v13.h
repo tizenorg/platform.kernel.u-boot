@@ -32,7 +32,7 @@
 	"name="PARTS_V13_EFS",start=12MiB,size=20MiB,uuid=${uuid_gpt_"PARTS_V13_EFS"};" \
 	"name="PARTS_V13_BOOT",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_BOOT"};" \
 	"name="PARTS_V13_RECOVERY",size=37MiB,uuid=${uuid_gpt_"PARTS_V13_RECOVERY"};" \
-	"name="PARTS_V13_CSC",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_CSC"};" \
+	"name="PARTS_V13_CSA",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_CSA"};" \
 	"name="PARTS_V13_MODEM",size=86MiB,uuid=${uuid_gpt_"PARTS_V13_MODEM"};" \
 	"name="PARTS_V13_RESERVED3",size=14MiB,uuid=${uuid_gpt_"PARTS_V13_RESERVED3"};" \
 	"name="PARTS_V13_RAMDISK1",size=20MiB,uuid=${uuid_gpt_"PARTS_V13_RAMDISK1"};" \
