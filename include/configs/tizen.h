@@ -91,7 +91,7 @@
 		"fi;\0" \
 	"kernel_args=" \
 		"setenv bootargs root=/dev/mmcblk${mmcrootdev}p${mmcrootpart}" \
-		" rootwait ${console} ${opts}\0" \
+		" rootfstype=${rootfstype} rootwait ${console} ${opts}\0" \
 	"checkboard=" \
 		"if test ${boardname} = trats2; then " \
 			"setenv console" CONFIG_CONSOLE_TTY2";" \
@@ -131,6 +131,7 @@
 		"fi;\0" \
 	"mmcbootdev=0\0" \
 	"mmcrootdev=0\0" \
+	"rootfstype=ext4\0" \
 	"bootdelay=0\0" \
 	"dfu_alt_info=Please reset the board.\0" \
 	"dfu_usb_con=0\0" \
