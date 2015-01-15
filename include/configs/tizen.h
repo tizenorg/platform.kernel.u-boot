@@ -137,8 +137,8 @@
 	"dfu_usb_con=0\0" \
 	"dfu_interface=mmc\0" \
 	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
-	"consoleon=set console console=ttySAC1,115200n8; save; reset\0" \
-	"consoleoff=set console console=ram; save; reset\0" \
+	"consoleon=set console console=ttySAC1,115200n8; saveenv; reset\0" \
+	"consoleoff=set console console=ram; saveenv; reset\0" \
 	"initrdname=uInitrd\0" \
 	"initrdaddr=42000000\0" \
 	"fdtaddr=40800000\0" \

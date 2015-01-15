@@ -77,7 +77,7 @@ static int platform_write(bool save_env)
 		return CMD_RET_FAILURE;
 	}
 
-	if (save_env && run_command("save", 0)) {
+	if (save_env && run_command("saveenv", 0)) {
 		error("Environment save failed");
 		return CMD_RET_FAILURE;
 	}
