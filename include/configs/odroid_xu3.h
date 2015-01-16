@@ -10,11 +10,13 @@
 
 #include "exynos5420-common.h"
 #include <configs/exynos5-common.h>
+#include <samsung/platform_boot.h>
 
 #undef CONFIG_ENV_IS_IN_SPI_FLASH
 #define CONFIG_IDENT_STRING		" for ODROID-XU3"
 
 #define CONFIG_BOARD_COMMON
+#define CONFIG_SIG
 
 #define CONFIG_SYS_SDRAM_BASE		0x40000000
 #define CONFIG_SYS_TEXT_BASE		0x43E00000
@@ -79,12 +81,20 @@
 /* UMS */
 #define CONFIG_G_DNL_UMS_VENDOR_NUM	0x0525
 #define CONFIG_G_DNL_UMS_PRODUCT_NUM	0xA4A5
+#define CONFIG_USB_GADGET_MASS_STORAGE
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
 #define CONFIG_CMD_USB_MASS_STORAGE
 
 /* FIXME: MUST BE REMOVED AFTER TMU IS TURNED ON */
 #undef CONFIG_EXYNOS_TMU
 #undef CONFIG_TMU_CMD_DTT
+
+/* Partitions name for Tizen 3.0 */
+#define PARTS_BOOT             "boot"
+#define PARTS_ROOT             "platform"
+#define PARTS_DATA             "system-data"
+#define PARTS_USER             "user"
+#define PARTS_MODULES          "modules"
 
 #define CONFIG_DFU_ALT_SYSTEM               \
 	"uImage fat 0 1;"                   \
@@ -96,8 +106,11 @@
 	"exynos5422-odroidxu3.dtb fat 0 1;" \
 	"exynos5422-odroidxu3-lite.dtb fat 0 1;" \
 	"exynos5422-odroidxu4.dtb fat 0 1;" \
-	"boot part 0 1;"                    \
-	"root part 0 2\0"
+	""PARTS_BOOT" part 0 1;" \
+	""PARTS_ROOT" part 0 2;" \
+	""PARTS_DATA" part 0 3;" \
+	""PARTS_USER" part 0 5;" \
+	""PARTS_MODULES" part 0 6\0"
 
 #define CONFIG_DFU_ALT_BOOT_EMMC           \
 	"u-boot raw 0x3e 0x800 mmcpart 1;" \
@@ -134,7 +147,8 @@
 	EXYNOS_DEVICE_SETTINGS \
 	EXYNOS_FDTFILE_SETTING \
 	MEM_LAYOUT_ENV_SETTINGS \
-	BOOTENV \
+	PLATFORM_BOOT_INFO \
+	"checkboard=\0" \
 	"bootdelay=0\0" \
 	"rootfstype=ext4\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
@@ -144,6 +158,9 @@
 	"mmcrootdev=0\0" \
 	"mmcbootpart=1\0" \
 	"mmcrootpart=2\0" \
+	"dfu_usb_con=0\0" \
+	"dfu_interface=mmc\0" \
+	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
 	"dfu_alt_system="CONFIG_DFU_ALT_SYSTEM \
 	"dfu_alt_info=Autoset by THOR/DFU command run.\0"
 
