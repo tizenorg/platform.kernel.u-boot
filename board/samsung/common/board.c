@@ -378,6 +378,7 @@ int misc_init_r(void)
 #ifdef CONFIG_PLATFORM_SETUP
 	platform_setup();
 #endif
+	check_reboot_mode();
 #ifdef CONFIG_OF_MULTI
 	if (!board_is_trats2())
 		return 0;
