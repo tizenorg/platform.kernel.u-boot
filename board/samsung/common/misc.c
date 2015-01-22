@@ -19,6 +19,7 @@
 #include <power/pmic.h>
 #include <mmc.h>
 #include <part.h>
+#include <asm/arch/power.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -26,6 +27,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PLATFORM_SETUP_STR_BUF_LEN	64
 #define PLATFORM_SETUP_NUM_BUF_LEN	8
 #define BLOCK_SIZE	512
+
+#define REBOOT_MODE_PREFIX	0x12345670
+#define REBOOT_DOWNLOAD		1
 
 #if 0
 #define DBG(fmt, args...)	printf(fmt, ##args)
@@ -872,6 +876,29 @@ U_BOOT_CMD(battery, CONFIG_SYS_MAXARGS, 1, do_battery,
 );
 #endif /* CONFIG_CMD_BATTERY */
 #endif
+
+void check_reset_mode(void)
+{
+	unsigned int status = get_reset_status();
+	int mode = BOOT_MODE_EXIT;
+	cmd_tbl_t *cmd;
+
+	switch (status & ~REBOOT_MODE_PREFIX)
+	{
+	case REBOOT_DOWNLOAD:
+		mode = BOOT_MODE_THOR;
+		break;
+	}
+
+	/* clear reboot status */
+	writel(0x0, &status);
+
+	cmd = find_cmd(mode_name[mode][1]);
+	if (cmd)
+		run_command(mode_cmd[mode], 0);
+
+	return;
+}
 
 void check_boot_mode(void)
 {

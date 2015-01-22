@@ -11,6 +11,8 @@ u32 get_board_rev(void);
 void set_board_info(void);
 #endif
 
+void check_reset_mode(void);
+
 #if defined(CONFIG_LCD_MENU) || defined(CONFIG_INTERACTIVE_CHARGER)
 void keys_init(void);
 int check_keys(void);
