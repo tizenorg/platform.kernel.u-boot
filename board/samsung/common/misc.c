@@ -19,6 +19,8 @@
 #include <power/pmic.h>
 #include <mmc.h>
 #include <part.h>
+#include <asm/arch/power.h>
+#include <fdtdec.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -931,3 +933,46 @@ void draw_logo(void)
 }
 #endif /* CONFIG_CMD_BMP */
 
+#ifdef CONFIG_REBOOT_MODE
+#define REBOOT_MODE_PREFIX	0x12345670
+#define REBOOT_DOWNLOAD		1
+
+void check_reboot_mode(void)
+{
+	unsigned int *inform, status;
+	int node, inform_num;
+	char cmdbuf[32];
+	cmd_tbl_t *cmd;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, 0,
+			"samsung,reboot-mode");
+	if (node < 0)
+		return;
+
+	/* Get the inform number */
+	inform_num = fdtdec_get_int(gd->fdt_blob, node, "inform-num", 0);
+	if (inform_num <= 0) {
+		debug("Reboot mode: Can't get inform-num\n");
+		return;
+	}
+
+	inform = get_inform_address(inform_num);
+	status = readl(inform);
+
+	/* clear reboot status */
+	writel(0x0, inform);
+
+	switch (status ^ REBOOT_MODE_PREFIX) {
+	case REBOOT_DOWNLOAD:
+		/* use defined dfu_interface and dfu_deivce */
+		sprintf(cmdbuf, "thordown");
+		break;
+	}
+
+	cmd = find_cmd(cmdbuf);
+	if (cmd)
+		run_command(cmdbuf, 0);
+
+	return;
+}
+#endif
