@@ -385,6 +385,7 @@ int misc_init_r(void)
 #ifdef CONFIG_SET_DFU_ALT_INFO
 	set_dfu_alt_info();
 #endif
+	check_reset_mode();
 #ifdef CONFIG_OF_MULTI
 	if (!board_is_trats2())
 		return 0;
