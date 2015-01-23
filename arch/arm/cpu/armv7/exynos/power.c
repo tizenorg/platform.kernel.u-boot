@@ -228,6 +228,30 @@ uint32_t get_reset_status(void)
 		return  exynos4_get_reset_status();
 }
 
+static uint32_t *exynos5_get_inform_address(uint32_t num)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	return &power->inform0 + num;
+}
+
+static uint32_t *exynos4_get_inform_address(uint32_t num)
+{
+	struct exynos4_power *power =
+		(struct exynos4_power *)samsung_get_base_power();
+
+	return &power->inform0 + num;
+}
+
+uint32_t *get_inform_address(uint32_t num)
+{
+	if (cpu_is_exynos5())
+		return exynos5_get_inform_address(num);
+	else
+		return exynos4_get_inform_address(num);
+}
+
 static void exynos5_power_exit_wakeup(void)
 {
 	struct exynos5_power *power =
