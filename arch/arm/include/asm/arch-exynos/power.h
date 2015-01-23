@@ -1976,6 +1976,8 @@ void set_xclkout(void);
  */
 uint32_t get_reset_status(void);
 
+/* Read inform4 to get the reboot status. */
+uint32_t get_reboot_status(void);
 
 /* Read the resume function and call it */
 void power_exit_wakeup(void);
