@@ -80,4 +80,11 @@ int board_is_odroid_u3(void);
 #ifdef CONFIG_PLATFORM_SETUP
 int platform_setup(void);
 #endif
+
+#define report(fmt, args...)			\
+	printf("== REPORT: " fmt" ==\n", ##args);
+
+#define ERROR_DFU_ENV_ENTITIES		1
+
+void board_error_report(int id, int argc, char * const argv[]);
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
