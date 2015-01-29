@@ -33,7 +33,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define DBG(fmt, args...) { }
 #endif
 
-static char *getenv_by_args(const char *fmt, ...)
+char *getenv_by_args(const char *fmt, ...)
 {
 	char buf[PLATFORM_SETUP_STR_BUF_LEN];
 	char *env_var;
