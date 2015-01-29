@@ -10,6 +10,7 @@ obj-$(CONFIG_USBDOWNLOAD_GADGET) += gadget.o
 obj-$(CONFIG_MISC_COMMON) += misc.o
 obj-$(CONFIG_SIG) += sig_header.o
 obj-$(CONFIG_OF_MULTI)	+= exynos4-dt.o
+obj-$(CONFIG_BOARD_REPORT)	+= report.o
 
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_BOARD_COMMON)	+= board.o
