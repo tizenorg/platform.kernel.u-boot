@@ -10,6 +10,7 @@
 #include <libtizen.h>
 #include <samsung/misc.h>
 #include <samsung/platform_setup.h>
+#include <samsung/report.h>
 #include <errno.h>
 #include <version.h>
 #include <malloc.h>
@@ -937,3 +938,21 @@ void draw_logo(void)
 }
 #endif /* CONFIG_CMD_BMP */
 
+#ifdef CONFIG_BOARD_REPORT
+#define REPORT_URL				\
+	"https://wiki.tizen.org/wiki/"		\
+	"How_to_Build_and_Load_Tizen_on_Odroid_U3#Error_Report"
+
+void board_report(int id, int argc, char * const argv[])
+{
+	switch (id) {
+	case REPORT_DFU_ENV_ENTITIES:
+		report_dfu_env_entities(argc, argv);
+		break;
+	default:
+		break;
+	}
+
+	report("Please refer to: %s", REPORT_URL);
+}
+#endif

@@ -83,4 +83,10 @@ char *getenv_by_args(const char *fmt, ...);
 #ifdef CONFIG_PLATFORM_SETUP
 int platform_setup(void);
 #endif
+
+#ifdef CONFIG_BOARD_REPORT
+#define REPORT_DFU_ENV_ENTITIES		1
+
+void board_report(int id, int argc, char * const argv[]);
+#endif
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
