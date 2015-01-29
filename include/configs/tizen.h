@@ -20,6 +20,8 @@
 #define CONFIG_OF_MULTI
 #define CONFIG_FDTDEC_MEMORY
 
+#define CONFIG_BOARD_REPORT
+
 /* Arch number for Trats2 */
 #define MACH_TYPE_SMDK4412	3765
 /* Arch number for Odroid */
