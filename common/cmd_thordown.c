@@ -45,8 +45,12 @@ int do_thor_down(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	ret = dfu_init_env_entities(interface, devstring);
-	if (ret)
+	if (ret) {
+#ifdef CONFIG_BOARD_REPORT
+		board_report(REPORT_DFU_ENV_ENTITIES, argc, argv);
+#endif
 		goto done;
+	}
 
 	int controller_index = simple_strtoul(usb_controller, NULL, 0);
 	ret = board_usb_init(controller_index, USB_INIT_DEVICE);
