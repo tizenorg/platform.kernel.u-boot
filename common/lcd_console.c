@@ -16,6 +16,17 @@
 
 static struct console_t cons;
 
+void lcd_set_position_cursor(unsigned col, unsigned row)
+{
+	lcd_position_cursor(col, row);
+}
+
+void lcd_get_position_cursor(unsigned *col, unsigned *row)
+{
+	*col = cons.curr_col;
+	*row = cons.curr_row;
+}
+
 void lcd_set_col(short col)
 {
 	cons.curr_col = col;
