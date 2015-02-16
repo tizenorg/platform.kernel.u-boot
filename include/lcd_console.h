@@ -104,3 +104,19 @@ void lcd_puts(const char *s);
  * @...: The arguments for the formatted string
  */
 void lcd_printf(const char *fmt, ...);
+
+/**
+ * Set the position of the text cursor
+ *
+ * @param col   Column to place cursor (0 = left side)
+ * @param row   Row to place cursor (0 = top line)
+ */
+void lcd_set_position_cursor(unsigned col, unsigned row);
+
+/**
+ * Get the position of the text cursor
+ *
+ * @param *col  Pointer to store cursor placement column (0 = left side)
+ * @param *row  Pointer to store cursor placement row (0 = top line)
+ */
+void lcd_get_position_cursor(unsigned *col, unsigned *row);
