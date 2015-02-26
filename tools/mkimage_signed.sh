@@ -65,6 +65,8 @@ echo -n "none" > sig-product
 
 if [ $CONFIG == "tizen_defconfig" ]; then
 	echo -n "slp_midasq" > sig-board
+elif [ $CONFIG == "odroid-xu3_defconfig" ]; then
+	echo -n "odroid_xu3" > sig-board
 else
 	echo -n "slp_u1" > sig-board
 fi
