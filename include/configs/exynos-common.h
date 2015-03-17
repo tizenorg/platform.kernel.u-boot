@@ -39,7 +39,7 @@
 #define CONFIG_ENV_OVERWRITE
 
 /* Size of malloc() pool before and after relocation */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (80 << 20))
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (128 << 20))
 
 /* select serial console configuration */
 #define CONFIG_BAUDRATE			115200
