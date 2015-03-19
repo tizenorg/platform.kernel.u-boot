@@ -32,6 +32,7 @@ and Microblaze.
 %package -n u-boot-tools
 Summary: Companion tools for Das U-Boot bootloader
 Group: System/Kernel
+Provides: dtc
 
 %description -n u-boot-tools
 This package includes the mkimage program, which allows generation of U-Boot
@@ -93,6 +94,7 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 install -p -m 0755 tools/mkimage %{buildroot}%{_bindir}
 install -p -m 0755 tools/env/fw_printenv %{buildroot}%{_bindir}
+install -p -m 0755 tools/dtc/dtc %{buildroot}%{_bindir}
 ( cd %{buildroot}%{_bindir}; ln -sf fw_printenv fw_setenv )
 
 # u-boot installation
@@ -115,3 +117,4 @@ install -m 755 params.bin %{buildroot}/var/tmp/u-boot
 %{_bindir}/mkimage
 %{_bindir}/fw_printenv
 %{_bindir}/fw_setenv
+%{_bindir}/dtc
