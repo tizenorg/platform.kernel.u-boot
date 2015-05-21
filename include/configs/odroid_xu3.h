@@ -113,7 +113,7 @@
 
 /* Partitions name for Tizen 3.0 */
 #define PARTS_BOOT		"boot"
-#define PARTS_ROOT		"platform"
+#define PARTS_ROOT		"rootfs"
 #define PARTS_DATA		"system-data"
 #define PARTS_USER		"user"
 #define PARTS_MODULES		"modules"
