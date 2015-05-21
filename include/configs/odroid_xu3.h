@@ -147,9 +147,6 @@
 	"tzsw raw 0x83f 0x200;" \
 	"params.bin raw 0x1880 0x20\0"
 
-#define CONFIG_SET_DFU_ALT_INFO
-#define CONFIG_SET_DFU_ALT_BUF_LEN	(SZ_1K)
-
 /* FIXME: MUST BE REMOVED AFTER TMU IS TURNED ON */
 #undef CONFIG_EXYNOS_TMU
 #undef CONFIG_TMU_CMD_DTT
