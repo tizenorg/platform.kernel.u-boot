@@ -6,7 +6,7 @@ Group: System/Kernel
 License: GPL-2.0+
 ExclusiveArch: %{arm}
 URL: https://review.tizen.org/git/?p=kernel/u-boot.git
-Source0: %{name}-%{version}.tar.bz2
+Source0: u-boot-%{version}.tar.bz2
 Source1001: u_boot_xu3.manifest
 
 BuildRequires: gcc >= 4.8
