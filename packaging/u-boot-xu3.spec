@@ -1,6 +1,6 @@
 Name: u-boot-xu3
 Version: 2015.04
-Release: 1%{?dist}
+Release: 0
 Summary: Das U-Boot - Tizen bootloader
 Group: System/Kernel
 License: GPL-2.0+
@@ -44,7 +44,7 @@ and modify U-Boot's environment.
 %endif
 
 %prep
-%setup -q
+%setup -q -n u-boot-%{version}
 
 %build
 cp %{SOURCE1001} .
