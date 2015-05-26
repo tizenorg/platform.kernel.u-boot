@@ -7,7 +7,7 @@ License: GPL-2.0+
 ExclusiveArch: %{arm}
 URL: https://review.tizen.org/git/?p=kernel/u-boot.git
 Source0: %{name}-%{version}.tar.bz2
-Source1001: u_boot.manifest
+Source1001: u_boot_xu3.manifest
 
 BuildRequires: gcc >= 4.8
 BuildRequires: flex
@@ -94,21 +94,21 @@ install -p -m 0755 tools/dtc/dtc %{buildroot}%{_bindir}
 ( cd %{buildroot}%{_bindir}; ln -sf fw_printenv fw_setenv )
 
 # u-boot installation
-mkdir -p %{buildroot}/var/tmp/u-boot
-install -d %{buildroot}/var/tmp/u-boot
-install -m 755 u-boot.bin %{buildroot}/var/tmp/u-boot
-install -m 755 u-boot-mmc.bin %{buildroot}/var/tmp/u-boot
-install -m 755 params.bin %{buildroot}/var/tmp/u-boot
+mkdir -p %{buildroot}/var/tmp/u-boot-xu3
+install -d %{buildroot}/var/tmp/u-boot-xu3
+install -m 755 u-boot.bin %{buildroot}/var/tmp/u-boot-xu3
+install -m 755 u-boot-mmc.bin %{buildroot}/var/tmp/u-boot-xu3
+install -m 755 params.bin %{buildroot}/var/tmp/u-boot-xu3
 
 %clean
 
 %files
-%manifest u_boot.manifest
+%manifest u_boot_xu3.manifest
 %defattr(-,root,root,-)
-/var/tmp/u-boot
+/var/tmp/u-boot-xu3
 
 %files -n u-boot-tools
-%manifest u_boot.manifest
+%manifest u_boot_xu3.manifest
 %defattr(-,root,root,-)
 %{_bindir}/mkimage
 %{_bindir}/fw_printenv
