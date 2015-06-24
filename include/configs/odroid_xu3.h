@@ -102,6 +102,7 @@
 	"rootfstype=ext4\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"fdtfile=exynos5422-odroidxu3.dtb\0" \
+	"mmcbootdev=0\0" \
 	"mmcbootpart=1\0" \
 	"mmcrootdev=0\0" \
 	"mmcrootpart=2\0" \
