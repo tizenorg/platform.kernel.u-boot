@@ -153,10 +153,9 @@
 	"rootfstype=ext4\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
 	"fdtfile=exynos5422-odroidxu3.dtb\0" \
-	"boardname=odroidxu3\0" \
 	"mmcbootdev=0\0" \
-	"mmcrootdev=0\0" \
 	"mmcbootpart=1\0" \
+	"mmcrootdev=0\0" \
 	"mmcrootpart=2\0" \
 	"dfu_usb_con=0\0" \
 	"dfu_interface=mmc\0" \
