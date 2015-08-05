@@ -154,6 +154,7 @@ int get_soft_i2c_sda_pin(void);
 #define CONFIG_BOARD_TYPES
 #define CONFIG_MISC_INIT_R
 #undef CONFIG_REVISION_TAG
+#define CONFIG_REBOOT_MODE
 
 #define CONFIG_TIZEN
 #define CONFIG_SIG
