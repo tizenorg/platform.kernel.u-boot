@@ -451,4 +451,9 @@
 		div = <0x3>;
 		index = <4>;
 	};
+
+	reboot-mode {
+		compatible = "samsung,reboot-mode";
+		inform-num = <3>;
+	};
 };
