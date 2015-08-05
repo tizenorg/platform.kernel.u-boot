@@ -88,6 +88,7 @@
 
 #define CONFIG_MISC_COMMON
 #define CONFIG_MISC_INIT_R
+#define CONFIG_REBOOT_MODE
 
 #include <samsung/platform_boot.h>
 
