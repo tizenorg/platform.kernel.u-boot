@@ -59,7 +59,7 @@ for I in ${DTB[*]}; do
 		touch padding
 
 		if [ $CNT -lt $(($DTB_CNT)) ]; then
-			PAD_CNT=$(($PAD - $(($SIZE % $PAD))))
+			PAD_CNT=$(($(($PAD - $(($SIZE % $PAD)))) % $PAD))
 			if [ $PAD_CNT -ge 0 ]; then
 				echo -en " | PAD: $PAD_CNT B |"
 				rm padding
