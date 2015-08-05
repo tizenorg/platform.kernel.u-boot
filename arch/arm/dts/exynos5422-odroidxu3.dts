@@ -51,4 +51,9 @@
 		compatible = "samsung,emmc-reset";
 		reset-gpio = <&gpd1 0 0>;
 	};
+
+	reboot-mode {
+		compatible = "samsung,reboot-mode";
+		inform-num = <5>;
+	};
 };
