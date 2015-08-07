@@ -130,7 +130,10 @@ int max77686_set_ldo_mode(struct pmic *p, int ldo, char opmode)
 	case OPMODE_OFF:
 		mode = MAX77686_LDO_MODE_OFF;
 		break;
-	case OPMODE_STANDBY:
+	case OPMODE_LPM:
+		mode = MAX77686_LDO_MODE_LPM;
+		break;
+	case OPMODE_ON_AUTO_OFF:
 		switch (ldo) {
 		case 2:
 		case 6:
@@ -142,14 +145,14 @@ int max77686_set_ldo_mode(struct pmic *p, int ldo, char opmode)
 		case 14:
 		case 15:
 		case 16:
-			mode = MAX77686_LDO_MODE_STANDBY;
+			mode = MAX77686_LDO_MODE_ON_AUTO_OFF;
 			break;
 		default:
 			mode = 0xff;
 		}
 		break;
-	case OPMODE_LPM:
-		mode = MAX77686_LDO_MODE_LPM;
+	case OPMODE_ON_AUTO_LPM:
+		mode = MAX77686_LDO_MODE_ON_AUTO_LPM;
 		break;
 	case OPMODE_ON:
 		mode = MAX77686_LDO_MODE_ON;
@@ -205,13 +208,13 @@ int max77686_set_buck_mode(struct pmic *p, int buck, char opmode)
 	case OPMODE_OFF:
 		mode = MAX77686_BUCK_MODE_OFF << mode_shift;
 		break;
-	case OPMODE_STANDBY:
+	case OPMODE_ON_AUTO_OFF:
 		switch (buck) {
 		case 1:
 		case 2:
 		case 3:
 		case 4:
-			mode = MAX77686_BUCK_MODE_STANDBY << mode_shift;
+			mode = MAX77686_BUCK_MODE_ON_AUTO_OFF << mode_shift;
 			break;
 		default:
 			mode = 0xff;

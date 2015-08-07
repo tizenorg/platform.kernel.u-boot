@@ -28,29 +28,29 @@ DECLARE_GLOBAL_DATA_PTR;
 static struct dm_regulator_mode max77686_ldo_mode_standby1[] = {
 	MODE(OPMODE_OFF, MAX77686_LDO_MODE_OFF, "OFF"),
 	MODE(OPMODE_LPM, MAX77686_LDO_MODE_LPM, "LPM"),
-	MODE(OPMODE_STANDBY_LPM, MAX77686_LDO_MODE_STANDBY_LPM, "ON/LPM"),
+	MODE(OPMODE_ON_AUTO_LPM, MAX77686_LDO_MODE_ON_AUTO_LPM, "ON/LPM"),
 	MODE(OPMODE_ON, MAX77686_LDO_MODE_ON, "ON"),
 };
 
 /* LDO: 2,6,7,8,10,11,12,14,15,16 */
 static struct dm_regulator_mode max77686_ldo_mode_standby2[] = {
 	MODE(OPMODE_OFF, MAX77686_LDO_MODE_OFF, "OFF"),
-	MODE(OPMODE_STANDBY, MAX77686_LDO_MODE_STANDBY, "ON/OFF"),
-	MODE(OPMODE_STANDBY_LPM, MAX77686_LDO_MODE_STANDBY_LPM, "ON/LPM"),
+	MODE(OPMODE_ON_AUTO_OFF, MAX77686_LDO_MODE_ON_AUTO_OFF, "ON/OFF"),
+	MODE(OPMODE_ON_AUTO_LPM, MAX77686_LDO_MODE_ON_AUTO_LPM, "ON/LPM"),
 	MODE(OPMODE_ON, MAX77686_LDO_MODE_ON, "ON"),
 };
 
 /* Buck: 1 */
 static struct dm_regulator_mode max77686_buck_mode_standby[] = {
 	MODE(OPMODE_OFF, MAX77686_BUCK_MODE_OFF, "OFF"),
-	MODE(OPMODE_STANDBY, MAX77686_BUCK_MODE_STANDBY, "ON/OFF"),
+	MODE(OPMODE_ON_AUTO_OFF, MAX77686_BUCK_MODE_ON_AUTO_OFF, "ON/OFF"),
 	MODE(OPMODE_ON, MAX77686_BUCK_MODE_ON, "ON"),
 };
 
 /* Buck: 2,3,4 */
 static struct dm_regulator_mode max77686_buck_mode_lpm[] = {
 	MODE(OPMODE_OFF, MAX77686_BUCK_MODE_OFF, "OFF"),
-	MODE(OPMODE_STANDBY, MAX77686_BUCK_MODE_STANDBY, "ON/OFF"),
+	MODE(OPMODE_ON_AUTO_OFF, MAX77686_BUCK_MODE_ON_AUTO_OFF, "ON/OFF"),
 	MODE(OPMODE_LPM, MAX77686_BUCK_MODE_LPM, "LPM"),
 	MODE(OPMODE_ON, MAX77686_BUCK_MODE_ON, "ON"),
 };
@@ -201,7 +201,7 @@ static int max77686_ldo_hex2mode(int ldo, int hex)
 	switch (hex) {
 	case MAX77686_LDO_MODE_OFF:
 		return OPMODE_OFF;
-	case MAX77686_LDO_MODE_LPM: /* == MAX77686_LDO_MODE_STANDBY: */
+	case MAX77686_LDO_MODE_LPM: /* == MAX77686_LDO_MODE_ON_AUTO_OFF: */
 		/* The same mode values but different meaning for each ldo */
 		switch (ldo) {
 		case 2:
@@ -214,12 +214,12 @@ static int max77686_ldo_hex2mode(int ldo, int hex)
 		case 14:
 		case 15:
 		case 16:
-			return OPMODE_STANDBY;
+			return OPMODE_ON_AUTO_OFF;
 		default:
 			return OPMODE_LPM;
 		}
-	case MAX77686_LDO_MODE_STANDBY_LPM:
-		return OPMODE_STANDBY_LPM;
+	case MAX77686_LDO_MODE_ON_AUTO_LPM:
+		return OPMODE_ON_AUTO_LPM;
 	case MAX77686_LDO_MODE_ON:
 		return OPMODE_ON;
 	default:
@@ -237,13 +237,13 @@ static int max77686_buck_hex2mode(int buck, int hex)
 		return OPMODE_OFF;
 	case MAX77686_BUCK_MODE_ON:
 		return OPMODE_ON;
-	case MAX77686_BUCK_MODE_STANDBY:
+	case MAX77686_BUCK_MODE_ON_AUTO_OFF:
 		switch (buck) {
 		case 1:
 		case 2:
 		case 3:
 		case 4:
-			return OPMODE_STANDBY;
+			return OPMODE_ON_AUTO_OFF;
 		default:
 			return -EINVAL;
 		}
@@ -464,7 +464,7 @@ static int max77686_ldo_mode(struct udevice *dev, int op, int *opmode)
 			mode = MAX77686_LDO_MODE_LPM;
 		}
 		break;
-	case OPMODE_STANDBY:
+	case OPMODE_ON_AUTO_OFF:
 		switch (ldo) {
 		case 2:
 		case 6:
@@ -476,14 +476,14 @@ static int max77686_ldo_mode(struct udevice *dev, int op, int *opmode)
 		case 14:
 		case 15:
 		case 16:
-			mode = MAX77686_LDO_MODE_STANDBY;
+			mode = MAX77686_LDO_MODE_ON_AUTO_OFF;
 			break;
 		default:
 			return -EINVAL;
 		}
 		break;
-	case OPMODE_STANDBY_LPM:
-		mode = MAX77686_LDO_MODE_STANDBY_LPM;
+	case OPMODE_ON_AUTO_LPM:
+		mode = MAX77686_LDO_MODE_ON_AUTO_LPM;
 		break;
 	case OPMODE_ON:
 		mode = MAX77686_LDO_MODE_ON;
@@ -589,13 +589,13 @@ static int max77686_buck_mode(struct udevice *dev, int op, int *opmode)
 	case OPMODE_OFF:
 		mode = MAX77686_BUCK_MODE_OFF;
 		break;
-	case OPMODE_STANDBY:
+	case OPMODE_ON_AUTO_OFF:
 		switch (buck) {
 		case 1:
 		case 2:
 		case 3:
 		case 4:
-			mode = MAX77686_BUCK_MODE_STANDBY << mode_shift;
+			mode = MAX77686_BUCK_MODE_ON_AUTO_OFF << mode_shift;
 			break;
 		default:
 			mode = 0xff;
