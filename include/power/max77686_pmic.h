@@ -150,9 +150,9 @@ enum {
 enum {
 	OPMODE_OFF = 0,
 	OPMODE_LPM,
-	OPMODE_STANDBY,
-	OPMODE_STANDBY_LPM,
 	OPMODE_ON,
+	OPMODE_ON_AUTO_OFF,
+	OPMODE_ON_AUTO_LPM,
 };
 
 #ifdef CONFIG_POWER
@@ -165,11 +165,11 @@ int max77686_set_buck_mode(struct pmic *p, int buck, char opmode);
 #define MAX77686_LDO_VOLT_MAX_HEX	0x3f
 #define MAX77686_LDO_VOLT_MASK		0x3f
 #define MAX77686_LDO_MODE_MASK		0xc0
-#define MAX77686_LDO_MODE_OFF		(0x00 << 0x06)
-#define MAX77686_LDO_MODE_LPM		(0x01 << 0x06)
-#define MAX77686_LDO_MODE_STANDBY	(0x01 << 0x06)
-#define MAX77686_LDO_MODE_STANDBY_LPM	(0x02 << 0x06)
-#define MAX77686_LDO_MODE_ON		(0x03 << 0x06)
+#define MAX77686_LDO_MODE_OFF		(0x0 << 6)
+#define MAX77686_LDO_MODE_LPM		(0x1 << 6) /* ldo1 compatible */
+#define MAX77686_LDO_MODE_ON_AUTO_OFF	(0x1 << 6) /* ldo2 compatible */
+#define MAX77686_LDO_MODE_ON_AUTO_LPM	(0x2 << 6)
+#define MAX77686_LDO_MODE_ON		(0x3 << 6)
 #define MAX77686_BUCK234_VOLT_MAX_HEX	0xff
 #define MAX77686_BUCK234_VOLT_MASK	0xff
 #define MAX77686_BUCK_VOLT_MAX_HEX	0x3f
@@ -178,7 +178,7 @@ int max77686_set_buck_mode(struct pmic *p, int buck, char opmode);
 #define MAX77686_BUCK_MODE_SHIFT_1	0x00
 #define MAX77686_BUCK_MODE_SHIFT_2	0x04
 #define MAX77686_BUCK_MODE_OFF		0x00
-#define MAX77686_BUCK_MODE_STANDBY	0x01
+#define MAX77686_BUCK_MODE_ON_AUTO_OFF	0x01
 #define MAX77686_BUCK_MODE_LPM		0x02
 #define MAX77686_BUCK_MODE_ON		0x03
 
