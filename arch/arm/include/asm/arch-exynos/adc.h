@@ -21,6 +21,16 @@ struct s5p_adc {
 	unsigned int adcmux;
 	unsigned int adcclrintpndnup;
 };
+
+struct exynos_adc {
+	unsigned int con1;
+	unsigned int con2;
+	unsigned int status;
+	unsigned int dat;
+	unsigned int int_en;
+	unsigned int int_status;
+	unsigned int version;
+};
 #endif
 
 #endif /* __ASM_ARM_ARCH_ADC_H_ */
