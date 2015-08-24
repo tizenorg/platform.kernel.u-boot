@@ -271,10 +271,9 @@ void set_board_info(void)
 #ifdef CONFIG_BOARD_TYPES
 #ifdef CONFIG_OF_MULTI
 	const char *platname = get_plat_name();
-	bdname = get_board_name();
-
 	setenv("platname", platname);
 #endif
+	bdname = get_board_name();
 	setenv("boardname", bdname);
 #endif
 	snprintf(info, ARRAY_SIZE(info),  "%s%x-%s.dtb",
