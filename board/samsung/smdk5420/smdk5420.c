@@ -25,6 +25,7 @@
 #include <asm/arch/power.h>
 #include <samsung-usb-phy-uboot.h>
 #include <asm/arch/xhci-exynos.h>
+#include <asm/arch/adc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -77,10 +78,68 @@ void exynos_backlight_on(unsigned int onoff)
 }
 #endif
 
-int board_get_revision(void)
+#ifdef CONFIG_BOARD_TYPES
+enum {
+	BOARD_TYPE_ODROID_XU3,
+	BOARD_TYPE_ODROID_XU4,
+	BOARD_TYPES_NUM,
+};
+
+static const char * const board_model[] = {
+	"xu3",
+	"xu4",
+};
+
+static const char * const board_name[] = {
+	"odroidxu3",
+	"odroidxu4",
+};
+
+static unsigned int get_adc_value(int channel)
 {
-	return 0;
+	struct exynos_adc *adc = (struct exynos_adc *)samsung_get_base_adc();
+	unsigned short ret = 0;
+	unsigned int reg;
+	unsigned int loop = 0;
+
+	/* channel settings */
+	writel(readl(&adc->con2) | (channel << 0), &adc->con2);
+	/* reset */
+	writel(readl(&adc->con1) | (0x2 << 1), &adc->con1);
+	/* enable */
+	writel(readl(&adc->con1) | (0x1 << 0), &adc->con1);
+
+	do {
+		reg = readl(&adc->dat);
+	} while (!(reg & 0xFFF) && (loop++ < 1000));
+
+	ret = readl(&adc->dat) & 0xFFF;
+
+	return ret;
 }
+
+#define IS_RANGE(x, min, max)	((x) >= (min) && (x) <= (max))
+
+void set_board_type(void)
+{
+	unsigned int adc = get_adc_value(9);
+
+	if (IS_RANGE(adc, 0, 372))
+		gd->board_type = BOARD_TYPE_ODROID_XU3;
+	else
+		gd->board_type = BOARD_TYPE_ODROID_XU4;
+}
+
+const char *get_board_name(void)
+{
+	return board_name[gd->board_type];
+}
+
+const char *get_board_model(void)
+{
+	return board_model[gd->board_type];
+}
+#endif
 
 static struct dwc3_device dwc3_device_data = {
 	.maximum_speed = USB_SPEED_SUPER,
