@@ -91,6 +91,9 @@
 
 #include <samsung/platform_boot.h>
 
+#define CONFIG_BOARD_TYPES
+#define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
+
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run autoboot"
 
@@ -101,7 +104,6 @@
 	"bootdelay=0\0" \
 	"rootfstype=ext4\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
-	"fdtfile=exynos5422-odroidxu3.dtb\0" \
 	"mmcbootdev=0\0" \
 	"mmcbootpart=1\0" \
 	"mmcrootdev=0\0" \
