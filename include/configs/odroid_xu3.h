@@ -88,6 +88,7 @@
 
 #define CONFIG_MISC_COMMON
 #define CONFIG_MISC_INIT_R
+#define CONFIG_CHECK_FUSING_MODE
 
 #include <samsung/platform_boot.h>
 
