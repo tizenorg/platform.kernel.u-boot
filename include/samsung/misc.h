@@ -80,4 +80,7 @@ int board_is_odroid_u3(void);
 int platform_setup(void);
 #endif
 
+#ifdef CONFIG_CHECK_FUSING_MODE
+void check_fusing_mode(void);
+#endif
 #endif /* __SAMSUNG_MISC_COMMON_H__ */
