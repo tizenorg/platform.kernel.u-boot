@@ -19,6 +19,7 @@
 #include <power/pmic.h>
 #include <mmc.h>
 #include <part.h>
+#include <dfu.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -931,3 +932,104 @@ void draw_logo(void)
 }
 #endif /* CONFIG_CMD_BMP */
 
+#ifdef CONFIG_CHECK_FUSING_MODE
+#define CONFIG_FUSING_MODE_ADDR	(CONFIG_SYS_SDRAM_BASE + 0x10000000)
+#define CONFIG_FUSING_HDR_ADDR	0xC00
+#define FUSING_MODE_MAGIC	0x53554642	/* BFUS */
+
+/* 40 byte */
+struct fusing_entry {
+	char name[DFU_NAME_SIZE];
+	unsigned int offset;
+	unsigned int size;
+};
+
+/* 512 byte */
+struct fusing_header {
+	unsigned int magic;
+	unsigned char num;
+	char reserved[3];
+	struct fusing_entry f_entry[12];
+	char reserved_2[24];
+};
+
+void check_fusing_mode(void)
+{
+	struct fusing_header *f_hdr;
+	struct fusing_header empty_hdr;
+	struct mmc *mmc;
+	int dev_num = CONFIG_MMC_DEFAULT_DEV;
+	char *interface, *devstring;
+	int ret, i;
+
+	mmc = find_mmc_device(dev_num);
+	if (!mmc)
+		return;
+
+	if (mmc_init(mmc))
+		return;
+
+	if (IS_SD(mmc))
+		return;
+
+	ret = mmc->block_dev.block_read(dev_num, CONFIG_FUSING_HDR_ADDR,
+					0x1, (void *)CONFIG_FUSING_MODE_ADDR);
+	if (!ret)
+		return;
+
+	f_hdr = (struct fusing_header *)CONFIG_FUSING_MODE_ADDR;
+	if (f_hdr->magic != FUSING_MODE_MAGIC)
+		return;
+
+	/* erase fusing header */
+	ret = mmc->block_dev.block_write(dev_num, CONFIG_FUSING_HDR_ADDR,
+					 0x1, &empty_hdr);
+	if (!ret)
+		return;
+
+	interface = strdup(getenv("dfu_interface"));
+	devstring = strdup(getenv("dfu_device"));
+
+	ret = dfu_init_env_entities(interface, devstring);
+	if (ret)
+		return;
+
+	for (i = 0; i < f_hdr->num; i++) {
+		int dfu_alt_num = dfu_get_alt(f_hdr->f_entry[i].name);
+		struct dfu_entity *dfu_entity = dfu_get_entity(dfu_alt_num);
+		void *load_buf;
+
+		if (!dfu_entity) {
+			error("%d entity not found!\n", dfu_alt_num);
+			continue;
+		}
+
+		load_buf = dfu_get_buf(dfu_entity);
+		if (!load_buf) {
+			error("DFU buffer not allocated!");
+			return;
+		}
+
+		ret = mmc->block_dev.block_read(dev_num,
+						f_hdr->f_entry[i].offset,
+						f_hdr->f_entry[i].size,
+						load_buf);
+		if (!ret) {
+			error("mmc read failed: %d\n", ret);
+			goto dfu_flush;
+		}
+
+		ret = dfu_write(dfu_entity, load_buf,
+				f_hdr->f_entry[i].size * 512, 0);
+		if (ret)
+			error("DFU write failed: %d", ret);
+
+dfu_flush:
+		ret = dfu_flush(dfu_entity, load_buf, 0, 0);
+		if (ret)
+			error("DFU flush failed");
+	}
+
+	run_command("reset", 0);
+}
+#endif
