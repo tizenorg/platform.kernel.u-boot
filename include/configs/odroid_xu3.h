@@ -163,4 +163,7 @@
 	"dfu_alt_system="CONFIG_DFU_ALT_SYSTEM \
 	"dfu_alt_info=Autoset by THOR/DFU command run.\0"
 
+/* Hacking */
+#define EXYNOS5422_MFC_CPLL_FIX
+
 #endif	/* __CONFIG_H */
