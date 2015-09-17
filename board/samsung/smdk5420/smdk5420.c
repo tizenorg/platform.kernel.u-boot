@@ -30,6 +30,19 @@ DECLARE_GLOBAL_DATA_PTR;
 
 int exynos_init(void)
 {
+#ifdef EXYNOS5422_MFC_CPLL_FIX
+	/*
+	 * A workaround for MFC crash on Odroid XU3:
+	 * 1. set ACLK333 divider to 1
+	 * 2. set CPLL rate to 480MHz
+	 */
+	writel(0xa0500201, 0x10020120);
+	udelay(10);
+
+	writel(0x03100900, 0x10020504);
+	udelay(10);
+#endif
+
 	return 0;
 }
 

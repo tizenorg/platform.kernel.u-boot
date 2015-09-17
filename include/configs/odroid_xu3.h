@@ -152,4 +152,6 @@
 #undef CONFIG_EXYNOS_TMU
 #undef CONFIG_TMU_CMD_DTT
 
+#define EXYNOS5422_MFC_CPLL_FIX
+
 #endif	/* __CONFIG_H */
