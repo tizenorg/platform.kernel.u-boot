@@ -142,6 +142,9 @@
 #undef CONFIG_SYS_BOARD
 #define CONFIG_SYS_BOARD	"odroid"
 
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND	"run autoboot"
+
 /* Define new extra env settings, including DFU settings */
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #define CONFIG_EXTRA_ENV_SETTINGS \
