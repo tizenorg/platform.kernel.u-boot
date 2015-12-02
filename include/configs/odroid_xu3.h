@@ -151,7 +151,14 @@
 	EXYNOS_FDTFILE_SETTING \
 	MEM_LAYOUT_ENV_SETTINGS \
 	PLATFORM_BOOT_INFO \
-	"checkboard=\0" \
+	"checkboard=" \
+		"if test ${boardname} = odroidxu3-lite; then; " \
+			"setenv fdtfile exynos5422-odroidxu3.dtb;"  \
+			"echo;echo ' '@@@@@ !Warning! @@@@@;" \
+			"echo ' 'Detected Odroid XU3-Lite;" \
+			"echo ' 'Overwriting $'{'fdtfile'}' to exynos5422-odroidxu3.dtb;" \
+			"echo ' 'To prevent this, run: env delete checkboard;echo;" \
+		"fi;\0" \
 	"bootdelay=0\0" \
 	"rootfstype=ext4\0" \
 	"console=" CONFIG_DEFAULT_CONSOLE \
