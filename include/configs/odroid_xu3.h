@@ -171,7 +171,39 @@
 	"dfu_interface=mmc\0" \
 	"dfu_device=" __stringify(CONFIG_MMC_DEFAULT_DEV) "\0" \
 	"dfu_alt_system="CONFIG_DFU_ALT_SYSTEM \
-	"dfu_alt_info=Autoset by THOR/DFU command run.\0"
+	"dfu_alt_info=Autoset by THOR/DFU command run.\0" \
+	"bootclone="                                               \
+	"echo ' 'Bootloader clone from SD to eMMC.;"               \
+	"echo ' 'Checking SD/eMMC configuration...;"               \
+	"if mmc dev 1 1; then "                                    \
+		"mmc dev 0;"                                       \
+		"mmc read 0x40000000 0x1 0xa3e;"                   \
+		"mmc dev 1 1;"                                     \
+		"mmc write 0x40000000 0x0 0xa3e;"                  \
+		"mmc dev 1 0;"                                     \
+	"else "                                                    \
+		"echo ' 'Wrong cards setup.;"                      \
+		"echo ' 'Make sure that eMMC is in proper slot.;"  \
+		"echo ' 'Switch SW1 DIP to SD card booting.;"      \
+	"fi;\0"                                                    \
+	"ubootupgrade="                                            \
+	"if test -e mmc 0:${mmcbootpart} u-boot-mmc.bin; then "        \
+		"echo U-Boot upgrade from partition: ${mmcbootpart}.;" \
+		"echo Found U-Boot image: u-boot-mmc.bin;"             \
+		"fatload mmc 0:1 0x40000000 u-boot-mmc.bin;"           \
+		"if mmc dev 0 1; then "                                \
+			"echo Boot device is eMMC;"                    \
+			"mmc write 0x40000000 0x3e 0x800;"             \
+			"mmc dev 0 0;"                                 \
+		"else "                                                \
+			"echo Boot device is SD;"                      \
+			"mmc write 0x40000000 0x3f 0x800;"             \
+		"fi;"                                                  \
+		"echo Bootloader upgrade done;"                        \
+		"reset;"                                               \
+	"else "                                                        \
+		"echo U-Boot image: u-boot-mmc.bin not found!;"        \
+	"fi;\0"
 
 /* Hacking */
 #define EXYNOS5422_MFC_CPLL_FIX
