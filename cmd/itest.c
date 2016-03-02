@@ -71,6 +71,9 @@ static long evalexp(char *s, int w)
 			l = (long)(*(unsigned short *)buf);
 			break;
 		case 4:
+			l = (long)(*(unsigned int *)buf);
+			break;
+		case 8:
 			l = (long)(*(unsigned long *)buf);
 			break;
 		}
@@ -185,6 +188,7 @@ static int do_itest(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	case 1:
 	case 2:
 	case 4:
+	case 8:
 		value = binary_test (argv[2], argv[1], argv[3], w);
 		break;
 	case -2:
@@ -203,5 +207,5 @@ static int do_itest(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 U_BOOT_CMD(
 	itest, 4, 0, do_itest,
 	"return true/false on integer compare",
-	"[.b, .w, .l, .s] [*]value1 <op> [*]value2"
+	"[.b, .w, .l, .q, .s] [*]value1 <op> [*]value2"
 );
