@@ -32,7 +32,7 @@
 
 static void thor_tx_data(unsigned char *data, int len);
 static void thor_set_dma(void *addr, int len);
-static int thor_rx_data(void);
+static int thor_rx_data(size_t *received);
 
 static struct f_thor *thor_func;
 static inline struct f_thor *func_to_thor(struct usb_function *f)
@@ -49,7 +49,7 @@ DEFINE_CACHE_ALIGN_BUFFER(unsigned char, thor_rx_data_buf,
 /*         THOR protocol - transmission handling	      */
 /* ********************************************************** */
 DEFINE_CACHE_ALIGN_BUFFER(char, f_name, F_NAME_BUF_SIZE);
-static unsigned long long int thor_file_size;
+static size_t thor_file_size;
 static int alt_setting_num;
 
 static void send_rsp(const struct rsp_box *rsp)
@@ -141,12 +141,12 @@ static int process_rqt_cmd(const struct rqt_box *rqt)
 	return true;
 }
 
-static long long int download_head(unsigned long long total,
+static int download_head(unsigned long long total,
 				   unsigned int packet_size,
-				   long long int *left,
+				   size_t *left,
 				   int *cnt)
 {
-	long long int rcv_cnt = 0, left_to_rcv, ret_rcv;
+	size_t rcv_cnt = 0, left_to_rcv, ret_rcv;
 	struct dfu_entity *dfu_entity = dfu_get_entity(alt_setting_num);
 	void *transfer_buffer = dfu_get_buf(dfu_entity);
 	void *buf = transfer_buffer;
@@ -162,11 +162,11 @@ static long long int download_head(unsigned long long total,
 	while (total - rcv_cnt >= packet_size) {
 		thor_set_dma(buf, packet_size);
 		buf += packet_size;
-		ret_rcv = thor_rx_data();
-		if (ret_rcv < 0)
-			return ret_rcv;
+		ret = thor_rx_data(&ret_rcv);
+		if (ret < 0)
+			return ret;
 		rcv_cnt += ret_rcv;
-		debug("%d: RCV data count: %llu cnt: %d\n", usb_pkt_cnt,
+		debug("%d: RCV data count: %zu cnt: %d\n", usb_pkt_cnt,
 		      rcv_cnt, *cnt);
 
 		if ((rcv_cnt % THOR_STORE_UNIT_SIZE) == 0) {
@@ -191,21 +191,21 @@ static long long int download_head(unsigned long long total,
 	 * on the medium (they are smaller than THOR_STORE_UNIT_SIZE)
 	 */
 	*left = left_to_rcv + buf - transfer_buffer;
-	debug("%s: left: %llu left_to_rcv: %llu buf: 0x%p\n", __func__,
+	debug("%s: left: %zu left_to_rcv: %zu buf: 0x%p\n", __func__,
 	      *left, left_to_rcv, buf);
 
 	if (left_to_rcv) {
 		thor_set_dma(buf, packet_size);
-		ret_rcv = thor_rx_data();
-		if (ret_rcv < 0)
-			return ret_rcv;
+		ret = thor_rx_data(&ret_rcv);
+		if (ret < 0)
+			return ret;
 		rcv_cnt += ret_rcv;
 		send_data_rsp(0, ++usb_pkt_cnt);
 	}
 
-	debug("%s: %llu total: %llu cnt: %d\n", __func__, rcv_cnt, total, *cnt);
+	debug("%s: %zu total: %llu cnt: %d\n", __func__, rcv_cnt, total, *cnt);
 
-	return rcv_cnt;
+	return 0;
 }
 
 static int download_tail(long long int left, int cnt)
@@ -250,11 +250,11 @@ static int download_tail(long long int left, int cnt)
 	return ret;
 }
 
-static long long int process_rqt_download(const struct rqt_box *rqt)
+static int process_rqt_download(const struct rqt_box *rqt)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(struct rsp_box, rsp, sizeof(struct rsp_box));
-	static long long int left, ret_head;
-	int file_type, ret = 0;
+	int ret_head, file_type, ret = 0;
+	static size_t left;
 	static int cnt;
 
 	memset(rsp, 0, sizeof(struct rsp_box));
@@ -263,8 +263,8 @@ static long long int process_rqt_download(const struct rqt_box *rqt)
 
 	switch (rqt->rqt_data) {
 	case RQT_DL_INIT:
-		thor_file_size = rqt->int_data[0];
-		debug("INIT: total %d bytes\n", rqt->int_data[0]);
+		thor_file_size = (size_t)rqt->int_data[0];
+		debug("INIT: total %zu bytes\n", (size_t)rqt->int_data[0]);
 		break;
 	case RQT_DL_FILE_INFO:
 		file_type = rqt->int_data[0];
@@ -275,10 +275,10 @@ static long long int process_rqt_download(const struct rqt_box *rqt)
 			break;
 		}
 
-		thor_file_size = rqt->int_data[1];
+		thor_file_size = (size_t)rqt->int_data[1];
 		memcpy(f_name, rqt->str_data[0], F_NAME_BUF_SIZE);
 
-		debug("INFO: name(%s, %d), size(%llu), type(%d)\n",
+		debug("INFO: name(%s, %d), size(%zu), type(%d)\n",
 		      f_name, 0, thor_file_size, file_type);
 
 		rsp->int_data[0] = THOR_PACKET_SIZE;
@@ -336,7 +336,7 @@ static int process_data(void)
 		ret = process_rqt_cmd(rqt);
 		break;
 	case RQT_DL:
-		ret = (int) process_rqt_download(rqt);
+		ret = process_rqt_download(rqt);
 		break;
 	case RQT_UL:
 		puts("RQT: UPLOAD not supported!\n");
@@ -527,13 +527,14 @@ static struct usb_request *alloc_ep_req(struct usb_ep *ep, unsigned length)
 	return req;
 }
 
-static int thor_rx_data(void)
+static int thor_rx_data(size_t *received)
 {
 	struct thor_dev *dev = thor_func->dev;
-	int data_to_rx, tmp, status;
+	size_t data_to_rx;
+	int status;
 
 	data_to_rx = dev->out_req->length;
-	tmp = data_to_rx;
+	*received = data_to_rx;
 	do {
 		dev->out_req->length = data_to_rx;
 		debug("dev->out_req->length:%d dev->rxdata:%d\n",
@@ -556,7 +557,7 @@ static int thor_rx_data(void)
 		data_to_rx -= dev->out_req->actual;
 	} while (data_to_rx);
 
-	return tmp;
+	return 0;
 }
 
 static void thor_tx_data(unsigned char *data, int len)
@@ -695,6 +696,7 @@ static void thor_set_dma(void *addr, int len)
 int thor_init(void)
 {
 	struct thor_dev *dev = thor_func->dev;
+	size_t received;
 
 	/* Wait for a device enumeration and configuration settings */
 	debug("THOR enumeration/configuration setting....\n");
@@ -703,7 +705,7 @@ int thor_init(void)
 
 	thor_set_dma(thor_rx_data_buf, strlen("THOR"));
 	/* detect the download request from Host PC */
-	if (thor_rx_data() < 0) {
+	if (thor_rx_data(&received) < 0) {
 		printf("%s: Data not received!\n", __func__);
 		return -1;
 	}
@@ -724,14 +726,14 @@ int thor_init(void)
 
 int thor_handle(void)
 {
+	size_t received;
 	int ret;
 
 	/* receive the data from Host PC */
 	while (1) {
 		thor_set_dma(thor_rx_data_buf, sizeof(struct rqt_box));
-		ret = thor_rx_data();
-
-		if (ret > 0) {
+		ret = thor_rx_data(&received);
+		if (!ret) {
 			ret = process_data();
 #ifdef CONFIG_THOR_RESET_OFF
 			if (ret == RESET_DONE)
