@@ -1,5 +1,5 @@
 Name: u-boot
-Version: 2015.10
+Version: 2016.03
 Release: 0
 Summary: Das U-Boot - Tizen bootloader
 Group: System/Kernel
