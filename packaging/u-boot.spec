@@ -72,9 +72,9 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" env
 export PATH="$PATH:tools:tools/dtc/"
 make %{?_smp_mflags} EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
 
-# Prepare proper dtb image: cat u-boot.bin multi.dtb > u-boot-multi.bin
+# Prepare proper dtb image: cat u-boot-nodtb.bin multi.dtb > u-boot-multi.bin
 chmod 755 tools/mkimage_multidtb.sh
-mkimage_multidtb.sh u-boot.bin
+mkimage_multidtb.sh u-boot-nodtb.bin
 
 # Sign u-boot-multi.bin - output is: u-boot-mmc.bin
 chmod 755 tools/mkimage_signed.sh
