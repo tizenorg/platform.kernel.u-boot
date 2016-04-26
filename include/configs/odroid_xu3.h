@@ -206,7 +206,4 @@
 		"echo U-Boot image: u-boot-mmc.bin not found!;"        \
 	"fi;\0"
 
-/* Hacking */
-#define EXYNOS5422_MFC_CPLL_FIX
-
 #endif	/* __CONFIG_H */
