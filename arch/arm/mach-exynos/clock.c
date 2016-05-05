@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#ifndef CONFIG_TPL_SAMSUNG_DRACO
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/clk.h>
@@ -1772,3 +1773,22 @@ int set_epll_clk(unsigned long rate)
 
 	return 0;
 }
+#else
+unsigned long clock_get_periph_rate(int peripheral)
+{
+	/* PWM clock's parent is the SCLK_BUS_PLL (800MHz) divided by */
+	/* 12 => ACLK_PERIC_66 MHz is produced */
+	return 67000000;
+}
+
+#define PERIPH_ID_PWM0 132
+unsigned long get_pwm_clk(void)
+{
+	return clock_get_periph_rate(PERIPH_ID_PWM0);
+}
+
+unsigned long get_mmc_clk(int dev_index)
+{
+	return 100000000;
+}
+#endif /* CONFIG_TPL_SAMSUNG_DRACO */
