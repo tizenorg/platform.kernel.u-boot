@@ -83,6 +83,7 @@ static void exynos_dwmci_board_init(struct dwmci_host *host)
 static int exynos_dwmci_core_init(struct dwmci_host *host, int index)
 {
 	unsigned int div;
+	int addr_config;
 	unsigned long freq, sclk;
 	struct dwmci_exynos_priv_data *priv = host->priv;
 
@@ -114,6 +115,12 @@ static int exynos_dwmci_core_init(struct dwmci_host *host, int index)
 	host->clksel = exynos_dwmci_clksel;
 	host->dev_index = index;
 	host->get_mmc_clk = exynos_dwmci_get_clk;
+
+	addr_config = DWMCI_GET_ADDR_CONFIG(dwmci_readl(host, DWMCI_HCON));
+	if (addr_config == 1)
+		/* host supports IDMAC in 64-bit address mode */
+		host->dma_64bit_address = 1;
+
 	/* Add the mmc channel to be registered with mmc core */
 	if (add_dwmci(host, DWMMC_MAX_FREQ, DWMMC_MIN_FREQ)) {
 		printf("DWMMC%d registration failed\n", index);

@@ -131,6 +131,7 @@
 /* quirks */
 #define DWMCI_QUIRK_DISABLE_SMU		(1 << 0)
 
+#define DWMCI_GET_ADDR_CONFIG(x) (((x)>>27) & 0x1)
 /**
  * struct dwmci_host - Information about a designware MMC host
  *
@@ -144,6 +145,7 @@
  * @dev_id:	Arbitrary device ID for use by controller
  * @buswidth:	Bus width in bits (8 or 4)
  * @fifoth_val:	Value for FIFOTH register (or 0 to leave unset)
+ * @dma_64bit_address:	True only for devices supporting 64 bit DMA
  * @mmc:	Pointer to generic MMC structure for this device
  * @priv:	Private pointer for use by controller
  */
@@ -160,6 +162,7 @@ struct dwmci_host {
 	int dev_id;
 	int buswidth;
 	u32 fifoth_val;
+	int dma_64bit_address;
 	struct mmc *mmc;
 	void *priv;
 
