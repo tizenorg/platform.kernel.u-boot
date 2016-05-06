@@ -9,11 +9,15 @@
  */
 
 #include <common.h>
+#ifdef CONFIG_TPL_SAMSUNG_DRACO
+#include <asm/io.h>
+#endif
 #include <asm/arch/power.h>
 #include <asm/arch/xhci-exynos.h>
 
 void exynos5_usb3_phy_init(struct exynos_usb3_phy *phy)
 {
+#ifndef CONFIG_TPL_SAMSUNG_DRACO
 	u32 reg;
 
 	/* Reset USB 3.0 PHY */
@@ -75,4 +79,25 @@ void exynos5_usb3_phy_init(struct exynos_usb3_phy *phy)
 
 	reg &= ~PHYCLKRST_PORTRESET;
 	writel(reg, &phy->phy_clk_rst);
+#else
+	void *base = phy;
+	/* copied from Linux kernel register dump */
+	writel(0x0, base + 0x14);
+	writel(0x0, base + 0x34);
+	writel(0x8000040, base + 0x4);
+	writel(0x24d466e4, base + 0x1c);
+	writel(0x4, base + 0x30);
+	writel(0x24d466e4, base + 0x1c);
+	writel(0x3fff81c, base + 0x20);
+	writel(0x40, base + 0x8);
+	writel(0x0, base + 0x28);
+	writel(0xc41805bf, base + 0x10);
+	udelay(10);
+	writel(0xc41805bd, base + 0x10);
+	writel(0x3fff81c, base + 0x20);
+	writel(0x0, base + 0x28);
+	writel(0xc41b40bf, base + 0x10);
+	udelay(10);
+	writel(0xc41b40bd, base + 0x10);
+#endif /* CONFIG_TPL_SAMSUNG_DRACO */
 }
