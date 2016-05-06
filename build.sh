@@ -68,9 +68,12 @@ EOF
 tools/mkimage -f $KERNELDIR/kernel.its output/kernel.img || exit 1
 rm $KERNELDIR/kernel.its
 
-# make Android-compatible uboot.img from u-boot.bin (with empty ramdisk to make tools happy)
+# make Android-compatible uboot.img from u-boot.bin+download.bgra image (with empty ramdisk to make tools happy)
 dd if=/dev/zero of=output/ramdisk.img bs=4k count=1
-$KERNELDIR/tools/mkbootimg --kernel u-boot.bin --ramdisk output/ramdisk.img --output output/uboot.img
+dd if=/dev/zero of=output/uboot.bin bs=1024 count=320
+dd if=u-boot.bin of=output/uboot.bin conv=notrunc || exit 1
+dd if=images/download.bgra.gz of=output/uboot.bin bs=1024 conv=notrunc seek=320 || exit 1
+$KERNELDIR/tools/mkbootimg --kernel output/uboot.bin --ramdisk output/ramdisk.img --output output/uboot.img || exit 1
 
 # prepare mixed boot partition image:
 dd if=/dev/zero of=output/boot.img bs=1k count=1k
