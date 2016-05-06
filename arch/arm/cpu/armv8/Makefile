@@ -19,3 +19,4 @@ obj-y	+= fwcall.o
 obj-$(CONFIG_FSL_LAYERSCAPE) += fsl-layerscape/
 obj-$(CONFIG_ARCH_ZYNQMP) += zynqmp/
 obj-$(CONFIG_TARGET_HIKEY) += hisilicon/
+obj-$(CONFIG_TPL_SAMSUNG_DRACO) += exynos-common/
