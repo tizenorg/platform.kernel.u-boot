@@ -1,0 +1,1 @@
+../../../mach-exynos/include/mach/periph.h
