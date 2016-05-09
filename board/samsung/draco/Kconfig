@@ -1,0 +1,15 @@
+if TARGET_SAMSUNG_DRACO
+
+config SYS_BOARD
+	default "draco"
+
+config SYS_VENDOR
+	default "samsung"
+
+config SYS_SOC
+	default "exynos5433"
+
+config SYS_CONFIG_NAME
+	default "samsung_draco"
+
+endif
