@@ -663,6 +663,7 @@ config TARGET_SAMSUNG_DRACO
 	select ARM64
 	select DM
 	select DM_SERIAL
+	select OF_CONTROL
 	  help
 	  Support for Samsung Exynos5433 DRACO platform.
 
