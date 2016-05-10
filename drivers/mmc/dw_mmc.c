@@ -32,8 +32,8 @@ static int dwmci_wait_reset(struct dwmci_host *host, u32 value)
 	return 0;
 }
 
-static void dwmci_set_idma_desc(struct dwmci_idmac *idmac,
-		u32 desc0, u32 desc1, u32 desc2)
+static void dwmci_set_idma_desc_32bit(void *idmac,
+				      u32 desc0, u32 desc1, u32 desc2)
 {
 	struct dwmci_idmac *desc = idmac;
 
@@ -43,10 +43,29 @@ static void dwmci_set_idma_desc(struct dwmci_idmac *idmac,
 	desc->next_addr = (ulong)desc + sizeof(struct dwmci_idmac);
 }
 
-static void dwmci_prepare_data(struct dwmci_host *host,
+static void dwmci_set_idma_desc_64bit(void *idmac, u32 flags,
+				      u32 cnt, u32 addr)
+{
+	struct dwmci_idmac_64addr *d = idmac;
+	memset(d, '\0', sizeof(*d));
+
+	d->des0 = flags;
+	d->des2 = cnt;
+	d->des4 = addr;
+	d->des6 = (ulong)d + sizeof(struct dwmci_idmac_64addr);
+}
+
+#ifdef CONFIG_TPL_SAMSUNG_DRACO
+void dwmci_prepare_data(struct dwmci_host *host,
+			       struct mmc_data *data,
+			       struct dwmci_idmac_64addr *cur_idmac,
+			       void *bounce_buffer)
+#else
+void dwmci_prepare_data(struct dwmci_host *host,
 			       struct mmc_data *data,
 			       struct dwmci_idmac *cur_idmac,
 			       void *bounce_buffer)
+#endif
 {
 	unsigned long ctrl;
 	unsigned int i = 0, flags, cnt, blk_cnt;
@@ -69,8 +88,15 @@ static void dwmci_prepare_data(struct dwmci_host *host,
 		} else
 			cnt = data->blocksize * 8;
 
-		dwmci_set_idma_desc(cur_idmac, flags, cnt,
-				    (ulong)bounce_buffer + (i * PAGE_SIZE));
+		if (host->dma_64bit_address)
+			dwmci_set_idma_desc_64bit(cur_idmac, flags, cnt,
+						 (ulong)bounce_buffer +
+						  (i * PAGE_SIZE));
+		else
+			dwmci_set_idma_desc_32bit(cur_idmac,
+						  flags, cnt,
+						  (ulong)bounce_buffer +
+						  (i * PAGE_SIZE));
 
 		if (blk_cnt <= 8)
 			break;
@@ -185,8 +211,13 @@ static int dwmci_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		struct mmc_data *data)
 {
 	struct dwmci_host *host = mmc->priv;
+#ifdef CONFIG_TPL_SAMSUNG_DRACO
+	ALLOC_CACHE_ALIGN_BUFFER(struct dwmci_idmac_64addr, cur_idmac,
+				 data ? DIV_ROUND_UP(data->blocks, 8) : 0);
+#else
 	ALLOC_CACHE_ALIGN_BUFFER(struct dwmci_idmac, cur_idmac,
 				 data ? DIV_ROUND_UP(data->blocks, 8) : 0);
+#endif
 	int ret = 0, flags = 0, i;
 	unsigned int timeout = 100000;
 	u32 retry = 100000;
@@ -428,8 +459,11 @@ static int dwmci_init(struct mmc *mmc)
 	dwmci_writel(host, DWMCI_INTMASK, 0);
 
 	dwmci_writel(host, DWMCI_TMOUT, 0xFFFFFFFF);
-
+#ifdef CONFIG_TPL_SAMSUNG_DRACO
+	dwmci_writel(host, DWMCI_IDINTEN + 0x4, 0);
+#else
 	dwmci_writel(host, DWMCI_IDINTEN, 0);
+#endif
 	dwmci_writel(host, DWMCI_BMOD, 1);
 
 	if (!host->fifoth_val) {
