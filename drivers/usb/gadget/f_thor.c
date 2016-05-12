@@ -175,7 +175,7 @@ static int download_head(unsigned long long total,
 		if (ret < 0)
 			return ret;
 		rcv_cnt += ret_rcv;
-		debug("%d: RCV data count: %u cnt: %d\n", usb_pkt_cnt,
+		debug("%d: RCV data count: %zu cnt: %d\n", usb_pkt_cnt,
 		      rcv_cnt, *cnt);
 
 		if ((rcv_cnt % THOR_STORE_UNIT_SIZE) == 0) {
@@ -200,7 +200,7 @@ static int download_head(unsigned long long total,
 	 * on the medium (they are smaller than THOR_STORE_UNIT_SIZE)
 	 */
 	*left = left_to_rcv + buf - transfer_buffer;
-	debug("%s: left: %u left_to_rcv: %u buf: 0x%p\n", __func__,
+	debug("%s: left: %zu left_to_rcv: %zu buf: 0x%p\n", __func__,
 	      *left, left_to_rcv, buf);
 
 	if (left_to_rcv) {
@@ -212,7 +212,7 @@ static int download_head(unsigned long long total,
 		send_data_rsp(0, ++usb_pkt_cnt);
 	}
 
-	debug("%s: %u total: %llu cnt: %d\n", __func__, rcv_cnt, total, *cnt);
+	debug("%s: %zu total: %llu cnt: %d\n", __func__, rcv_cnt, total, *cnt);
 
 	return 0;
 }
@@ -285,7 +285,7 @@ static int process_rqt_download(const struct rqt_box *rqt)
 		total_file_size = thor_file_size;
 		downloaded_file_size = 0;
 #endif
-		debug("INIT: total %u bytes\n", (size_t)rqt->int_data[0]);
+		debug("INIT: total %zu bytes\n", (size_t)rqt->int_data[0]);
 		break;
 	case RQT_DL_FILE_INFO:
 		file_type = rqt->int_data[0];
@@ -299,7 +299,7 @@ static int process_rqt_download(const struct rqt_box *rqt)
 		thor_file_size = (size_t)rqt->int_data[1];
 		memcpy(f_name, rqt->str_data[0], F_NAME_BUF_SIZE);
 
-		debug("INFO: name(%s, %d), size(%u), type(%d)\n",
+		debug("INFO: name(%s, %d), size(%zu), type(%d)\n",
 		      f_name, 0, thor_file_size, file_type);
 
 		rsp->int_data[0] = THOR_PACKET_SIZE;
