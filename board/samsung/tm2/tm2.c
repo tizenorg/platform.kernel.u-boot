@@ -7,8 +7,14 @@
 #include <dm.h>
 #include <errno.h>
 #include <malloc.h>
+#include <dwc3-uboot.h>
 #include <asm/armv8/mmu.h>
 #include <asm/arch/dwmmc.h>
+#include <usb.h>
+#include <dwc3-uboot.h>
+#include <asm/arch/cpu.h>
+#include <asm/arch/power.h>
+#include <samsung-usb-phy-uboot.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -93,6 +99,37 @@ int board_mmc_init(bd_t *bis)
 		debug("dwmmc init failed\n");
 
 	return ret;
+}
+#endif
+
+#ifdef CONFIG_USB_DWC3
+static struct dwc3_device dwc3_device_data = {
+	.maximum_speed = USB_SPEED_SUPER,
+	.base = 0x15400000,
+	.dr_mode = USB_DR_MODE_PERIPHERAL,
+	.index = 0,
+};
+
+int usb_gadget_handle_interrupts(void)
+{
+	dwc3_uboot_handle_interrupt(0);
+	return 0;
+}
+
+int board_usb_init(int index, enum usb_init_type init)
+{
+	struct exynos_usb3_phy *phy = (struct exynos_usb3_phy *)
+		samsung_get_base_usb3_phy();
+
+	if (!phy) {
+		error("usb3 phy not supported");
+		return -ENODEV;
+	}
+
+	set_usbdrd_phy_ctrl(POWER_USB_DRD_PHY_CTRL_EN);
+	exynos5_usb3_phy_init(phy);
+
+	return dwc3_uboot_init(&dwc3_device_data);
 }
 #endif
 
