@@ -126,7 +126,19 @@ int board_usb_init(int index, enum usb_init_type init)
 		return -ENODEV;
 	}
 
+#ifndef CONFIG_TPL_TM2
 	set_usbdrd_phy_ctrl(POWER_USB_DRD_PHY_CTRL_EN);
+#else
+	/*
+	 * Below values are taken from similar driver
+	 * running on Linux kernel
+	 */
+	writel(0x0007770b, (void *)0x10030634);
+	writel(0x00000011, (void *)0x156e0208);
+	writel(0x01101001, (void *)0x156e0204);
+	writel(0x00000101, (void *)0x10030234);
+	writel(0x00000001, (void *)0x105c0704);
+#endif
 	exynos5_usb3_phy_init(phy);
 
 	return dwc3_uboot_init(&dwc3_device_data);
