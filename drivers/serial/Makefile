@@ -23,7 +23,11 @@ obj-$(CONFIG_EFI_APP) += serial_efi.o
 obj-$(CONFIG_LPC32XX_HSUART) += lpc32xx_hsuart.o
 obj-$(CONFIG_MCFUART) += mcfuart.o
 obj-$(CONFIG_SYS_NS16550) += ns16550.o
+ifndef CONFIG_TPL_TM2
 obj-$(CONFIG_S5P) += serial_s5p.o
+else
+obj-$(CONFIG_S5P_SERIAL) += serial_s5p.o
+endif
 obj-$(CONFIG_MXC_UART) += serial_mxc.o
 obj-$(CONFIG_PXA_SERIAL) += serial_pxa.o
 obj-$(CONFIG_S3C24X0_SERIAL) += serial_s3c24x0.o
