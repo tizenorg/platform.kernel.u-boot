@@ -1,11 +1,14 @@
 #
-# Copyright (C) 2009 Samsung Electronics
-# Minkyu Kang <mk7.kang@samsung.com>
+# Copyright (C) 2016 Samsung Electronics
+# Lukasz Majewski <l.majewski@samsung.com>
 #
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y	+= clock.o power.o soc.o system.o pinmux.o tzpc.o
+obj-y	+= clock.o
+ifndef CONFIG_TPL_TM2
+obj-y	+= power.o soc.o system.o pinmux.o tzpc.o
+endif
 
 obj-$(CONFIG_EXYNOS5420)	+= sec_boot.o
 
