@@ -1,0 +1,15 @@
+if TARGET_TM2
+
+config SYS_BOARD
+	default "tm2"
+
+config SYS_VENDOR
+	default "samsung"
+
+config SYS_SOC
+	default "exynos5433"
+
+config SYS_CONFIG_NAME
+	default "tm2"
+
+endif
