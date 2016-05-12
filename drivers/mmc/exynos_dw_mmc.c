@@ -14,7 +14,9 @@
 #include <asm/arch/clk.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
+#ifndef CONFIG_TPL_TM2
 #include <asm/gpio.h>
+#endif
 #include <asm-generic/errno.h>
 
 #define	DWMMC_MAX_CH_NUM		4
@@ -82,10 +84,12 @@ static void exynos_dwmci_board_init(struct dwmci_host *host)
 
 static int exynos_dwmci_core_init(struct dwmci_host *host, int index)
 {
-	unsigned int div;
 	int addr_config;
-	unsigned long freq, sclk;
 	struct dwmci_exynos_priv_data *priv = host->priv;
+
+#ifndef CONFIG_TPL_TM2
+	unsigned long freq, sclk;
+	unsigned int div;
 
 	if (host->bus_hz)
 		freq = host->bus_hz;
@@ -97,6 +101,7 @@ static int exynos_dwmci_core_init(struct dwmci_host *host, int index)
 	div = DIV_ROUND_UP(sclk, freq);
 	/* set the clock divisor for mmc */
 	set_mmc_clk(index, div);
+#endif
 
 	host->name = "EXYNOS DWMMC";
 #ifdef CONFIG_EXYNOS5420
@@ -128,7 +133,7 @@ static int exynos_dwmci_core_init(struct dwmci_host *host, int index)
 	}
 	return 0;
 }
-
+#ifndef CONFIG_TPL_TM2
 /*
  * This function adds the mmc channel to be registered with mmc core.
  * index -	mmc channel number.
@@ -164,15 +169,17 @@ int exynos_dwmci_add_port(int index, u32 regbase, int bus_width, u32 clksel)
 
 	return exynos_dwmci_core_init(host, index);
 }
-
+#endif /* CONFIG_TPL_TM2" */
 #if CONFIG_IS_ENABLED(OF_CONTROL)
 static struct dwmci_host dwmci_host[DWMMC_MAX_CH_NUM];
 
 static int do_dwmci_init(struct dwmci_host *host)
 {
-	int index, flag, err;
+	int index;
 
 	index = host->dev_index;
+#ifndef CONFIG_TPL_TM2
+	int flag, err;
 
 	flag = host->buswidth == 8 ? PINMUX_FLAG_8BIT_MODE : PINMUX_FLAG_NONE;
 	err = exynos_pinmux_config(host->dev_id, flag);
@@ -180,7 +187,7 @@ static int do_dwmci_init(struct dwmci_host *host)
 		printf("DWMMC%d not configure\n", index);
 		return err;
 	}
-
+#endif
 	return exynos_dwmci_core_init(host, index);
 }
 
@@ -188,7 +195,8 @@ static int exynos_dwmci_get_config(const void *blob, int node,
 					struct dwmci_host *host)
 {
 	int err = 0;
-	u32 base, timing[3];
+	u32 timing[3];
+	dma_addr_t base;
 	struct dwmci_exynos_priv_data *priv;
 
 	priv = malloc(sizeof(struct dwmci_exynos_priv_data));
@@ -198,8 +206,11 @@ static int exynos_dwmci_get_config(const void *blob, int node,
 	}
 
 	/* Extract device id for each mmc channel */
+#ifndef CONFIG_TPL_TM2
 	host->dev_id = pinmux_decode_periph_id(blob, node);
-
+#else
+	host->dev_id = 0;
+#endif
 	host->dev_index = fdtdec_get_int(blob, node, "index", host->dev_id);
 	if (host->dev_index == host->dev_id)
 		host->dev_index = host->dev_id - PERIPH_ID_SDMMC0;
@@ -274,7 +285,6 @@ int exynos_dwmmc_init(const void *blob)
 {
 	int compat_id;
 	int node_list[DWMMC_MAX_CH_NUM];
-	int boot_dev_node;
 	int err = 0, count;
 
 	compat_id = COMPAT_SAMSUNG_EXYNOS_DWMMC;
@@ -282,13 +292,15 @@ int exynos_dwmmc_init(const void *blob)
 	count = fdtdec_find_aliases_for_id(blob, "mmc",
 				compat_id, node_list, DWMMC_MAX_CH_NUM);
 
+#ifndef CONFIG_TPL_TM2
+	int boot_dev_node;
 	/* For DWMMC always set boot device as mmc 0 */
 	if (count >= 3 && get_boot_mode() == BOOT_MODE_SD) {
 		boot_dev_node = node_list[2];
 		node_list[2] = node_list[0];
 		node_list[0] = boot_dev_node;
 	}
-
+#endif
 	err = exynos_dwmci_process_node(blob, node_list, count);
 
 	return err;
