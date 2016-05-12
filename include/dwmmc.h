@@ -197,6 +197,17 @@ struct dwmci_idmac {
 	u32 next_addr;
 } __aligned(ARCH_DMA_MINALIGN);
 
+struct dwmci_idmac_64addr {
+	u32 des0;	/* Control Descriptor */
+	u32 des1;	/* Reserved */
+	u32 des2;	/* Buffer sizes */
+	u32 des3;	/* Reserved */
+	u32 des4;	/* Lower 32-bits of Buffer Address Pointer 1*/
+	u32 des5;	/* Upper 32-bits of Buffer Address Pointer 1*/
+	u32 des6;	/* Lower 32-bits of Next Descriptor Address */
+	u32 des7;	/* Upper 32-bits of Next Descriptor Address */
+};
+
 static inline void dwmci_writel(struct dwmci_host *host, int reg, u32 val)
 {
 	writel(val, host->ioaddr + reg);
