@@ -1,0 +1,32 @@
+/*
+ * TM2 device tree source
+ *
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd.
+ *		http://www.samsung.com
+ *
+ * SPDX-License-Identifier:	GPL-2.0+
+ */
+
+/dts-v1/;
+#include "skeleton.dtsi"
+
+/ {
+	model = "TM2 based on EXYNOS5433";
+	compatible = "samsung,tm2", "samsung,exynos7";
+
+	mmc@15540000 {
+		compatible = "samsung,exynos-dwmmc";
+		reg = <0x0 0x15540000 0x0 0x1000>;
+		interrupts = <0 75 0>;
+		samsung,bus-width = <8>;
+		samsung,timing = <1 3 3>;
+		samsung,removable = <0>;
+		samsung,pre-init;
+		fifoth_val = <0x201f0020>;
+	};
+
+	emmc-reset {
+//		compatible = "samsung,emmc-reset";
+//		reset-gpio = <&gpd1 0 0>;
+	};
+};
