@@ -663,6 +663,7 @@ config TARGET_TM2
 	select ARM64
 	select DM
 	select DM_SERIAL
+	select OF_CONTROL
 	  help
 	  Support for Samsung Exynos5433 TM2 platform.
 
