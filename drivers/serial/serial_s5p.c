@@ -88,12 +88,13 @@ static void __maybe_unused s5p_serial_baud(struct s5p_uart *uart, uint uclk,
 #ifndef CONFIG_SPL_BUILD
 int s5p_serial_setbrg(struct udevice *dev, int baudrate)
 {
+#ifndef CONFIG_TPL_TM2
 	struct s5p_serial_platdata *plat = dev->platdata;
 	struct s5p_uart *const uart = plat->reg;
 	u32 uclk = get_uart_clk(plat->port_id);
 
 	s5p_serial_baud(uart, uclk, baudrate);
-
+#endif
 	return 0;
 }
 
@@ -164,6 +165,7 @@ static int s5p_serial_pending(struct udevice *dev, bool input)
 		return (ufstat & TX_FIFO_COUNT_MASK) >> TX_FIFO_COUNT_SHIFT;
 }
 
+#ifndef CONFIG_TPL_TM2
 static int s5p_serial_ofdata_to_platdata(struct udevice *dev)
 {
 	struct s5p_serial_platdata *plat = dev->platdata;
@@ -178,7 +180,12 @@ static int s5p_serial_ofdata_to_platdata(struct udevice *dev)
 
 	return 0;
 }
-
+#else
+static int s5p_serial_ofdata_to_platdata(struct udevice *dev)
+{
+	return 0;
+}
+#endif
 static const struct dm_serial_ops s5p_serial_ops = {
 	.putc = s5p_serial_putc,
 	.pending = s5p_serial_pending,
