@@ -4,7 +4,7 @@ Release: 0
 Summary: Das U-Boot - Tizen bootloader
 Group: System/Kernel
 License: GPL-2.0+
-ExclusiveArch: %{arm}
+ExclusiveArch: %{arm} aarch64
 URL: https://review.tizen.org/git/?p=kernel/u-boot.git
 Source0: %{name}-%{version}.tar.bz2
 Source1001: u_boot.manifest
@@ -43,6 +43,12 @@ and modify U-Boot's environment.
 %global use_mmc_storage 1
 %endif
 
+%ifarch aarch64
+%define tool tools-only
+%else
+%define tool tools
+%endif
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -60,7 +66,7 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" -C tools/dtc
 make $CONFIG
 
 # Build tools
-make %{?_smp_mflags} HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true tools
+make %{?_smp_mflags} HOSTCC="gcc $RPM_OPT_FLAGS" HOSTSTRIP=/bin/true %{tool}
 
 %if 1%{?use_mmc_storage}
 make HOSTCC="gcc $RPM_OPT_FLAGS" CONFIG_ENV_IS_IN_MMC=y env
@@ -68,6 +74,7 @@ make HOSTCC="gcc $RPM_OPT_FLAGS" CONFIG_ENV_IS_IN_MMC=y env
 make HOSTCC="gcc $RPM_OPT_FLAGS" env
 %endif
 
+%ifarch %{arm}
 # Build u-boot
 export PATH="$PATH:tools:tools/dtc/"
 make %{?_smp_mflags} EXTRAVERSION=`echo %{vcs} | sed 's/.*u-boot.*#\(.\{9\}\).*/-g\1-TIZEN.org/'`
@@ -86,6 +93,7 @@ objcopy -O binary --only-section=.rodata.default_environment `find . -name "copy
 tr '\0' '\n' < copy_env_common.o > default_envs.txt
 mkenvimage -s 16384 -o params.bin default_envs.txt
 rm copy_env_common.o default_envs.txt
+%endif
 
 %install
 rm -rf %{buildroot}
@@ -98,18 +106,22 @@ install -p -m 0755 tools/dtc/dtc %{buildroot}%{_bindir}
 ( cd %{buildroot}%{_bindir}; ln -sf fw_printenv fw_setenv )
 
 # u-boot installation
+%ifarch %{arm}
 mkdir -p %{buildroot}/var/tmp/u-boot
 install -d %{buildroot}/var/tmp/u-boot
 install -m 755 u-boot.bin %{buildroot}/var/tmp/u-boot
 install -m 755 u-boot-mmc.bin %{buildroot}/var/tmp/u-boot
 install -m 755 params.bin %{buildroot}/var/tmp/u-boot
+%endif
 
 %clean
 
+%ifarch %{arm}
 %files
 %manifest u_boot.manifest
 %defattr(-,root,root,-)
 /var/tmp/u-boot
+%endif
 
 %files -n u-boot-tools
 %manifest u_boot.manifest
