@@ -15,6 +15,7 @@
 #include <asm/arch/cpu.h>
 #include <asm/arch/power.h>
 #include <samsung-usb-phy-uboot.h>
+#include <asm/gpio.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -102,6 +103,23 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
+#ifdef CONFIG_SYS_I2C_INIT_BOARD
+void i2c_init_board(void)
+{
+	/* Soft I2C - hsi2c_8 */
+
+	gpio_request(GPIO_I2C_SDA_PIN, "hsi2c_8_data");
+	gpio_request(GPIO_I2C_SCL_PIN, "hsi2c_8_clk");
+	gpio_direction_output(GPIO_I2C_SDA_PIN, 1);
+	gpio_direction_output(GPIO_I2C_SCL_PIN, 1);
+
+	gpio_set_pull(GPIO_I2C_SCL_PIN, S5P_GPIO_PULL_UP);
+	gpio_set_pull(GPIO_I2C_SDA_PIN, S5P_GPIO_PULL_UP);
+
+	gpio_set_drv(GPIO_I2C_SCL_PIN, S5P_GPIO_DRV_1X);
+	gpio_set_drv(GPIO_I2C_SDA_PIN, S5P_GPIO_DRV_1X);
+}
+#endif
 #ifdef CONFIG_USB_DWC3
 static struct dwc3_device dwc3_device_data = {
 	.maximum_speed = USB_SPEED_SUPER,

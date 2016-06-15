@@ -84,6 +84,18 @@
 #define CONFIG_G_DNL_UMS_VENDOR_NUM	CONFIG_G_DNL_VENDOR_NUM
 #define CONFIG_G_DNL_UMS_PRODUCT_NUM	0xA4A5
 
+/* I2C */
+#define CONFIG_SOFT_I2C_GPIO_SCL	GPIO_I2C_SCL_PIN
+#define CONFIG_SOFT_I2C_GPIO_SDA	GPIO_I2C_SDA_PIN
+
+#define CONFIG_CMD_I2C
+#define CONFIG_SYS_I2C
+#define CONFIG_MAX_I2C_NUM		8
+#define CONFIG_SYS_I2C_SOFT
+#define CONFIG_SYS_I2C_SOFT_SPEED	50000
+#define CONFIG_SYS_I2C_SOFT_SLAVE	0x00
+#define CONFIG_SYS_I2C_INIT_BOARD
+
 /* CONFIG_SYS_TEXT_BASE needs to align with where sboot loads kernel */
 #define CONFIG_SYS_TEXT_BASE		0x20080000
 
@@ -110,12 +122,15 @@
 /* Initial environment variables */
 #define CONFIG_BOOTCOMMAND		"run modedetect"
 #define CONFIG_EXTRA_ENV_SETTINGS	"dfu_alt_info=kernel part 0 9 offset 0x400;rootfs part 0 18;system-data part 0 19;user part 0 21\0" \
-					"modedetect=if itest.l *0x10580044 == 0x81 || itest.l *0x10580044 == 0x1 || itest.l *0x105c080c == 0x12345671; then echo Thor mode enabled; run displayimg; mw.l 0x105c080c 0; thor 0 mmc 0; reset; else echo Booting kernel; run boarddetect; run loadkernel; bootm 0x30080000#$board; reset; fi\0" \
+					"modedetect=if itest.l *0x10580044 == 0x81 || itest.l *0x10580044 == 0x1 || itest.l *0x105c080c == 0x12345671; then run download; else run bootkernel; fi; reset\0" \
 					"fdt_high=0xffffffffffffffff\0" \
 					"bootargs=console=ttySAC1,115200 earlycon=exynos4210,0x14C20000 loglevel=7 root=/dev/mmcblk0p18 rootfstype=ext4 rootwait\0" \
+					"bootkernel=echo Booting kernel; run boarddetect; run loadkernel; bootm 0x30080000#$board\0" \
 					"boarddetect=if itest.l *0x138000b4 == 0x0063f9ff; then setenv board tm2e; elif itest.l *0x138000b4 == 0x0059f9ff; then setenv board tm2; else setenv board unknown; fi; echo Detected $board board\0" \
 					"loadkernel=part start mmc 0 9 kernel_sect; part size mmc 0 9 kernel_size; mmc read 0x30000000 $kernel_sect $kernel_size\0" \
-					"displayimg=unzip 200d0000 67000000; mw.l 138000b4 0059f9ff; mw.l 138001a0 67e10000; mw.l 13800200 00001680; mw.l 13801410 1; mw.l 13802040 e0000018; sleep 1; mw.l 13802040 e0000008\0"
+					"muicsetusb=i2c mw 25 c 1b; i2c mw 25 d 3b; i2c mw 25 e 05; i2c mw 25 16 f2\0" \
+					"displayimg=unzip 200d0000 67000000; mw.l 138000b4 0059f9ff; mw.l 138001a0 67e10000; mw.l 13800200 00001680; mw.l 13801410 1; mw.l 13802040 e0000018; sleep 1; mw.l 13802040 e0000008\0" \
+					"download=echo Thor mode enabled; run muicsetusb; run displayimg; mw.l 0x105c080c 0; thor 0 mmc 0\0"
 #define CONFIG_BOOTDELAY		-2	/* force autoboot */
 #define CONFIG_MENUPROMPT		"Loading, please wait..."
 
