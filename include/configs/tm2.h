@@ -116,7 +116,7 @@
 					"boarddetect=if itest.l *0x138000b4 == 0x0063f9ff; then setenv board tm2e; elif itest.l *0x138000b4 == 0x0059f9ff; then setenv board tm2; else setenv board unknown; fi; echo Detected $board board\0" \
 					"loadkernel=part start mmc 0 9 kernel_sect; part size mmc 0 9 kernel_size; mmc read 0x30000000 $kernel_sect $kernel_size\0" \
 					"displayimg=unzip 200d0000 67000000; mw.l 138000b4 0059f9ff; mw.l 138001a0 67e10000; mw.l 13800200 00001680; mw.l 13801410 1; mw.l 13802040 e0000018; sleep 1; mw.l 13802040 e0000008\0"
-#define CONFIG_BOOTDELAY		2
+#define CONFIG_BOOTDELAY		-2	/* force autoboot */
 #define CONFIG_MENUPROMPT		"Loading, please wait..."
 
 #define CONFIG_ENV_SIZE			0x1000
