@@ -110,7 +110,7 @@
 /* Initial environment variables */
 #define CONFIG_BOOTCOMMAND		"run modedetect"
 #define CONFIG_EXTRA_ENV_SETTINGS	"dfu_alt_info=kernel part 0 9 offset 0x400;rootfs part 0 18;system-data part 0 19;user part 0 21\0" \
-					"modedetect=if itest.l *0x10580044 == 0x81 || itest.l *0x10580044 == 0x1; then echo Thor mode enabled; run displayimg; thor 0 mmc 0; reset; else echo Booting kernel; run boarddetect; run loadkernel; bootm 0x30080000#$board; reset; fi\0" \
+					"modedetect=if itest.l *0x10580044 == 0x81 || itest.l *0x10580044 == 0x1 || itest.l *0x105c080c == 0x12345671; then echo Thor mode enabled; run displayimg; mw.l 0x105c080c 0; thor 0 mmc 0; reset; else echo Booting kernel; run boarddetect; run loadkernel; bootm 0x30080000#$board; reset; fi\0" \
 					"fdt_high=0xffffffffffffffff\0" \
 					"bootargs=console=ttySAC1,115200 earlycon=exynos4210,0x14C20000 loglevel=7 root=/dev/mmcblk0p18 rootfstype=ext4 rootwait\0" \
 					"boarddetect=if itest.l *0x138000b4 == 0x0063f9ff; then setenv board tm2e; elif itest.l *0x138000b4 == 0x0059f9ff; then setenv board tm2; else setenv board unknown; fi; echo Detected $board board\0" \
