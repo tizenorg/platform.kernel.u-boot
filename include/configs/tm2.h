@@ -124,7 +124,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS	"dfu_alt_info=kernel part 0 9 offset 0x400;rootfs part 0 18;system-data part 0 19;user part 0 21\0" \
 					"modedetect=if itest.l *0x10580044 == 0x81 || itest.l *0x10580044 == 0x1 || itest.l *0x105c080c == 0x12345671; then run download; else run bootkernel; fi; reset\0" \
 					"fdt_high=0xffffffffffffffff\0" \
-					"bootargs=console=ttySAC1,115200 earlycon=exynos4210,0x14C20000 loglevel=7 root=/dev/mmcblk0p18 rootfstype=ext4 rootwait\0" \
+					"bootargs=console=ttySAC1,115200 earlycon=exynos4210,0x14C20000 ess_setup=0x26000000 loglevel=7 root=/dev/mmcblk0p18 rootfstype=ext4 rootwait\0" \
 					"bootkernel=echo Booting kernel; run boarddetect; run loadkernel; bootm 0x30080000#$board\0" \
 					"boarddetect=if itest.l *0x138000b4 == 0x0063f9ff; then setenv board tm2e; elif itest.l *0x138000b4 == 0x0059f9ff; then setenv board tm2; else setenv board unknown; fi; echo Detected $board board\0" \
 					"loadkernel=part start mmc 0 9 kernel_sect; part size mmc 0 9 kernel_size; mmc read 0x30000000 $kernel_sect $kernel_size\0" \
