@@ -6,6 +6,7 @@
  */
 
 #include <common.h>
+#include <errno.h>
 #include <asm/io.h>
 #include <asm/arch/power.h>
 
@@ -259,4 +260,66 @@ unsigned int get_boot_mode(void)
 	unsigned int om_pin = samsung_get_base_power();
 
 	return readl(om_pin) & OM_PIN_MASK;
+}
+
+unsigned int exynos5_get_inform_value(int num)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	if (num < 0 || num > 3)
+		return -EINVAL;
+	return readl(&power->inform0 + num);
+}
+
+unsigned int exynos4_get_inform_value(int num)
+{
+	struct exynos4_power *power =
+		(struct exynos4_power *)samsung_get_base_power();
+
+	if (num < 0 || num > 7)
+		return -EINVAL;
+	return readl(&power->inform0 + num);
+}
+
+unsigned int get_inform_value(int num)
+{
+	if (cpu_is_exynos5())
+		return exynos5_get_inform_value(num);
+	else
+		return exynos4_get_inform_value(num);
+}
+
+void exynos5_clear_inform(int num)
+{
+	struct exynos5_power *power =
+		(struct exynos5_power *)samsung_get_base_power();
+
+	/* Exynos5 has from INFORM0 to INFORM3 */
+	if (num < 0 || num > 3)
+		return;
+
+	/* Clear to 0 */
+	writel(0, &power->inform0 + num);
+}
+
+void exynos4_clear_inform(int num)
+{
+	struct exynos4_power *power =
+		(struct exynos4_power *)samsung_get_base_power();
+
+	/* Exynos4 has from INFORM0 to INFORM7 */
+	if (num < 0 || num > 7)
+		return;
+
+	/* Clear to 0 */
+	writel(0, &power->inform0 + num);
+}
+
+void clear_inform_value(int num)
+{
+	if (cpu_is_exynos5())
+		exynos5_clear_inform(num);
+	else
+		exynos4_clear_inform(num);
 }
