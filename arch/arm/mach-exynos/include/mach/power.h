@@ -1921,6 +1921,8 @@ enum {
 };
 
 unsigned int get_boot_mode(void);
+unsigned int get_inform_value(int num);
+void clear_inform_value(int num);
 
 void set_mipi_phy_ctrl(unsigned int dev_index, unsigned int enable);
 
