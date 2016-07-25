@@ -11,6 +11,11 @@ u32 get_board_rev(void);
 void set_board_info(void);
 #endif
 
+/* Check which reboot mode is */
+#define REBOOT_MODE_PREFIX	0x12345670
+#define REBOOT_DOWNLOAD		0x1
+void check_reboot_mode(void);
+
 #if defined(CONFIG_LCD_MENU) || defined(CONFIG_INTERACTIVE_CHARGER)
 void keys_init(void);
 int check_keys(void);

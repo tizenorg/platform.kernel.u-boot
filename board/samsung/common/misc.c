@@ -17,6 +17,7 @@
 #include <memalign.h>
 #include <linux/sizes.h>
 #include <asm/arch/cpu.h>
+#include <asm/arch/power.h>
 #include <asm/gpio.h>
 #include <dm.h>
 #include <power/pmic.h>
@@ -904,6 +905,32 @@ void keys_init(void)
 	gpio_direction_input(KEY_VOL_DOWN_GPIO);
 }
 #endif /* CONFIG_LCD_MENU */
+
+void check_reboot_mode(void) {
+	u32 val;
+	int node, inform_num;
+
+	node = fdt_node_offset_by_compatible(gd->fdt_blob, 0,
+			"samsung,reboot-mode");
+	if (node < 0)
+		return;
+
+	inform_num = fdtdec_get_int(gd->fdt_blob, node, "inform-num", -1);
+	if (inform_num < 0)
+		return;
+
+	/* Get the value from INFORM register */
+	val = get_inform_value(inform_num);
+	if (val < 0)
+		return;
+
+	clear_inform_value(inform_num);
+
+	val &= ~REBOOT_MODE_PREFIX;
+	if (val & REBOOT_DOWNLOAD) {
+		run_command("thordown", 0);
+	}
+}
 
 #ifdef CONFIG_CMD_BMP
 void draw_logo(void)
